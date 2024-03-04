@@ -1,0 +1,29 @@
+<!--
+  ~ This file is part of Squeeze Client, an Android client for the LMS music server.
+  ~ Copyright (c) 2024 Danny Baumann
+  ~
+  ~ This program is free software: you can redistribute it and/or modify it under the terms of the
+  ~  GNU General Public License as published by the Free Software Foundation,
+  ~   either version 3 of the License, or (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+  ~  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  ~  See the GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License along with this program.
+  ~ If not, see <http://www.gnu.org/licenses/>.
+  -->
+
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="?attr/colorControlNormal">
+  <path
+      android:fillColor="#000"
+      android:pathData="M10,4A4,4 0,0 0,6 8A4,4 0,0 0,10 12A4,4 0,0 0,14 8A4,4 0,0 0,10 4zM10,14C5.58,14 2,15.79 2,18L2,20L11.6797,20A7,7 0,0 1,11 17A7,7 0,0 1,11.6406 14.0898C11.1106,14.0298 10.56,14 10,14z"/>
+  <path
+      android:fillColor="#000"
+      android:pathData="m17.9616,16.5142a0.5127,0.5127 0,0 0,-0.5127 0.5127,0.5127 0.5127,0 0,0 0.5127,0.5127 0.5127,0.5127 0,0 0,0.5127 -0.5127,0.5127 0.5127,0 0,0 -0.5127,-0.5127m0,2.8198c-1.2817,0 -2.3071,-1.0254 -2.3071,-2.3071 0,-1.2817 1.0254,-2.3071 2.3071,-2.3071 1.2817,0 2.3071,1.0254 2.3071,2.3071 0,1.2817 -1.0254,2.3071 -2.3071,2.3071m0,-7.434A5.1269,5.1269 0,0 0,12.8347 17.0269,5.1269 5.1269,0 0,0 17.9616,22.1538 5.1269,5.1269 0,0 0,23.0885 17.0269,5.1269 5.1269,0 0,0 17.9616,11.9Z" />
+</vector>

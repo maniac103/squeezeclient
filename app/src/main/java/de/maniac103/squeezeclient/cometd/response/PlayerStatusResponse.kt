@@ -1,0 +1,148 @@
+/*
+ * This file is part of Squeeze Client, an Android client for the LMS music server.
+ * Copyright (c) 2024 Danny Baumann
+ *
+ * This program is free software: you can redistribute it and/or modify it under the terms of the
+ *  GNU General Public License as published by the Free Software Foundation,
+ *   either version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ *  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ *  See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <http://www.gnu.org/licenses/>.
+ */
+
+package de.maniac103.squeezeclient.cometd.response
+
+import de.maniac103.squeezeclient.cometd.BooleanAsIntSerializer
+import de.maniac103.squeezeclient.cometd.PlayerIdListAsStringSerializer
+import de.maniac103.squeezeclient.cometd.PlayerIdSerializer
+import de.maniac103.squeezeclient.cometd.TimestampAsInstantSerializer
+import de.maniac103.squeezeclient.model.PlayerId
+import de.maniac103.squeezeclient.model.PlayerStatus
+import de.maniac103.squeezeclient.model.Playlist
+import kotlin.math.abs
+import kotlin.math.roundToLong
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
+// offset and item_loop are not returned when fetching non-existing pages
+@Serializable
+data class PlayerStatusResponse(
+    @SerialName("mode")
+    val state: PlayerStatus.PlayState,
+    val offset: String? = null,
+    val count: Int,
+    @SerialName("item_loop")
+    private val items: List<Item>? = null,
+    @SerialName("time")
+    val playPosition: Float = 0F,
+    val eventTimestamp: Instant = Clock.System.now(),
+    @SerialName("duration")
+    val currentSongDuration: Float? = null,
+    @SerialName("playlist_cur_index")
+    val playlistCurrentIndex: Int = 0,
+    @SerialName("playlist_tracks")
+    val playlistTrackCount: Int,
+    @SerialName("playlist_timestamp")
+    @Serializable(with = TimestampAsInstantSerializer::class)
+    val playlistTimestamp: Instant = Clock.System.now(),
+    @SerialName("playlist shuffle")
+    val shuffleState: PlayerStatus.ShuffleState,
+    @SerialName("playlist repeat")
+    val repeatState: PlayerStatus.RepeatState,
+    @SerialName("mixer volume")
+    val currentVolume: Int,
+    @SerialName("digital_volume_control")
+    @Serializable(with = BooleanAsIntSerializer::class)
+    val digitalVolumeControl: Boolean,
+    @SerialName("player_name")
+    val playerName: String,
+    @SerialName("player_connected")
+    @Serializable(with = BooleanAsIntSerializer::class)
+    val connected: Boolean,
+    @SerialName("power")
+    @Serializable(with = BooleanAsIntSerializer::class)
+    val powered: Boolean,
+    @SerialName("sync_master")
+    @Serializable(with = PlayerIdSerializer::class)
+    val syncMaster: PlayerId? = null,
+    @SerialName("sync_slaves")
+    @Serializable(with = PlayerIdListAsStringSerializer::class)
+    val syncSlaves: List<PlayerId>? = null
+) {
+
+    @Serializable
+    data class Item(
+        val track: String? = null,
+        val artist: String? = null,
+        val album: String? = null,
+        @SerialName("icon-id") val iconId: String? = null,
+        val icon: String? = null
+    ) {
+        fun asModelPlaylistItem() = if (track != null && artist != null && album != null) {
+            Playlist.PlaylistItem(track, artist, album, iconId, icon)
+        } else {
+            null
+        }
+    }
+
+    fun asModelStatus(): PlayerStatus {
+        val nowPlaying = items?.elementAtOrNull(0)?.asModelPlaylistItem()
+        val duration = currentSongDuration
+            ?.times(1000)
+            ?.roundToLong()
+            ?.toDuration(DurationUnit.MILLISECONDS)
+        return PlayerStatus(
+            state,
+            PlayerStatus.PlaylistInfo(
+                nowPlaying,
+                playlistCurrentIndex + 1,
+                playlistTrackCount,
+                playlistTimestamp
+            ),
+            duration,
+            playPosition,
+            repeatState,
+            shuffleState,
+            playerName,
+            connected,
+            powered,
+            abs(currentVolume),
+            currentVolume < 0,
+            syncMaster,
+            syncSlaves,
+            eventTimestamp
+        )
+    }
+
+    fun asModelPlaylist(fetchOffset: Int): Playlist {
+        val actualOffset = when (offset) {
+            null -> fetchOffset
+            "-" -> playlistCurrentIndex
+            else -> offset.toInt()
+        }
+        val (playlist, reachableCount) = if (items != null) {
+            val playlist = items.mapNotNull { it.asModelPlaylistItem() }
+            val filteredItems = items.size - playlist.size
+            // This assumes filtered items are at the end of the response
+            val reachableCount = count - filteredItems
+            playlist to reachableCount
+        } else {
+            emptyList<Playlist.PlaylistItem>() to count
+        }
+        return Playlist(
+            playlist,
+            actualOffset,
+            reachableCount,
+            playlistCurrentIndex,
+            playlistTimestamp
+        )
+    }
+}

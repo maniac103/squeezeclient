@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ This file is part of Squeeze Client, an Android client for the LMS music server.
+  ~ Copyright (c) 2024 Danny Baumann
+  ~
+  ~ This program is free software: you can redistribute it and/or modify it under the terms of the
+  ~  GNU General Public License as published by the Free Software Foundation,
+  ~   either version 3 of the License, or (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+  ~  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  ~  See the GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License along with this program.
+  ~ If not, see <http://www.gnu.org/licenses/>.
+  -->
+
+<androidx.drawerlayout.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/drawer_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <Space
+            android:id="@+id/nowplaying_placeholder"
+            android:layout_width="@dimen/landscape_nowplaying_pane_width"
+            android:layout_height="match_parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <androidx.coordinatorlayout.widget.CoordinatorLayout
+            android:id="@+id/coordinator_layout"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/nowplaying_placeholder">
+
+            <com.google.android.material.appbar.AppBarLayout
+                android:id="@+id/appbar_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fitsSystemWindows="true">
+
+                <com.google.android.material.appbar.MaterialToolbar
+                    android:id="@+id/toolbar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="?attr/actionBarSize"
+                    app:navigationIcon="@drawable/ic_drawer_menu_24dp"
+                    app:navigationIconTint="?colorControlNormal"
+                    app:menu="@menu/main_toolbar"
+                    app:title="@string/app_name"
+                    app:titleCentered="true"
+                    app:subtitleCentered="true" />
+
+                <LinearLayout
+                    android:id="@+id/breadcrumbs_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="8dp"
+                    android:orientation="horizontal"
+                    android:visibility="gone"
+                    tools:visibility="visible">
+
+                    <ImageView
+                        android:id="@+id/breadcrumbs_home"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
+                        android:src="@drawable/ic_home_24dp"
+                        app:tint="?colorControlNormal" />
+
+                    <TextView
+                        android:id="@+id/breadcrumbs"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
+                        android:ellipsize="start"
+                        android:maxLines="1"
+                        android:textAppearance="?textAppearanceLabelMedium"
+                        tools:text="> My music > Artists" />
+
+                </LinearLayout>
+
+            </com.google.android.material.appbar.AppBarLayout>
+
+            <androidx.fragment.app.FragmentContainerView
+                android:id="@+id/container"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+
+            <com.google.android.material.progressindicator.CircularProgressIndicator
+                android:id="@+id/loading_indicator"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:indeterminate="true"
+                android:visibility="gone"
+                app:indicatorSize="128dp"
+                app:trackThickness="6dp" />
+
+        </androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/player_container"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/search_container"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:fitsSystemWindows="true" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/navigation_view"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        app:headerLayout="@layout/nav_drawer_header"
+        app:menu="@menu/nav_drawer" />
+
+</androidx.drawerlayout.widget.DrawerLayout>

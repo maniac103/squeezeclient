@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ This file is part of Squeeze Client, an Android client for the LMS music server.
+  ~ Copyright (c) 2024 Danny Baumann
+  ~
+  ~ This program is free software: you can redistribute it and/or modify it under the terms of the
+  ~  GNU General Public License as published by the Free Software Foundation,
+  ~   either version 3 of the License, or (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+  ~  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  ~  See the GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License along with this program.
+  ~ If not, see <http://www.gnu.org/licenses/>.
+  -->
+
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <application
+        android:allowBackup="true"
+        android:name=".SqueezeClientApplication"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.SqueezeClient"
+        android:usesCleartextTraffic="true"
+        tools:targetApi="31">
+        <activity
+            android:name=".ui.MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".ui.ServerSetupActivity"
+            android:windowSoftInputMode="adjustResize"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.slideshow.ImageViewActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.playermanagement.PlayerManagementActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.prefs.SettingsActivity"
+            android:exported="false" />
+        
+        <service
+            android:name=".service.MediaService"
+            android:foregroundServiceType="mediaPlayback"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="androidx.media3.session.MediaSessionService" />
+                <action android:name="android.media.browse.MediaBrowserService" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name="androidx.work.impl.foreground.SystemForegroundService"
+            android:foregroundServiceType="dataSync"
+            tools:node="merge" />
+
+        <provider
+            android:name=".CacheFileProvider"
+            android:authorities="${applicationId}.cachefiles"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/cache_provider_paths" />
+        </provider>
+    </application>
+
+</manifest>

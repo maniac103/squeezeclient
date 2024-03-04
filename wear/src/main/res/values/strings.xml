@@ -1,0 +1,27 @@
+<!--
+  ~ This file is part of Squeeze Client, an Android client for the LMS music server.
+  ~ Copyright (c) 2024 Danny Baumann
+  ~
+  ~ This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  -->
+
+<resources>
+    <string name="app_name">Squeeze Client</string>
+    <string name="status_connecting">Loading player list from %1$s</string>
+    <string name="status_no_players">No players are connected to server</string>
+    <string name="status_no_device_found">No device found. Please install Squeeze Client on your mobile device.</string>
+    <string name="status_app_incompatible">The app installed on %1$s is incompatible. Please update the app on device and watch.</string>
+    <string name="status_connection_error">Could not load player list from %1$s</string>
+    <string name="status_server_not_reachable">Squeezebox server is not reachable</string>
+    <string name="player_state_off">Off</string>
+    <string name="player_state_paused">Paused</string>
+    <string name="player_state_stopped">Stopped</string>
+    <string name="player_state_playing">Playing</string>
+    <string name="action_stop_players">Stop all players</string>
+    <string name="action_turn_off_players">Turn off all players</string>
+    <string name="action_disconnect">Disconnect</string>
+</resources>

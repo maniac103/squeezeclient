@@ -1,0 +1,26 @@
+<!--
+  ~ This file is part of Squeeze Client, an Android client for the LMS music server.
+  ~ Copyright (c) 2024 Danny Baumann
+  ~
+  ~ This program is free software: you can redistribute it and/or modify it under the terms of the
+  ~  GNU General Public License as published by the Free Software Foundation,
+  ~   either version 3 of the License, or (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+  ~  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  ~  See the GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License along with this program.
+  ~ If not, see <http://www.gnu.org/licenses/>.
+  -->
+
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="?colorControlNormal">
+  <path
+      android:fillColor="#FF000000"
+      android:pathData="M12,4C10.42,4 9.003,4.476 7.75,5.43C6.503,6.376 5.67,7.617 5.25,9.15C3.983,9.43 2.957,10.08 2.17,11.1C1.39,12.12 1,13.28 1,14.58C1,16.093 1.536,17.376 2.609,18.43C3.683,19.476 4.98,20 6.5,20L18.5,20C19.753,20 20.816,19.563 21.689,18.689C22.563,17.816 23,16.753 23,15.5C23,14.353 22.619,13.353 21.859,12.5C21.106,11.633 20.153,11.133 19,11C19,9.047 18.321,7.392 16.961,6.039C15.608,4.679 13.953,4 12,4zM11.43,6.52L15.43,6.52L15.43,9.186L12.764,9.186L12.764,15.852C12.764,17.325 11.569,18.52 10.096,18.52C8.622,18.52 7.43,17.325 7.43,15.852C7.43,14.378 8.622,13.186 10.096,13.186C10.582,13.186 11.036,13.326 11.43,13.553L11.43,6.52z"/>
+</vector>

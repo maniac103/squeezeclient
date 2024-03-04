@@ -1,0 +1,28 @@
+<!--
+  ~ This file is part of Squeeze Client, an Android client for the LMS music server.
+  ~ Copyright (c) 2024 Danny Baumann
+  ~
+  ~ This program is free software: you can redistribute it and/or modify it under the terms of the
+  ~  GNU General Public License as published by the Free Software Foundation,
+  ~   either version 3 of the License, or (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+  ~  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  ~  See the GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License along with this program.
+  ~ If not, see <http://www.gnu.org/licenses/>.
+  -->
+
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+  <path
+      android:fillColor="#FF000000"
+      android:pathData="M17,3L17,6L14.26,6L11.459,8.801L13.58,10.92L15.5,9L17,9L17,12L22.25,7.5L17,3zM17,12L17,14.336L20.59,17.922L22.25,16.5L17,12zM2,6L2,9L5.26,9L7.199,10.939L9.125,9.016L6.107,6L2,6zM10.186,10.074L5.26,15L2,15L2,18L6.5,18L12.307,12.193L10.186,10.074zM13.369,13.252L11.439,15.18L14.26,18L17,18L17,21L19.221,19.098L13.369,13.252z"/>
+  <path
+      android:fillColor="#000000"
+      android:pathData="M2.666,2.466l18.396,18.374l-1.272,1.274l-18.396,-18.374z" />
+</vector>

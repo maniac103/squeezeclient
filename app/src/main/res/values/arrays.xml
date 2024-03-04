@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ This file is part of Squeeze Client, an Android client for the LMS music server.
+  ~ Copyright (c) 2024 Danny Baumann
+  ~
+  ~ This program is free software: you can redistribute it and/or modify it under the terms of the
+  ~  GNU General Public License as published by the Free Software Foundation,
+  ~   either version 3 of the License, or (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+  ~  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  ~  See the GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License along with this program.
+  ~ If not, see <http://www.gnu.org/licenses/>.
+  -->
+
+<resources>
+    <string-array name="settings_theme_values" translatable="false">
+        <item>light</item>
+        <item>dark</item>
+        <item>system</item>
+    </string-array>
+
+    <string-array name="settings_theme_entries" translatable="false">
+        <item>@string/settings_theme_light</item>
+        <item>@string/settings_theme_dark</item>
+        <item>@string/settings_theme_follow_battery_saver</item>
+    </string-array>
+
+    <string-array name="settings_download_path_structure_entries" translatable="false">
+        <item>@string/settings_download_path_structure_entry_as_server</item>
+        <item>@string/settings_download_path_structure_entry_album</item>
+        <item>@string/settings_download_path_structure_entry_artist</item>
+        <item>@string/settings_download_path_structure_entry_album_under_artist</item>
+        <item>@string/settings_download_path_structure_entry_artist_album</item>
+    </string-array>
+</resources>

@@ -1,0 +1,27 @@
+<!--
+  ~ This file is part of Squeeze Client, an Android client for the LMS music server.
+  ~ Copyright (c) 2024 Danny Baumann
+  ~
+  ~ This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  -->
+
+<resources>
+    <string name="app_name">Squeeze Client</string>
+    <string name="status_connecting">Liste der Wiedergabegeräte wird von %1$s geladen</string>
+    <string name="status_no_players">Am Server sind keine Wiedergabegeräte angemeldet</string>
+    <string name="status_no_device_found">Kein Gerät gefunden. Installieren Sie bitte Squeeze Client auf Ihrem mobilen Gerät.</string>
+    <string name="status_app_incompatible">Die auf %1$s installierte App ist inkompatibel. Aktualisieren Sie bitte die App auf dem mobilen Gerät und der Uhr.</string>
+    <string name="status_connection_error">Liste der Wiedergabegeräte konnte nicht von %1$s geladen werden</string>
+    <string name="status_server_not_reachable">Squeezebox-Server ist nicht erreichbar</string>
+    <string name="player_state_off">Ausgeschaltet</string>
+    <string name="player_state_paused">Pausiert</string>
+    <string name="player_state_stopped">Angehalten</string>
+    <string name="player_state_playing">Wiedergabe</string>
+    <string name="action_stop_players">Wiedergabe auf allen Geräten anhalten</string>
+    <string name="action_turn_off_players">Alle Wiedergabegeräte ausschalten</string>
+    <string name="action_disconnect">Verbindung trennen</string>
+</resources>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ This file is part of Squeeze Client, an Android client for the LMS music server.
+  ~ Copyright (c) 2024 Danny Baumann
+  ~
+  ~ This program is free software: you can redistribute it and/or modify it under the terms of the
+  ~  GNU General Public License as published by the Free Software Foundation,
+  ~   either version 3 of the License, or (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+  ~  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  ~  See the GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License along with this program.
+  ~ If not, see <http://www.gnu.org/licenses/>.
+  -->
+
+<resources>
+    <dimen name="collapsed_now_playing_height">64dp</dimen> <!-- 48dp icon + 4dp top padding + 12dp progress indicator -->
+    <dimen name="playlist_sheet_peek_height">48dp</dimen>
+    <dimen name="volume_popup_panel_width">56dp</dimen>
+    <dimen name="volume_popup_panel_corner_radius">28dp</dimen>
+    <dimen name="volume_popup_slider_height">256dp</dimen>
+    <dimen name="volume_popup_slider_width">40dp</dimen>
+    <dimen name="volume_popup_slider_corner_radius">20dp</dimen>
+    <dimen name="volume_popup_track_width">4dp</dimen>
+    <dimen name="volume_popup_track_corner_radius">2dp</dimen>
+    <dimen name="rounded_slider_track_inset">22dp</dimen>
+    <dimen name="rounded_slider_icon_size">20dp</dimen>
+    <!-- (volume_popup_panel_width - rounded_slider_icon_size) / 2 -->
+    <dimen name="volume_slider_icon_inset">11dp</dimen>
+    <dimen name="volume_popup_end_margin">8dp</dimen>
+    <dimen name="volume_popup_mute_button_size">42dp</dimen>
+    <dimen name="search_sheet_corner_radius">24dp</dimen>
+    <dimen name="item_grid_column_width">160dp</dimen>
+    <dimen name="landscape_nowplaying_pane_width">320dp</dimen>
+</resources>

@@ -1,0 +1,29 @@
+<!--
+  ~ This file is part of Squeeze Client, an Android client for the LMS music server.
+  ~ Copyright (c) 2024 Danny Baumann
+  ~
+  ~ This program is free software: you can redistribute it and/or modify it under the terms of the
+  ~  GNU General Public License as published by the Free Software Foundation,
+  ~   either version 3 of the License, or (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+  ~  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  ~  See the GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License along with this program.
+  ~ If not, see <http://www.gnu.org/licenses/>.
+  -->
+
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="?colorControlNormal">
+  <path
+      android:fillColor="#FF000000"
+      android:pathData="M15,6H3V8H15V6m0,4H3v2H15V10M3,16h8V14H3v2"/>
+  <path
+      android:pathData="m17.169,16.5q0.538,1.109 1.353,1.109 0.424,0 0.685,-0.298 0.277,-0.315 0.277,-0.811 0,-0.48 -0.277,-0.778 -0.261,-0.315 -0.685,-0.315 -0.408,0 -0.734,0.265 -0.326,0.248 -0.62,0.828zM15.815,16.5q-0.277,-0.579 -0.62,-0.828 -0.326,-0.265 -0.717,-0.265 -0.424,0 -0.701,0.315 -0.261,0.298 -0.261,0.778 0,0.497 0.261,0.811 0.277,0.298 0.701,0.298 0.391,0 0.717,-0.248 0.326,-0.265 0.62,-0.861zM16.5,17.758Q16.158,18.238 15.636,18.619 15.13,19 14.429,19 13.973,19 13.533,18.851 13.093,18.702 12.75,18.404 12.408,18.089 12.196,17.626 12,17.146 12,16.5 12,15.838 12.196,15.374 12.407,14.894 12.75,14.596 13.092,14.281 13.533,14.149 13.973,14 14.429,14q0.701,0 1.206,0.397 0.522,0.381 0.864,0.861 0.342,-0.48 0.848,-0.861Q17.87,14 18.571,14q0.456,0 0.88,0.149 0.44,0.149 0.783,0.464 0.342,0.298 0.554,0.778Q21,15.854 21,16.5q0,0.662 -0.212,1.142 -0.212,0.464 -0.554,0.778 -0.342,0.298 -0.783,0.447Q19.027,19 18.571,19 17.87,19 17.348,18.619 16.826,18.238 16.5,17.758Z"
+      android:fillColor="#FF000000"/>
+</vector>

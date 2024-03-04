@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ This file is part of Squeeze Client, an Android client for the LMS music server.
+  ~ Copyright (c) 2024 Danny Baumann
+  ~
+  ~ This program is free software: you can redistribute it and/or modify it under the terms of the
+  ~  GNU General Public License as published by the Free Software Foundation,
+  ~   either version 3 of the License, or (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+  ~  without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  ~  See the GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License along with this program.
+  ~ If not, see <http://www.gnu.org/licenses/>.
+  -->
+
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory
+        android:title="@string/settings_category_display">
+
+        <ListPreference
+            android:key="app_theme"
+            android:title="@string/settings_theme_title"
+            android:entries="@array/settings_theme_entries"
+            android:entryValues="@array/settings_theme_values"
+            android:defaultValue="system"
+            android:summary="%s"/>
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="@string/settings_category_playback">
+
+        <SwitchPreferenceCompat
+            android:key="use_volume_buttons"
+            android:title="@string/settings_volume_buttons_title"
+            android:summary="@string/settings_volume_buttons_summary"
+            android:defaultValue="true" />
+
+        <SeekBarPreference
+            android:key="fade_in_duration"
+            android:title="@string/settings_fade_in_seconds_title"
+            android:defaultValue="0"
+            app:min="0"
+            android:max="10"
+            app:updatesContinuously="true" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="@string/settings_category_download">
+
+        <ListPreference
+            android:key="download_path_structure"
+            android:title="@string/settings_download_path_structure_title"
+            android:entries="@array/settings_download_path_structure_entries"
+            android:summary="%s" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

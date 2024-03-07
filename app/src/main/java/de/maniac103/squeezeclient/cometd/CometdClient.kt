@@ -252,6 +252,9 @@ class CometdClient(private val json: Json, private val serverConfig: ServerConfi
         val mimeType = "application/json".toMediaType()
         return Request.Builder().apply {
             url("${serverConfig.url}cometd")
+            // FIXME: pretend to be Squeezer as there's UA filtering in some plugins (e.g. Qobuz)
+            //        -> at some point we should get added to the UA list instead
+            header("User-Agent", "Squeezer-squeezer/1.0")
             method("POST", json.encodeToString(messagesArray).toRequestBody(mimeType))
             serverConfig.credentialsAsAuthorizationHeader?.let { addHeader("Authorization", it) }
         }.build()

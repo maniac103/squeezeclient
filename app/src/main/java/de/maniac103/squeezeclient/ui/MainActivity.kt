@@ -17,11 +17,13 @@
 package de.maniac103.squeezeclient.ui
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.Menu
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.content.edit
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -269,6 +271,12 @@ class MainActivity :
         val player = this.player ?: return
         val f = SlimBrowseSubItemListFragment.create(player.id, items)
         replaceMainContent(f, title)
+    }
+
+    override fun onOpenWebLink(title: String, link: Uri) {
+        val intent = CustomTabsIntent.Builder()
+            .build()
+        intent.launchUrl(this, link)
     }
 
     override fun onGoAction(title: String, action: JiveAction): Job? =

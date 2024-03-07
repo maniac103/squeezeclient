@@ -62,7 +62,9 @@ data class SlimBrowseListResponse(
         val trackType: SlimBrowseItemList.TrackType? = null,
         val nextWindow: SlimBrowseItemList.NextWindow? = null,
         @SerialName("item_loop")
-        val subItems: List<JsonObject>? = null
+        val subItems: List<JsonObject>? = null,
+        @SerialName("weblink")
+        val webLink: String? = null
         // All action related attributes are parsed manually below. This includes:
         // actions, input, choiceStrings, selectedIndex, radio, checkbox,
         // slider, min, max, initial, sliderIcons
@@ -92,7 +94,8 @@ data class SlimBrowseListResponse(
                 item.iconId,
                 actions,
                 nextWindow,
-                subItems
+                subItems,
+                item.webLink
             )
         }
         return SlimBrowseItemList(modelItems, offset, count, title, window)

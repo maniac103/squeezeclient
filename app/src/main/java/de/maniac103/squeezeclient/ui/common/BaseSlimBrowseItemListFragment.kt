@@ -16,7 +16,9 @@
 
 package de.maniac103.squeezeclient.ui.common
 
+import android.net.Uri
 import android.os.Build
+import androidx.core.net.toUri
 import androidx.lifecycle.lifecycleScope
 import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
@@ -53,6 +55,7 @@ abstract class BaseSlimBrowseItemListFragment :
 
     interface NavigationListener {
         fun onOpenSubItemList(title: String, items: List<SlimBrowseItemList.SlimBrowseItem>)
+        fun onOpenWebLink(title: String, link: Uri)
         fun onGoAction(
             title: String,
             actionTitle: String?,
@@ -97,6 +100,7 @@ abstract class BaseSlimBrowseItemListFragment :
                 val nextWindow = actions.goAction.nextWindow ?: item.nextWindow
                 return listener.onGoAction(item.title, null, actions.goAction, nextWindow)
             }
+            item.webLink != null -> listener.onOpenWebLink(item.title, item.webLink.toUri())
         }
         return null
     }
@@ -220,8 +224,7 @@ abstract class BaseSlimBrowseItemListFragment :
                     getString(R.string.action_download),
                     null, null, null, null, null, null,
                     actions,
-                    null,
-                    null
+                    null, null, null
                 )
                 add(item)
             }

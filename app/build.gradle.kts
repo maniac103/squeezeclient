@@ -86,6 +86,7 @@ dependencies {
     coreLibraryDesugaring(libs.android.desugar.jdk.libs)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.activity.ktx)
+    implementation(libs.androidx.browser)
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.fragment)

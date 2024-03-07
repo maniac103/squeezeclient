@@ -43,7 +43,8 @@ data class SlimBrowseItemList(
         override val iconId: String?,
         val actions: JiveActions?,
         val nextWindow: NextWindow?,
-        val subItems: List<SlimBrowseItem>?
+        val subItems: List<SlimBrowseItem>?,
+        val webLink: String?
     ) : Parcelable, ArtworkItem
 
     @Serializable

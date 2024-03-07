@@ -59,9 +59,13 @@ import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.extfuncs.withRoundedCorners
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.JiveActions
+import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.PlayerStatus
+import de.maniac103.squeezeclient.model.Playlist
+import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.ui.bottomsheets.InputBottomSheetFragment
+import de.maniac103.squeezeclient.ui.contextmenu.ContextMenuBottomSheetFragment
 import kotlin.math.max
 import kotlin.time.DurationUnit
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -72,7 +76,18 @@ import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
-class NowPlayingFragment : Fragment(), MenuProvider, InputBottomSheetFragment.SubmitListener {
+class NowPlayingFragment : Fragment(), MenuProvider,
+    ContextMenuBottomSheetFragment.Listener,
+    InputBottomSheetFragment.SubmitListener {
+
+    interface ContextMenuListener {
+        fun onContextMenuAction(
+            title: String,
+            actionTitle: String?,
+            action: JiveAction
+        ): Job?
+    }
+
     private val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)
     private val playlistFragment get() =
         childFragmentManager.findFragmentById(binding.playlistFragment.id) as? PlaylistFragment
@@ -82,6 +97,7 @@ class NowPlayingFragment : Fragment(), MenuProvider, InputBottomSheetFragment.Su
     private var timeUpdateJob: Job? = null
     private var sliderDragUpdateJob: Job? = null
     private var currentVolume = 0
+    private var currentSong: Playlist.PlaylistItem? = null
     private var isMuted = false
 
     fun collapseIfExpanded(): Boolean {
@@ -210,6 +226,11 @@ class NowPlayingFragment : Fragment(), MenuProvider, InputBottomSheetFragment.Su
                         update(status)
                         currentVolume = status.currentVolume
                         isMuted = status.muted
+                        val nowPlaying = status.playlist.nowPlaying
+                        if (nowPlaying != currentSong) {
+                            currentSong = nowPlaying
+                            binding.toolbar.invalidateMenu()
+                        }
                     }
             }
         }
@@ -238,9 +259,33 @@ class NowPlayingFragment : Fragment(), MenuProvider, InputBottomSheetFragment.Su
         }
     }
 
+    override fun onPrepareMenu(menu: Menu) {
+        super.onPrepareMenu(menu)
+        menu.findItem(R.id.info).setVisible(currentSong?.actions?.moreAction != null)
+    }
+
     override fun onMenuItemSelected(menuItem: MenuItem) = when (menuItem.itemId) {
         R.id.volume -> {
             showVolumePopup()
+            true
+        }
+        R.id.info -> {
+            val currentSong = currentSong
+            currentSong?.actions?.moreAction?.let { action ->
+                lifecycleScope.launch {
+                    val items = connectionHelper.fetchItemsForAction(
+                        playerId,
+                        action,
+                        PagingParams.All
+                    )
+                    val contextMenu = ContextMenuBottomSheetFragment.create(
+                        playerId,
+                        currentSong.asSlimbrowseItem(),
+                        items.items
+                    )
+                    contextMenu.show(childFragmentManager, "song_info")
+                }
+            }
             true
         }
         R.id.save_playlist -> {
@@ -272,6 +317,27 @@ class NowPlayingFragment : Fragment(), MenuProvider, InputBottomSheetFragment.Su
         return lifecycleScope.launch {
             connectionHelper.saveCurrentPlaylist(playerId, name)
         }
+    }
+
+    override fun onContextItemSelected(
+        parentTitle: String,
+        item: SlimBrowseItemList.SlimBrowseItem
+    ): Job? {
+        val actions = item.actions ?: return null
+        val job = when {
+            actions.doAction != null -> lifecycleScope.launch {
+                connectionHelper.executeAction(playerId, actions.doAction)
+            }
+            actions.goAction != null -> {
+                val listener = activity as? ContextMenuListener
+                listener?.onContextMenuAction(parentTitle, item.title, actions.goAction)
+            }
+            else -> null
+        }
+        job?.invokeOnCompletion {
+            collapseIfExpanded()
+        }
+        return job
     }
 
     private fun applyInsetsToSpacer(spacer: View, side: Int, insetSelector: (Insets) -> Int) {

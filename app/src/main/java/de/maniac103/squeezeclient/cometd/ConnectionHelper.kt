@@ -190,7 +190,7 @@ class ConnectionHelper(private val appContext: SqueezeClientApplication) {
     suspend fun fetchPlaylist(playerId: PlayerId, page: PagingParams) =
         doRequestWithResult<PlayerStatusResponse>(
             PlayerStatusRequest(playerId, page)
-        ).asModelPlaylist(page.start.toInt())
+        ).asModelPlaylist(json, page.start.toInt())
 
     suspend fun movePlaylistItem(playerId: PlayerId, fromPosition: Int, toPosition: Int) =
         publishOneShotRequest(MovePlaylistItemRequest(playerId, fromPosition, toPosition))
@@ -406,12 +406,12 @@ class ConnectionHelper(private val appContext: SqueezeClientApplication) {
             {
                 connectionHelper.doRequestWithResult<PlayerStatusResponse>(
                     PlayerStatusRequest(playerId)
-                ).asModelStatus()
+                ).asModelStatus(connectionHelper.json)
             },
             CometdClient.Channels.playerStatus(clientId, playerId),
             { _, msgData ->
                 val json = connectionHelper.json
-                json.decodeFromJsonElement<PlayerStatusResponse>(msgData).asModelStatus()
+                json.decodeFromJsonElement<PlayerStatusResponse>(msgData).asModelStatus(json)
             }
         )
 

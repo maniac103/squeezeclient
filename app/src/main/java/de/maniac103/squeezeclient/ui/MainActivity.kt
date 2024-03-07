@@ -83,6 +83,7 @@ class MainActivity :
     JiveHomeListItemFragment.NavigationListener,
     SliderBottomSheetFragment.ChangeListener,
     BaseSlimBrowseItemListFragment.NavigationListener,
+    NowPlayingFragment.ContextMenuListener,
     ConnectionErrorHintFragment.Listener,
     SearchFragment.Listener {
 
@@ -287,6 +288,15 @@ class MainActivity :
         } else {
             handleGoAction(listOfNotNull(title, actionTitle), action)
         }
+    }
+
+    override fun onContextMenuAction(
+        title: String,
+        actionTitle: String?,
+        action: JiveAction
+    ): Job? {
+        clearBackStack()
+        return handleGoAction(listOfNotNull(title, actionTitle), action)
     }
 
     private fun handleGoAction(title: List<String>, action: JiveAction): Job? {

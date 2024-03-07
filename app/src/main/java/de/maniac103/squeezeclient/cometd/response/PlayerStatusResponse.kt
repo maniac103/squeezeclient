@@ -31,6 +31,9 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.decodeFromJsonElement
 
 // offset and item_loop are not returned when fetching non-existing pages
 @Serializable
@@ -40,7 +43,8 @@ data class PlayerStatusResponse(
     val offset: String? = null,
     val count: Int,
     @SerialName("item_loop")
-    private val items: List<Item>? = null,
+    private val items: List<JsonObject>? = null,
+    private val base: JsonObject? = null,
     @SerialName("time")
     val playPosition: Float = 0F,
     val eventTimestamp: Instant = Clock.System.now(),
@@ -85,16 +89,10 @@ data class PlayerStatusResponse(
         val album: String? = null,
         @SerialName("icon-id") val iconId: String? = null,
         val icon: String? = null
-    ) {
-        fun asModelPlaylistItem() = if (track != null && artist != null && album != null) {
-            Playlist.PlaylistItem(track, artist, album, iconId, icon)
-        } else {
-            null
-        }
-    }
+    )
 
-    fun asModelStatus(): PlayerStatus {
-        val nowPlaying = items?.elementAtOrNull(0)?.asModelPlaylistItem()
+    fun asModelStatus(json: Json): PlayerStatus {
+        val nowPlaying = items?.elementAtOrNull(0)?.asModelPlaylistItem(json, base)
         val duration = currentSongDuration
             ?.times(1000)
             ?.roundToLong()
@@ -122,14 +120,14 @@ data class PlayerStatusResponse(
         )
     }
 
-    fun asModelPlaylist(fetchOffset: Int): Playlist {
+    fun asModelPlaylist(json: Json, fetchOffset: Int): Playlist {
         val actualOffset = when (offset) {
             null -> fetchOffset
             "-" -> playlistCurrentIndex
             else -> offset.toInt()
         }
         val (playlist, reachableCount) = if (items != null) {
-            val playlist = items.mapNotNull { it.asModelPlaylistItem() }
+            val playlist = items.mapNotNull {it.asModelPlaylistItem(json, base) }
             val filteredItems = items.size - playlist.size
             // This assumes filtered items are at the end of the response
             val reachableCount = count - filteredItems
@@ -144,5 +142,25 @@ data class PlayerStatusResponse(
             playlistCurrentIndex,
             playlistTimestamp
         )
+    }
+
+    private fun JsonObject.asModelPlaylistItem(
+        json: Json,
+        base: JsonObject?
+    ): Playlist.PlaylistItem? {
+        val item = json.decodeFromJsonElement<Item>(this)
+        val actions = json.combineItemAndBaseActions(this, base)
+        return if (item.track != null && item.artist != null && item.album != null) {
+            Playlist.PlaylistItem(
+                item.track,
+                item.artist,
+                item.album,
+                actions,
+                item.iconId,
+                item.icon
+            )
+        } else {
+            null
+        }
     }
 }

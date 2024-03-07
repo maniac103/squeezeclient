@@ -24,6 +24,7 @@
     <string name="menu_search">Suche</string>
     <string name="menu_share">Teilen</string>
     <string name="menu_player_volume">Lautstärke</string>
+    <string name="menu_song_info">Titel-Informationen</string>
     <string name="now_playing">Aktueller Titel</string>
     <string name="playlist">Wiedergabeliste</string>
     <string name="playlist_save_title">Titel der Wiedergabeliste</string>

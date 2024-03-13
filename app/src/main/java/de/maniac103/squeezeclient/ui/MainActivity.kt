@@ -84,9 +84,9 @@ import kotlinx.coroutines.plus
 class MainActivity :
     AppCompatActivity(),
     JiveHomeListItemFragment.NavigationListener,
-    SliderBottomSheetFragment.ChangeListener,
     BaseSlimBrowseItemListFragment.NavigationListener,
     SlimBrowseSubItemListFragment.DataRefreshProvider,
+    SliderBottomSheetFragment.ChangeListener,
     NowPlayingFragment.ContextMenuListener,
     ConnectionErrorHintFragment.Listener,
     SearchFragment.Listener {
@@ -259,6 +259,8 @@ class MainActivity :
         return super.onKeyUp(keyCode, event)
     }
 
+    // JiveHomeListItemFragment.NavigationListener implementation
+
     override fun onNodeSelected(nodeId: String) {
         val player = this.player ?: return
         if (homeMenu.values.any { it.node == nodeId }) {
@@ -266,6 +268,11 @@ class MainActivity :
             replaceMainContent(f, "home:$nodeId", nodeId != "home")
         }
     }
+
+    override fun onGoAction(title: String, action: JiveAction): Job? =
+        handleGoAction(listOf(title), action)
+
+    // BaseSlimBrowseItemListFragment.NavigationListener implementation
 
     override fun onOpenSubItemList(
         item: SlimBrowseItemList.SlimBrowseItem,
@@ -283,27 +290,6 @@ class MainActivity :
         intent.launchUrl(this, link)
     }
 
-    override suspend fun provideRefreshedSubItemList(
-        item: SlimBrowseItemList.SlimBrowseItem
-    ): List<SlimBrowseItemList.SlimBrowseItem> {
-        val player = this.player ?: return emptyList()
-        val fm = supportFragmentManager
-        val backStackCount = fm.backStackEntryCount
-        val parentTag = fm.getBackStackEntryAt(backStackCount - 2).name
-        val parentFragment = fm.findFragmentByTag(parentTag) as? SlimBrowseItemListFragment
-            ?: throw IllegalStateException("Can't provide sub items for non item list parent")
-        val items = connectionHelper.fetchItemsForAction(
-            player.id,
-            parentFragment.fetchAction,
-            PagingParams.All
-        )
-        val updatedItem = items.items[item.listPosition]
-        return updatedItem.subItems ?: emptyList()
-    }
-
-    override fun onGoAction(title: String, action: JiveAction): Job? =
-        handleGoAction(listOf(title), action)
-
     override fun onGoAction(
         title: String,
         actionTitle: String?,
@@ -320,6 +306,34 @@ class MainActivity :
         }
     }
 
+    // SlimBrowseSubItemListFragment.DataRefreshProvider implementation
+
+    override suspend fun provideRefreshedSubItemList(
+        item: SlimBrowseItemList.SlimBrowseItem
+    ): List<SlimBrowseItemList.SlimBrowseItem> {
+        val player = this.player ?: return emptyList()
+        val parentFragment = with (supportFragmentManager) {
+            val parentTag = getBackStackEntryAt(backStackEntryCount - 2).name
+            findFragmentByTag(parentTag) as? SlimBrowseItemListFragment
+                ?: throw IllegalStateException("Can't provide sub items for non item list parent")
+        }
+        val items = connectionHelper.fetchItemsForAction(
+            player.id,
+            parentFragment.fetchAction,
+            PagingParams.All
+        )
+        val updatedItem = items.items[item.listPosition]
+        return updatedItem.subItems ?: emptyList()
+    }
+
+    // SliderBottomSheetFragment.ChangeListener implementation
+
+    override fun onSliderChanged(input: JiveAction): Job = lifecycleScope.launch {
+        player?.let { player -> connectionHelper.executeAction(player.id, input) }
+    }
+
+    // NowPlayingFragment.ContextMenuListener implementation
+
     override fun onContextMenuAction(
         title: String,
         actionTitle: String?,
@@ -328,6 +342,42 @@ class MainActivity :
         clearBackStack()
         return handleGoAction(listOfNotNull(title, actionTitle), action)
     }
+
+    // ConnectionErrorHintFragment.Listener implementation
+
+    override fun onActionInvoked(index: Int, tag: String?) = when (tag) {
+        ACTION_TAG_RECONNECT -> connectionHelper.connect()
+        ACTION_TAG_SERVER_SETUP -> openServerSetup(true)
+        else -> {}
+    }
+
+    // SearchFragment.Listener implementation
+
+    override fun onCloseSearch() {
+        searchFragment?.let {
+            supportFragmentManager.commit { remove(it) }
+        }
+    }
+
+    override fun onOpenLocalSearchPage(searchTerm: String, type: LibrarySearchRequest.Mode) {
+        onCloseSearch()
+        player?.id?.let { playerId ->
+            val f = LibrarySearchResultsFragment.create(playerId, type, searchTerm)
+            clearBackStack()
+            replaceMainContent(f, "localsearch-$searchTerm", true)
+        }
+    }
+
+    override fun onOpenRadioSearchPage(searchTerm: String) {
+        onCloseSearch()
+        player?.id?.let { playerId ->
+            val f = RadioSearchResultsFragment.create(playerId, searchTerm)
+            clearBackStack()
+            replaceMainContent(f, "radiosearch-$searchTerm", true)
+        }
+    }
+
+    // internal implementation details
 
     private fun handleGoAction(title: List<String>, action: JiveAction): Job? {
         val player = this.player ?: return null
@@ -390,40 +440,6 @@ class MainActivity :
             }
             else -> {}
         }
-    }
-
-    override fun onSliderChanged(input: JiveAction): Job = lifecycleScope.launch {
-        player?.let { player -> connectionHelper.executeAction(player.id, input) }
-    }
-
-    override fun onCloseSearch() {
-        searchFragment?.let {
-            supportFragmentManager.commit { remove(it) }
-        }
-    }
-
-    override fun onOpenLocalSearchPage(searchTerm: String, type: LibrarySearchRequest.Mode) {
-        onCloseSearch()
-        player?.id?.let { playerId ->
-            val f = LibrarySearchResultsFragment.create(playerId, type, searchTerm)
-            clearBackStack()
-            replaceMainContent(f, "localsearch-$searchTerm", true)
-        }
-    }
-
-    override fun onOpenRadioSearchPage(searchTerm: String) {
-        onCloseSearch()
-        player?.id?.let { playerId ->
-            val f = RadioSearchResultsFragment.create(playerId, searchTerm)
-            clearBackStack()
-            replaceMainContent(f, "radiosearch-$searchTerm", true)
-        }
-    }
-
-    override fun onActionInvoked(index: Int, tag: String?) = when (tag) {
-        ACTION_TAG_RECONNECT -> connectionHelper.connect()
-        ACTION_TAG_SERVER_SETUP -> openServerSetup(true)
-        else -> {}
     }
 
     private fun clearBackStack() = supportFragmentManager.apply {

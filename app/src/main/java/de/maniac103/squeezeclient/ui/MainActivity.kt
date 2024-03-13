@@ -322,6 +322,9 @@ class MainActivity :
             parentFragment.fetchAction,
             PagingParams.All
         )
+        // Make sure the parent fragment (which actually holds the sub items)
+        // refreshes its data as well
+        parentFragment.refresh()
         val updatedItem = items.items[item.listPosition]
         return updatedItem.subItems ?: emptyList()
     }

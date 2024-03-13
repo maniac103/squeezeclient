@@ -124,7 +124,7 @@ class PlaylistFragment :
                             lastPlaylistTimestamp != null &&
                             lastPlaylistTimestamp != newPlaylistTimestamp
                         ) {
-                            invalidate()
+                            refresh()
                         }
                         lastKnownPlaylistTimestamp = newPlaylistTimestamp
                         adapter.selectedItemPosition = status.playlist.currentPosition - 1

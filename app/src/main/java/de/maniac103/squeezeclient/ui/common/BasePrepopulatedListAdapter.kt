@@ -49,6 +49,15 @@ abstract class BasePrepopulatedListAdapter<T, VH : RecyclerView.ViewHolder>(item
             notifyItemChanged(position)
         }
     }
+    fun replaceItems(items: List<T>) {
+        if (items.size != internalItems.size) {
+            internalItems.clear()
+            internalItems.addAll(items)
+            notifyDataSetChanged()
+        } else {
+            (0 until items.size).forEach { replaceItem(it, items[it]) }
+        }
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
         val inflater = LayoutInflater.from(parent.context)

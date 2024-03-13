@@ -47,6 +47,7 @@ import kotlinx.coroutines.launch
 
 abstract class BaseSlimBrowseItemListFragment :
     BasePagingListFragment<SlimBrowseItemList.SlimBrowseItem, SlimBrowseItemListViewHolder>(),
+    TitleProvidingFragment,
     SlimBrowseItemListAdapter.ItemSelectionListener,
     ChoicesBottomSheetFragment.SelectionListener,
     ContextMenuBottomSheetFragment.Listener,
@@ -54,7 +55,10 @@ abstract class BaseSlimBrowseItemListFragment :
     InputBottomSheetFragment.SubmitListener {
 
     interface NavigationListener {
-        fun onOpenSubItemList(title: String, items: List<SlimBrowseItemList.SlimBrowseItem>)
+        fun onOpenSubItemList(
+            item: SlimBrowseItemList.SlimBrowseItem,
+            items: List<SlimBrowseItemList.SlimBrowseItem>
+        )
         fun onOpenWebLink(title: String, link: Uri)
         fun onGoAction(
             title: String,
@@ -95,7 +99,9 @@ abstract class BaseSlimBrowseItemListFragment :
         when {
             actions.input != null -> showInput(item)
             actions.choices != null -> showChoices(item)
-            item.subItems != null -> listener.onOpenSubItemList(item.title, item.subItems)
+            actions.checkbox != null -> onCheckBoxChanged(item, !actions.checkbox.state)
+            actions.radio != null -> onRadioChecked(item)
+            item.subItems != null -> listener.onOpenSubItemList(item, item.subItems)
             actions.goAction != null -> {
                 val nextWindow = actions.goAction.nextWindow ?: item.nextWindow
                 return listener.onGoAction(item.title, null, actions.goAction, nextWindow)
@@ -122,14 +128,15 @@ abstract class BaseSlimBrowseItemListFragment :
         }
     }
 
-    override fun onChoiceSelected(choice: JiveAction) = executeAction(choice)
+    override fun onChoiceSelected(choice: JiveAction) = executeAction(choice, null)
     override fun onInputSubmitted(title: String, action: JiveAction, isGoAction: Boolean) =
         if (isGoAction) {
             val listener = activity as? NavigationListener
             // FIXME: use nextWindow from item
             listener?.onGoAction(title, null, action, null)
         } else {
-            executeAction(action)
+            // FIXME: use nextWindow from item
+            executeAction(action, null)
         }
 
     override fun onCheckBoxChanged(
@@ -138,12 +145,12 @@ abstract class BaseSlimBrowseItemListFragment :
     ): Job? {
         val checkbox = item.actions?.checkbox ?: return null
         val action = if (checked) checkbox.onAction else checkbox.offAction
-        return executeAction(action)
+        return executeAction(action, item.nextWindow)
     }
 
     override fun onRadioChecked(item: SlimBrowseItemList.SlimBrowseItem): Job? {
         val radioAction = item.actions?.radio?.action ?: return null
-        return executeAction(radioAction)
+        return executeAction(radioAction, item.nextWindow)
     }
 
     override fun onContextItemSelected(
@@ -153,40 +160,51 @@ abstract class BaseSlimBrowseItemListFragment :
         val listener = activity as? NavigationListener
         val actions = item.actions ?: return null
 
+        val translateNextWindow = { action: JiveAction ->
+            when (val nextWindow = action.nextWindow ?: item.nextWindow) {
+                SlimBrowseItemList.NextWindow.Refresh -> null
+                SlimBrowseItemList.NextWindow.RefreshOrigin ->
+                    SlimBrowseItemList.NextWindow.Refresh
+                SlimBrowseItemList.NextWindow.Parent -> null
+                SlimBrowseItemList.NextWindow.GrandParent ->
+                    SlimBrowseItemList.NextWindow.Parent
+                else -> nextWindow
+            }
+        }
+
         return when {
             // FIXME: the item title check is kinda ugly, but there's no proper way to
             // implement a marker object it seems, since SlimBrowseItem is a data class
             actions.downloadData != null && item.title == getString(R.string.action_download) ->
                 triggerDownload(actions.downloadData)
-            actions.doAction != null -> executeAction(actions.doAction)
+            actions.doAction != null -> {
+                val nextWindow = translateNextWindow(actions.doAction)
+                executeAction(actions.doAction, nextWindow)
+            }
             actions.goAction != null ->
-                when (val nextWindow = actions.goAction.nextWindow ?: item.nextWindow) {
+                when (actions.goAction.nextWindow ?: item.nextWindow) {
                     SlimBrowseItemList.NextWindow.Parent -> lifecycleScope.launch {
                         // next target is our list, and we shall not refresh
                         connectionHelper.executeAction(playerId, actions.goAction)
                     }
-                    SlimBrowseItemList.NextWindow.GrandParent -> {
-                        // since we show the context menu in a separate fragment, we 'subtract' one window
+                    SlimBrowseItemList.NextWindow.RefreshOrigin -> {
+                        // next target is our list, and we shall refresh
+                        executeAction(actions.goAction, SlimBrowseItemList.NextWindow.Refresh)
+                    }
+                    else -> {
                         listener?.onGoAction(
                             parentTitle,
                             item.title,
                             actions.goAction,
-                            SlimBrowseItemList.NextWindow.Parent
+                            translateNextWindow(actions.goAction)
                         )
-                    }
-                    SlimBrowseItemList.NextWindow.RefreshOrigin -> {
-                        // next target is our list, and we shall refresh
-                        executeAction(actions.goAction)
-                    }
-                    else -> {
-                        listener?.onGoAction(parentTitle, item.title, actions.goAction, nextWindow)
                     }
                 }
             else -> null
         }
     }
 
-    override fun onActionSelected(action: JiveAction): Job? = executeAction(action)
+    override fun onActionSelected(action: JiveAction): Job? = executeAction(action, null)
     override fun onDownloadSelected(data: DownloadRequestData) = triggerDownload(data)
 
     private fun showInput(item: SlimBrowseItemList.SlimBrowseItem) {
@@ -205,9 +223,16 @@ abstract class BaseSlimBrowseItemListFragment :
         f.show(childFragmentManager, "choices")
     }
 
-    private fun executeAction(action: JiveAction) = lifecycleScope.launch {
+    private fun executeAction(
+        action: JiveAction,
+        nextWindow: SlimBrowseItemList.NextWindow?
+    ) = lifecycleScope.launch {
         connectionHelper.executeAction(playerId, action)
-        invalidate()
+        when (action.nextWindow ?: nextWindow) {
+            SlimBrowseItemList.NextWindow.Refresh,
+            SlimBrowseItemList.NextWindow.RefreshOrigin -> refresh()
+            else -> {}
+        }
     }
 
     private suspend fun loadContextMenuItems(

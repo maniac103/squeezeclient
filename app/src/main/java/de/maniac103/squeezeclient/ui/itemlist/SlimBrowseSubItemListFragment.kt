@@ -16,6 +16,7 @@
 
 package de.maniac103.squeezeclient.ui.itemlist
 
+import android.os.Bundle
 import androidx.core.os.bundleOf
 import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.extfuncs.getParcelableList
@@ -26,18 +27,38 @@ import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.ui.common.BaseSlimBrowseItemListFragment
 
 class SlimBrowseSubItemListFragment : BaseSlimBrowseItemListFragment() {
-    private val items get() =
-        requireArguments().getParcelableList("items", SlimBrowseItemList.SlimBrowseItem::class)
+    interface DataRefreshProvider {
+        suspend fun provideRefreshedSubItemList(item: SlimBrowseItemList.SlimBrowseItem):
+            List<SlimBrowseItemList.SlimBrowseItem>
+    }
+
+    private lateinit var items: List<SlimBrowseItemList.SlimBrowseItem>
+    private val parentItem get() =
+        requireArguments().getParcelable("parent", SlimBrowseItemList.SlimBrowseItem::class)
     override val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)
+    override val title: String get() = parentItem.title
     override val showIcons = false
     override val useGrid = false
     override val fastScrollEnabled = false
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        items = requireArguments().getParcelableList("items", SlimBrowseItemList.SlimBrowseItem::class)
+    }
+
+    override suspend fun refresh() {
+        (activity as? DataRefreshProvider)?.provideRefreshedSubItemList(parentItem)?.let {
+            items = it
+        }
+        super.refresh()
+    }
 
     override suspend fun onLoadPage(
         page: PagingParams
     ): ListResponse<SlimBrowseItemList.SlimBrowseItem> {
         return ItemListWrapper(items)
     }
+
 
     data class ItemListWrapper(override val items: List<SlimBrowseItemList.SlimBrowseItem>) :
         ListResponse<SlimBrowseItemList.SlimBrowseItem> {
@@ -46,9 +67,16 @@ class SlimBrowseSubItemListFragment : BaseSlimBrowseItemListFragment() {
     }
 
     companion object {
-        fun create(playerId: PlayerId, items: List<SlimBrowseItemList.SlimBrowseItem>) =
-            SlimBrowseSubItemListFragment().apply {
-                arguments = bundleOf("playerId" to playerId, "items" to ArrayList(items))
-            }
+        fun create(
+            playerId: PlayerId,
+            parentItem: SlimBrowseItemList.SlimBrowseItem,
+            items: List<SlimBrowseItemList.SlimBrowseItem>
+        ) = SlimBrowseSubItemListFragment().apply {
+            arguments = bundleOf(
+                "playerId" to playerId,
+                "parent" to parentItem,
+                "items" to ArrayList(items)
+            )
+        }
     }
 }

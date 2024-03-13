@@ -33,9 +33,11 @@ import de.maniac103.squeezeclient.extfuncs.loadSlideshowImage
 import de.maniac103.squeezeclient.extfuncs.withRoundedCorners
 import de.maniac103.squeezeclient.model.SlideshowImage
 import de.maniac103.squeezeclient.ui.common.BasePrepopulatedListAdapter
+import de.maniac103.squeezeclient.ui.common.TitleProvidingFragment
 
-class GalleryFragment : Fragment() {
+class GalleryFragment : Fragment(), TitleProvidingFragment {
     private val items get() = requireArguments().getParcelableList("items", SlideshowImage::class)
+    override val title get() = requireArguments().getString("title")!!
 
     private lateinit var binding: FragmentGenericListBinding
 
@@ -91,8 +93,8 @@ class GalleryFragment : Fragment() {
         RecyclerView.ViewHolder(binding.root)
 
     companion object {
-        fun create(items: List<SlideshowImage>) = GalleryFragment().apply {
-            arguments = bundleOf("items" to ArrayList(items))
+        fun create(items: List<SlideshowImage>, title: String) = GalleryFragment().apply {
+            arguments = bundleOf("items" to ArrayList(items), "title" to title)
         }
     }
 }

@@ -23,13 +23,13 @@ import android.view.ViewGroup
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import androidx.paging.InvalidatingPagingSourceFactory
 import androidx.paging.LoadState
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.PagingDataAdapter
 import androidx.paging.PagingSource
+import androidx.paging.PagingSourceFactory
 import androidx.paging.PagingState
 import androidx.paging.cachedIn
 import androidx.recyclerview.widget.DiffUtil
@@ -49,7 +49,8 @@ abstract class BasePagingListFragment<T : Any, VH : RecyclerView.ViewHolder> :
     Fragment(),
     ScrollingListFragment {
     protected lateinit var binding: FragmentGenericListBinding
-    private lateinit var pagingSourceFactory: InvalidatingPagingSourceFactory<Int, T>
+    private lateinit var adapter: PagingDataAdapter<T, VH>
+
     override val scrollingTargetView get() = binding.recycler
 
     protected abstract val fastScrollEnabled: Boolean
@@ -63,8 +64,8 @@ abstract class BasePagingListFragment<T : Any, VH : RecyclerView.ViewHolder> :
     protected abstract fun areItemContentsTheSame(lhs: T, rhs: T): Boolean
     protected open fun onDataLoaded(data: PagingData<T>) {}
 
-    protected fun invalidate() {
-        pagingSourceFactory.invalidate()
+    protected open suspend fun refresh() {
+        adapter.refresh()
     }
 
     override fun onCreateView(
@@ -96,7 +97,7 @@ abstract class BasePagingListFragment<T : Any, VH : RecyclerView.ViewHolder> :
             LinearLayoutManager(requireContext(), RecyclerView.VERTICAL, false)
         }
 
-        val adapter = onCreateAdapter(diffCallback)
+        adapter = onCreateAdapter(diffCallback)
         binding.recycler.adapter = adapter
 
         if (fastScrollEnabled) {
@@ -107,7 +108,7 @@ abstract class BasePagingListFragment<T : Any, VH : RecyclerView.ViewHolder> :
 
         binding.progress.isVisible = true
 
-        pagingSourceFactory = InvalidatingPagingSourceFactory {
+        val pagingSourceFactory = PagingSourceFactory {
             ItemSource { page ->
                 if (!isAdded) throw IllegalStateException("Fragment not attached")
                 onLoadPage(page)

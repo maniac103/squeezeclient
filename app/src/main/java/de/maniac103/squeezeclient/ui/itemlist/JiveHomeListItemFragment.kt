@@ -40,6 +40,7 @@ import de.maniac103.squeezeclient.ui.bottomsheets.ChoicesBottomSheetFragment
 import de.maniac103.squeezeclient.ui.bottomsheets.InputBottomSheetFragment
 import de.maniac103.squeezeclient.ui.common.BasePrepopulatedListAdapter
 import de.maniac103.squeezeclient.ui.common.ScrollingListFragment
+import de.maniac103.squeezeclient.ui.common.TitleProvidingFragment
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.flatMapLatest
@@ -48,6 +49,7 @@ import kotlinx.coroutines.launch
 class JiveHomeListItemFragment :
     Fragment(),
     ScrollingListFragment,
+    TitleProvidingFragment,
     BasePrepopulatedListAdapter.ItemSelectionListener<JiveHomeMenuItem>,
     ChoicesBottomSheetFragment.SelectionListener,
     InputBottomSheetFragment.SubmitListener {
@@ -57,11 +59,13 @@ class JiveHomeListItemFragment :
     }
 
     private val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)
-    private val items get() = requireArguments().getParcelableList("items", JiveHomeMenuItem::class)
+    private val nodeId get() = requireArguments().getString("nodeId")!!
     override val scrollingTargetView get() = binding.recycler
+    override val title: String get() = latestMenu[nodeId]?.title ?: ""
 
     private lateinit var binding: FragmentGenericListBinding
     private var adapter: JiveHomeItemListAdapter? = null
+    private var latestMenu = mapOf<String, JiveHomeMenuItem>()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -70,10 +74,8 @@ class JiveHomeListItemFragment :
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 val playerState = connectionHelper.playerState(playerId)
                 playerState.flatMapLatest { it.homeMenu }.collect { menu ->
-                    menu.forEach { (id, item) ->
-                        val index = items.indexOfFirst { it.id == id }
-                        adapter?.replaceItem(index, item)
-                    }
+                    latestMenu = menu
+                    updateMenuData()
                 }
             }
         }
@@ -95,10 +97,11 @@ class JiveHomeListItemFragment :
             RecyclerView.VERTICAL,
             false
         )
-        adapter = JiveHomeItemListAdapter(items).apply {
+        adapter = JiveHomeItemListAdapter().apply {
             itemSelectionListener = this@JiveHomeListItemFragment
             binding.recycler.adapter = this
         }
+        updateMenuData()
     }
 
     override fun onItemSelected(item: JiveHomeMenuItem): Job? {
@@ -145,10 +148,14 @@ class JiveHomeListItemFragment :
         f.show(childFragmentManager, "choices")
     }
 
+    private fun updateMenuData() {
+        val items = latestMenu.values.filter { it.node == nodeId }.sortedBy { it.sortWeight }
+        adapter?.replaceItems(items)
+    }
+
     companion object {
-        fun create(playerId: PlayerId, items: List<JiveHomeMenuItem>) =
-            JiveHomeListItemFragment().apply {
-                arguments = bundleOf("playerId" to playerId, "items" to ArrayList(items))
-            }
+        fun create(playerId: PlayerId, nodeId: String) = JiveHomeListItemFragment().apply {
+            arguments = bundleOf("playerId" to playerId, "nodeId" to nodeId)
+        }
     }
 }

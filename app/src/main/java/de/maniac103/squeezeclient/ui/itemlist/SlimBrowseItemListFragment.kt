@@ -29,9 +29,10 @@ import de.maniac103.squeezeclient.ui.common.BaseSlimBrowseItemListFragment
 
 class SlimBrowseItemListFragment : BaseSlimBrowseItemListFragment() {
     override val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)
+    override val title get() = requireArguments().getString("title")!!
     override val showIcons get() = requireArguments().getBoolean("showIcons")
     override val useGrid get() = super.useGrid && requireArguments().getBoolean("canUseGrid")
-    private val fetchAction get() =
+    val fetchAction get() =
         requireArguments().getParcelable("fetchAction", JiveAction::class)
     override val fastScrollEnabled = true
 
@@ -42,17 +43,22 @@ class SlimBrowseItemListFragment : BaseSlimBrowseItemListFragment() {
     }
 
     companion object {
-        fun create(playerId: PlayerId, fetchAction: JiveAction, windowStyle: WindowStyle?) =
-            SlimBrowseItemListFragment().apply {
-                val showIcons = windowStyle != WindowStyle.TextOnlyList
-                val canUseGrid =
-                    windowStyle == WindowStyle.IconList || windowStyle == WindowStyle.HomeMenu
-                arguments = bundleOf(
-                    "playerId" to playerId,
-                    "fetchAction" to fetchAction,
-                    "canUseGrid" to canUseGrid,
-                    "showIcons" to showIcons
-                )
-            }
+        fun create(
+            playerId: PlayerId,
+            title: String,
+            fetchAction: JiveAction,
+            windowStyle: WindowStyle?
+        ) = SlimBrowseItemListFragment().apply {
+            val showIcons = windowStyle != WindowStyle.TextOnlyList
+            val canUseGrid =
+                windowStyle == WindowStyle.IconList || windowStyle == WindowStyle.HomeMenu
+            arguments = bundleOf(
+                "playerId" to playerId,
+                "title" to title,
+                "fetchAction" to fetchAction,
+                "canUseGrid" to canUseGrid,
+                "showIcons" to showIcons
+            )
+        }
     }
 }

@@ -30,10 +30,11 @@ import de.maniac103.squeezeclient.databinding.ListItemSlimbrowseBinding
 import de.maniac103.squeezeclient.model.JiveHomeMenuItem
 import de.maniac103.squeezeclient.ui.common.BasePrepopulatedListAdapter
 
-class JiveHomeItemListAdapter(items: List<JiveHomeMenuItem>) : BasePrepopulatedListAdapter<
-    JiveHomeMenuItem,
-    JiveHomeItemListAdapter.JiveHomeItemListViewHolder
-    >(items) {
+class JiveHomeItemListAdapter(items: List<JiveHomeMenuItem> = listOf()) :
+    BasePrepopulatedListAdapter<
+        JiveHomeMenuItem,
+        JiveHomeItemListAdapter.JiveHomeItemListViewHolder
+        >(items) {
     override fun onCreateViewHolder(
         inflater: LayoutInflater,
         parent: ViewGroup,

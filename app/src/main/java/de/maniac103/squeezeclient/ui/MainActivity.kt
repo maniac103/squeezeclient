@@ -60,6 +60,7 @@ import de.maniac103.squeezeclient.ui.bottomsheets.InfoBottomSheet
 import de.maniac103.squeezeclient.ui.bottomsheets.SliderBottomSheetFragment
 import de.maniac103.squeezeclient.ui.common.BaseSlimBrowseItemListFragment
 import de.maniac103.squeezeclient.ui.common.ScrollingListFragment
+import de.maniac103.squeezeclient.ui.common.TitleProvidingFragment
 import de.maniac103.squeezeclient.ui.itemlist.JiveHomeListItemFragment
 import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseItemListFragment
 import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseSubItemListFragment
@@ -85,6 +86,7 @@ class MainActivity :
     JiveHomeListItemFragment.NavigationListener,
     SliderBottomSheetFragment.ChangeListener,
     BaseSlimBrowseItemListFragment.NavigationListener,
+    SlimBrowseSubItemListFragment.DataRefreshProvider,
     NowPlayingFragment.ContextMenuListener,
     ConnectionErrorHintFragment.Listener,
     SearchFragment.Listener {
@@ -259,24 +261,44 @@ class MainActivity :
 
     override fun onNodeSelected(nodeId: String) {
         val player = this.player ?: return
-        val items = homeMenu.values.filter { it.node == nodeId }.sortedBy { it.sortWeight }
-        if (items.isNotEmpty()) {
-            val f = JiveHomeListItemFragment.create(player.id, items)
-            val title = homeMenu[nodeId]?.title ?: nodeId
-            replaceMainContent(f, if (nodeId != "home") title else null)
+        if (homeMenu.values.any { it.node == nodeId }) {
+            val f = JiveHomeListItemFragment.create(player.id, nodeId)
+            replaceMainContent(f, "home:$nodeId", nodeId != "home")
         }
     }
 
-    override fun onOpenSubItemList(title: String, items: List<SlimBrowseItemList.SlimBrowseItem>) {
+    override fun onOpenSubItemList(
+        item: SlimBrowseItemList.SlimBrowseItem,
+        items: List<SlimBrowseItemList.SlimBrowseItem>
+    ) {
         val player = this.player ?: return
-        val f = SlimBrowseSubItemListFragment.create(player.id, items)
-        replaceMainContent(f, title)
+        val f = SlimBrowseSubItemListFragment.create(player.id, item, items)
+        val level = supportFragmentManager.backStackEntryCount
+        replaceMainContent(f, "l$level-p${item.listPosition}-subitems", true)
     }
 
     override fun onOpenWebLink(title: String, link: Uri) {
         val intent = CustomTabsIntent.Builder()
             .build()
         intent.launchUrl(this, link)
+    }
+
+    override suspend fun provideRefreshedSubItemList(
+        item: SlimBrowseItemList.SlimBrowseItem
+    ): List<SlimBrowseItemList.SlimBrowseItem> {
+        val player = this.player ?: return emptyList()
+        val fm = supportFragmentManager
+        val backStackCount = fm.backStackEntryCount
+        val parentTag = fm.getBackStackEntryAt(backStackCount - 2).name
+        val parentFragment = fm.findFragmentByTag(parentTag) as? SlimBrowseItemListFragment
+            ?: throw IllegalStateException("Can't provide sub items for non item list parent")
+        val items = connectionHelper.fetchItemsForAction(
+            player.id,
+            parentFragment.fetchAction,
+            PagingParams.All
+        )
+        val updatedItem = items.items[item.listPosition]
+        return updatedItem.subItems ?: emptyList()
     }
 
     override fun onGoAction(title: String, action: JiveAction): Job? =
@@ -313,8 +335,9 @@ class MainActivity :
         pendingNavigation = currentPlayerScope?.launch {
             if (action.isSlideshow) {
                 val items = connectionHelper.fetchSlideshowImages(player.id, action)
-                val f = GalleryFragment.create(items)
-                replaceMainContent(f, title.joinToString(" › "))
+                val f = GalleryFragment.create(items, title.joinToString(" › "))
+                val level = supportFragmentManager.backStackEntryCount
+                replaceMainContent(f, "l$level-gallery", true)
                 return@launch
             }
             // Fetch first item of page to check whether we're dealing with a slider or a normal page
@@ -335,10 +358,12 @@ class MainActivity :
                 else -> {
                     val f = SlimBrowseItemListFragment.create(
                         player.id,
+                        title.joinToString(" › "),
                         action,
                         result.window?.windowStyle
                     )
-                    replaceMainContent(f, title.joinToString(" › "))
+                    val level = supportFragmentManager.backStackEntryCount
+                    replaceMainContent(f, "l$level-items", true)
                 }
             }
         }
@@ -382,7 +407,7 @@ class MainActivity :
         player?.id?.let { playerId ->
             val f = LibrarySearchResultsFragment.create(playerId, type, searchTerm)
             clearBackStack()
-            replaceMainContent(f, getString(R.string.page_title_library_search, searchTerm))
+            replaceMainContent(f, "localsearch-$searchTerm", true)
         }
     }
 
@@ -391,7 +416,7 @@ class MainActivity :
         player?.id?.let { playerId ->
             val f = RadioSearchResultsFragment.create(playerId, searchTerm)
             clearBackStack()
-            replaceMainContent(f, getString(R.string.page_title_radio_search, searchTerm))
+            replaceMainContent(f, "radiosearch-$searchTerm", true)
         }
     }
 
@@ -519,10 +544,12 @@ class MainActivity :
         }
     }
 
-    private fun replaceMainContent(content: Fragment, backStackEntryTitle: String?) {
+    private fun replaceMainContent(content: Fragment, tag: String, addToBackStack: Boolean) {
         supportFragmentManager.commit {
-            replace(binding.container.id, content)
-            backStackEntryTitle?.let { addToBackStack(it) }
+            replace(binding.container.id, content, tag)
+            if (addToBackStack) {
+                addToBackStack(tag)
+            }
         }
     }
 
@@ -582,8 +609,10 @@ class MainActivity :
     }
 
     private fun updateBreadcrumbs() = supportFragmentManager.apply {
-        val breadcrumbs = (0 until backStackEntryCount)
-            .mapNotNull { index -> getBackStackEntryAt(index).name }
+        val breadcrumbs = (0 until backStackEntryCount).mapNotNull { index ->
+            val f = findFragmentByTag(getBackStackEntryAt(index).name)
+            (f as? TitleProvidingFragment)?.title
+        }
         binding.breadcrumbsContainer.isVisible = breadcrumbs.isNotEmpty()
         binding.breadcrumbs.text =
             breadcrumbs.joinToString(separator = " › ", prefix = " › ")

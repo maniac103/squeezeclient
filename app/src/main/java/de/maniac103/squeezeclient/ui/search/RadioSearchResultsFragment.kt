@@ -17,6 +17,7 @@
 package de.maniac103.squeezeclient.ui.search
 
 import androidx.core.os.bundleOf
+import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.model.ListResponse
@@ -27,6 +28,7 @@ import de.maniac103.squeezeclient.ui.common.BaseSlimBrowseItemListFragment
 
 class RadioSearchResultsFragment : BaseSlimBrowseItemListFragment() {
     override val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)
+    override val title get() = getString(R.string.page_title_radio_search, searchTerm)
     private val searchTerm get() = requireArguments().getString("query")!!
     override val showIcons = true
     override val fastScrollEnabled = true

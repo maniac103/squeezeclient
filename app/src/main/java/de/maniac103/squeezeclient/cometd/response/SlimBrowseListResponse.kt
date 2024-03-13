@@ -25,6 +25,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
@@ -142,14 +143,14 @@ fun Json.combineItemAndBaseActions(item: JsonObject, base: JsonObject?): JiveAct
         val nextWindow = actionObj["nextWindow"]?.let {
             decodeFromJsonElement<SlimBrowseItemList.NextWindow>(it)
         }
-        val mergedParams = mutableMapOf("useContextMenu" to "1")
+        val mergedParams: MutableMap<String, String?> = mutableMapOf("useContextMenu" to "1")
         // Include params from action object itself
         actionObj["params"]?.jsonObject?.forEach { (k, elem) ->
-            mergedParams[k] = elem.jsonPrimitive.content
+            mergedParams[k] = elem.jsonPrimitive.contentOrNull
         }
         // In case of the base action object, also include the item params
         itemParamsObj?.forEach { (k, elem) ->
-            mergedParams[k] = elem.jsonPrimitive.content
+            mergedParams[k] = elem.jsonPrimitive.contentOrNull
         }
         cmd?.let { JiveAction(cmd, mergedParams, nextWindow, window?.isContextMenu) }
     }

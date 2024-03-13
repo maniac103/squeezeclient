@@ -28,8 +28,8 @@ import kotlinx.serialization.json.Json
 
 class SqueezeClientApplication : Application(), SharedPreferences.OnSharedPreferenceChangeListener {
     val json = Json {
+        coerceInputValues = true
         ignoreUnknownKeys = true
-        isLenient = true
     }
     val connectionHelper = ConnectionHelper(this)
 

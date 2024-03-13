@@ -25,12 +25,14 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.long
 
 // https://wiki.slimdevices.com/index.php/SBS_SqueezePlay_interface.html#Introduction
 @Serializable
@@ -109,12 +111,16 @@ data class SlimBrowseInputResponse(
     val title: String? = null,
     val len: Int,
     val allowedChars: String? = null,
-    val initialText: String? = null,
+    val initialText: JsonPrimitive? = null, // might be a string or a number
     @SerialName("_inputStyle")
     val inputStyle: JiveActions.Input.Type = JiveActions.Input.Type.Text
 ) {
     fun toJiveInput(doAction: JiveAction?, goAction: JiveAction?): JiveActions.Input? {
         val action = doAction ?: goAction ?: return null
+        val initialText = initialText?.let {
+            if (it.isString) it.content else it.long.toString()
+        }
+
         return JiveActions.Input(
             len,
             initialText,

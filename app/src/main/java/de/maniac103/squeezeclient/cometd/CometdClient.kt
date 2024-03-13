@@ -17,6 +17,7 @@
 package de.maniac103.squeezeclient.cometd
 
 import android.util.Log
+import de.maniac103.squeezeclient.BuildConfig
 import de.maniac103.squeezeclient.extfuncs.ValueOrCompletion
 import de.maniac103.squeezeclient.extfuncs.dematerializeCompletion
 import de.maniac103.squeezeclient.extfuncs.materializeCompletion
@@ -327,6 +328,10 @@ class CometdClient(private val json: Json, private val serverConfig: ServerConfi
 
     companion object {
         private const val TAG = "CometdClient"
-        private val HTTP_LOGGING_LEVEL = HttpLoggingInterceptor.Level.BODY
+        private val HTTP_LOGGING_LEVEL = if (BuildConfig.DEBUG) {
+            HttpLoggingInterceptor.Level.BODY
+        } else {
+            HttpLoggingInterceptor.Level.NONE
+        }
     }
 }

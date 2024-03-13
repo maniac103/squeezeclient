@@ -30,7 +30,6 @@ import androidx.recyclerview.widget.RecyclerView
 import de.maniac103.squeezeclient.databinding.FragmentGenericListBinding
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.getParcelable
-import de.maniac103.squeezeclient.extfuncs.getParcelableList
 import de.maniac103.squeezeclient.extfuncs.showActionTimePicker
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.JiveActions
@@ -52,7 +51,7 @@ class JiveHomeListItemFragment :
     TitleProvidingFragment,
     BasePrepopulatedListAdapter.ItemSelectionListener<JiveHomeMenuItem>,
     ChoicesBottomSheetFragment.SelectionListener,
-    InputBottomSheetFragment.SubmitListener {
+    InputBottomSheetFragment.InputSubmitListener {
     interface NavigationListener {
         fun onNodeSelected(nodeId: String)
         fun onGoAction(title: String, action: JiveAction): Job?
@@ -137,7 +136,7 @@ class JiveHomeListItemFragment :
         if (input.type == JiveActions.Input.Type.Time) {
             showActionTimePicker(playerId, item.title, input)
         } else {
-            val f = InputBottomSheetFragment.create(item.title, input)
+            val f = InputBottomSheetFragment.createForInput(item.title, input)
             f.show(childFragmentManager, "input")
         }
     }

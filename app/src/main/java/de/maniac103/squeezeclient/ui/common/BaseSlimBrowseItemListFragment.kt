@@ -52,7 +52,7 @@ abstract class BaseSlimBrowseItemListFragment :
     ChoicesBottomSheetFragment.SelectionListener,
     ContextMenuBottomSheetFragment.Listener,
     ItemActionsMenuSheet.Listener,
-    InputBottomSheetFragment.SubmitListener {
+    InputBottomSheetFragment.ItemSubmitListener {
 
     interface NavigationListener {
         fun onOpenSubItemList(
@@ -129,15 +129,16 @@ abstract class BaseSlimBrowseItemListFragment :
     }
 
     override fun onChoiceSelected(choice: JiveAction) = executeAction(choice, null)
-    override fun onInputSubmitted(title: String, action: JiveAction, isGoAction: Boolean) =
-        if (isGoAction) {
-            val listener = activity as? NavigationListener
-            // FIXME: use nextWindow from item
-            listener?.onGoAction(title, null, action, null)
-        } else {
-            // FIXME: use nextWindow from item
-            executeAction(action, null)
-        }
+    override fun onInputSubmitted(
+        item: SlimBrowseItemList.SlimBrowseItem,
+        action: JiveAction,
+        isGoAction: Boolean
+    ) = if (isGoAction) {
+        val listener = activity as? NavigationListener
+        listener?.onGoAction(title, null, action, item.nextWindow)
+    } else {
+        executeAction(action, item.nextWindow)
+    }
 
     override fun onCheckBoxChanged(
         item: SlimBrowseItemList.SlimBrowseItem,
@@ -212,7 +213,7 @@ abstract class BaseSlimBrowseItemListFragment :
         if (input.type == JiveActions.Input.Type.Time) {
             showActionTimePicker(playerId, item.title, input)
         } else {
-            val f = InputBottomSheetFragment.create(item.title, input)
+            val f = InputBottomSheetFragment.createForItem(item, input)
             f.show(childFragmentManager, "input")
         }
     }

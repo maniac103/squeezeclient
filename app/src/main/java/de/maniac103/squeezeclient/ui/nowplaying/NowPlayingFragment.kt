@@ -58,7 +58,6 @@ import de.maniac103.squeezeclient.extfuncs.doOnTransitionCompleted
 import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.extfuncs.withRoundedCorners
 import de.maniac103.squeezeclient.model.JiveAction
-import de.maniac103.squeezeclient.model.JiveActions
 import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.PlayerStatus
@@ -78,7 +77,7 @@ import kotlin.time.Duration.Companion.seconds
 
 class NowPlayingFragment : Fragment(), MenuProvider,
     ContextMenuBottomSheetFragment.Listener,
-    InputBottomSheetFragment.SubmitListener {
+    InputBottomSheetFragment.PlainSubmitListener {
 
     interface ContextMenuListener {
         fun onContextMenuAction(
@@ -289,17 +288,7 @@ class NowPlayingFragment : Fragment(), MenuProvider,
             true
         }
         R.id.save_playlist -> {
-            val dummyAction = JiveAction.createEmptyForInput()
-            val dummyInput = JiveActions.Input(
-                1,
-                null,
-                null,
-                JiveActions.Input.Type.Text,
-                dummyAction,
-                false
-            )
-            val title = getString(R.string.playlist_save_title)
-            val f = InputBottomSheetFragment.create(title, dummyInput)
+            val f = InputBottomSheetFragment.createPlain(minLength = 1)
             f.show(childFragmentManager, "playlist_name")
             true
         }
@@ -312,10 +301,9 @@ class NowPlayingFragment : Fragment(), MenuProvider,
         else -> false
     }
 
-    override fun onInputSubmitted(title: String, action: JiveAction, isGoAction: Boolean): Job {
-        val name = action.params.keys.first()
+    override fun onInputSubmitted(value: String): Job {
         return lifecycleScope.launch {
-            connectionHelper.saveCurrentPlaylist(playerId, name)
+            connectionHelper.saveCurrentPlaylist(playerId, value)
         }
     }
 

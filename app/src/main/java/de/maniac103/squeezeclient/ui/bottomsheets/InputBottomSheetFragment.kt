@@ -26,16 +26,30 @@ import androidx.core.widget.doAfterTextChanged
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.databinding.BottomSheetContentInputBinding
 import de.maniac103.squeezeclient.extfuncs.getParcelable
+import de.maniac103.squeezeclient.extfuncs.getParcelableOrNull
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.JiveActions
+import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import kotlinx.coroutines.Job
 
 class InputBottomSheetFragment : BaseBottomSheet() {
-    interface SubmitListener {
+    interface ItemSubmitListener {
+        fun onInputSubmitted(
+            item: SlimBrowseItemList.SlimBrowseItem,
+            action: JiveAction,
+            isGoAction: Boolean
+        ): Job?
+    }
+    interface InputSubmitListener {
         fun onInputSubmitted(title: String, action: JiveAction, isGoAction: Boolean): Job?
     }
+    interface PlainSubmitListener {
+        fun onInputSubmitted(value: String): Job?
+    }
 
-    override val title get() = requireArguments().getString("parentTitle")!!
+    override val title get() = parentItem?.title ?: requireArguments().getString("parentTitle")!!
+    private val parentItem get() =
+        requireArguments().getParcelableOrNull("item", SlimBrowseItemList.SlimBrowseItem::class)
     private val input get() = requireArguments().getParcelable("input", JiveActions.Input::class)
 
     private lateinit var binding: BottomSheetContentInputBinding
@@ -77,9 +91,20 @@ class InputBottomSheetFragment : BaseBottomSheet() {
     }
 
     private fun submitInput(inputText: String) {
-        val listener = parentFragment as? SubmitListener
-        val action = input.action.withInputValue(inputText)
-        val job = listener?.onInputSubmitted(title, action, input.actionHasTarget)
+        val job = when (val parent = parentFragment) {
+            is ItemSubmitListener -> {
+                val action = input.action.withInputValue(inputText)
+                parent.onInputSubmitted(requireNotNull(parentItem), action, input.actionHasTarget)
+            }
+            is InputSubmitListener -> {
+                val action = input.action.withInputValue(inputText)
+                parent.onInputSubmitted(title, action, input.actionHasTarget)
+            }
+            is PlainSubmitListener -> {
+                parent.onInputSubmitted(inputText)
+            }
+            else -> null
+        }
         handleAction(job, true)
     }
 
@@ -96,9 +121,34 @@ class InputBottomSheetFragment : BaseBottomSheet() {
     }
 
     companion object {
-        fun create(parentTitle: String, input: JiveActions.Input) =
+        fun createForItem(item: SlimBrowseItemList.SlimBrowseItem, input: JiveActions.Input) =
             InputBottomSheetFragment().apply {
-                arguments = bundleOf("parentTitle" to parentTitle, "input" to input)
+                arguments = bundleOf("item" to item, "input" to input)
             }
+
+        fun createPlain(
+            minLength: Int = 0,
+            initialText: String? = null,
+            allowedChars: String? = null,
+            type: JiveActions.Input.Type = JiveActions.Input.Type.Text
+        ): InputBottomSheetFragment {
+            val dummyAction = JiveAction.createEmptyForInput()
+            val dummyInput = JiveActions.Input(
+                minLength,
+                initialText,
+                allowedChars,
+                type,
+                dummyAction,
+                false
+            )
+            return createForInput("", dummyInput)
+        }
+
+        fun createForInput(
+            parentTitle: String,
+            input: JiveActions.Input
+        ) = InputBottomSheetFragment().apply {
+            arguments = bundleOf("parentTitle" to parentTitle, "input" to input)
+        }
     }
 }

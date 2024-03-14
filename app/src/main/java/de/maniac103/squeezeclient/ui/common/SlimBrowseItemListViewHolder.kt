@@ -34,10 +34,8 @@ class SlimBrowseItemListViewHolder(private val binding: SlimBrowseItemListAdapte
     val radio: RadioButton? = itemView.findViewById(R.id.radio)
     val checkbox: CheckBox? = itemView.findViewById(R.id.checkbox)
     private val choiceLabel: TextView? = itemView.findViewById(R.id.choice_label)
-    var isBinding = false
 
     fun bind(item: SlimBrowseItemList.SlimBrowseItem) {
-        isBinding = true
         binding.title.text = item.title
         binding.subText.text = item.subText
         binding.subText.isVisible = !item.subText.isNullOrEmpty()
@@ -47,7 +45,6 @@ class SlimBrowseItemListViewHolder(private val binding: SlimBrowseItemListAdapte
         item.actions?.radio?.let { radio?.isChecked = it.state }
         item.actions?.checkbox?.let { checkbox?.isChecked = it.state }
         item.actions?.choices?.let { choiceLabel?.text = it.items[it.selectedIndex].title }
-        isBinding = false
     }
 
     fun setupBusyListener(job: Job) {

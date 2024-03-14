@@ -41,8 +41,6 @@ class SlimBrowseItemListAdapter(
     interface ItemSelectionListener {
         fun onItemSelected(item: SlimBrowseItemList.SlimBrowseItem): Job?
         fun onContextMenu(item: SlimBrowseItemList.SlimBrowseItem): Job?
-        fun onCheckBoxChanged(item: SlimBrowseItemList.SlimBrowseItem, checked: Boolean): Job?
-        fun onRadioChecked(item: SlimBrowseItemList.SlimBrowseItem): Job?
     }
     data class ItemBinding(
         val root: View,
@@ -99,20 +97,6 @@ class SlimBrowseItemListAdapter(
         holder.contextMenu?.setOnClickListener {
             val item = getItem(holder.bindingAdapterPosition) ?: return@setOnClickListener
             itemSelectionListener?.onContextMenu(item)?.let { holder.setupBusyListener(it) }
-        }
-        holder.radio?.setOnCheckedChangeListener { _, checked ->
-            val item = getItem(holder.bindingAdapterPosition)
-            if (item != null && !holder.isBinding && checked) {
-                itemSelectionListener?.onRadioChecked(item)?.let { holder.setupBusyListener(it) }
-            }
-        }
-        holder.checkbox?.setOnCheckedChangeListener { _, checked ->
-            val item = getItem(holder.bindingAdapterPosition)
-            if (item != null && !holder.isBinding) {
-                itemSelectionListener?.onCheckBoxChanged(item, checked)?.let {
-                    holder.setupBusyListener(it)
-                }
-            }
         }
 
         binding.icon.isVisible = showIcons

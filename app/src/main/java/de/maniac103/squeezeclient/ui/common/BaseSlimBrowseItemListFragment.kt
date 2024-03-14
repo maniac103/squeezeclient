@@ -97,19 +97,43 @@ abstract class BaseSlimBrowseItemListFragment :
     override fun onItemSelected(item: SlimBrowseItemList.SlimBrowseItem): Job? {
         val listener = activity as? NavigationListener ?: return null
         val actions = item.actions ?: return null
-        when {
-            actions.input != null -> showInput(item)
-            actions.choices != null -> showChoices(item)
-            actions.checkbox != null -> onCheckBoxChanged(item, !actions.checkbox.state)
-            actions.radio != null -> onRadioChecked(item)
-            item.webLink != null -> listener.onOpenWebLink(item.title, item.webLink.toUri())
-            item.subItems != null -> fetchAction?.let { listener.onOpenSubItemList(item, it) }
+        return when {
+            actions.input != null -> {
+                showInput(item)
+                null
+            }
+            actions.choices != null -> {
+                showChoices(item)
+                null
+            }
+            actions.checkbox != null -> {
+                val action = if (actions.checkbox.state) {
+                    actions.checkbox.offAction
+                } else {
+                    actions.checkbox.onAction
+                }
+                executeAction(action, item.nextWindow ?: SlimBrowseItemList.NextWindow.Refresh)
+            }
+            actions.radio != null -> {
+                executeAction(
+                    actions.radio.action,
+                    item.nextWindow ?: SlimBrowseItemList.NextWindow.Refresh
+                )
+            }
+            item.webLink != null -> {
+                listener.onOpenWebLink(item.title, item.webLink.toUri())
+                null
+            }
+            item.subItems != null -> {
+                fetchAction?.let { listener.onOpenSubItemList(item, it) }
+                null
+            }
             actions.goAction != null -> {
                 val nextWindow = actions.goAction.nextWindow ?: item.nextWindow
-                return listener.onGoAction(item.title, null, actions.goAction, nextWindow)
+                listener.onGoAction(item.title, null, actions.goAction, nextWindow)
             }
+            else -> null
         }
-        return null
     }
 
     override fun onContextMenu(item: SlimBrowseItemList.SlimBrowseItem): Job? {
@@ -139,20 +163,6 @@ abstract class BaseSlimBrowseItemListFragment :
         listener?.onGoAction(title, null, action, item.nextWindow)
     } else {
         executeAction(action, item.nextWindow)
-    }
-
-    override fun onCheckBoxChanged(
-        item: SlimBrowseItemList.SlimBrowseItem,
-        checked: Boolean
-    ): Job? {
-        val checkbox = item.actions?.checkbox ?: return null
-        val action = if (checked) checkbox.onAction else checkbox.offAction
-        return executeAction(action, item.nextWindow)
-    }
-
-    override fun onRadioChecked(item: SlimBrowseItemList.SlimBrowseItem): Job? {
-        val radioAction = item.actions?.radio?.action ?: return null
-        return executeAction(radioAction, item.nextWindow)
     }
 
     override fun onContextItemSelected(

@@ -85,7 +85,6 @@ class MainActivity :
     AppCompatActivity(),
     JiveHomeListItemFragment.NavigationListener,
     BaseSlimBrowseItemListFragment.NavigationListener,
-    SlimBrowseSubItemListFragment.DataRefreshProvider,
     SliderBottomSheetFragment.ChangeListener,
     NowPlayingFragment.ContextMenuListener,
     ConnectionErrorHintFragment.Listener,
@@ -276,10 +275,15 @@ class MainActivity :
 
     override fun onOpenSubItemList(
         item: SlimBrowseItemList.SlimBrowseItem,
-        items: List<SlimBrowseItemList.SlimBrowseItem>
+        itemFetchAction: JiveAction
     ) {
         val player = this.player ?: return
-        val f = SlimBrowseSubItemListFragment.create(player.id, item, items)
+        val f = SlimBrowseSubItemListFragment.create(
+            player.id,
+            item.title,
+            itemFetchAction,
+            item.listPosition
+        )
         val level = supportFragmentManager.backStackEntryCount
         replaceMainContent(f, "l$level-p${item.listPosition}-subitems", true)
     }
@@ -304,29 +308,6 @@ class MainActivity :
         } else {
             handleGoAction(listOfNotNull(title, actionTitle), action)
         }
-    }
-
-    // SlimBrowseSubItemListFragment.DataRefreshProvider implementation
-
-    override suspend fun provideRefreshedSubItemList(
-        item: SlimBrowseItemList.SlimBrowseItem
-    ): List<SlimBrowseItemList.SlimBrowseItem> {
-        val player = this.player ?: return emptyList()
-        val parentFragment = with (supportFragmentManager) {
-            val parentTag = getBackStackEntryAt(backStackEntryCount - 2).name
-            findFragmentByTag(parentTag) as? SlimBrowseItemListFragment
-                ?: throw IllegalStateException("Can't provide sub items for non item list parent")
-        }
-        val items = connectionHelper.fetchItemsForAction(
-            player.id,
-            parentFragment.fetchAction,
-            PagingParams.All
-        )
-        // Make sure the parent fragment (which actually holds the sub items)
-        // refreshes its data as well
-        parentFragment.refresh()
-        val updatedItem = items.items[item.listPosition]
-        return updatedItem.subItems ?: emptyList()
     }
 
     // SliderBottomSheetFragment.ChangeListener implementation

@@ -26,13 +26,14 @@ import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.model.WindowStyle
 import de.maniac103.squeezeclient.ui.common.BaseSlimBrowseItemListFragment
+import kotlinx.coroutines.Job
 
 class SlimBrowseItemListFragment : BaseSlimBrowseItemListFragment() {
     override val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)
     override val title get() = requireArguments().getString("title")!!
     override val showIcons get() = requireArguments().getBoolean("showIcons")
     override val useGrid get() = super.useGrid && requireArguments().getBoolean("canUseGrid")
-    val fetchAction get() =
+    override val fetchAction get() =
         requireArguments().getParcelable("fetchAction", JiveAction::class)
     override val fastScrollEnabled = true
 

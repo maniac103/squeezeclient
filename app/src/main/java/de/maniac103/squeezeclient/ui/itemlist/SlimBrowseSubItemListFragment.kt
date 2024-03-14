@@ -16,10 +16,10 @@
 
 package de.maniac103.squeezeclient.ui.itemlist
 
-import android.os.Bundle
 import androidx.core.os.bundleOf
+import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.getParcelable
-import de.maniac103.squeezeclient.extfuncs.getParcelableList
+import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.ListResponse
 import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
@@ -27,36 +27,28 @@ import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.ui.common.BaseSlimBrowseItemListFragment
 
 class SlimBrowseSubItemListFragment : BaseSlimBrowseItemListFragment() {
-    interface DataRefreshProvider {
-        suspend fun provideRefreshedSubItemList(item: SlimBrowseItemList.SlimBrowseItem):
-            List<SlimBrowseItemList.SlimBrowseItem>
-    }
-
-    private lateinit var items: List<SlimBrowseItemList.SlimBrowseItem>
-    private val parentItem get() =
-        requireArguments().getParcelable("parent", SlimBrowseItemList.SlimBrowseItem::class)
     override val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)
-    override val title: String get() = parentItem.title
+    override val title: String get() = requireArguments().getString("title")!!
+    private val parentFetchAction get() =
+        requireArguments().getParcelable("fetchAction", JiveAction::class)
+    private val parentItemPosition get() = requireArguments().getInt("listPosition")
     override val showIcons = false
     override val useGrid = false
     override val fastScrollEnabled = false
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        items = requireArguments().getParcelableList("items", SlimBrowseItemList.SlimBrowseItem::class)
-    }
-
-    override suspend fun refresh() {
-        (activity as? DataRefreshProvider)?.provideRefreshedSubItemList(parentItem)?.let {
-            items = it
-        }
-        super.refresh()
-    }
-
     override suspend fun onLoadPage(
-        page: PagingParams
+        page: PagingParams // ignored, because subitems aren't paged
     ): ListResponse<SlimBrowseItemList.SlimBrowseItem> {
-        return ItemListWrapper(items)
+        val actualPage = PagingParams(parentItemPosition, 1)
+        val parentItemList = connectionHelper
+            .fetchItemsForAction(playerId, parentFetchAction, actualPage)
+        val parentItem = if (parentItemList.offset == parentItemPosition) {
+            parentItemList.items[0]
+        } else {
+            // server does not support paging for this action
+            parentItemList.items[parentItemPosition]
+        }
+        return ItemListWrapper(requireNotNull(parentItem.subItems))
     }
 
 
@@ -69,13 +61,15 @@ class SlimBrowseSubItemListFragment : BaseSlimBrowseItemListFragment() {
     companion object {
         fun create(
             playerId: PlayerId,
-            parentItem: SlimBrowseItemList.SlimBrowseItem,
-            items: List<SlimBrowseItemList.SlimBrowseItem>
+            title: String,
+            fetchAction: JiveAction,
+            listPosition: Int
         ) = SlimBrowseSubItemListFragment().apply {
             arguments = bundleOf(
                 "playerId" to playerId,
-                "parent" to parentItem,
-                "items" to ArrayList(items)
+                "title" to title,
+                "fetchAction" to fetchAction,
+                "listPosition" to listPosition
             )
         }
     }

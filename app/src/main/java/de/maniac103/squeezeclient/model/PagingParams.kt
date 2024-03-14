@@ -17,7 +17,7 @@
 package de.maniac103.squeezeclient.model
 
 data class PagingParams(val start: String, val page: String) {
-    constructor(start: Int, end: Int) : this(start.toString(), end.toString())
+    constructor(start: Int, page: Int) : this(start.toString(), page.toString())
     companion object {
         internal val Status = PagingParams("-", "1")
         val CountOnly = PagingParams(0, 1)

@@ -57,7 +57,7 @@ abstract class BaseSlimBrowseItemListFragment :
     interface NavigationListener {
         fun onOpenSubItemList(
             item: SlimBrowseItemList.SlimBrowseItem,
-            items: List<SlimBrowseItemList.SlimBrowseItem>
+            itemFetchAction: JiveAction
         )
         fun onOpenWebLink(title: String, link: Uri)
         fun onGoAction(
@@ -70,6 +70,7 @@ abstract class BaseSlimBrowseItemListFragment :
 
     protected abstract val playerId: PlayerId
     protected abstract val showIcons: Boolean
+    protected open val fetchAction: JiveAction? = null
 
     override fun onCreateAdapter(
         diffCallback: DiffUtil.ItemCallback<SlimBrowseItemList.SlimBrowseItem>
@@ -101,12 +102,12 @@ abstract class BaseSlimBrowseItemListFragment :
             actions.choices != null -> showChoices(item)
             actions.checkbox != null -> onCheckBoxChanged(item, !actions.checkbox.state)
             actions.radio != null -> onRadioChecked(item)
-            item.subItems != null -> listener.onOpenSubItemList(item, item.subItems)
+            item.webLink != null -> listener.onOpenWebLink(item.title, item.webLink.toUri())
+            item.subItems != null -> fetchAction?.let { listener.onOpenSubItemList(item, it) }
             actions.goAction != null -> {
                 val nextWindow = actions.goAction.nextWindow ?: item.nextWindow
                 return listener.onGoAction(item.title, null, actions.goAction, nextWindow)
             }
-            item.webLink != null -> listener.onOpenWebLink(item.title, item.webLink.toUri())
         }
         return null
     }

@@ -30,6 +30,7 @@ import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
+import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.model.ListResponse
@@ -45,6 +46,7 @@ import kotlinx.datetime.Instant
 class PlaylistFragment :
     BasePagingListFragment<Playlist.PlaylistItem, PlaylistItemViewHolder>() {
     private val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)
+    override val title get() = getString(R.string.playlist)
     override val fastScrollEnabled = true
     override val useGrid = false
 

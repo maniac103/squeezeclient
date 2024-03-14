@@ -23,7 +23,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.os.bundleOf
-import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import de.maniac103.squeezeclient.databinding.FragmentGenericListBinding
@@ -33,11 +32,12 @@ import de.maniac103.squeezeclient.extfuncs.loadSlideshowImage
 import de.maniac103.squeezeclient.extfuncs.withRoundedCorners
 import de.maniac103.squeezeclient.model.SlideshowImage
 import de.maniac103.squeezeclient.ui.common.BasePrepopulatedListAdapter
-import de.maniac103.squeezeclient.ui.common.TitleProvidingFragment
+import de.maniac103.squeezeclient.ui.common.MainContentFragment
 
-class GalleryFragment : Fragment(), TitleProvidingFragment {
+class GalleryFragment : MainContentFragment() {
     private val items get() = requireArguments().getParcelableList("items", SlideshowImage::class)
     override val title get() = requireArguments().getString("title")!!
+    override val scrollingTargetView get() = binding.recycler
 
     private lateinit var binding: FragmentGenericListBinding
 

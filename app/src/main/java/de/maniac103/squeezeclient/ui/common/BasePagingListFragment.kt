@@ -21,7 +21,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.isVisible
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.paging.LoadState
 import androidx.paging.Pager
@@ -46,8 +45,7 @@ import kotlinx.coroutines.launch
 import me.zhanghai.android.fastscroll.FastScrollerBuilder
 
 abstract class BasePagingListFragment<T : Any, VH : RecyclerView.ViewHolder> :
-    Fragment(),
-    ScrollingListFragment {
+    MainContentFragment() {
     protected lateinit var binding: FragmentGenericListBinding
     private lateinit var adapter: PagingDataAdapter<T, VH>
 

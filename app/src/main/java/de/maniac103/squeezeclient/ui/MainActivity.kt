@@ -59,8 +59,7 @@ import de.maniac103.squeezeclient.service.MediaService
 import de.maniac103.squeezeclient.ui.bottomsheets.InfoBottomSheet
 import de.maniac103.squeezeclient.ui.bottomsheets.SliderBottomSheetFragment
 import de.maniac103.squeezeclient.ui.common.BaseSlimBrowseItemListFragment
-import de.maniac103.squeezeclient.ui.common.ScrollingListFragment
-import de.maniac103.squeezeclient.ui.common.TitleProvidingFragment
+import de.maniac103.squeezeclient.ui.common.MainContentFragment
 import de.maniac103.squeezeclient.ui.itemlist.JiveHomeListItemFragment
 import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseItemListFragment
 import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseSubItemListFragment
@@ -185,7 +184,7 @@ class MainActivity :
                     override fun onFragmentStarted(fm: FragmentManager, f: Fragment) {
                         super.onFragmentStarted(fm, f)
                         if (f.id == binding.container.id) {
-                            val scrollTarget = (f as? ScrollingListFragment)?.scrollingTargetView
+                            val scrollTarget = (f as? MainContentFragment)?.scrollingTargetView
                             binding.appbarContainer.setLiftOnScrollTargetView(scrollTarget)
                         }
                     }
@@ -544,7 +543,11 @@ class MainActivity :
         }
     }
 
-    private fun replaceMainContent(content: Fragment, tag: String, addToBackStack: Boolean) {
+    private fun replaceMainContent(
+        content: MainContentFragment,
+        tag: String,
+        addToBackStack: Boolean
+    ) {
         supportFragmentManager.commit {
             replace(binding.container.id, content, tag)
             if (addToBackStack) {
@@ -611,7 +614,7 @@ class MainActivity :
     private fun updateBreadcrumbs() = supportFragmentManager.apply {
         val breadcrumbs = (0 until backStackEntryCount).mapNotNull { index ->
             val f = findFragmentByTag(getBackStackEntryAt(index).name)
-            (f as? TitleProvidingFragment)?.title
+            (f as? MainContentFragment)?.title
         }
         binding.breadcrumbsContainer.isVisible = breadcrumbs.isNotEmpty()
         binding.breadcrumbs.text =

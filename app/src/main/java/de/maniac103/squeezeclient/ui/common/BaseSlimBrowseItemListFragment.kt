@@ -47,7 +47,6 @@ import kotlinx.coroutines.launch
 
 abstract class BaseSlimBrowseItemListFragment :
     BasePagingListFragment<SlimBrowseItemList.SlimBrowseItem, SlimBrowseItemListViewHolder>(),
-    TitleProvidingFragment,
     SlimBrowseItemListAdapter.ItemSelectionListener,
     ChoicesBottomSheetFragment.SelectionListener,
     ContextMenuBottomSheetFragment.Listener,

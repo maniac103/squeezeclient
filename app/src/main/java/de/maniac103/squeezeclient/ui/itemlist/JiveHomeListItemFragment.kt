@@ -21,7 +21,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.os.bundleOf
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -38,17 +37,14 @@ import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.ui.bottomsheets.ChoicesBottomSheetFragment
 import de.maniac103.squeezeclient.ui.bottomsheets.InputBottomSheetFragment
 import de.maniac103.squeezeclient.ui.common.BasePrepopulatedListAdapter
-import de.maniac103.squeezeclient.ui.common.ScrollingListFragment
-import de.maniac103.squeezeclient.ui.common.TitleProvidingFragment
+import de.maniac103.squeezeclient.ui.common.MainContentFragment
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 
 class JiveHomeListItemFragment :
-    Fragment(),
-    ScrollingListFragment,
-    TitleProvidingFragment,
+    MainContentFragment(),
     BasePrepopulatedListAdapter.ItemSelectionListener<JiveHomeMenuItem>,
     ChoicesBottomSheetFragment.SelectionListener,
     InputBottomSheetFragment.InputSubmitListener {

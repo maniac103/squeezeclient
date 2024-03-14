@@ -17,7 +17,9 @@
 package de.maniac103.squeezeclient.ui.common
 
 import android.view.View
+import androidx.fragment.app.Fragment
 
-interface ScrollingListFragment {
-    val scrollingTargetView: View
+abstract class MainContentFragment : Fragment() {
+    abstract val scrollingTargetView: View
+    abstract val title: String
 }

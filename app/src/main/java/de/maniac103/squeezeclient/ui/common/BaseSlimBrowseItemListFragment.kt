@@ -152,7 +152,9 @@ abstract class BaseSlimBrowseItemListFragment :
         }
     }
 
-    override fun onChoiceSelected(choice: JiveAction) = executeAction(choice, null)
+    override fun onChoiceSelected(choice: JiveAction) =
+        executeAction(choice, SlimBrowseItemList.NextWindow.Refresh)
+
     override fun onInputSubmitted(
         item: SlimBrowseItemList.SlimBrowseItem,
         action: JiveAction,

@@ -70,6 +70,7 @@ import de.maniac103.squeezeclient.ui.search.LibrarySearchResultsFragment
 import de.maniac103.squeezeclient.ui.search.RadioSearchResultsFragment
 import de.maniac103.squeezeclient.ui.search.SearchFragment
 import de.maniac103.squeezeclient.ui.slideshow.GalleryFragment
+import de.maniac103.squeezeclient.ui.volume.VolumeFragment
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -79,13 +80,14 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
+import kotlin.time.Duration.Companion.seconds
 
 class MainActivity :
     AppCompatActivity(),
     JiveHomeListItemFragment.NavigationListener,
     BaseSlimBrowseItemListFragment.NavigationListener,
     SliderBottomSheetFragment.ChangeListener,
-    NowPlayingFragment.ContextMenuListener,
+    NowPlayingFragment.Listener,
     ConnectionErrorHintFragment.Listener,
     SearchFragment.Listener {
 
@@ -108,6 +110,8 @@ class MainActivity :
         supportFragmentManager.findFragmentById(binding.playerContainer.id) as? NowPlayingFragment
     private val searchFragment get() =
         supportFragmentManager.findFragmentById(binding.searchContainer.id) as? SearchFragment
+    private val volumeFragment get() =
+        supportFragmentManager.findFragmentById(binding.volumeContainer.id) as? VolumeFragment
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -228,31 +232,17 @@ class MainActivity :
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-        val player = if (prefs.useVolumeButtonsForPlayerVolume) player else null
-        return when {
-            keyCode == KeyEvent.KEYCODE_VOLUME_DOWN && player != null -> {
-                lifecycleScope.launch {
-                    connectionHelper.setVolume(player.id, currentPlayerVolume - 5)
-                }
-                true
-            }
-
-            keyCode == KeyEvent.KEYCODE_VOLUME_UP && player != null -> {
-                lifecycleScope.launch {
-                    connectionHelper.setVolume(player.id, currentPlayerVolume + 5)
-                }
-                true
-            }
-
-            else -> super.onKeyDown(keyCode, event)
+        val volumeFragment = if (prefs.useVolumeButtonsForPlayerVolume) volumeFragment else null
+        if (volumeFragment?.handleKeyDown(keyCode) == true) {
+            return true
         }
+        return super.onKeyDown(keyCode, event)
     }
 
     override fun onKeyUp(keyCode: Int, event: KeyEvent?): Boolean {
-        if (prefs.useVolumeButtonsForPlayerVolume && player != null) {
-            if (keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
-                return true
-            }
+        val volumeFragment = if (prefs.useVolumeButtonsForPlayerVolume) volumeFragment else null
+        if (volumeFragment?.handleKeyUp(keyCode) == true) {
+            return true
         }
         return super.onKeyUp(keyCode, event)
     }
@@ -315,7 +305,11 @@ class MainActivity :
         player?.let { player -> connectionHelper.executeAction(player.id, input) }
     }
 
-    // NowPlayingFragment.ContextMenuListener implementation
+    // NowPlayingFragment.Listener implementation
+
+    override fun showVolumePopup() {
+        volumeFragment?.showIfNeeded(5.seconds)
+    }
 
     override fun onContextMenuAction(
         title: String,
@@ -461,6 +455,10 @@ class MainActivity :
             supportFragmentManager.commit {
                 mainListFragment?.let { remove(it) }
                 replace(binding.playerContainer.id, NowPlayingFragment.create(player.id))
+
+                val volumeFragment = VolumeFragment.create(player.id)
+                replace(binding.volumeContainer.id, volumeFragment)
+                hide(volumeFragment)
             }
         }
 

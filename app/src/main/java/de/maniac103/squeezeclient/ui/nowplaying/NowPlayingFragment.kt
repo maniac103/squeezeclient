@@ -16,21 +16,14 @@
 
 package de.maniac103.squeezeclient.ui.nowplaying
 
-import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.text.format.DateUtils
-import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
-import android.view.View.MeasureSpec
 import android.view.ViewGroup
-import android.view.WindowManager.LayoutParams
-import android.widget.PopupWindow
-import android.widget.SeekBar
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.graphics.Insets
@@ -52,7 +45,6 @@ import com.google.android.material.slider.LabelFormatter
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.cometd.request.PlaybackButtonRequest
 import de.maniac103.squeezeclient.databinding.FragmentNowplayingBinding
-import de.maniac103.squeezeclient.databinding.PopupWindowVolumeBinding
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.doOnTransitionCompleted
 import de.maniac103.squeezeclient.extfuncs.getParcelable
@@ -79,12 +71,14 @@ class NowPlayingFragment : Fragment(), MenuProvider,
     ContextMenuBottomSheetFragment.Listener,
     InputBottomSheetFragment.PlainSubmitListener {
 
-    interface ContextMenuListener {
+    interface Listener {
         fun onContextMenuAction(
             title: String,
             actionTitle: String?,
             action: JiveAction
         ): Job?
+
+        fun showVolumePopup()
     }
 
     private val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)
@@ -95,9 +89,7 @@ class NowPlayingFragment : Fragment(), MenuProvider,
     private lateinit var playlistBottomSheetBehavior: BottomSheetBehavior<ConstraintLayout>
     private var timeUpdateJob: Job? = null
     private var sliderDragUpdateJob: Job? = null
-    private var currentVolume = 0
     private var currentSong: Playlist.PlaylistItem? = null
-    private var isMuted = false
 
     fun collapseIfExpanded(): Boolean {
         if (
@@ -223,8 +215,6 @@ class NowPlayingFragment : Fragment(), MenuProvider,
                     .flatMapLatest { it.playStatus }
                     .collect { status ->
                         update(status)
-                        currentVolume = status.currentVolume
-                        isMuted = status.muted
                         val nowPlaying = status.playlist.nowPlaying
                         if (nowPlaying != currentSong) {
                             currentSong = nowPlaying
@@ -265,7 +255,7 @@ class NowPlayingFragment : Fragment(), MenuProvider,
 
     override fun onMenuItemSelected(menuItem: MenuItem) = when (menuItem.itemId) {
         R.id.volume -> {
-            showVolumePopup()
+            (activity as? Listener)?.showVolumePopup()
             true
         }
         R.id.info -> {
@@ -317,7 +307,7 @@ class NowPlayingFragment : Fragment(), MenuProvider,
                 connectionHelper.executeAction(playerId, actions.doAction)
             }
             actions.goAction != null -> {
-                val listener = activity as? ContextMenuListener
+                val listener = activity as? Listener
                 listener?.onContextMenuAction(parentTitle, item.title, actions.goAction)
             }
             else -> null
@@ -465,55 +455,6 @@ class NowPlayingFragment : Fragment(), MenuProvider,
             lifecycleScope.launch {
                 connectionHelper.sendButtonRequest(request)
             }
-        }
-    }
-
-    private fun showVolumePopup() {
-        val popupBinding = PopupWindowVolumeBinding.inflate(layoutInflater)
-        popupBinding.volumeSlider.apply {
-            progress = currentVolume
-            setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-                private var updateJob: Job? = null
-                override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
-                    if (fromUser) {
-                        updateJob?.cancel()
-                        updateJob = lifecycleScope.launch {
-                            delay(200.milliseconds)
-                            connectionHelper.setVolume(playerId, progress)
-                        }
-                    }
-                }
-                override fun onStartTrackingTouch(seekBar: SeekBar) {
-                }
-                override fun onStopTrackingTouch(seekBar: SeekBar) {
-                }
-            })
-        }
-
-        popupBinding.volumeMute.apply {
-            isActivated = isMuted
-            setOnClickListener {
-                isActivated = !isActivated
-                lifecycleScope.launch {
-                    connectionHelper.setMuteState(playerId, isActivated)
-                }
-            }
-        }
-
-        popupBinding.root.measure(MeasureSpec.UNSPECIFIED, MeasureSpec.UNSPECIFIED)
-        val popupMargin = resources.getDimensionPixelSize(R.dimen.volume_popup_end_margin)
-        val popupWidth = popupBinding.root.measuredWidth
-        val popupOffset = -(popupWidth + popupMargin)
-
-        PopupWindow(
-            popupBinding.root,
-            LayoutParams.WRAP_CONTENT,
-            LayoutParams.WRAP_CONTENT,
-            false
-        ).apply {
-            isOutsideTouchable = true
-            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-            showAsDropDown(binding.toolbar, popupOffset, 0, Gravity.END)
         }
     }
 

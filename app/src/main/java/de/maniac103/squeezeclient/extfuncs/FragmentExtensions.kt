@@ -29,6 +29,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
 val Fragment.connectionHelper get() = requireContext().connectionHelper
+val Fragment.prefs get() = requireContext().prefs
 
 fun Fragment.showActionTimePicker(playerId: PlayerId, title: String, input: JiveActions.Input) {
     val (hour, minute) = input.initialText?.toIntOrNull()?.let { (it / 3600) to (it / 60) }

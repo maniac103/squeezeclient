@@ -17,6 +17,6 @@
 
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
     <size android:width="@dimen/volume_popup_panel_width" />
-    <solid android:color="?colorSurface" />
+    <solid android:color="?colorSurfaceContainerHighest" />
     <corners android:radius="@dimen/volume_popup_panel_corner_radius" />
 </shape>

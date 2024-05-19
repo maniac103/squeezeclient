@@ -127,6 +127,16 @@
             app:layout_constraintBottom_toBottomOf="parent"
             android:fitsSystemWindows="true" />
 
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/volume_container"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:fitsSystemWindows="true" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <com.google.android.material.navigation.NavigationView

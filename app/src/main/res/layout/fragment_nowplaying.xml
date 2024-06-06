@@ -60,7 +60,8 @@
         android:layout_height="wrap_content"
         android:padding="4dp"
         app:trackCornerRadius="2dp"
-        app:trackThickness="4dp" />
+        app:trackThickness="4dp"
+        app:trackStopIndicatorSize="0dp" />
 
     <Space
         android:id="@+id/top_inset_spacer"

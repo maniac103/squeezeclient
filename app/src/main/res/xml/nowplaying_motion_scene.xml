@@ -59,7 +59,7 @@
             </KeyAttribute>
 
             <KeyAttribute
-                app:framePosition="70"
+                app:framePosition="90"
                 app:motionTarget="@id/toolbar_container">
                 <CustomAttribute
                     app:attributeName="alpha"
@@ -149,7 +149,7 @@
             </KeyAttribute>
 
             <KeyAttribute
-                app:framePosition="50"
+                app:framePosition="30"
                 app:motionTarget="@id/title_minimized">
                 <CustomAttribute
                     app:attributeName="alpha"

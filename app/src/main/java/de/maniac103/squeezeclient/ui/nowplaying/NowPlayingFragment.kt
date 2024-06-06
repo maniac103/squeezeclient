@@ -320,7 +320,10 @@ class NowPlayingFragment : Fragment(), MenuProvider,
 
     private fun applyInsetsToSpacer(spacer: View, side: Int, insetSelector: (Insets) -> Int) {
         ViewCompat.setOnApplyWindowInsetsListener(spacer) { v, windowInsets ->
-            val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val insets = windowInsets.getInsets(
+                WindowInsetsCompat.Type.systemBars() or
+                WindowInsetsCompat.Type.displayCutout()
+            )
             val inset = insetSelector(insets)
             listOf(R.id.collapsed, R.id.expanded).forEach { setId ->
                 binding.container.getConstraintSet(setId).apply {

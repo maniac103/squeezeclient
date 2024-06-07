@@ -32,8 +32,9 @@
 
         <KeyFrameSet>
             <KeyPosition
-                app:keyPositionType="pathRelative"
+                app:keyPositionType="deltaRelative"
                 app:percentX="0.3"
+                app:percentY="0.4"
                 app:framePosition="50"
                 app:motionTarget="@id/artwork" />
 
@@ -46,7 +47,7 @@
 
         <KeyFrameSet>
             <KeyAttribute
-                app:framePosition="80"
+                app:framePosition="70"
                 android:alpha="0.0"
                 app:motionTarget="@id/toolbar_container" />
         </KeyFrameSet>

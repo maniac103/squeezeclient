@@ -39,12 +39,17 @@ object BooleanAsIntSerializer : KSerializer<Boolean> {
 
 object TimestampAsInstantSerializer : KSerializer<Instant> {
     override val descriptor: SerialDescriptor get() =
-        PrimitiveSerialDescriptor("TimestampAsInstant", PrimitiveKind.FLOAT)
+        PrimitiveSerialDescriptor("TimestampAsInstant", PrimitiveKind.DOUBLE)
     override fun deserialize(decoder: Decoder): Instant {
-        return Instant.fromEpochSeconds(decoder.decodeFloat().toLong())
+        val epochSecondsDouble = decoder.decodeDouble()
+        val epochSecondsLong = epochSecondsDouble.toLong()
+        val remainderNanoSeconds = ((epochSecondsDouble - epochSecondsLong) * 1000000000.0).toLong()
+        return Instant.fromEpochSeconds(epochSecondsLong, remainderNanoSeconds)
     }
     override fun serialize(encoder: Encoder, value: Instant) {
-        encoder.encodeFloat(value.epochSeconds.toFloat())
+        val seconds = value.epochSeconds.toDouble()
+        val remainder = value.nanosecondsOfSecond.toDouble() / 1000000000.0
+        encoder.encodeDouble(seconds + remainder)
     }
 }
 

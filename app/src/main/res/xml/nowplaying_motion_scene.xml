@@ -16,181 +16,94 @@
   -->
 
 <MotionScene xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:motion="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <Transition
-        motion:constraintSetEnd="@id/expanded"
-        motion:constraintSetStart="@id/collapsed"
-        motion:duration="300"
+        app:constraintSetEnd="@id/expanded"
+        app:constraintSetStart="@id/collapsed"
+        app:duration="300"
         app:motionInterpolator="easeInOut">
         <OnSwipe
             app:dragDirection="dragUp"
             app:maxAcceleration="200"
             app:touchAnchorId="@id/player_background"
-            app:touchAnchorSide="top"
-            />
+            app:touchAnchorSide="top" />
 
         <KeyFrameSet>
-            <KeyAttribute
-                app:framePosition="100"
-                app:motionTarget="@id/title">
-                <CustomAttribute
-                    app:attributeName="alpha"
-                    app:customFloatValue="1.0" />
-            </KeyAttribute>
+            <KeyPosition
+                app:keyPositionType="pathRelative"
+                app:percentX="0.3"
+                app:framePosition="50"
+                app:motionTarget="@id/artwork" />
 
             <KeyAttribute
                 app:framePosition="50"
-                app:motionTarget="@id/title">
-                <CustomAttribute
-                    app:attributeName="alpha"
-                    app:customFloatValue="0.0" />
-            </KeyAttribute>
+                android:scaleX="0.5"
+                android:scaleY="0.5"
+                app:motionTarget="@id/artwork" />
         </KeyFrameSet>
 
         <KeyFrameSet>
             <KeyAttribute
-                app:framePosition="100"
-                app:motionTarget="@id/toolbar_container">
-                <CustomAttribute
-                    app:attributeName="alpha"
-                    app:customFloatValue="1.0" />
-            </KeyAttribute>
-
-            <KeyAttribute
-                app:framePosition="90"
-                app:motionTarget="@id/toolbar_container">
-                <CustomAttribute
-                    app:attributeName="alpha"
-                    app:customFloatValue="0.0" />
-            </KeyAttribute>
+                app:framePosition="80"
+                android:alpha="0.0"
+                app:motionTarget="@id/toolbar_container" />
         </KeyFrameSet>
 
         <KeyFrameSet>
             <KeyAttribute
-                app:framePosition="100"
-                app:motionTarget="@id/artist">
-                <CustomAttribute
-                    app:attributeName="alpha"
-                    app:customFloatValue="1.0" />
-            </KeyAttribute>
+                app:framePosition="40"
+                android:alpha="0.0"
+                app:motionTarget="@id/title_minimized" />
+        </KeyFrameSet>
 
+        <KeyFrameSet>
             <KeyAttribute
                 app:framePosition="50"
-                app:motionTarget="@id/artist">
-                <CustomAttribute
-                    app:attributeName="alpha"
-                    app:customFloatValue="0.0" />
-            </KeyAttribute>
+                android:alpha="0.0"
+                app:motionTarget="@id/title" />
         </KeyFrameSet>
 
         <KeyFrameSet>
             <KeyAttribute
-                app:framePosition="100"
-                app:motionTarget="@id/album">
-                <CustomAttribute
-                    app:attributeName="alpha"
-                    app:customFloatValue="1.0" />
-            </KeyAttribute>
+                app:framePosition="50"
+                android:alpha="0.0"
+                app:motionTarget="@id/artist_minimized" />
+        </KeyFrameSet>
 
+        <KeyFrameSet>
+            <KeyAttribute
+                app:framePosition="50"
+                android:alpha="0.0"
+                app:motionTarget="@id/artist" />
+        </KeyFrameSet>
+
+        <KeyFrameSet>
+            <KeyAttribute
+                app:framePosition="50"
+                android:alpha="0.0"
+                app:motionTarget="@id/album" />
+        </KeyFrameSet>
+
+        <KeyFrameSet>
             <KeyAttribute
                 app:framePosition="70"
-                app:motionTarget="@id/album">
-                <CustomAttribute
-                    app:attributeName="alpha"
-                    app:customFloatValue="0.0" />
-            </KeyAttribute>
+                android:alpha="0.0"
+                app:motionTarget="@id/progress_wrapper" />
         </KeyFrameSet>
 
         <KeyFrameSet>
-            <KeyAttribute
-                app:framePosition="100"
-                app:motionTarget="@id/progress_wrapper">
-                <CustomAttribute
-                    app:attributeName="alpha"
-                    app:customFloatValue="1.0" />
-            </KeyAttribute>
-
             <KeyAttribute
                 app:framePosition="70"
-                app:motionTarget="@id/progress_wrapper">
-                <CustomAttribute
-                    app:attributeName="alpha"
-                    app:customFloatValue="0.0" />
-            </KeyAttribute>
+                android:alpha="0.0"
+                app:motionTarget="@id/progress_minimized" />
         </KeyFrameSet>
 
         <KeyFrameSet>
             <KeyAttribute
-                app:framePosition="0"
-                app:motionTarget="@id/progress_minimized">
-                <CustomAttribute
-                    app:attributeName="alpha"
-                    app:customFloatValue="1.0" />
-            </KeyAttribute>
-
-            <KeyAttribute
-                app:framePosition="70"
-                app:motionTarget="@id/progress_minimized">
-                <CustomAttribute
-                    app:attributeName="alpha"
-                    app:customFloatValue="0.0" />
-            </KeyAttribute>
-        </KeyFrameSet>
-
-        <KeyFrameSet>
-            <KeyAttribute
-                app:framePosition="0"
-                app:motionTarget="@id/title_minimized">
-                <CustomAttribute
-                    app:attributeName="alpha"
-                    app:customFloatValue="1.0" />
-            </KeyAttribute>
-
-            <KeyAttribute
-                app:framePosition="30"
-                app:motionTarget="@id/title_minimized">
-                <CustomAttribute
-                    app:attributeName="alpha"
-                    app:customFloatValue="0.0" />
-            </KeyAttribute>
-        </KeyFrameSet>
-
-        <KeyFrameSet>
-            <KeyAttribute
-                app:framePosition="0"
-                app:motionTarget="@id/artist_minimized">
-                <CustomAttribute
-                    app:attributeName="alpha"
-                    app:customFloatValue="1.0" />
-            </KeyAttribute>
-
-            <KeyAttribute
-                app:framePosition="50"
-                app:motionTarget="@id/artist_minimized">
-                <CustomAttribute
-                    app:attributeName="alpha"
-                    app:customFloatValue="0.0" />
-            </KeyAttribute>
-        </KeyFrameSet>
-
-        <KeyFrameSet>
-            <KeyAttribute
-                app:framePosition="50"
-                app:motionTarget="@id/playlist_sheet">
-                <CustomAttribute
-                    app:attributeName="alpha"
-                    app:customFloatValue="0.0" />
-            </KeyAttribute>
-
-            <KeyAttribute
-                app:framePosition="100"
-                app:motionTarget="@id/playlist_sheet">
-                <CustomAttribute
-                    app:attributeName="alpha"
-                    app:customFloatValue="1.0" />
-            </KeyAttribute>
+                app:framePosition="80"
+                android:alpha="0.0"
+                app:motionTarget="@id/playlist_sheet" />
         </KeyFrameSet>
 
     </Transition>
@@ -209,6 +122,7 @@
             android:id="@id/toolbar_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:alpha="1.0"
             app:layout_constraintEnd_toStartOf="@id/right_inset_spacer"
             app:layout_constraintStart_toEndOf="@id/left_inset_spacer"
             app:layout_constraintTop_toTopOf="parent" />
@@ -230,82 +144,64 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
+            android:alpha="1.0"
             app:layout_constraintEnd_toStartOf="@id/right_inset_spacer"
             app:layout_constraintStart_toEndOf="@id/left_inset_spacer"
             app:layout_constraintTop_toBottomOf="@id/artwork"
             app:layout_constraintBottom_toTopOf="@id/artist"
             app:layout_constraintVertical_bias="0"
-            app:layout_constraintVertical_chainStyle="packed">
-            <CustomAttribute
-                app:attributeName="alpha"
-                app:customFloatValue="1.0"/>
-        </Constraint>
+            app:layout_constraintVertical_chainStyle="packed" />
 
         <Constraint
             android:id="@id/artist"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
+            android:alpha="1.0"
             app:layout_constraintEnd_toStartOf="@id/right_inset_spacer"
             app:layout_constraintStart_toEndOf="@id/left_inset_spacer"
             app:layout_constraintTop_toBottomOf="@id/title"
-            app:layout_constraintBottom_toTopOf="@id/album">
-            <CustomAttribute
-                app:attributeName="alpha"
-                app:customFloatValue="1.0"/>
-        </Constraint>
+            app:layout_constraintBottom_toTopOf="@id/album" />
 
         <Constraint
             android:id="@id/album"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
+            android:alpha="1.0"
             app:layout_constraintEnd_toStartOf="@id/right_inset_spacer"
             app:layout_constraintStart_toEndOf="@id/left_inset_spacer"
-            app:layout_constraintTop_toBottomOf="@id/artist">
-            <CustomAttribute
-                app:attributeName="alpha"
-                app:customFloatValue="1.0"/>
-        </Constraint>
+            app:layout_constraintTop_toBottomOf="@id/artist" />
 
         <Constraint
             android:id="@id/title_minimized"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:alpha="0.0"
             app:layout_constraintEnd_toStartOf="@id/right_inset_spacer"
             app:layout_constraintStart_toEndOf="@id/left_inset_spacer"
             app:layout_constraintTop_toTopOf="@id/title"
-            app:layout_constraintBottom_toBottomOf="@id/title">
-            <CustomAttribute
-                app:attributeName="alpha"
-                app:customFloatValue="0.0"/>
-        </Constraint>
+            app:layout_constraintBottom_toBottomOf="@id/title" />
 
         <Constraint
             android:id="@id/artist_minimized"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:alpha="0.0"
             app:layout_constraintEnd_toStartOf="@id/right_inset_spacer"
             app:layout_constraintStart_toEndOf="@id/left_inset_spacer"
             app:layout_constraintTop_toTopOf="@id/artist"
             app:layout_constraintBottom_toBottomOf="@id/artist"
-            app:visibilityMode="ignore">
-            <CustomAttribute
-                app:attributeName="alpha"
-                app:customFloatValue="0.0"/>
-        </Constraint>
+            app:visibilityMode="ignore" />
 
         <Constraint
             android:id="@id/progress_minimized"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:alpha="0.0"
             app:layout_constraintEnd_toStartOf="@id/right_inset_spacer"
             app:layout_constraintStart_toEndOf="@id/left_inset_spacer"
-            app:layout_constraintBottom_toTopOf="@id/bottom_inset_spacer">
-            <CustomAttribute
-                app:attributeName="alpha"
-                app:customFloatValue="0.0"/>
-        </Constraint>
+            app:layout_constraintBottom_toTopOf="@id/bottom_inset_spacer" />
 
         <Constraint
             android:id="@id/progress_top_space"
@@ -323,14 +219,11 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
+            android:alpha="1.0"
             app:layout_constraintEnd_toStartOf="@id/right_inset_spacer"
             app:layout_constraintStart_toEndOf="@id/left_inset_spacer"
             app:layout_constraintTop_toBottomOf="@id/progress_top_space"
-            app:layout_constraintBottom_toTopOf="@id/play_pause_top_space">
-            <CustomAttribute
-                app:attributeName="alpha"
-                app:customFloatValue="1.0"/>
-        </Constraint>
+            app:layout_constraintBottom_toTopOf="@id/play_pause_top_space" />
 
         <Constraint
             android:id="@id/repeat"
@@ -397,17 +290,18 @@
             app:layout_constraintEnd_toStartOf="@id/right_inset_spacer" />
 
         <Constraint
-            android:id="@+id/playlist_sheet"
+            android:id="@id/playlist_sheet"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:visibility="visible"
+            android:alpha="1.0"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toBottomOf="@id/toolbar_container"
             app:layout_constraintBottom_toBottomOf="parent" />
 
         <Constraint
-            android:id="@+id/playlist_sheet_placeholder"
+            android:id="@id/playlist_sheet_placeholder"
             android:layout_width="match_parent"
             android:layout_height="@dimen/playlist_sheet_peek_height"
             android:visibility="visible"
@@ -431,9 +325,10 @@
 
         <Constraint
             android:id="@id/toolbar_container"
-            android:layout_height="0dp"
+            android:layout_height="wrap_content"
             android:layout_width="match_parent"
-            android:visibility="gone"
+            android:visibility="invisible"
+            android:alpha="0.0"
             app:layout_constraintStart_toEndOf="@id/left_inset_spacer"
             app:layout_constraintEnd_toStartOf="@id/right_inset_spacer"
             app:layout_constraintTop_toTopOf="@id/player_background" />
@@ -452,29 +347,23 @@
             android:layout_marginBottom="2dp"
             android:paddingStart="12dp"
             android:paddingEnd="10dp"
+            android:alpha="0.0"
             app:layout_constraintBottom_toTopOf="@id/artist"
             app:layout_constraintEnd_toStartOf="@id/prev"
             app:layout_constraintStart_toEndOf="@id/artwork"
             app:layout_constraintTop_toTopOf="@id/player_background"
-            app:layout_constraintVertical_chainStyle="packed">
-            <CustomAttribute
-                app:attributeName="alpha"
-                app:customFloatValue="0.0" />
-        </Constraint>
+            app:layout_constraintVertical_chainStyle="packed" />
 
         <Constraint
             android:id="@id/title_minimized"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
+            android:alpha="1.0"
             app:layout_constraintEnd_toStartOf="@id/prev"
             app:layout_constraintStart_toEndOf="@id/artwork"
             app:layout_constraintTop_toTopOf="@id/artwork"
-            app:layout_constraintBottom_toTopOf="@id/artist_minimized">
-            <CustomAttribute
-                app:attributeName="alpha"
-                app:customFloatValue="1.0" />
-        </Constraint>
+            app:layout_constraintBottom_toTopOf="@id/artist_minimized" />
 
         <Constraint
             android:id="@id/artist"
@@ -483,15 +372,12 @@
             android:layout_marginTop="2dp"
             android:paddingStart="12dp"
             android:paddingEnd="10dp"
+            android:alpha="0.0"
             app:layout_constraintBottom_toBottomOf="@id/player_background"
             app:layout_constraintEnd_toStartOf="@id/prev"
             app:layout_constraintStart_toEndOf="@id/artwork"
             app:layout_constraintTop_toBottomOf="@id/title"
-            app:layout_constraintVertical_chainStyle="packed">
-            <CustomAttribute
-                app:attributeName="alpha"
-                app:customFloatValue="0.0" />
-        </Constraint>
+            app:layout_constraintVertical_chainStyle="packed" />
 
         <Constraint
             android:id="@id/album"
@@ -500,40 +386,31 @@
             android:layout_marginTop="2dp"
             android:paddingStart="12dp"
             android:paddingEnd="10dp"
+            android:alpha="0.0"
             app:layout_constraintBottom_toBottomOf="@id/player_background"
             app:layout_constraintEnd_toStartOf="@id/prev"
             app:layout_constraintStart_toEndOf="@id/artwork"
-            app:layout_constraintTop_toBottomOf="@id/artist">
-            <CustomAttribute
-                app:attributeName="alpha"
-                app:customFloatValue="0.0" />
-        </Constraint>
+            app:layout_constraintTop_toBottomOf="@id/artist" />
 
         <Constraint
             android:id="@id/artist_minimized"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:alpha="1.0"
             app:layout_constraintEnd_toStartOf="@id/prev"
             app:layout_constraintStart_toStartOf="@id/title_minimized"
             app:layout_constraintTop_toBottomOf="@id/title_minimized"
             app:layout_constraintBottom_toTopOf="@id/progress_minimized"
-            app:visibilityMode="ignore">
-            <CustomAttribute
-                app:attributeName="alpha"
-                app:customFloatValue="1.0" />
-        </Constraint>
+            app:visibilityMode="ignore" />
 
         <Constraint
             android:id="@id/progress_minimized"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:alpha="1.0"
             app:layout_constraintEnd_toStartOf="@id/right_inset_spacer"
             app:layout_constraintStart_toEndOf="@id/left_inset_spacer"
-            app:layout_constraintBottom_toTopOf="@id/bottom_inset_spacer">
-            <CustomAttribute
-                app:attributeName="alpha"
-                app:customFloatValue="1.0"/>
-        </Constraint>
+            app:layout_constraintBottom_toTopOf="@id/bottom_inset_spacer" />
 
         <Constraint
             android:id="@id/progress_top_space"
@@ -546,18 +423,15 @@
 
         <Constraint
             android:id="@id/progress_wrapper"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
-            android:visibility="gone"
+            android:visibility="invisible"
+            android:alpha="0.0"
             app:layout_constraintTop_toTopOf="@id/progress_minimized"
             app:layout_constraintBottom_toBottomOf="@id/progress_minimized"
             app:layout_constraintStart_toStartOf="@id/progress_minimized"
-            app:layout_constraintEnd_toEndOf="@id/progress_minimized">
-            <CustomAttribute
-                app:attributeName="alpha"
-                app:customFloatValue="0.0" />
-        </Constraint>
+            app:layout_constraintEnd_toEndOf="@id/progress_minimized" />
 
         <Constraint
             android:id="@id/prev"
@@ -588,8 +462,7 @@
             android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="@id/play_pause_wrapper"
             app:layout_constraintEnd_toStartOf="@id/prev"
-            app:layout_constraintTop_toTopOf="@id/play_pause_wrapper"
-            />
+            app:layout_constraintTop_toTopOf="@id/play_pause_wrapper" />
 
         <Constraint
             android:id="@id/shuffle"
@@ -599,8 +472,7 @@
             android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="@id/play_pause_wrapper"
             app:layout_constraintEnd_toStartOf="@id/right_inset_spacer"
-            app:layout_constraintTop_toTopOf="@id/play_pause_wrapper"
-            />
+            app:layout_constraintTop_toTopOf="@id/play_pause_wrapper" />
 
         <Constraint
             android:id="@id/play_pause_top_space"
@@ -620,16 +492,17 @@
             android:visibility="gone" />
 
         <Constraint
-            android:id="@+id/playlist_sheet"
+            android:id="@id/playlist_sheet"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:visibility="invisible"
+            android:alpha="0.0"
             app:layout_constraintStart_toEndOf="@id/left_inset_spacer"
             app:layout_constraintEnd_toStartOf="@id/right_inset_spacer"
             app:layout_constraintTop_toBottomOf="parent" />
 
         <Constraint
-            android:id="@+id/playlist_sheet_placeholder"
+            android:id="@id/playlist_sheet_placeholder"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:visibility="gone"

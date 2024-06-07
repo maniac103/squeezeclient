@@ -72,6 +72,7 @@
         app:layout_constraintTop_toBottomOf="@id/discovered_servers_wrapper"
         app:layout_constraintBottom_toTopOf="@id/server_address_wrapper"
         app:layout_constraintStart_toStartOf="parent"
+        app:trackStopIndicatorSize="0dp"
         android:max="100"/>
 
     <com.google.android.material.textfield.TextInputLayout

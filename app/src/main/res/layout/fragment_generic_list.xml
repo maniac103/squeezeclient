@@ -30,6 +30,7 @@
         android:visibility="gone"
         android:indeterminate="true"
         app:trackThickness="3dp"
+        app:trackStopIndicatorSize="0dp"
         tools:visibility="visible" />
 
     <androidx.recyclerview.widget.RecyclerView

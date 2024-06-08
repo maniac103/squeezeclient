@@ -185,8 +185,6 @@ class NowPlayingFragment : Fragment(), MenuProvider,
             binding.toolbar.invalidateMenu()
         }
 
-        // TODO: context menu if present
-
         binding.progressSlider.apply {
             labelBehavior = LabelFormatter.LABEL_GONE
             valueFrom = 0F

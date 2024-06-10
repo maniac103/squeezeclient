@@ -25,7 +25,7 @@ import kotlinx.serialization.Serializable
 data class ServerStatusResponse(
     val version: String,
     @SerialName("players_loop")
-    val players: List<Player>,
+    val players: List<Player> = emptyList(),
     @SerialName("mediadirs")
     val mediaDirectories: List<String>
 )

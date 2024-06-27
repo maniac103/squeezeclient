@@ -107,6 +107,12 @@
                 app:indicatorSize="128dp"
                 app:trackThickness="6dp" />
 
+            <androidx.fragment.app.FragmentContainerView
+                android:id="@+id/status_container"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginBottom="8dp" />
+
         </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
         <androidx.fragment.app.FragmentContainerView

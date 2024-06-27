@@ -21,11 +21,13 @@ import de.maniac103.squeezeclient.cometd.BooleanAsIntSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonPrimitive
+import kotlin.time.Duration.Companion.milliseconds
 
 @Serializable
 data class DisplayMessage(
     val type: MessageType? = null,
-    val duration: Int? = null,
+    @SerialName("duration")
+    private val durationInternal: Int? = null,
     @SerialName("is-remote")
     @Serializable(with = BooleanAsIntSerializer::class)
     val isRemote: Boolean? = null,
@@ -39,6 +41,7 @@ data class DisplayMessage(
     val style: String? = null
 ) : ArtworkItem {
     override val iconId: String? get() = internalIconId?.content
+    val duration get() = durationInternal?.milliseconds
 
     @Serializable
     enum class MessageType {

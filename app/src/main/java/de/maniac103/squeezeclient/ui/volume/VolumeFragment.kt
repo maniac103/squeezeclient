@@ -156,6 +156,7 @@ class VolumeFragment : Fragment() {
         binding.volumeSlider.progress = currentPlayerVolume
         binding.volumeMute.isActivated = isMuted
     }
+
     companion object {
         fun create(playerId: PlayerId): VolumeFragment {
             return VolumeFragment().apply {

@@ -460,6 +460,10 @@ class MainActivity :
                 val volumeFragment = VolumeFragment.create(player.id)
                 replace(binding.volumeContainer.id, volumeFragment)
                 hide(volumeFragment)
+
+                val statusFragment = DisplayStatusFragment.create(player.id)
+                replace(binding.statusContainer.id, statusFragment)
+                hide(statusFragment)
             }
         }
 
@@ -486,12 +490,6 @@ class MainActivity :
             if (mainListFragment == null || mainListFragment is ConnectionErrorHintFragment) {
                 onNodeSelected("home")
             }
-        }.launchIn(scope)
-
-        stateFlow.flatMapLatest { it.displayStatus }.onEach { message ->
-            android.util.Log.d("foo", "display message $message")
-            // TODO: improve this
-            // Snackbar.make(binding.coordinatorLayout, message.text.joinToString(" "), Snackbar.LENGTH_SHORT).show()
         }.launchIn(scope)
     }
 

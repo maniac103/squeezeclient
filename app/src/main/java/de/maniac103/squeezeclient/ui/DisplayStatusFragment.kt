@@ -1,0 +1,110 @@
+/*
+ * This file is part of Squeeze Client, an Android client for the LMS music server.
+ * Copyright (c) 2024 Danny Baumann
+ *
+ * This program is free software: you can redistribute it and/or modify it under the terms of the
+ * GNU General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
+package de.maniac103.squeezeclient.ui
+
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.core.os.bundleOf
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.isGone
+import androidx.core.view.updatePadding
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import de.maniac103.squeezeclient.databinding.FragmentDisplaystatusBinding
+import de.maniac103.squeezeclient.extfuncs.connectionHelper
+import de.maniac103.squeezeclient.extfuncs.getParcelable
+import de.maniac103.squeezeclient.extfuncs.loadArtwork
+import de.maniac103.squeezeclient.model.DisplayMessage
+import de.maniac103.squeezeclient.model.PlayerId
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.seconds
+
+class DisplayStatusFragment : Fragment() {
+    private val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)
+
+    private lateinit var binding: FragmentDisplaystatusBinding
+    private var hideJob: Job? = null
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        binding = FragmentDisplaystatusBinding.inflate(inflater)
+        return binding.root
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, windowInsets ->
+            val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.updatePadding(bottom = insets.bottom)
+            windowInsets
+        }
+
+        lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                connectionHelper.playerState(playerId)
+                    .flatMapLatest { it.displayStatus }
+                    .collect { message -> showMessage(message) }
+            }
+        }
+    }
+
+    private fun showMessage(message: DisplayMessage) {
+        if (message.type != DisplayMessage.MessageType.PopupPlay) {
+            return
+        }
+
+        binding.text.text = message.text.joinToString("\n")
+        binding.icon.loadArtwork(message)
+        binding.icon.isGone = message.extractIconUrl(requireContext()) == null
+
+        if (!isVisible) {
+            parentFragmentManager.beginTransaction()
+                .show(this)
+                .commitNow()
+        }
+
+        hideJob?.cancel()
+        hideJob = lifecycleScope.launch {
+            delay(message.duration ?: 2.seconds)
+            parentFragmentManager.beginTransaction()
+                .hide(this@DisplayStatusFragment)
+                .commitNowAllowingStateLoss()
+        }
+    }
+
+    companion object {
+        fun create(playerId: PlayerId): DisplayStatusFragment {
+            return DisplayStatusFragment().apply {
+                arguments = bundleOf("playerId" to playerId)
+            }
+        }
+    }
+}

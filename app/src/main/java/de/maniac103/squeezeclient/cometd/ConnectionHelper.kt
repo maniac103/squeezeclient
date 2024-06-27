@@ -59,6 +59,7 @@ import de.maniac103.squeezeclient.extfuncs.serverConfig
 import de.maniac103.squeezeclient.model.DisplayMessage
 import de.maniac103.squeezeclient.model.DownloadRequestData
 import de.maniac103.squeezeclient.model.JiveAction
+import de.maniac103.squeezeclient.model.JiveHomeMenuItem
 import de.maniac103.squeezeclient.model.LocalLibrarySearchResultCounts
 import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
@@ -77,6 +78,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -416,7 +418,7 @@ class ConnectionHelper(private val appContext: SqueezeClientApplication) {
             }
         )
 
-        private val displayStatusFlow = createSubscribingFlow<DisplayMessage?>(
+        private val displayStatusFlow = createSubscribingFlow<DisplayMessage>(
             { subscribed ->
                 val displayStatusRequest =
                     UpdateDisplayStatusSubscriptionRequest(playerId, subscribed)
@@ -438,13 +440,13 @@ class ConnectionHelper(private val appContext: SqueezeClientApplication) {
             }
         )
 
-        val homeMenu = homeMenuFlow.asSharedFlow()
-        val playStatus = playerStatusFlow.asSharedFlow()
-        val displayStatus = displayStatusFlow.asSharedFlow().filterNotNull()
+        val homeMenu: SharedFlow<Map<String, JiveHomeMenuItem>> = homeMenuFlow.asSharedFlow()
+        val playStatus: SharedFlow<PlayerStatus> = playerStatusFlow.asSharedFlow()
+        val displayStatus: SharedFlow<DisplayMessage> = displayStatusFlow.asSharedFlow()
 
         private fun <T> createSubscribingFlow(
             subscribeMethod: suspend (Boolean) -> Unit,
-            requestMethod: suspend () -> T,
+            requestMethod: suspend () -> T?,
             responseChannel: String,
             updateFromEventMethod: (T?, JsonElement) -> T?
         ) = MutableSharedFlow<T>(1).apply {
@@ -455,7 +457,7 @@ class ConnectionHelper(private val appContext: SqueezeClientApplication) {
                 .onEach { subscribed ->
                     subscribeMethod(subscribed)
                     if (subscribed) {
-                        emit(requestMethod())
+                        requestMethod()?.let { emit(it) }
                         jobHolder.launch {
                             connectionHelper.client?.subscribe(responseChannel)?.collect { msg ->
                                 val last = replayCache.lastOrNull()

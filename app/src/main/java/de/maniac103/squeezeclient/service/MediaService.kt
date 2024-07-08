@@ -83,24 +83,26 @@ class MediaService : MediaSessionService(), LifecycleOwner, MediaSession.Callbac
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 connectionHelper.state.collectLatest { status ->
+                    // Update connection status first, because currentPlayer checked below
+                    // is updated on status changes
+                    player.isConnectedToServer = status is ConnectionState.Connected
                     when (status) {
                         is ConnectionState.Disconnected -> connectionHelper.connect()
                         is ConnectionState.Connecting -> {}
                         is ConnectionState.Connected -> {
-                            val currentPlayerId = player.currentPlayer
-                            val currentPlayerIsPresent =
-                                status.players.any { it.id == currentPlayerId }
-                            if (currentPlayerId != null && !currentPlayerIsPresent) {
-                                stopSelf()
+                            player.currentPlayer?.let { playerId ->
+                                if (status.players.none { it.id == playerId }) {
+                                    // current player is gone
+                                    stopSelf()
+                                }
                             }
                         }
                     }
-                    player.updateConnectionStatus(status is ConnectionState.Connected)
                 }
             }
         }
 
-        prefs.lastSelectedPlayer?.let { player.updatePlayer(it) }
+        player.currentPlayer = prefs.lastSelectedPlayer
 
         val powerButton = CommandButton.Builder()
             .setDisplayName(getString(R.string.notif_action_player_power))
@@ -138,7 +140,7 @@ class MediaService : MediaSessionService(), LifecycleOwner, MediaSession.Callbac
             val playerId = requireNotNull(
                 IntentCompat.getParcelableExtra(intent, "playerId", PlayerId::class.java)
             )
-            player.updatePlayer(playerId)
+            player.currentPlayer = playerId
             return START_STICKY
         }
         return super.onStartCommand(intent, flags, startId)
@@ -217,10 +219,22 @@ class MediaService : MediaSessionService(), LifecycleOwner, MediaSession.Callbac
         private val lifecycle: Lifecycle
     ) : SimpleBasePlayer(Looper.getMainLooper()), CoroutineScope by lifecycle.coroutineScope {
         var currentPlayer: PlayerId? = null
-            private set
+            set(value) {
+                if (field != value) {
+                    field = value
+                    updatePlayer(value)
+                }
+            }
+        var isConnectedToServer: Boolean = true
+            set(value) {
+                if (field != value) {
+                    field = value
+                    updatePlayer(currentPlayer)
+                    invalidateState()
+                }
+            }
         private var latestStatus: PlayerStatus? = null
         private var latestPlaylist: Playlist? = null
-        private var isConnectedToServer = true
         private var statusSubscription: Job? = null
 
         override fun handleSetDeviceVolume(deviceVolume: Int, flags: Int) = future {
@@ -335,6 +349,7 @@ class MediaService : MediaSessionService(), LifecycleOwner, MediaSession.Callbac
                     PlayerStatus.PlayState.Stopped -> STATE_IDLE
                 }
             }
+
             return State.Builder()
                 .setPlaybackState(playbackState)
                 .setAvailableCommands(commandsBuilder.build())
@@ -356,11 +371,11 @@ class MediaService : MediaSessionService(), LifecycleOwner, MediaSession.Callbac
         }
 
         @kotlin.OptIn(ExperimentalCoroutinesApi::class)
-        fun updatePlayer(playerId: PlayerId) {
-            if (currentPlayer == playerId) {
+        private fun updatePlayer(playerId: PlayerId?) {
+            statusSubscription?.cancel()
+            if (playerId == null || !isConnectedToServer) {
                 return
             }
-            statusSubscription?.cancel()
             statusSubscription = launch {
                 lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
                     connectionHelper.playerState(playerId)
@@ -372,18 +387,10 @@ class MediaService : MediaSessionService(), LifecycleOwner, MediaSession.Callbac
                                     PagingParams.All
                                 )
                             }
-                            currentPlayer = playerId
                             latestStatus = status
                             invalidateState()
                         }
                 }
-            }
-        }
-
-        fun updateConnectionStatus(connected: Boolean) {
-            if (isConnectedToServer != connected) {
-                isConnectedToServer = connected
-                invalidateState()
             }
         }
 

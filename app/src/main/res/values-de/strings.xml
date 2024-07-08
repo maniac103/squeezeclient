@@ -35,6 +35,7 @@
 
     <string name="connection_error_text_no_connection">Die Verbindung mit dem Server konnte nicht hergestellt werden</string>
     <string name="connection_error_text_no_player">Keine Wiedergabegeräte sind mit diesem Server verbunden</string>
+    <string name="connection_error_text_connection_failure">Die Verbindung mit dem Server ist fehlgeschlagen\n(%1$s)</string>
     <string name="connection_error_action_retry">Erneut versuchen</string>
     <string name="connection_error_action_setup_server">Servereinstellungen</string>
 

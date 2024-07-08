@@ -20,6 +20,7 @@ package de.maniac103.squeezeclient.ui
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.KeyEvent
 import android.view.Menu
 import androidx.activity.enableEdgeToEdge
@@ -538,6 +539,22 @@ class MainActivity :
                 showConnectionErrorHint(f)
             }
         }
+        is ConnectionState.ConnectionFailure -> {
+            Log.w(TAG, "Connection failed", state.cause)
+            hideContentAndShowLoadingIndicator()
+            if (++consecutiveUnsuccessfulConnectAttempts < 3) {
+                connectionHelper.connect()
+            } else {
+                val f = ConnectionErrorHintFragment.create(
+                    R.drawable.ic_cloud_question_24dp,
+                    R.string.connection_error_text_connection_failure,
+                    textArgument = state.cause.message,
+                    action1LabelResId = R.string.connection_error_action_retry,
+                    action1Tag = ACTION_TAG_RECONNECT,
+                )
+                showConnectionErrorHint(f)
+            }
+        }
     }
 
     private fun replaceMainContent(
@@ -624,6 +641,7 @@ class MainActivity :
     }
 
     companion object {
+        private const val TAG = "MainActivity"
         private const val FIRST_PLAYER_MENU_ID = 1000
         private const val LAST_PLAYER_MENU_ID = 1100
 

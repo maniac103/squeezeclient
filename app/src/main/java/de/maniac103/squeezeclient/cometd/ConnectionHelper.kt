@@ -67,11 +67,13 @@ import de.maniac103.squeezeclient.model.PlayerStatus
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.delay
@@ -132,27 +134,37 @@ class ConnectionHelper(private val appContext: SqueezeClientApplication) {
                 val listenTimeout = SUBSCRIPTION_INTERVAL.plus(5.seconds)
                 client.connect(listenTimeout)
             } catch (e: CometdClient.CometdException) {
-                disconnect()
+                handleFailure(e)
                 return@launch
             }
 
             connectionScope = this
             // Subscribe to server status; disconnect on subscription failure
-            client.subscribe(CometdClient.Channels.serverStatus(clientId))
-                .onEach { message -> parseServerStatus(message) }
-                .onCompletion { disconnect() }
-                .launchIn(this)
+            try {
+                client.subscribe(CometdClient.Channels.serverStatus(clientId))
+                    .onEach { message -> parseServerStatus(message) }
+                    .onCompletion { disconnect() }
+                    .launchIn(this)
+            } catch (e: CometdClient.CometdException) {
+                handleFailure(e)
+                return@launch
+            }
 
-            publishRequest(
-                ServerStatusRequest(SUBSCRIPTION_INTERVAL),
-                responseChannel = CometdClient.Channels.serverStatus(clientId)
-            )
+            try {
+                publishRequest(
+                    ServerStatusRequest(SUBSCRIPTION_INTERVAL),
+                    responseChannel = CometdClient.Channels.serverStatus(clientId)
+                )
+            } catch (e: CometdClient.CometdException) {
+                handleFailure(e)
+                return@launch
+            }
 
             // Wait for connection being established, which happens once the first
             // server status message arrives
             withTimeoutOrNull(CONNECTION_TIMEOUT) {
                 stateFlow.filter { it is ConnectionState.Connected }.first()
-            } ?: disconnect()
+            } ?: handleFailure(CometdClient.CometdException("Initial server status timeout"))
 
             // Schedule disconnection once all subscribers vanish
             stateFlow.subscriptionCount
@@ -303,16 +315,28 @@ class ConnectionHelper(private val appContext: SqueezeClientApplication) {
         val id = nextRequestId++
         val responseChannel = CometdClient.Channels.oneShotRequestResponse(clientId, id.toString())
         val subscriptionChannel = scope.produce {
-            val subscriptionFlow = client.subscribe(responseChannel)
-            val r = subscriptionFlow.map { it.data }.filterNotNull().first()
-            send(r)
+            try {
+                val subscriptionFlow = client.subscribe(responseChannel)
+                val r = subscriptionFlow.map { it.data }.filterNotNull().first()
+                send(r)
+            } catch (e: CometdClient.CometdException) {
+                cancel("Subscribing to publish request failed", e)
+            }
         }
         yield() // make sure subscription coroutine is started
-        publishRequest(request, responseChannel = responseChannel)
-        // TODO: timeout? how to communicate it to upper layers?
-        return subscriptionChannel.receive()
+        return try {
+            publishRequest(request, responseChannel = responseChannel)
+            withTimeoutOrNull(CONNECTION_TIMEOUT) {
+                subscriptionChannel.receive()
+            } ?: throw CometdClient.CometdException("Response timeout")
+        } catch (e: CometdClient.CometdException) {
+            handleFailure(e)
+            coroutineContext.cancel(CancellationException("Fetching publish response failed", e))
+            awaitCancellation()
+        }
     }
 
+    @Throws(CometdClient.CometdException::class)
     private suspend fun publishRequest(
         request: Request,
         channel: String = CometdClient.Channels.oneShotRequest(),
@@ -329,13 +353,18 @@ class ConnectionHelper(private val appContext: SqueezeClientApplication) {
         val clientId = client?.clientId ?: return
         val response = message.data?.let { json.decodeFromJsonElement<ServerStatusResponse>(it) }
             ?: return
+        var subscriptionFailure: CometdClient.CometdException? = null
         // Create player states for newly reported players
         response.players.filter { !playerStates.containsKey(it.id) }.forEach { p ->
             playerStates[p.id] = PlayerState(coroutineContext, this, clientId, p.id)
-            publishRequest(
-                PlayerStatusRequest(p.id),
-                responseChannel = CometdClient.Channels.playerStatus(clientId, p.id)
-            )
+            try {
+                publishRequest(
+                    PlayerStatusRequest(p.id),
+                    responseChannel = CometdClient.Channels.playerStatus(clientId, p.id)
+                )
+            } catch (e: CometdClient.CometdException) {
+                subscriptionFailure = e
+            }
         }
         // Destroy player states for players no longer in the list
         playerStates.keys
@@ -343,18 +372,27 @@ class ConnectionHelper(private val appContext: SqueezeClientApplication) {
             .forEach { playerStates.remove(it)?.cancel() }
 
         mediaDirectories = response.mediaDirectories
-        stateFlow.emit(ConnectionState.Connected(response.players))
+        subscriptionFailure.let { failure ->
+            if (failure == null) {
+                stateFlow.emit(ConnectionState.Connected(response.players))
+            } else {
+                handleFailure(failure)
+            }
+        }
     }
 
-    private fun disconnect() {
+    private fun disconnect(newState: ConnectionState = ConnectionState.Disconnected) {
         client?.disconnect()
         client = null
         connectionScope?.cancel()
         connectionScope = null
-        stateFlow.tryEmit(ConnectionState.Disconnected)
+        stateFlow.tryEmit(newState)
         playerStates.values.forEach { it.cancel() }
         playerStates.clear()
     }
+
+    private fun handleFailure(cause: CometdClient.CometdException) =
+        disconnect(ConnectionState.ConnectionFailure(cause))
 
     class PlayerState(
         parentContext: CoroutineContext,
@@ -455,14 +493,23 @@ class ConnectionHelper(private val appContext: SqueezeClientApplication) {
                 .map { count -> count > 0 }
                 .distinctUntilChanged()
                 .onEach { subscribed ->
-                    subscribeMethod(subscribed)
+                    try {
+                        subscribeMethod(subscribed)
+                    } catch (e: CometdClient.CometdException) {
+                        jobHolder.cancel(e)
+                    }
                     if (subscribed) {
                         requestMethod()?.let { emit(it) }
                         jobHolder.launch {
-                            connectionHelper.client?.subscribe(responseChannel)?.collect { msg ->
-                                val last = replayCache.lastOrNull()
-                                val data = msg.data ?: return@collect
-                                updateFromEventMethod(last, data)?.let { emit(it) }
+                            try {
+                                val flow = connectionHelper.client?.subscribe(responseChannel)
+                                flow?.collect { msg ->
+                                    val last = replayCache.lastOrNull()
+                                    val data = msg.data ?: return@collect
+                                    updateFromEventMethod(last, data)?.let { emit(it) }
+                                }
+                            } catch (e: CometdClient.CometdException) {
+                                cancel("Subscription failed", e)
                             }
                         }
                     } else {
@@ -478,8 +525,8 @@ class ConnectionHelper(private val appContext: SqueezeClientApplication) {
                 job?.cancel()
                 job = scope.launch(block = block)
             }
-            fun cancel() {
-                job?.cancel()
+            fun cancel(cause: Throwable? = null) {
+                job?.cancel(cause?.let { CancellationException(it.message, it) })
                 job = null
             }
         }

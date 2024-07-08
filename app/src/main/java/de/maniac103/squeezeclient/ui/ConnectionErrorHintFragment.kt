@@ -50,7 +50,7 @@ class ConnectionErrorHintFragment : Fragment() {
 
         val args = requireArguments()
         binding.image.setImageResource(args.getInt("icon"))
-        binding.hintText.setText(args.getInt("text"))
+        binding.hintText.text = getString(args.getInt("text"), args.getString("textArgument"))
         binding.actionButton1.bindToAction(0, args.getInt("action1"), args.getString("action1tag"))
         binding.actionButton2.bindToAction(1, args.getInt("action2"), args.getString("action2tag"))
     }
@@ -70,6 +70,7 @@ class ConnectionErrorHintFragment : Fragment() {
         fun create(
             @DrawableRes iconResId: Int,
             @StringRes textResId: Int,
+            textArgument: String? = null,
             @StringRes action1LabelResId: Int? = null,
             @StringRes action2LabelResId: Int? = null,
             action1Tag: String? = null,
@@ -78,6 +79,7 @@ class ConnectionErrorHintFragment : Fragment() {
             arguments = bundleOf(
                 "icon" to iconResId,
                 "text" to textResId,
+                "textArgument" to textArgument,
                 "action1" to (action1LabelResId ?: 0),
                 "action1tag" to action1Tag,
                 "action2" to (action2LabelResId ?: 0),

@@ -97,6 +97,7 @@ class MediaService : MediaSessionService(), LifecycleOwner, MediaSession.Callbac
                                 }
                             }
                         }
+                        is ConnectionState.ConnectionFailure -> connectionHelper.connect()
                     }
                 }
             }

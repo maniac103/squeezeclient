@@ -23,4 +23,5 @@ sealed class ConnectionState {
     data object Disconnected : ConnectionState()
     data object Connecting : ConnectionState()
     class Connected(val players: List<Player>) : ConnectionState()
+    class ConnectionFailure(val cause: Throwable) : ConnectionState()
 }

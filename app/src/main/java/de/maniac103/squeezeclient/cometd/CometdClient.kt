@@ -79,6 +79,7 @@ class CometdClient(private val json: Json, private val serverConfig: ServerConfi
     private var eventFlow: Flow<ValueOrCompletion<Message>>? = null
     private var nextId = 1
 
+    @Throws(CometdException::class)
     suspend fun connect(listenTimeout: Duration): String {
         val existingClientId = clientId
         if (existingClientId != null && eventFlow != null) {
@@ -103,6 +104,7 @@ class CometdClient(private val json: Json, private val serverConfig: ServerConfi
         Log.d(TAG, "Disconnected from ${serverConfig.url}")
     }
 
+    @Throws(CometdException::class)
     fun subscribe(responseChannel: String): Flow<Message> {
         val events = eventFlow ?: throw CometdException("Not connected")
         val responseChannelId = ChannelId(responseChannel)
@@ -111,6 +113,7 @@ class CometdClient(private val json: Json, private val serverConfig: ServerConfi
             .filter { responseChannelId.matches(it.channelId) }
     }
 
+    @Throws(CometdException::class)
     suspend fun publish(channel: String, messageData: JsonElement) {
         val clientId = this.clientId ?: throw CometdException("Not connected")
         val message = buildJsonObject {
@@ -121,8 +124,11 @@ class CometdClient(private val json: Json, private val serverConfig: ServerConfi
         }
         val request = buildRequest(message)
         return withContext(Dispatchers.IO) {
-            val body = requestClient.newCall(request).execute().body
-                ?: throw CometdException("Empty response body")
+            val body = try {
+                requestClient.newCall(request).execute().body
+            } catch (e: IOException) {
+                throw CometdException("Could not send publish request", e)
+            } ?: throw CometdException("Empty response body")
             val messages = body.use {
                 it.string().parseToMessageArrayOrThrow()
             }
@@ -132,6 +138,7 @@ class CometdClient(private val json: Json, private val serverConfig: ServerConfi
         }
     }
 
+    @Throws(IOException::class)
     private suspend fun handshake(): String {
         val message = buildJsonObject {
             put("channel", "/meta/handshake")
@@ -151,6 +158,7 @@ class CometdClient(private val json: Json, private val serverConfig: ServerConfi
         }
     }
 
+    @Throws(IOException::class)
     private suspend fun startListening(
         clientId: String,
         listenTimeout: Duration

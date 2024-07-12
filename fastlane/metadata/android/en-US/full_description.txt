@@ -1,0 +1,13 @@
+Squeeze Client is an Android client/controller application for the <a href="https://lms-community.github.io">Lyrion music server</a> (formerly known as Logitech media server or Squeezebox server) with Material Design 3 UI.
+
+<b>Features</b>
+<ul>
+<li>Music library browser</li>
+<li>Music library search quick access</li>
+<li>Playback and volume control</li>
+<li>Playlist management</li>
+<li>Multi-player management</li>
+<li>Music download</li>
+<li>Support for Light and dark theme as well as following system theme</li>
+<li>Full integration with system media controls</li>
+</ul>

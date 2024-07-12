@@ -14,6 +14,8 @@
  * If not, see <http://www.gnu.org/licenses/>.
  */
 
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -52,6 +54,21 @@ android {
         buildConfig = true
     }
 
+    signingConfigs {
+        create("release") {
+            val props = Properties().apply {
+                val propsFile = File("signing.properties")
+                if (propsFile.exists()) {
+                    load(propsFile.reader())
+                }
+            }
+            storeFile = props.getProperty("storeFilePath")?.let { File(it) }
+            storePassword = props.getProperty("storePassword")
+            keyPassword = props.getProperty("keyPassword")
+            keyAlias = props.getProperty("keyAlias")
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -59,8 +76,13 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            // FIXME
-            signingConfig = signingConfigs.getByName("debug")
+            val signing = signingConfigs.findByName("release")
+            if (signing != null && signing.storeFile != null && signing.storePassword != null && signing.keyPassword != null && signing.keyAlias != null) {
+                signingConfig = signing
+            } else {
+                println("Release signing config not available, falling back to debug config")
+                signingConfig = signingConfigs.getByName("debug")
+            }
         }
         debug {
             isDebuggable = true

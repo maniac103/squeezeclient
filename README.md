@@ -2,6 +2,12 @@
 
 An Android client/controller application for the [LMS music server](https://lms-community.github.io/) with Material Design 3 UI.
 
+[<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png"
+     alt="Get it on F-Droid"
+     height="80">](https://f-droid.org/packages/de.maniac103.squeezeclient/)
+
+Or download the latest APK from the [Releases Section](https://github.com/maniac103/squeezeclient/releases/latest).
+
 ### Features:
 - Music library browser
 - Music library search quick access

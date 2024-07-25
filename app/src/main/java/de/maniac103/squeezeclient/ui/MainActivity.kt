@@ -551,18 +551,14 @@ class MainActivity :
             Log.w(TAG, "Connection failed", state.cause)
             hideContentAndShowLoadingIndicator()
             resetCurrentPlayer()
-            if (++consecutiveUnsuccessfulConnectAttempts < 3) {
-                connectionHelper.connect()
-            } else {
-                val f = ConnectionErrorHintFragment.create(
-                    R.drawable.ic_cloud_question_24dp,
-                    R.string.connection_error_text_connection_failure,
-                    textArgument = state.cause.message,
-                    action1LabelResId = R.string.connection_error_action_retry,
-                    action1Tag = ACTION_TAG_RECONNECT,
-                )
-                showConnectionErrorHint(f)
-            }
+            val f = ConnectionErrorHintFragment.create(
+                R.drawable.ic_cloud_question_24dp,
+                R.string.connection_error_text_connection_failure,
+                textArgument = state.cause.message,
+                action1LabelResId = R.string.connection_error_action_retry,
+                action1Tag = ACTION_TAG_RECONNECT,
+            )
+            showConnectionErrorHint(f)
         }
     }
 

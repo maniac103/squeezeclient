@@ -92,6 +92,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 import kotlinx.coroutines.withTimeoutOrNull
@@ -143,7 +144,7 @@ class ConnectionHelper(private val appContext: SqueezeClientApplication) {
             try {
                 client.subscribe(CometdClient.Channels.serverStatus(clientId))
                     .onEach { message -> parseServerStatus(message) }
-                    .onCompletion { disconnect() }
+                    .onCompletion { if (isActive) disconnect() }
                     .launchIn(this)
             } catch (e: CometdClient.CometdException) {
                 handleFailure(e)

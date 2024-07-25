@@ -129,11 +129,12 @@ class CometdClient(private val json: Json, private val serverConfig: ServerConfi
             } catch (e: IOException) {
                 throw CometdException("Could not send publish request", e)
             } ?: throw CometdException("Empty response body")
-            val messages = body.use {
-                it.string().parseToMessageArrayOrThrow()
-            }
-            if (!messages[0].successful) {
-                throw CometdException("Unexpected response $body")
+            body.use {
+                val content = it.string()
+                val messages = content.parseToMessageArrayOrThrow()
+                if (!messages[0].successful) {
+                    throw CometdException("Unexpected response for request $messageData: $content")
+                }
             }
         }
     }

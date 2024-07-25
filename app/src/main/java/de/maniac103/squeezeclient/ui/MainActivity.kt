@@ -476,6 +476,13 @@ class MainActivity :
         }
     }
 
+    private fun resetCurrentPlayer() {
+        currentPlayerScope?.cancel()
+        currentPlayerScope = null
+        player = null
+        playerIsActive = false
+    }
+
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun updatePlayerStateSubscriptions(playerId: PlayerId, scope: CoroutineScope) {
         val stateFlow = connectionHelper.playerState(playerId)
@@ -497,6 +504,7 @@ class MainActivity :
     private fun updateContentForConnectionState(state: ConnectionState) = when (state) {
         is ConnectionState.Disconnected -> {
             hideContentAndShowLoadingIndicator()
+            resetCurrentPlayer()
             if (prefs.serverConfig == null) {
                 openServerSetup(false)
             } else if (++consecutiveUnsuccessfulConnectAttempts < 3) {
@@ -542,6 +550,7 @@ class MainActivity :
         is ConnectionState.ConnectionFailure -> {
             Log.w(TAG, "Connection failed", state.cause)
             hideContentAndShowLoadingIndicator()
+            resetCurrentPlayer()
             if (++consecutiveUnsuccessfulConnectAttempts < 3) {
                 connectionHelper.connect()
             } else {

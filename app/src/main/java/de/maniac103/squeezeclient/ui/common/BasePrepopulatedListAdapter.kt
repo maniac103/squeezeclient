@@ -28,7 +28,7 @@ abstract class BasePrepopulatedListAdapter<T, VH : RecyclerView.ViewHolder>(item
         fun onItemSelected(item: T): Job?
     }
 
-    private val internalItems: MutableList<T>
+    private val internalItems = items.toMutableList()
     var itemSelectionListener: ItemSelectionListener<T>? = null
 
     protected abstract fun onCreateViewHolder(
@@ -40,11 +40,7 @@ abstract class BasePrepopulatedListAdapter<T, VH : RecyclerView.ViewHolder>(item
     protected open fun onHolderBusyStateChanged(holder: VH, busy: Boolean) {}
     protected open fun getItemViewType(item: T): Int = 0
 
-    init {
-        internalItems = items.toMutableList()
-    }
-
-    fun replaceItem(position: Int, item: T) {
+    private fun replaceItem(position: Int, item: T) {
         if (position >= 0 && position < internalItems.size && item != internalItems[position]) {
             internalItems[position] = item
             notifyItemChanged(position)
@@ -56,7 +52,7 @@ abstract class BasePrepopulatedListAdapter<T, VH : RecyclerView.ViewHolder>(item
             internalItems.addAll(items)
             notifyDataSetChanged()
         } else {
-            (0 until items.size).forEach { replaceItem(it, items[it]) }
+            items.indices.forEach { replaceItem(it, items[it]) }
         }
     }
 

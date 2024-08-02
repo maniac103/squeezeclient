@@ -23,11 +23,11 @@
         android:icon="@drawable/ic_volume_24dp"
         android:title="@string/menu_player_volume"
         app:iconTint="?colorControlNormal"
-        app:showAsAction="always" />
+        app:showAsAction="ifRoom" />
     <item
         android:id="@+id/info"
         android:icon="@drawable/ic_info_24dp"
         android:title="@string/menu_song_info"
         app:iconTint="?colorControlNormal"
-        app:showAsAction="always" />
+        app:showAsAction="ifRoom" />
 </menu>

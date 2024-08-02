@@ -92,7 +92,7 @@ class ImageViewActivity : AppCompatActivity() {
                 ".$extension"
             ).toFile()
             snapshot.data.toFile().copyTo(tempFile, true)
-            FileProvider.getUriForFile(this, "${packageName}.cachefiles", tempFile)
+            FileProvider.getUriForFile(this, "$packageName.cachefiles", tempFile)
         }
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)

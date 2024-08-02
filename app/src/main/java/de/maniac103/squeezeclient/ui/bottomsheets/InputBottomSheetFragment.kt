@@ -145,11 +145,9 @@ class InputBottomSheetFragment : BaseBottomSheet() {
             return createForInput("", dummyInput)
         }
 
-        fun createForInput(
-            parentTitle: String,
-            input: JiveActions.Input
-        ) = InputBottomSheetFragment().apply {
-            arguments = bundleOf("parentTitle" to parentTitle, "input" to input)
-        }
+        fun createForInput(parentTitle: String, input: JiveActions.Input) =
+            InputBottomSheetFragment().apply {
+                arguments = bundleOf("parentTitle" to parentTitle, "input" to input)
+            }
     }
 }

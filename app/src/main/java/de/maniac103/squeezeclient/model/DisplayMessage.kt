@@ -18,10 +18,10 @@
 package de.maniac103.squeezeclient.model
 
 import de.maniac103.squeezeclient.cometd.BooleanAsIntSerializer
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonPrimitive
-import kotlin.time.Duration.Companion.milliseconds
 
 @Serializable
 data class DisplayMessage(
@@ -35,7 +35,8 @@ data class DisplayMessage(
     val playMode: String? = null,
     val text: List<String>,
     @SerialName("icon-id")
-    private val internalIconId: JsonPrimitive? = null, // may be string or number
+    // may be string or number
+    private val internalIconId: JsonPrimitive? = null,
     override val icon: String? = null,
     // style = add, repeat, shuffle
     val style: String? = null

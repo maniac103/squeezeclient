@@ -35,6 +35,7 @@ import de.maniac103.squeezeclient.databinding.ActivityPlayerManagementBinding
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.PlayerStatus
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -47,7 +48,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.milliseconds
 
 class PlayerManagementActivity : AppCompatActivity() {
     private lateinit var binding: ActivityPlayerManagementBinding

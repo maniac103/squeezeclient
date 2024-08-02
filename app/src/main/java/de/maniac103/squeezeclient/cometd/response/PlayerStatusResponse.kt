@@ -128,7 +128,7 @@ data class PlayerStatusResponse(
             else -> offset.toInt()
         }
         val (playlist, reachableCount) = if (items != null) {
-            val playlist = items.mapNotNull {it.asModelPlaylistItem(json, base) }
+            val playlist = items.mapNotNull { it.asModelPlaylistItem(json, base) }
             val filteredItems = items.size - playlist.size
             // This assumes filtered items are at the end of the response
             val reachableCount = count - filteredItems

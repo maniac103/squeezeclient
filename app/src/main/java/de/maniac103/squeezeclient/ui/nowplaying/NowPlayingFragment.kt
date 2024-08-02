@@ -59,26 +59,23 @@ import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.ui.bottomsheets.InputBottomSheetFragment
 import de.maniac103.squeezeclient.ui.contextmenu.ContextMenuBottomSheetFragment
 import kotlin.math.max
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
 
-class NowPlayingFragment : Fragment(), MenuProvider,
+class NowPlayingFragment :
+    Fragment(),
+    MenuProvider,
     ContextMenuBottomSheetFragment.Listener,
     InputBottomSheetFragment.PlainSubmitListener {
 
     interface Listener {
-        fun onContextMenuAction(
-            title: String,
-            actionTitle: String?,
-            action: JiveAction
-        ): Job?
-
+        fun onContextMenuAction(title: String, actionTitle: String?, action: JiveAction): Job?
         fun showVolumePopup()
     }
 
@@ -321,7 +318,7 @@ class NowPlayingFragment : Fragment(), MenuProvider,
         ViewCompat.setOnApplyWindowInsetsListener(spacer) { v, windowInsets ->
             val insets = windowInsets.getInsets(
                 WindowInsetsCompat.Type.systemBars() or
-                WindowInsetsCompat.Type.displayCutout()
+                    WindowInsetsCompat.Type.displayCutout()
             )
             val inset = insetSelector(insets)
             listOf(R.id.collapsed, R.id.expanded).forEach { setId ->

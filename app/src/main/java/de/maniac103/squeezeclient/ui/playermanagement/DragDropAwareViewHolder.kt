@@ -41,14 +41,20 @@ open class DragDropAwareViewHolder(
         }
 
     private fun updateForState(state: State) {
-        itemView.animateScale(when (state) {
-            State.Dragged -> 0.95F
-            else -> 1.0F
-        }, ANIMATION_DURATION)
-        contentView.animateScale(when (state) {
-            State.DropTarget -> 0.9F
-            else -> 1.0F
-        }, ANIMATION_DURATION)
+        itemView.animateScale(
+            when (state) {
+                State.Dragged -> 0.95F
+                else -> 1.0F
+            },
+            ANIMATION_DURATION
+        )
+        contentView.animateScale(
+            when (state) {
+                State.DropTarget -> 0.9F
+                else -> 1.0F
+            },
+            ANIMATION_DURATION
+        )
 
         itemView.isSelected = state == State.DropTarget
         itemView.isActivated = state == State.Dragged

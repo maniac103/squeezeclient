@@ -55,10 +55,7 @@ abstract class BaseSlimBrowseItemListFragment :
     InputBottomSheetFragment.ItemSubmitListener {
 
     interface NavigationListener {
-        fun onOpenSubItemList(
-            item: SlimBrowseItemList.SlimBrowseItem,
-            itemFetchAction: JiveAction
-        )
+        fun onOpenSubItemList(item: SlimBrowseItemList.SlimBrowseItem, itemFetchAction: JiveAction)
         fun onOpenWebLink(title: String, link: Uri)
         fun onGoAction(
             title: String,
@@ -237,17 +234,15 @@ abstract class BaseSlimBrowseItemListFragment :
         f.show(childFragmentManager, "choices")
     }
 
-    private fun executeAction(
-        action: JiveAction,
-        nextWindow: SlimBrowseItemList.NextWindow?
-    ) = lifecycleScope.launch {
-        connectionHelper.executeAction(playerId, action)
-        when (action.nextWindow ?: nextWindow) {
-            SlimBrowseItemList.NextWindow.Refresh,
-            SlimBrowseItemList.NextWindow.RefreshOrigin -> refresh()
-            else -> {}
+    private fun executeAction(action: JiveAction, nextWindow: SlimBrowseItemList.NextWindow?) =
+        lifecycleScope.launch {
+            connectionHelper.executeAction(playerId, action)
+            when (action.nextWindow ?: nextWindow) {
+                SlimBrowseItemList.NextWindow.Refresh,
+                SlimBrowseItemList.NextWindow.RefreshOrigin -> refresh()
+                else -> {}
+            }
         }
-    }
 
     private suspend fun loadContextMenuItems(
         action: JiveAction,

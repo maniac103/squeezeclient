@@ -38,7 +38,8 @@ class SlimBrowseSubItemListFragment : BaseSlimBrowseItemListFragment() {
     override val fastScrollEnabled = false
 
     override suspend fun onLoadPage(
-        page: PagingParams // ignored, because subitems aren't paged
+        // ignored, because subitems aren't paged
+        page: PagingParams
     ): ListResponse<SlimBrowseItemList.SlimBrowseItem> {
         val actualPage = PagingParams(parentItemPosition, 1)
         val parentItemList = connectionHelper
@@ -52,7 +53,6 @@ class SlimBrowseSubItemListFragment : BaseSlimBrowseItemListFragment() {
         return ItemListWrapper(requireNotNull(parentItem.subItems))
     }
 
-
     data class ItemListWrapper(override val items: List<SlimBrowseItemList.SlimBrowseItem>) :
         ListResponse<SlimBrowseItemList.SlimBrowseItem> {
         override val offset = 0
@@ -60,18 +60,14 @@ class SlimBrowseSubItemListFragment : BaseSlimBrowseItemListFragment() {
     }
 
     companion object {
-        fun create(
-            playerId: PlayerId,
-            title: String,
-            fetchAction: JiveAction,
-            listPosition: Int
-        ) = SlimBrowseSubItemListFragment().apply {
-            arguments = bundleOf(
-                "playerId" to playerId,
-                "title" to title,
-                "fetchAction" to fetchAction,
-                "listPosition" to listPosition
-            )
-        }
+        fun create(playerId: PlayerId, title: String, fetchAction: JiveAction, listPosition: Int) =
+            SlimBrowseSubItemListFragment().apply {
+                arguments = bundleOf(
+                    "playerId" to playerId,
+                    "title" to title,
+                    "fetchAction" to fetchAction,
+                    "listPosition" to listPosition
+                )
+            }
     }
 }

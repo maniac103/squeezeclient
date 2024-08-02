@@ -30,5 +30,5 @@ data class PlayerData(
     val playbackState: PlayerStatus.PlayState?,
     val volume: Int,
     val powered: Boolean,
-    val master: PlayerId?,
+    val master: PlayerId?
 )

@@ -36,12 +36,12 @@ import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.extfuncs.loadArtwork
 import de.maniac103.squeezeclient.model.DisplayMessage
 import de.maniac103.squeezeclient.model.PlayerId
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.seconds
 
 class DisplayStatusFragment : Fragment() {
     private val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)

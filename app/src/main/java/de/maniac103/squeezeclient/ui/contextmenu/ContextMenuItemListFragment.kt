@@ -90,7 +90,6 @@ class ContextMenuItemListFragment : Fragment() {
             // FIXME: have isSelectable property?
             holder.binding.root.isEnabled = item.actions?.goAction != null
         }
-
     }
 
     private class ItemViewHolder(val binding: ListItemContextMenuBinding) :

@@ -27,7 +27,6 @@ import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.model.WindowStyle
 import de.maniac103.squeezeclient.ui.common.BaseSlimBrowseItemListFragment
-import kotlinx.coroutines.Job
 
 class SlimBrowseItemListFragment : BaseSlimBrowseItemListFragment() {
     override val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)

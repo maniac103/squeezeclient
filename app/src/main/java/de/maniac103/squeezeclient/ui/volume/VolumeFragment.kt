@@ -33,14 +33,14 @@ import de.maniac103.squeezeclient.databinding.FragmentVolumeBinding
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.model.PlayerId
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.launch
 
 class VolumeFragment : Fragment() {
     private val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)
@@ -108,7 +108,7 @@ class VolumeFragment : Fragment() {
     }
 
     fun handleKeyDown(keyCode: Int): Boolean {
-        val volumeDelta = when(keyCode) {
+        val volumeDelta = when (keyCode) {
             KeyEvent.KEYCODE_VOLUME_UP -> 5
             KeyEvent.KEYCODE_VOLUME_DOWN -> -5
             else -> null

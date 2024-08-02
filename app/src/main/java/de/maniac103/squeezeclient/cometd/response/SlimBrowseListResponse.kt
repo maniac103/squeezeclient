@@ -112,7 +112,8 @@ data class SlimBrowseInputResponse(
     val title: String? = null,
     val len: Int,
     val allowedChars: String? = null,
-    val initialText: JsonPrimitive? = null, // might be a string or a number
+    // might be a string or a number
+    val initialText: JsonPrimitive? = null,
     @SerialName("_inputStyle")
     val inputStyle: JiveActions.Input.Type = JiveActions.Input.Type.Text
 ) {

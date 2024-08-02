@@ -39,10 +39,10 @@ import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.ui.common.BasePrepopulatedListAdapter
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.seconds
 
 class SearchFragment : Fragment() {
     interface Listener {

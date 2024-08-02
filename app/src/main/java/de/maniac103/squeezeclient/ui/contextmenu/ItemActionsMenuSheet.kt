@@ -115,7 +115,6 @@ class ItemActionsMenuSheet : BottomSheetDialogFragment() {
         override fun onBindViewHolder(holder: ItemViewHolder, item: ActionItem) {
             holder.binding.root.text = holder.itemView.context.getString(item.labelResId)
         }
-
     }
 
     data class ActionItem(

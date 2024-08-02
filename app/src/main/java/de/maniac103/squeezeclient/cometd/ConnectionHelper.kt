@@ -29,6 +29,7 @@ import de.maniac103.squeezeclient.cometd.request.LocalSearchRequest
 import de.maniac103.squeezeclient.cometd.request.MenuStatusRequest
 import de.maniac103.squeezeclient.cometd.request.MovePlaylistItemRequest
 import de.maniac103.squeezeclient.cometd.request.PlaybackButtonRequest
+import de.maniac103.squeezeclient.cometd.request.PlayerPowerRequest
 import de.maniac103.squeezeclient.cometd.request.PlayerStatusRequest
 import de.maniac103.squeezeclient.cometd.request.RadioSearchRequest
 import de.maniac103.squeezeclient.cometd.request.RemovePlaylistItemRequest
@@ -40,7 +41,6 @@ import de.maniac103.squeezeclient.cometd.request.SetPlaybackPositionRequest
 import de.maniac103.squeezeclient.cometd.request.SetPlaylistPositionRequest
 import de.maniac103.squeezeclient.cometd.request.SetVolumeRequest
 import de.maniac103.squeezeclient.cometd.request.SyncPlayersRequest
-import de.maniac103.squeezeclient.cometd.request.PlayerPowerRequest
 import de.maniac103.squeezeclient.cometd.request.UnsyncPlayerRequest
 import de.maniac103.squeezeclient.cometd.request.UpdateDisplayStatusSubscriptionRequest
 import de.maniac103.squeezeclient.cometd.request.UpdatePlayerStatusSubscriptionRequest

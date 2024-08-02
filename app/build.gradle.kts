@@ -77,7 +77,11 @@ android {
                 "proguard-rules.pro"
             )
             val signing = signingConfigs.findByName("release")
-            if (signing != null && signing.storeFile != null && signing.storePassword != null && signing.keyPassword != null && signing.keyAlias != null) {
+            if (signing?.storeFile != null &&
+                signing.storePassword != null &&
+                signing.keyPassword != null &&
+                signing.keyAlias != null
+            ) {
                 signingConfig = signing
             } else {
                 println("Release signing config not available, falling back to debug config")

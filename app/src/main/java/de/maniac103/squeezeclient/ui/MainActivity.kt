@@ -73,6 +73,7 @@ import de.maniac103.squeezeclient.ui.search.RadioSearchResultsFragment
 import de.maniac103.squeezeclient.ui.search.SearchFragment
 import de.maniac103.squeezeclient.ui.slideshow.GalleryFragment
 import de.maniac103.squeezeclient.ui.volume.VolumeFragment
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -82,7 +83,6 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
-import kotlin.time.Duration.Companion.seconds
 
 class MainActivity :
     AppCompatActivity(),
@@ -556,7 +556,7 @@ class MainActivity :
                 R.string.connection_error_text_connection_failure,
                 textArgument = state.cause.message,
                 action1LabelResId = R.string.connection_error_action_retry,
-                action1Tag = ACTION_TAG_RECONNECT,
+                action1Tag = ACTION_TAG_RECONNECT
             )
             showConnectionErrorHint(f)
         }

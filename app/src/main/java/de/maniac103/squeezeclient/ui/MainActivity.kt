@@ -234,7 +234,11 @@ class MainActivity :
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-        val volumeFragment = if (prefs.useVolumeButtonsForPlayerVolume) volumeFragment else null
+        val volumeFragment = when {
+            nowPlayingFragment?.isVisible != true -> null // don't forward key in disconnected state
+            prefs.useVolumeButtonsForPlayerVolume -> volumeFragment
+            else -> null
+        }
         if (volumeFragment?.handleKeyDown(keyCode) == true) {
             return true
         }
@@ -242,7 +246,11 @@ class MainActivity :
     }
 
     override fun onKeyUp(keyCode: Int, event: KeyEvent?): Boolean {
-        val volumeFragment = if (prefs.useVolumeButtonsForPlayerVolume) volumeFragment else null
+        val volumeFragment = when {
+            nowPlayingFragment?.isVisible != true -> null // don't forward key in disconnected state
+            prefs.useVolumeButtonsForPlayerVolume -> volumeFragment
+            else -> null
+        }
         if (volumeFragment?.handleKeyUp(keyCode) == true) {
             return true
         }

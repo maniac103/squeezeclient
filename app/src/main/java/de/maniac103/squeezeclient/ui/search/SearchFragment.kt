@@ -23,6 +23,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
+import androidx.activity.BackEventCompat
+import androidx.activity.OnBackPressedCallback
 import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
@@ -34,11 +36,13 @@ import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.cometd.request.LibrarySearchRequest
 import de.maniac103.squeezeclient.databinding.FragmentSearchBinding
 import de.maniac103.squeezeclient.databinding.ListItemSearchCategoryBinding
+import de.maniac103.squeezeclient.extfuncs.animateScale
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.ui.common.BasePrepopulatedListAdapter
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -77,6 +81,26 @@ class SearchFragment : Fragment() {
         null
     )
 
+    private val onBackPressedCallback = object : OnBackPressedCallback(true) {
+        override fun handleOnBackPressed() {
+            (activity as? Listener)?.onCloseSearch()
+        }
+
+        override fun handleOnBackProgressed(backEvent: BackEventCompat) {
+            val scale = 1F - 0.2F * backEvent.progress
+            binding.searchPill.apply {
+                scaleX = scale
+                scaleY = scale
+            }
+            binding.root.background.alpha = (255F * (1F - 0.5F * backEvent.progress)).toInt()
+        }
+
+        override fun handleOnBackCancelled() {
+            binding.searchPill.animateScale(1F, 200.milliseconds)
+            binding.root.background.alpha = 255
+        }
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -88,6 +112,12 @@ class SearchFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        requireActivity().onBackPressedDispatcher.addCallback(
+            viewLifecycleOwner,
+            onBackPressedCallback
+        )
+
         binding.categories.apply {
             val categories = listOf(
                 artistCategory,

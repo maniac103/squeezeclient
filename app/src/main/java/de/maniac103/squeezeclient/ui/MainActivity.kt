@@ -23,6 +23,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.KeyEvent
 import android.view.Menu
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.browser.customtabs.CustomTabsIntent
@@ -106,6 +107,12 @@ class MainActivity :
     private var homeMenu: Map<String, JiveHomeMenuItem> = mapOf()
     private var consecutiveUnsuccessfulConnectAttempts = 0
 
+    private val onBackPressedBlockerCallback = object : OnBackPressedCallback(false) {
+        override fun handleOnBackPressed() {
+            // no-op, just present to prevent popping fragment back stack
+        }
+    }
+
     private val mainListFragment get() =
         supportFragmentManager.findFragmentById(binding.container.id)
     private val nowPlayingFragment get() =
@@ -118,6 +125,8 @@ class MainActivity :
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+
+        onBackPressedDispatcher.addCallback(this, onBackPressedBlockerCallback)
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -217,20 +226,6 @@ class MainActivity :
         currentPlayerScope?.cancel()
         currentPlayerScope = null
         super.onStop()
-    }
-
-    @Deprecated("Deprecated in Java")
-    @Suppress("deprecation")
-    override fun onBackPressed() = when {
-        searchFragment != null -> onCloseSearch()
-        nowPlayingFragment?.collapseIfExpanded() == true -> {}
-        supportFragmentManager.backStackEntryCount > 0 -> {
-            if (!binding.loadingIndicator.isVisible) {
-                supportFragmentManager.popBackStack()
-            }
-            Unit
-        }
-        else -> super.onBackPressed()
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
@@ -607,6 +602,7 @@ class MainActivity :
         binding.toolbar.subtitle = player?.name
         updatePlayerDependentMenuItems()
         updateBreadcrumbs()
+        updateOnBackPressedCallbackState()
     }
 
     private fun hideContentAndShowLoadingIndicator() {
@@ -621,6 +617,7 @@ class MainActivity :
         binding.toolbar.subtitle = null
         binding.navigationView.menu.removeGroup(R.id.menu_players)
         updatePlayerDependentMenuItems()
+        updateOnBackPressedCallbackState()
     }
 
     private fun showConnectionErrorHint(f: ConnectionErrorHintFragment) {
@@ -636,16 +633,24 @@ class MainActivity :
         binding.toolbar.subtitle = null
         binding.navigationView.menu.removeGroup(R.id.menu_players)
         updatePlayerDependentMenuItems()
+        updateOnBackPressedCallbackState()
     }
 
     private fun updateBreadcrumbs() = supportFragmentManager.apply {
-        val breadcrumbs = (0 until backStackEntryCount).mapNotNull { index ->
-            val f = findFragmentByTag(getBackStackEntryAt(index).name)
-            (f as? MainContentFragment)?.title
-        }
+        val breadcrumbs = (0 until backStackEntryCount)
+            .map { index -> getBackStackEntryAt(index) }
+            .distinctBy { it.name } // after back press cancel latest fragment might appear twice
+            .mapNotNull {
+                val f = findFragmentByTag(it.name)
+                (f as? MainContentFragment)?.title
+            }
         binding.breadcrumbsContainer.isVisible = breadcrumbs.isNotEmpty()
         binding.breadcrumbs.text =
             breadcrumbs.joinToString(separator = " › ", prefix = " › ")
+    }
+
+    private fun updateOnBackPressedCallbackState() {
+        onBackPressedBlockerCallback.isEnabled = binding.loadingIndicator.isVisible
     }
 
     private fun openServerSetup(allowBack: Boolean) {

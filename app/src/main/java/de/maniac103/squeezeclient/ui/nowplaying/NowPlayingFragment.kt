@@ -25,6 +25,8 @@ import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.BackEventCompat
+import androidx.activity.OnBackPressedCallback
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.graphics.Insets
@@ -89,19 +91,47 @@ class NowPlayingFragment :
     private var sliderDragUpdateJob: Job? = null
     private var currentSong: Playlist.PlaylistItem? = null
 
-    fun collapseIfExpanded(): Boolean {
-        if (
-            playlistBottomSheetBehavior.isDraggable &&
-            playlistBottomSheetBehavior.state == BottomSheetBehavior.STATE_EXPANDED
-        ) {
-            playlistBottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
-            return true
+    private val onBackPressedCallback = object : OnBackPressedCallback(false) {
+        private var startedCollapse = false
+
+        override fun handleOnBackPressed() {
+            when {
+                canCollapsePlaylist() -> playlistBottomSheetBehavior.handleBackInvoked()
+                sheetIsExpanded() || startedCollapse -> {
+                    binding.container.transitionToState(R.id.collapsed)
+                    startedCollapse = false
+                }
+            }
         }
-        if (binding.container.currentState == R.id.expanded) {
-            binding.container.transitionToState(R.id.collapsed)
-            return true
+
+        override fun handleOnBackStarted(backEvent: BackEventCompat) {
+            when {
+                canCollapsePlaylist() -> playlistBottomSheetBehavior.startBackProgress(backEvent)
+                sheetIsExpanded() -> {
+                    binding.container.setTransition(R.id.expanded, R.id.collapsed)
+                    binding.container.progress = 0F
+                    startedCollapse = true
+                }
+            }
         }
-        return false
+
+        override fun handleOnBackProgressed(backEvent: BackEventCompat) {
+            when {
+                canCollapsePlaylist() -> playlistBottomSheetBehavior.updateBackProgress(backEvent)
+                startedCollapse -> binding.container.progress = 0.25F * backEvent.progress
+            }
+        }
+
+        override fun handleOnBackCancelled() {
+            when {
+                canCollapsePlaylist() -> playlistBottomSheetBehavior.cancelBackProgress()
+                startedCollapse -> {
+                    binding.container.setTransition(R.id.collapsed, R.id.expanded)
+                    binding.container.progress = 1F
+                    startedCollapse = false
+                }
+            }
+        }
     }
 
     fun expandIfNeeded() {
@@ -123,6 +153,11 @@ class NowPlayingFragment :
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        requireActivity().onBackPressedDispatcher.addCallback(
+            viewLifecycleOwner,
+            onBackPressedCallback
+        )
+
         if (playlistFragment == null) {
             childFragmentManager.commit {
                 add(binding.playlistFragment.id, PlaylistFragment.create(playerId))
@@ -137,6 +172,7 @@ class NowPlayingFragment :
                         playlistFragment?.scrollToCurrentPlaylistPosition()
                     }
                     binding.toolbar.invalidateMenu()
+                    updateBackPressedCallbackState()
                 }
 
                 override fun onSlide(bottomSheet: View, slideOffset: Float) {
@@ -179,6 +215,7 @@ class NowPlayingFragment :
         }
 
         binding.container.doOnTransitionCompleted {
+            updateBackPressedCallbackState()
             binding.toolbar.invalidateMenu()
         }
 
@@ -456,6 +493,26 @@ class NowPlayingFragment :
             }
         }
     }
+
+    private fun updateBackPressedCallbackState() {
+        val playlistExpandedAndCollapsible = playlistBottomSheetBehavior.isDraggable &&
+            playlistBottomSheetBehavior.state == BottomSheetBehavior.STATE_EXPANDED
+        val isExpanded = binding.container.currentState == R.id.expanded
+
+        onBackPressedCallback.isEnabled = playlistExpandedAndCollapsible || isExpanded
+    }
+
+    private fun collapseIfExpanded() = when {
+        canCollapsePlaylist() ->
+            playlistBottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+        sheetIsExpanded() -> binding.container.transitionToState(R.id.collapsed)
+        else -> {}
+    }
+
+    private fun canCollapsePlaylist() = playlistBottomSheetBehavior.isDraggable &&
+        playlistBottomSheetBehavior.state == BottomSheetBehavior.STATE_EXPANDED
+
+    private fun sheetIsExpanded() = binding.container.currentState == R.id.expanded
 
     companion object {
         fun create(playerId: PlayerId) = NowPlayingFragment().apply {

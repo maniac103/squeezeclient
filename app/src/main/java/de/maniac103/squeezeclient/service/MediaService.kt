@@ -119,7 +119,7 @@ class MediaService : MediaSessionService(), LifecycleOwner, MediaSession.Callbac
         val activityIntent = PendingIntent.getActivity(
             this,
             0,
-            Intent(this, MainActivity::class.java),
+            Intent(this, MainActivity::class.java).setAction(Intent.ACTION_MAIN),
             PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         mediaSession = MediaSession.Builder(this, player)

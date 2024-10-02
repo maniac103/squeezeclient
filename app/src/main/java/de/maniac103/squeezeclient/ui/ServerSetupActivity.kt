@@ -91,8 +91,10 @@ class ServerSetupActivity : AppCompatActivity() {
                 )
                 val intent = Intent(this@ServerSetupActivity, MainActivity::class.java).apply {
                     addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 }
                 startActivity(intent)
+                finish()
             }
         }
 

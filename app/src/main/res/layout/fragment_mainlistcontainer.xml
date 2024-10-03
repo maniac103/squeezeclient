@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <!--
   ~ This file is part of Squeeze Client, an Android client for the LMS music server.
   ~ Copyright (c) 2024 Danny Baumann
@@ -17,28 +16,9 @@
   ~
   -->
 
-<de.maniac103.squeezeclient.ui.common.MainContentContainerView
+<androidx.fragment.app.FragmentContainerView
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/list_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
-
-    <com.google.android.material.progressindicator.LinearProgressIndicator
-        android:id="@+id/progress"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:visibility="gone"
-        android:indeterminate="true"
-        app:trackThickness="3dp"
-        app:trackStopIndicatorSize="0dp"
-        tools:visibility="visible" />
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recycler"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:clipToPadding="false" />
-
-</de.maniac103.squeezeclient.ui.common.MainContentContainerView>
+    android:background="?colorSurfaceContainer" />

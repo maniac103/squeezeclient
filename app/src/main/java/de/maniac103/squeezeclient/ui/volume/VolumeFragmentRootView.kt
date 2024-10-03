@@ -22,10 +22,8 @@ import android.util.AttributeSet
 import android.widget.LinearLayout
 
 class VolumeFragmentRootView(context: Context, attrs: AttributeSet) : LinearLayout(context, attrs) {
+    @Suppress("unused") // used via animator
     fun setXOffsetRatio(offset: Float) {
-        val width = width
-        if (width > 0) {
-            translationX = offset * width
-        }
+        width.takeIf { it > 0 }?.let { translationX = offset * it }
     }
 }

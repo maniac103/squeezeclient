@@ -19,6 +19,8 @@ package de.maniac103.squeezeclient.ui.common
 
 import android.net.Uri
 import android.os.Build
+import android.os.Bundle
+import android.view.View
 import androidx.core.net.toUri
 import androidx.lifecycle.lifecycleScope
 import androidx.paging.PagingDataAdapter
@@ -44,6 +46,7 @@ import de.maniac103.squeezeclient.ui.contextmenu.ContextMenuBottomSheetFragment
 import de.maniac103.squeezeclient.ui.contextmenu.ItemActionsMenuSheet
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 
 abstract class BaseSlimBrowseItemListFragment :
@@ -66,8 +69,16 @@ abstract class BaseSlimBrowseItemListFragment :
     }
 
     protected abstract val playerId: PlayerId
+    protected abstract val title: String
     protected abstract val showIcons: Boolean
     protected open val fetchAction: JiveAction? = null
+
+    override val titleFlow get() = flowOf(title)
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        binding.root.enableMainContentBackground()
+    }
 
     override fun onCreateAdapter(
         diffCallback: DiffUtil.ItemCallback<SlimBrowseItemList.SlimBrowseItem>

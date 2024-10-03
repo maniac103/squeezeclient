@@ -15,13 +15,17 @@
  *
  */
 
-package de.maniac103.squeezeclient.ui.common
+package de.maniac103.squeezeclient.ui.widget
 
-import android.view.View
-import androidx.fragment.app.Fragment
-import kotlinx.coroutines.flow.Flow
+import android.graphics.Color
+import android.text.TextPaint
+import android.text.style.CharacterStyle
+import android.text.style.UpdateAppearance
 
-abstract class MainContentFragment : Fragment() {
-    abstract val scrollingTargetView: View
-    abstract val titleFlow: Flow<String?>
+class AlphaSpan(private val alpha: Float) : CharacterStyle(), UpdateAppearance {
+    override fun updateDrawState(paint: TextPaint) {
+        val color = paint.color
+        val newAlpha = (alpha * Color.alpha(color)).toInt()
+        paint.color = Color.argb(newAlpha, Color.red(color), Color.green(color), Color.blue(color))
+    }
 }

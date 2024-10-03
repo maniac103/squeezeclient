@@ -34,10 +34,11 @@ import de.maniac103.squeezeclient.extfuncs.withRoundedCorners
 import de.maniac103.squeezeclient.model.SlideshowImage
 import de.maniac103.squeezeclient.ui.common.BasePrepopulatedListAdapter
 import de.maniac103.squeezeclient.ui.common.MainContentFragment
+import kotlinx.coroutines.flow.flowOf
 
 class GalleryFragment : MainContentFragment() {
     private val items get() = requireArguments().getParcelableList("items", SlideshowImage::class)
-    override val title get() = requireArguments().getString("title")!!
+    override val titleFlow get() = flowOf(requireArguments().getString("title"))
     override val scrollingTargetView get() = binding.recycler
 
     private lateinit var binding: FragmentGenericListBinding
@@ -53,6 +54,7 @@ class GalleryFragment : MainContentFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        binding.root.enableMainContentBackground()
         binding.recycler.apply {
             layoutManager = GridLayoutManager(requireContext(), 2, RecyclerView.VERTICAL, false)
             adapter = GalleryAdapter(items)

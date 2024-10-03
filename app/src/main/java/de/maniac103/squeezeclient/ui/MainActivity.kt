@@ -20,10 +20,12 @@ package de.maniac103.squeezeclient.ui
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.text.SpannableStringBuilder
 import android.util.Log
 import android.view.KeyEvent
 import android.view.Menu
-import androidx.activity.OnBackPressedCallback
+import android.view.View
+import android.view.animation.AnimationUtils
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.browser.customtabs.CustomTabsIntent
@@ -32,9 +34,6 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.core.view.updatePadding
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentManager
-import androidx.fragment.app.FragmentManager.FragmentLifecycleCallbacks
 import androidx.fragment.app.commit
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -62,7 +61,6 @@ import de.maniac103.squeezeclient.service.MediaService
 import de.maniac103.squeezeclient.ui.bottomsheets.InfoBottomSheet
 import de.maniac103.squeezeclient.ui.bottomsheets.SliderBottomSheetFragment
 import de.maniac103.squeezeclient.ui.common.BaseSlimBrowseItemListFragment
-import de.maniac103.squeezeclient.ui.common.MainContentFragment
 import de.maniac103.squeezeclient.ui.itemlist.JiveHomeListItemFragment
 import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseItemListFragment
 import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseSubItemListFragment
@@ -74,6 +72,7 @@ import de.maniac103.squeezeclient.ui.search.RadioSearchResultsFragment
 import de.maniac103.squeezeclient.ui.search.SearchFragment
 import de.maniac103.squeezeclient.ui.slideshow.GalleryFragment
 import de.maniac103.squeezeclient.ui.volume.VolumeFragment
+import de.maniac103.squeezeclient.ui.widget.AlphaSpan
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -87,6 +86,7 @@ import kotlinx.coroutines.plus
 
 class MainActivity :
     AppCompatActivity(),
+    MainListHolderFragment.Listener,
     JiveHomeListItemFragment.NavigationListener,
     BaseSlimBrowseItemListFragment.NavigationListener,
     SliderBottomSheetFragment.ChangeListener,
@@ -106,15 +106,14 @@ class MainActivity :
     private var currentPlayerVolume = 0
     private var homeMenu: Map<String, JiveHomeMenuItem> = mapOf()
     private var consecutiveUnsuccessfulConnectAttempts = 0
-
-    private val onBackPressedBlockerCallback = object : OnBackPressedCallback(false) {
-        override fun handleOnBackPressed() {
-            // no-op, just present to prevent popping fragment back stack
-        }
+    private val breadcrumbsProgressInterpolator by lazy {
+        AnimationUtils.loadInterpolator(this, android.R.interpolator.decelerate_quint)
     }
 
-    private val mainListFragment get() =
-        supportFragmentManager.findFragmentById(binding.container.id)
+    private val mainListContainer get() =
+        supportFragmentManager.findFragmentById(binding.container.id) as? MainListHolderFragment
+    private val errorFragment get() =
+        supportFragmentManager.findFragmentById(binding.container.id) as? ConnectionErrorHintFragment
     private val nowPlayingFragment get() =
         supportFragmentManager.findFragmentById(binding.playerContainer.id) as? NowPlayingFragment
     private val searchFragment get() =
@@ -125,8 +124,6 @@ class MainActivity :
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-
-        onBackPressedDispatcher.addCallback(this, onBackPressedBlockerCallback)
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -189,27 +186,11 @@ class MainActivity :
         }
 
         binding.breadcrumbsHome.setOnClickListener {
-            clearBackStack()
+            mainListContainer?.clearBackStack()
         }
 
-        supportFragmentManager.apply {
-            addOnBackStackChangedListener { updateBreadcrumbs() }
-            registerFragmentLifecycleCallbacks(
-                object : FragmentLifecycleCallbacks() {
-                    override fun onFragmentStarted(fm: FragmentManager, f: Fragment) {
-                        super.onFragmentStarted(fm, f)
-                        if (f.id == binding.container.id) {
-                            val scrollTarget = (f as? MainContentFragment)?.scrollingTargetView
-                            binding.appbarContainer.setLiftOnScrollTargetView(scrollTarget)
-                        }
-                    }
-                },
-                false
-            )
-        }
         savedInstanceState?.let {
             player = savedInstanceState.getParcelableOrNull("player", Player::class)
-            updateBreadcrumbs()
         }
     }
 
@@ -252,13 +233,48 @@ class MainActivity :
         return super.onKeyUp(keyCode, event)
     }
 
+    // MainListHolderFragment.Listener implementation
+
+    override fun onScrollTargetChanged(scrollTarget: View?) {
+        binding.appbarContainer.setLiftOnScrollTargetView(scrollTarget)
+    }
+
+    override fun onContentStackChanged(
+        titles: List<String>,
+        pendingTitle: String?,
+        pendingProgress: Float
+    ) {
+        val hasBreadcrumbs = titles.isNotEmpty() || pendingTitle != null
+        binding.breadcrumbsContainer.isVisible = hasBreadcrumbs
+        if (hasBreadcrumbs) {
+            val breadcrumbs = SpannableStringBuilder()
+            val alpha = 1F - breadcrumbsProgressInterpolator.getInterpolation(pendingProgress)
+            titles.forEach { breadcrumbs.append(" › ").append(it) }
+            pendingTitle?.let {
+                breadcrumbs.append(" › ").append(it)
+                breadcrumbs.setSpan(
+                    AlphaSpan(alpha),
+                    breadcrumbs.length - it.length - 3 /* separator length */,
+                    breadcrumbs.length,
+                    SpannableStringBuilder.SPAN_INCLUSIVE_INCLUSIVE
+                )
+            }
+            binding.breadcrumbs.text = breadcrumbs
+        }
+    }
+
     // JiveHomeListItemFragment.NavigationListener implementation
 
     override fun onNodeSelected(nodeId: String) {
         val player = this.player ?: return
         if (homeMenu.values.any { it.node == nodeId }) {
             val f = JiveHomeListItemFragment.create(player.id, nodeId)
-            replaceMainContent(f, "home:$nodeId", nodeId != "home")
+            val mode = if (nodeId == "home") {
+                MainListHolderFragment.ReplacementMode.SetAsHome
+            } else {
+                MainListHolderFragment.ReplacementMode.OnTopOfStack
+            }
+            mainListContainer?.replaceContent(f, "home:$nodeId", mode)
         }
     }
 
@@ -278,8 +294,11 @@ class MainActivity :
             itemFetchAction,
             item.listPosition
         )
-        val level = supportFragmentManager.backStackEntryCount
-        replaceMainContent(f, "l$level-p${item.listPosition}-subitems", true)
+        mainListContainer?.replaceContent(
+            f,
+            "pos${item.listPosition}-subitems",
+            MainListHolderFragment.ReplacementMode.OnTopOfStack
+        )
     }
 
     override fun onOpenWebLink(title: String, link: Uri) {
@@ -321,7 +340,7 @@ class MainActivity :
         actionTitle: String?,
         action: JiveAction
     ): Job? {
-        clearBackStack()
+        mainListContainer?.clearBackStack()
         return handleGoAction(listOfNotNull(title, actionTitle), action)
     }
 
@@ -345,8 +364,11 @@ class MainActivity :
         onCloseSearch()
         player?.id?.let { playerId ->
             val f = LibrarySearchResultsFragment.create(playerId, type, searchTerm)
-            clearBackStack()
-            replaceMainContent(f, "localsearch-$searchTerm", true)
+            mainListContainer?.replaceContent(
+                f,
+                "localsearch-$searchTerm",
+                MainListHolderFragment.ReplacementMode.OnTopOfHome
+            )
         }
     }
 
@@ -354,8 +376,11 @@ class MainActivity :
         onCloseSearch()
         player?.id?.let { playerId ->
             val f = RadioSearchResultsFragment.create(playerId, searchTerm)
-            clearBackStack()
-            replaceMainContent(f, "radiosearch-$searchTerm", true)
+            mainListContainer?.replaceContent(
+                f,
+                "radiosearch-$searchTerm",
+                MainListHolderFragment.ReplacementMode.OnTopOfHome
+            )
         }
     }
 
@@ -368,8 +393,11 @@ class MainActivity :
             if (action.isSlideshow) {
                 val items = connectionHelper.fetchSlideshowImages(player.id, action)
                 val f = GalleryFragment.create(items, title.joinToString(" › "))
-                val level = supportFragmentManager.backStackEntryCount
-                replaceMainContent(f, "l$level-gallery", true)
+                mainListContainer?.replaceContent(
+                    f,
+                    "gallery",
+                    MainListHolderFragment.ReplacementMode.OnTopOfStack
+                )
                 return@launch
             }
             // Fetch first item of page to check whether we're dealing with a slider or a normal page
@@ -394,8 +422,11 @@ class MainActivity :
                         action,
                         result.window?.windowStyle
                     )
-                    val level = supportFragmentManager.backStackEntryCount
-                    replaceMainContent(f, "l$level-items", true)
+                    mainListContainer?.replaceContent(
+                        f,
+                        "items",
+                        MainListHolderFragment.ReplacementMode.OnTopOfStack
+                    )
                 }
             }
         }
@@ -415,18 +446,12 @@ class MainActivity :
                 }
             SlimBrowseItemList.NextWindow.Home,
             SlimBrowseItemList.NextWindow.MyMusic ->
-                clearBackStack()
+                mainListContainer?.clearBackStack()
             SlimBrowseItemList.NextWindow.NowPlaying -> {
-                clearBackStack()
+                mainListContainer?.clearBackStack()
                 nowPlayingFragment?.expandIfNeeded()
             }
             else -> {}
-        }
-    }
-
-    private fun clearBackStack() = supportFragmentManager.apply {
-        while (backStackEntryCount > 0) {
-            popBackStackImmediate()
         }
     }
 
@@ -456,10 +481,12 @@ class MainActivity :
             currentPlayerScope = null
             homeMenu = emptyMap()
             this.player = player
-            clearBackStack()
             supportFragmentManager.commit {
-                mainListFragment?.let { remove(it) }
+                mainListContainer?.let { remove(it) }
+                val mainListHolder = MainListHolderFragment.create()
+                replace(binding.container.id, mainListHolder)
                 replace(binding.playerContainer.id, NowPlayingFragment.create(player.id))
+                setPrimaryNavigationFragment(mainListHolder)
 
                 val volumeFragment = VolumeFragment.create(player.id)
                 replace(binding.volumeContainer.id, volumeFragment)
@@ -498,7 +525,7 @@ class MainActivity :
 
         stateFlow.flatMapLatest { it.homeMenu }.onEach { items ->
             homeMenu = items
-            if (mainListFragment == null || mainListFragment is ConnectionErrorHintFragment) {
+            if (mainListContainer?.hasContent != true || errorFragment != null) {
                 onNodeSelected("home")
             }
         }.launchIn(scope)
@@ -565,22 +592,8 @@ class MainActivity :
         }
     }
 
-    private fun replaceMainContent(
-        content: MainContentFragment,
-        tag: String,
-        addToBackStack: Boolean
-    ) {
-        supportFragmentManager.commit {
-            replace(binding.container.id, content, tag)
-            if (addToBackStack) {
-                addToBackStack(tag)
-            }
-        }
-    }
-
     private fun updatePlayerDependentMenuItems() {
-        val isInLoadingOrErrorState = binding.loadingIndicator.isVisible ||
-            mainListFragment is ConnectionErrorHintFragment
+        val isInLoadingOrErrorState = binding.loadingIndicator.isVisible || errorFragment != null
 
         binding.toolbar.menu.findItem(R.id.search)?.let {
             it.isVisible = player != null && !isInLoadingOrErrorState
@@ -593,7 +606,10 @@ class MainActivity :
 
     private fun showContentAndHideLoadingIndicator() {
         supportFragmentManager.commit {
-            mainListFragment?.let { show(it) }
+            mainListContainer?.let {
+                show(it)
+                setPrimaryNavigationFragment(it)
+            }
             nowPlayingFragment?.let { show(it) }
             searchFragment?.let { show(it) }
         }
@@ -601,15 +617,14 @@ class MainActivity :
         binding.loadingIndicator.isVisible = false
         binding.toolbar.subtitle = player?.name
         updatePlayerDependentMenuItems()
-        updateBreadcrumbs()
-        updateOnBackPressedCallbackState()
     }
 
     private fun hideContentAndShowLoadingIndicator() {
         supportFragmentManager.commit {
-            mainListFragment?.let { hide(it) }
+            mainListContainer?.let { hide(it) }
             nowPlayingFragment?.let { hide(it) }
             searchFragment?.let { hide(it) }
+            setPrimaryNavigationFragment(null)
         }
         binding.nowplayingPlaceholder?.isVisible = false
         binding.breadcrumbsContainer.isVisible = false
@@ -617,11 +632,9 @@ class MainActivity :
         binding.toolbar.subtitle = null
         binding.navigationView.menu.removeGroup(R.id.menu_players)
         updatePlayerDependentMenuItems()
-        updateOnBackPressedCallbackState()
     }
 
     private fun showConnectionErrorHint(f: ConnectionErrorHintFragment) {
-        clearBackStack()
         supportFragmentManager.commit {
             replace(binding.container.id, f)
             nowPlayingFragment?.let { hide(it) }
@@ -633,24 +646,6 @@ class MainActivity :
         binding.toolbar.subtitle = null
         binding.navigationView.menu.removeGroup(R.id.menu_players)
         updatePlayerDependentMenuItems()
-        updateOnBackPressedCallbackState()
-    }
-
-    private fun updateBreadcrumbs() = supportFragmentManager.apply {
-        val breadcrumbs = (0 until backStackEntryCount)
-            .map { index -> getBackStackEntryAt(index) }
-            .distinctBy { it.name } // after back press cancel latest fragment might appear twice
-            .mapNotNull {
-                val f = findFragmentByTag(it.name)
-                (f as? MainContentFragment)?.title
-            }
-        binding.breadcrumbsContainer.isVisible = breadcrumbs.isNotEmpty()
-        binding.breadcrumbs.text =
-            breadcrumbs.joinToString(separator = " › ", prefix = " › ")
-    }
-
-    private fun updateOnBackPressedCallbackState() {
-        onBackPressedBlockerCallback.isEnabled = binding.loadingIndicator.isVisible
     }
 
     private fun openServerSetup(allowBack: Boolean) {

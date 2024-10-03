@@ -42,6 +42,7 @@ import de.maniac103.squeezeclient.ui.common.MainContentFragment
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 class JiveHomeListItemFragment :
@@ -57,7 +58,11 @@ class JiveHomeListItemFragment :
     private val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)
     private val nodeId get() = requireArguments().getString("nodeId")!!
     override val scrollingTargetView get() = binding.recycler
-    override val title: String get() = latestMenu[nodeId]?.title ?: ""
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override val titleFlow get() = connectionHelper
+        .playerState(playerId)
+        .flatMapLatest { it.homeMenu }
+        .map { it[nodeId]?.title }
 
     private lateinit var binding: FragmentGenericListBinding
     private var adapter: JiveHomeItemListAdapter? = null
@@ -88,6 +93,7 @@ class JiveHomeListItemFragment :
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        binding.root.enableMainContentBackground()
         binding.recycler.layoutManager = LinearLayoutManager(
             requireContext(),
             RecyclerView.VERTICAL,

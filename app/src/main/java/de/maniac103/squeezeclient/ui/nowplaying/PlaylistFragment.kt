@@ -41,13 +41,14 @@ import de.maniac103.squeezeclient.model.Playlist
 import de.maniac103.squeezeclient.ui.common.BasePagingListFragment
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
 
 class PlaylistFragment :
     BasePagingListFragment<Playlist.PlaylistItem, PlaylistItemViewHolder>() {
     private val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)
-    override val title get() = getString(R.string.playlist)
+    override val titleFlow get() = flowOf(getString(R.string.playlist))
     override val fastScrollEnabled = true
     override val useGrid = false
 

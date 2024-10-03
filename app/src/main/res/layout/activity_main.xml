@@ -55,6 +55,7 @@
                 android:padding="8dp"
                 android:orientation="horizontal"
                 android:visibility="gone"
+                android:animateLayoutChanges="true"
                 tools:visibility="visible">
 
                 <ImageView

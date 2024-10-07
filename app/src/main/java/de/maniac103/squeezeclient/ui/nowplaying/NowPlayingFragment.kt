@@ -495,11 +495,7 @@ class NowPlayingFragment :
     }
 
     private fun updateBackPressedCallbackState() {
-        val playlistExpandedAndCollapsible = playlistBottomSheetBehavior.isDraggable &&
-            playlistBottomSheetBehavior.state == BottomSheetBehavior.STATE_EXPANDED
-        val isExpanded = binding.container.currentState == R.id.expanded
-
-        onBackPressedCallback.isEnabled = playlistExpandedAndCollapsible || isExpanded
+        onBackPressedCallback.isEnabled = canCollapsePlaylist() || sheetIsExpanded()
     }
 
     private fun collapseIfExpanded() = when {

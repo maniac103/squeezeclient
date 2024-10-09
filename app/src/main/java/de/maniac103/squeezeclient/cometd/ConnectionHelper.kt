@@ -123,7 +123,7 @@ class ConnectionHelper(private val appContext: SqueezeClientApplication) {
             return
         }
         val prefs = appContext.prefs
-        val client = prefs.serverConfig?.let { CometdClient(json, it) }
+        val client = prefs.serverConfig?.let { CometdClient(appContext.httpClient, json, it) }
             ?: return
 
         this.client = client

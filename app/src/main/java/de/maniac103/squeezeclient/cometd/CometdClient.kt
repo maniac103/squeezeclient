@@ -61,8 +61,12 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.ResponseBody
 import okhttp3.logging.HttpLoggingInterceptor
 
-class CometdClient(private val json: Json, private val serverConfig: ServerConfiguration) {
-    private val requestClient = OkHttpClient.Builder()
+class CometdClient(
+    private val httpClient: OkHttpClient,
+    private val json: Json,
+    private val serverConfig: ServerConfiguration
+) {
+    private val requestClient = httpClient.newBuilder()
         .apply {
             if (HTTP_LOGGING_LEVEL != HttpLoggingInterceptor.Level.NONE) {
                 val logger = HttpLoggingInterceptor.Logger { message -> Log.d(TAG, message) }
@@ -177,7 +181,7 @@ class CometdClient(private val json: Json, private val serverConfig: ServerConfi
             put("id", nextId++)
         }
         val request = buildRequest(connectMessage, metaSubscribeMessage)
-        val subscriptionClient = OkHttpClient.Builder()
+        val subscriptionClient = httpClient.newBuilder()
             .readTimeout(listenTimeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
             .build()
         val body = withContext(Dispatchers.IO) {

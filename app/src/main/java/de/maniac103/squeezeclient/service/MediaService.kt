@@ -40,6 +40,10 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.common.SimpleBasePlayer
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.DataSourceBitmapLoader
+import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.datasource.okhttp.OkHttpDataSource
+import androidx.media3.session.CacheBitmapLoader
 import androidx.media3.session.CommandButton
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSession.ConnectionResult
@@ -52,6 +56,7 @@ import de.maniac103.squeezeclient.cometd.ConnectionHelper
 import de.maniac103.squeezeclient.cometd.ConnectionState
 import de.maniac103.squeezeclient.cometd.request.PlaybackButtonRequest
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
+import de.maniac103.squeezeclient.extfuncs.httpClient
 import de.maniac103.squeezeclient.extfuncs.lastSelectedPlayer
 import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.model.PagingParams
@@ -122,10 +127,20 @@ class MediaService : MediaSessionService(), LifecycleOwner, MediaSession.Callbac
             Intent(this, MainActivity::class.java).setAction(Intent.ACTION_MAIN),
             PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
+
+        val dataSourceFactory = DefaultDataSource.Factory(
+            this,
+            OkHttpDataSource.Factory(httpClient)
+        )
+        val bitmapLoader = DataSourceBitmapLoader(
+            DataSourceBitmapLoader.DEFAULT_EXECUTOR_SERVICE.get(),
+            dataSourceFactory
+        )
         mediaSession = MediaSession.Builder(this, player)
             .setCallback(this)
             .setCustomLayout(listOf(powerButton, disconnectButton))
             .setSessionActivity(activityIntent)
+            .setBitmapLoader(CacheBitmapLoader(bitmapLoader))
             .build()
         addSession(mediaSession)
     }

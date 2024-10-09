@@ -40,6 +40,7 @@ import androidx.work.workDataOf
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.extfuncs.DownloadFolderStructure
 import de.maniac103.squeezeclient.extfuncs.downloadFolderStructure
+import de.maniac103.squeezeclient.extfuncs.httpClient
 import de.maniac103.squeezeclient.extfuncs.jsonParser
 import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.extfuncs.serverConfig
@@ -52,7 +53,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 import kotlinx.serialization.encodeToString
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.ResponseBody
 import okio.Buffer
@@ -73,8 +73,7 @@ class DownloadWorker(
         val serverConfig = applicationContext.prefs.serverConfig
             ?: return Result.failure()
         val baseUrl = serverConfig.url
-        val authorizationHeader = serverConfig.credentialsAsAuthorizationHeader
-        val client = OkHttpClient.Builder().build()
+        val client = applicationContext.httpClient
         val resolver = applicationContext.contentResolver
         val folderStructure = applicationContext.prefs.downloadFolderStructure
 
@@ -91,10 +90,9 @@ class DownloadWorker(
                 .addPathSegment(item.trackId.toString())
                 .addPathSegment("download")
                 .build()
-            val request = Request.Builder().apply {
-                url(songUrl)
-                authorizationHeader?.let { addHeader("Authorization", it) }
-            }.build()
+            val request = Request.Builder()
+                .url(songUrl)
+                .build()
 
             withContext(Dispatchers.IO) {
                 val response = client.newCall(request).execute()

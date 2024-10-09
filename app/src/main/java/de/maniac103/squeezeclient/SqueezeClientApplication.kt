@@ -25,13 +25,30 @@ import com.google.android.material.color.DynamicColors
 import com.markodevcic.peko.PermissionRequester
 import de.maniac103.squeezeclient.cometd.ConnectionHelper
 import de.maniac103.squeezeclient.extfuncs.prefs
+import de.maniac103.squeezeclient.extfuncs.serverConfig
 import kotlinx.serialization.json.Json
+import okhttp3.OkHttpClient
 
 class SqueezeClientApplication : Application(), SharedPreferences.OnSharedPreferenceChangeListener {
     val json = Json {
         coerceInputValues = true
         ignoreUnknownKeys = true
     }
+    val httpClient = OkHttpClient.Builder()
+        .addInterceptor { chain ->
+            val request = chain.request()
+            val serverConfig = prefs.serverConfig
+            val authHeader = serverConfig?.credentialsAsAuthorizationHeader
+            val actualRequest = when {
+                request.url.host == serverConfig?.url?.host && authHeader != null ->
+                    request.newBuilder().addHeader("Authorization", authHeader).build()
+
+                else -> request
+            }
+            chain.proceed(actualRequest)
+        }
+        .followRedirects(true)
+        .build()
     val connectionHelper = ConnectionHelper(this)
 
     override fun onCreate() {

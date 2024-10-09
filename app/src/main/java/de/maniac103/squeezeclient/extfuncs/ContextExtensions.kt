@@ -26,5 +26,7 @@ val Context.connectionHelper get() =
     (applicationContext as SqueezeClientApplication).connectionHelper
 val Context.jsonParser get() =
     (applicationContext as SqueezeClientApplication).json
+val Context.httpClient get() =
+    (applicationContext as SqueezeClientApplication).httpClient
 val Context.prefs: SharedPreferences get() =
     PreferenceManager.getDefaultSharedPreferences(this)

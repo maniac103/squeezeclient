@@ -26,7 +26,7 @@ data class AllPlayerActionRequest(val action: Action) {
             putInt("action", action.ordinal)
         }
         val response = messageClient.sendRequest(nodeId, PATH, data.toByteArray()).await()
-        return response[0].toInt()  != 0
+        return response[0].toInt() != 0
     }
 
     companion object {

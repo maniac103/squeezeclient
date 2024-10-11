@@ -63,7 +63,7 @@ class AppViewModel : ViewModel() {
         _connectionState.value = when {
             response == null -> ConnectionState.ConnectionError(node)
             !response.isConnected -> ConnectionState.ServerNotReachable
-            else  -> ConnectionState.ConnectedToServer(node)
+            else -> ConnectionState.ConnectedToServer(node)
         }
         if (response != null) {
             _players.value = response.players

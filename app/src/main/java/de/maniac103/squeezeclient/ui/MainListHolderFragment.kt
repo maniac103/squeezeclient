@@ -33,11 +33,11 @@ import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.databinding.FragmentMainlistcontainerBinding
 import de.maniac103.squeezeclient.ui.common.BasePagingListFragment
 import de.maniac103.squeezeclient.ui.common.MainContentFragment
+import java.lang.IllegalStateException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import java.lang.IllegalStateException
 
 class MainListHolderFragment : Fragment(), FragmentManager.OnBackStackChangedListener {
     interface Listener {
@@ -68,11 +68,7 @@ class MainListHolderFragment : Fragment(), FragmentManager.OnBackStackChangedLis
     private var contentTitles = emptyMap<String, String?>()
     private var pendingBack: PendingBackInfo? = null
 
-    fun replaceContent(
-        content: MainContentFragment,
-        tag: String,
-        mode: ReplacementMode
-    ) {
+    fun replaceContent(content: MainContentFragment, tag: String, mode: ReplacementMode) {
         if (mode != ReplacementMode.OnTopOfStack) {
             clearBackStack()
         }

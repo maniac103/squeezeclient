@@ -32,11 +32,11 @@ import de.maniac103.squeezeclient.wearapi.ListPlayersRequest
 import de.maniac103.squeezeclient.wearapi.PlayerInfo
 import de.maniac103.squeezeclient.wearapi.StartMediaServiceRequest
 import de.maniac103.squeezeclient.wearapi.StopMediaServiceRequest
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withTimeoutOrNull
 
 class MainActivity : ComponentActivity() {

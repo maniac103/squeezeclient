@@ -58,6 +58,7 @@ class JiveHomeListItemFragment :
     private val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)
     private val nodeId get() = requireArguments().getString("nodeId")!!
     override val scrollingTargetView get() = binding.recycler
+
     @OptIn(ExperimentalCoroutinesApi::class)
     override val titleFlow get() = connectionHelper
         .playerState(playerId)

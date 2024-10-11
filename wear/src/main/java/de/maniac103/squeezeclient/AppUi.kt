@@ -139,7 +139,7 @@ fun AppUi(
                                     ActionRow(
                                         titleResId = R.string.action_stop_players,
                                         icon = Icons.Filled.Stop,
-                                        onClick = onStopPlayers,
+                                        onClick = onStopPlayers
                                     )
                                     ActionRow(
                                         titleResId = R.string.action_turn_off_players,
@@ -189,10 +189,15 @@ fun BoxScope.StatusMessage(textResId: Int, node: Node?) {
 fun PlayerRow(playerInfo: PlayerInfo, isActive: Boolean, onClick: (PlayerInfo) -> Unit) {
     val (stateStringId, stateIcon) = if (!playerInfo.isPowered) {
         Pair(R.string.player_state_off, Icons.Filled.PowerOff)
-    } else when (playerInfo.playState) {
-        PlayerInfo.PlayState.Playing -> Pair(R.string.player_state_playing, Icons.Filled.PlayArrow)
-        PlayerInfo.PlayState.Paused -> Pair(R.string.player_state_paused, Icons.Filled.Pause)
-        PlayerInfo.PlayState.Stopped -> Pair(R.string.player_state_stopped, Icons.Filled.Stop)
+    } else {
+        when (playerInfo.playState) {
+            PlayerInfo.PlayState.Playing -> Pair(
+                R.string.player_state_playing,
+                Icons.Filled.PlayArrow
+            )
+            PlayerInfo.PlayState.Paused -> Pair(R.string.player_state_paused, Icons.Filled.Pause)
+            PlayerInfo.PlayState.Stopped -> Pair(R.string.player_state_stopped, Icons.Filled.Stop)
+        }
     }
     Chip(
         onClick = { onClick(playerInfo) },
@@ -247,7 +252,7 @@ fun DefaultPreview() {
     )
     AppUi(
         connectionState = AppViewModel.ConnectionState.ConnectedToServer(node),
-        players =  players,
+        players = players,
         activePlayerId = "def",
         onPlayerSelected = {},
         onStopPlayers = {},

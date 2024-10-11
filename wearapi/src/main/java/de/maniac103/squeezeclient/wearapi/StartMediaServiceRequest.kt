@@ -20,7 +20,7 @@ data class StartMediaServiceRequest(val playerId: String) {
         val data = DataMap()
         data.putString("player", playerId)
         val response = messageClient.sendRequest(nodeId, PATH, data.toByteArray()).await()
-        return response[0].toInt()  != 0
+        return response[0].toInt() != 0
     }
 
     companion object {

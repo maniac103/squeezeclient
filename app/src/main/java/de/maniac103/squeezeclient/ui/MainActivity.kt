@@ -113,7 +113,9 @@ class MainActivity :
     private val mainListContainer get() =
         supportFragmentManager.findFragmentById(binding.container.id) as? MainListHolderFragment
     private val errorFragment get() =
-        supportFragmentManager.findFragmentById(binding.container.id) as? ConnectionErrorHintFragment
+        supportFragmentManager.findFragmentById(
+            binding.container.id
+        ) as? ConnectionErrorHintFragment
     private val nowPlayingFragment get() =
         supportFragmentManager.findFragmentById(binding.playerContainer.id) as? NowPlayingFragment
     private val searchFragment get() =
@@ -251,10 +253,11 @@ class MainActivity :
             val alpha = 1F - breadcrumbsProgressInterpolator.getInterpolation(pendingProgress)
             titles.forEach { breadcrumbs.append(" › ").append(it) }
             pendingTitle?.let {
+                val posBeforePending = breadcrumbs.length
                 breadcrumbs.append(" › ").append(it)
                 breadcrumbs.setSpan(
                     AlphaSpan(alpha),
-                    breadcrumbs.length - it.length - 3 /* separator length */,
+                    posBeforePending,
                     breadcrumbs.length,
                     SpannableStringBuilder.SPAN_INCLUSIVE_INCLUSIVE
                 )

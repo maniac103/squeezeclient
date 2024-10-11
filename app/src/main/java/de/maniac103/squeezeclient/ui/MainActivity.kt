@@ -103,7 +103,6 @@ class MainActivity :
     private var allPlayers: List<Player>? = null
     private var player: Player? = null
     private var playerIsActive = false
-    private var currentPlayerVolume = 0
     private var homeMenu: Map<String, JiveHomeMenuItem> = mapOf()
     private var consecutiveUnsuccessfulConnectAttempts = 0
     private val breadcrumbsProgressInterpolator by lazy {
@@ -369,26 +368,24 @@ class MainActivity :
 
     override fun onOpenLocalSearchPage(searchTerm: String, type: LibrarySearchRequest.Mode) {
         onCloseSearch()
-        player?.id?.let { playerId ->
-            val f = LibrarySearchResultsFragment.create(playerId, type, searchTerm)
-            mainListContainer?.replaceContent(
-                f,
-                "localsearch-$searchTerm",
-                MainListHolderFragment.ReplacementMode.OnTopOfHome
-            )
-        }
+        val playerId = player?.id ?: return
+        val f = LibrarySearchResultsFragment.create(playerId, type, searchTerm)
+        mainListContainer?.replaceContent(
+            f,
+            "localsearch-$searchTerm",
+            MainListHolderFragment.ReplacementMode.OnTopOfHome
+        )
     }
 
     override fun onOpenRadioSearchPage(searchTerm: String) {
         onCloseSearch()
-        player?.id?.let { playerId ->
-            val f = RadioSearchResultsFragment.create(playerId, searchTerm)
-            mainListContainer?.replaceContent(
-                f,
-                "radiosearch-$searchTerm",
-                MainListHolderFragment.ReplacementMode.OnTopOfHome
-            )
-        }
+        val playerId = player?.id ?: return
+        val f = RadioSearchResultsFragment.create(playerId, searchTerm)
+        mainListContainer?.replaceContent(
+            f,
+            "radiosearch-$searchTerm",
+            MainListHolderFragment.ReplacementMode.OnTopOfHome
+        )
     }
 
     // internal implementation details
@@ -489,11 +486,11 @@ class MainActivity :
             homeMenu = emptyMap()
             this.player = player
             supportFragmentManager.commit {
-                mainListContainer?.let { remove(it) }
                 val mainListHolder = MainListHolderFragment.create()
                 replace(binding.container.id, mainListHolder)
-                replace(binding.playerContainer.id, NowPlayingFragment.create(player.id))
                 setPrimaryNavigationFragment(mainListHolder)
+
+                replace(binding.playerContainer.id, NowPlayingFragment.create(player.id))
 
                 val volumeFragment = VolumeFragment.create(player.id)
                 replace(binding.volumeContainer.id, volumeFragment)
@@ -525,7 +522,6 @@ class MainActivity :
         val stateFlow = connectionHelper.playerState(playerId)
         stateFlow.flatMapLatest { it.playStatus }.onEach { status ->
             binding.toolbar.subtitle = status.playerName
-            currentPlayerVolume = status.currentVolume
             playerIsActive =
                 status.powered && status.playbackState == PlayerStatus.PlayState.Playing
         }.launchIn(scope)

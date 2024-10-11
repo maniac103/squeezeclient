@@ -323,6 +323,10 @@ class MainActivity :
         }
     }
 
+    override fun onHandleMultiLevelRefresh(levels: Int) {
+        mainListContainer?.handleMultiLevelRefresh(levels)
+    }
+
     // SliderBottomSheetFragment.ChangeListener implementation
 
     override fun onSliderChanged(input: JiveAction): Job = lifecycleScope.launch {

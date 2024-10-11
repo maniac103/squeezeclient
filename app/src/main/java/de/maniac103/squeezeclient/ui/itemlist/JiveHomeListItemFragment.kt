@@ -120,9 +120,10 @@ class JiveHomeListItemFragment :
         return null
     }
 
-    override fun onChoiceSelected(choice: JiveAction) = lifecycleScope.launch {
-        connectionHelper.executeAction(playerId, choice)
-    }
+    override fun onChoiceSelected(choice: JiveAction, refresh: JiveActions.RefreshBehavior?) =
+        lifecycleScope.launch {
+            connectionHelper.executeAction(playerId, choice)
+        }
 
     override fun onInputSubmitted(title: String, action: JiveAction, isGoAction: Boolean) =
         if (isGoAction) {
@@ -146,7 +147,7 @@ class JiveHomeListItemFragment :
 
     private fun showChoices(item: JiveHomeMenuItem) {
         val choices = item.choices ?: return
-        val f = ChoicesBottomSheetFragment.create(item.title, choices)
+        val f = ChoicesBottomSheetFragment.create(item.title, choices, null)
         f.show(childFragmentManager, "choices")
     }
 

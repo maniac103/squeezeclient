@@ -63,7 +63,7 @@ abstract class BasePagingListFragment<T : Any, VH : RecyclerView.ViewHolder> :
     protected abstract fun areItemContentsTheSame(lhs: T, rhs: T): Boolean
     protected open fun onDataLoaded(data: PagingData<T>) {}
 
-    protected fun refresh() {
+    fun refresh() {
         adapter.refresh()
     }
 

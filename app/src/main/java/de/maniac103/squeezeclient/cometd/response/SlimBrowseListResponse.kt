@@ -288,6 +288,10 @@ fun Json.combineItemAndBaseActions(item: JsonObject, base: JsonObject?): JiveAct
     val addAction = actionMap["add"]
     val insertAction = actionMap["add-hold"]
 
+    val onClickRefresh = (item["onClick"] ?: base?.get("onClick"))?.let {
+        decodeFromJsonElement<JiveActions.RefreshBehavior>(it)
+    }
+
     return JiveActions(
         goAction,
         if (radio == null && slider == null) doAction else null,
@@ -300,6 +304,7 @@ fun Json.combineItemAndBaseActions(item: JsonObject, base: JsonObject?): JiveAct
         checkbox,
         radio,
         slider,
-        input
+        input,
+        onClickRefresh
     )
 }

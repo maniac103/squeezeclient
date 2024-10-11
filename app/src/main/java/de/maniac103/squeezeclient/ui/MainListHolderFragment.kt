@@ -31,6 +31,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.databinding.FragmentMainlistcontainerBinding
+import de.maniac103.squeezeclient.ui.common.BasePagingListFragment
 import de.maniac103.squeezeclient.ui.common.MainContentFragment
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.combine
@@ -101,6 +102,14 @@ class MainListHolderFragment : Fragment(), FragmentManager.OnBackStackChangedLis
         while (backStackEntryCount > 0) {
             popBackStackImmediate()
         }
+    }
+
+    fun handleMultiLevelRefresh(levels: Int) = childFragmentManager.run {
+        (backStackEntryCount - levels)
+            .takeIf { it >= 0 }
+            ?.let { getBackStackEntryAt(it) }
+            ?.let { findFragmentByTag(it.name) as? BasePagingListFragment<*, *> }
+            ?.refresh()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

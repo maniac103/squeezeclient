@@ -66,6 +66,7 @@ abstract class BaseSlimBrowseItemListFragment :
             action: JiveAction,
             nextWindow: SlimBrowseItemList.NextWindow?
         ): Job?
+        fun onHandleMultiLevelRefresh(levels: Int)
     }
 
     protected abstract val playerId: PlayerId
@@ -120,12 +121,17 @@ abstract class BaseSlimBrowseItemListFragment :
                 } else {
                     actions.checkbox.onAction
                 }
-                executeAction(action, item.nextWindow ?: SlimBrowseItemList.NextWindow.Refresh)
+                executeAction(
+                    action,
+                    item.nextWindow ?: SlimBrowseItemList.NextWindow.RefreshSelf,
+                    actions.onClickRefresh
+                )
             }
             actions.radio != null -> {
                 executeAction(
                     actions.radio.action,
-                    item.nextWindow ?: SlimBrowseItemList.NextWindow.Refresh
+                    item.nextWindow ?: SlimBrowseItemList.NextWindow.RefreshSelf,
+                    actions.onClickRefresh
                 )
             }
             item.webLink != null -> {
@@ -161,8 +167,8 @@ abstract class BaseSlimBrowseItemListFragment :
         }
     }
 
-    override fun onChoiceSelected(choice: JiveAction) =
-        executeAction(choice, SlimBrowseItemList.NextWindow.Refresh)
+    override fun onChoiceSelected(choice: JiveAction, refresh: JiveActions.RefreshBehavior?) =
+        executeAction(choice, SlimBrowseItemList.NextWindow.RefreshSelf, refresh)
 
     override fun onInputSubmitted(
         item: SlimBrowseItemList.SlimBrowseItem,
@@ -172,7 +178,7 @@ abstract class BaseSlimBrowseItemListFragment :
         val listener = activity as? NavigationListener
         listener?.onGoAction(title, null, action, item.nextWindow)
     } else {
-        executeAction(action, item.nextWindow)
+        executeAction(action, item.nextWindow, item.actions?.onClickRefresh)
     }
 
     override fun onContextItemSelected(
@@ -184,9 +190,9 @@ abstract class BaseSlimBrowseItemListFragment :
 
         val translateNextWindow = { action: JiveAction ->
             when (val nextWindow = action.nextWindow ?: item.nextWindow) {
-                SlimBrowseItemList.NextWindow.Refresh -> null
-                SlimBrowseItemList.NextWindow.RefreshOrigin ->
-                    SlimBrowseItemList.NextWindow.Refresh
+                SlimBrowseItemList.NextWindow.RefreshSelf -> null
+                SlimBrowseItemList.NextWindow.ParentWithRefresh ->
+                    SlimBrowseItemList.NextWindow.RefreshSelf
                 SlimBrowseItemList.NextWindow.Parent -> null
                 SlimBrowseItemList.NextWindow.GrandParent ->
                     SlimBrowseItemList.NextWindow.Parent
@@ -201,7 +207,7 @@ abstract class BaseSlimBrowseItemListFragment :
                 triggerDownload(actions.downloadData)
             actions.doAction != null -> {
                 val nextWindow = translateNextWindow(actions.doAction)
-                executeAction(actions.doAction, nextWindow)
+                executeAction(actions.doAction, nextWindow, null)
             }
             actions.goAction != null ->
                 when (actions.goAction.nextWindow ?: item.nextWindow) {
@@ -209,9 +215,13 @@ abstract class BaseSlimBrowseItemListFragment :
                         // next target is our list, and we shall not refresh
                         connectionHelper.executeAction(playerId, actions.goAction)
                     }
-                    SlimBrowseItemList.NextWindow.RefreshOrigin -> {
+                    SlimBrowseItemList.NextWindow.ParentWithRefresh -> {
                         // next target is our list, and we shall refresh
-                        executeAction(actions.goAction, SlimBrowseItemList.NextWindow.Refresh)
+                        executeAction(
+                            actions.goAction,
+                            null,
+                            JiveActions.RefreshBehavior.RefreshSelf
+                        )
                     }
                     else -> {
                         listener?.onGoAction(
@@ -226,7 +236,7 @@ abstract class BaseSlimBrowseItemListFragment :
         }
     }
 
-    override fun onActionSelected(action: JiveAction): Job? = executeAction(action, null)
+    override fun onActionSelected(action: JiveAction): Job? = executeAction(action, null, null)
     override fun onDownloadSelected(data: DownloadRequestData) = triggerDownload(data)
 
     private fun showInput(item: SlimBrowseItemList.SlimBrowseItem) {
@@ -241,19 +251,33 @@ abstract class BaseSlimBrowseItemListFragment :
 
     private fun showChoices(item: SlimBrowseItemList.SlimBrowseItem) {
         val choices = item.actions?.choices ?: return
-        val f = ChoicesBottomSheetFragment.create(item.title, choices)
+        val f = ChoicesBottomSheetFragment.create(item.title, choices, item.actions.onClickRefresh)
         f.show(childFragmentManager, "choices")
     }
 
-    private fun executeAction(action: JiveAction, nextWindow: SlimBrowseItemList.NextWindow?) =
-        lifecycleScope.launch {
-            connectionHelper.executeAction(playerId, action)
-            when (action.nextWindow ?: nextWindow) {
-                SlimBrowseItemList.NextWindow.Refresh,
-                SlimBrowseItemList.NextWindow.RefreshOrigin -> refresh()
-                else -> {}
-            }
+    private fun executeAction(
+        action: JiveAction,
+        nextWindow: SlimBrowseItemList.NextWindow?,
+        refresh: JiveActions.RefreshBehavior?
+    ) = lifecycleScope.launch {
+        connectionHelper.executeAction(playerId, action)
+        when (action.nextWindow ?: nextWindow) {
+            SlimBrowseItemList.NextWindow.RefreshSelf,
+            SlimBrowseItemList.NextWindow.ParentWithRefresh ->
+                refresh()
+            else -> {}
         }
+        val listener = activity as? NavigationListener
+        when (refresh) {
+            JiveActions.RefreshBehavior.RefreshSelf ->
+                refresh()
+            JiveActions.RefreshBehavior.RefreshParent ->
+                listener?.onHandleMultiLevelRefresh(1)
+            JiveActions.RefreshBehavior.RefreshGrandParent ->
+                listener?.onHandleMultiLevelRefresh(2)
+            else -> {}
+        }
+    }
 
     private suspend fun loadContextMenuItems(
         action: JiveAction,

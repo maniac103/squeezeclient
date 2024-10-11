@@ -64,13 +64,13 @@ data class SlimBrowseItemList(
         NowPlaying,
 
         @SerialName("refresh")
-        Refresh,
+        RefreshSelf,
 
         @SerialName("myMusic")
         MyMusic,
 
         @SerialName("refreshOrigin")
-        RefreshOrigin,
+        ParentWithRefresh,
 
         @SerialName("presets")
         Presets

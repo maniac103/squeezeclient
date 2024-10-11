@@ -35,7 +35,8 @@ data class JiveActions(
     val checkbox: Checkbox?,
     val radio: Radio?,
     val slider: Slider?,
-    val input: Input?
+    val input: Input?,
+    val onClickRefresh: RefreshBehavior?
 ) : Parcelable {
     val hasContextMenu get() = playAction != null ||
         addAction != null ||
@@ -97,5 +98,17 @@ data class JiveActions(
             @SerialName("time")
             Time
         }
+    }
+
+    @Serializable
+    enum class RefreshBehavior {
+        @SerialName("refreshMe")
+        RefreshSelf,
+
+        @SerialName("refreshOrigin")
+        RefreshParent,
+
+        @SerialName("refreshGrandparent")
+        RefreshGrandParent
     }
 }

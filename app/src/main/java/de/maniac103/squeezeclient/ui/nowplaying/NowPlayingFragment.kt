@@ -48,6 +48,7 @@ import de.maniac103.squeezeclient.databinding.FragmentNowplayingBinding
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.doOnTransitionCompleted
 import de.maniac103.squeezeclient.extfuncs.getParcelable
+import de.maniac103.squeezeclient.extfuncs.requireParentAs
 import de.maniac103.squeezeclient.extfuncs.withRoundedCorners
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.PagingParams
@@ -82,6 +83,7 @@ class NowPlayingFragment :
     private val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)
     private val playlistFragment get() =
         childFragmentManager.findFragmentById(binding.playlistFragment.id) as? PlaylistFragment
+    private val listener get() = requireParentAs<Listener>()
 
     private lateinit var playlistBottomSheetBehavior: BottomSheetBehavior<ConstraintLayout>
     private var timeUpdateJob: Job? = null
@@ -274,7 +276,7 @@ class NowPlayingFragment :
 
     override fun onMenuItemSelected(menuItem: MenuItem) = when (menuItem.itemId) {
         R.id.volume -> {
-            (activity as? Listener)?.showVolumePopup()
+            listener.showVolumePopup()
             true
         }
         R.id.info -> {
@@ -326,8 +328,7 @@ class NowPlayingFragment :
                 connectionHelper.executeAction(playerId, actions.doAction)
             }
             actions.goAction != null -> {
-                val listener = activity as? Listener
-                listener?.onContextMenuAction(parentTitle, item.title, actions.goAction)
+                listener.onContextMenuAction(parentTitle, item.title, actions.goAction)
             }
             else -> null
         }

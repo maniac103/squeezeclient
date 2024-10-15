@@ -29,6 +29,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.databinding.FragmentMainlistcontainerBinding
+import de.maniac103.squeezeclient.extfuncs.requireParentAs
 import de.maniac103.squeezeclient.ui.common.BasePagingListFragment
 import de.maniac103.squeezeclient.ui.common.ViewBindingFragment
 import java.lang.IllegalStateException
@@ -65,6 +66,7 @@ class MainListHolderFragment :
     }
 
     val hasContent get() = childFragmentManager.fragments.isNotEmpty()
+    private val listener get() = requireParentAs<Listener>()
 
     data class PendingBackInfo(
         val fragment: Fragment,
@@ -129,7 +131,7 @@ class MainListHolderFragment :
                     override fun onFragmentStarted(fm: FragmentManager, f: Fragment) {
                         super.onFragmentStarted(fm, f)
                         val scrollTarget = (f as? Child)?.scrollingTargetView
-                        (activity as? Listener)?.onScrollTargetChanged(scrollTarget)
+                        listener.onScrollTargetChanged(scrollTarget)
                         binding.root.background.alpha = 255
                     }
                 },
@@ -227,7 +229,7 @@ class MainListHolderFragment :
         }
         val pendingTitle = pendingBack?.tag?.let { contentTitles[it] }
         val progress = pendingBack?.progress ?: 0F
-        (activity as? Listener)?.onContentStackChanged(titles, pendingTitle, progress)
+        listener.onContentStackChanged(titles, pendingTitle, progress)
     }
 
     companion object {

@@ -32,6 +32,7 @@ import de.maniac103.squeezeclient.databinding.BottomSheetContextMenuBinding
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.extfuncs.getParcelableList
+import de.maniac103.squeezeclient.extfuncs.requireParentAs
 import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
@@ -55,6 +56,7 @@ class ContextMenuBottomSheetFragment :
         "initialItems",
         SlimBrowseItemList.SlimBrowseItem::class
     )
+    private val listener get() = requireParentAs<Listener>()
 
     private lateinit var binding: BottomSheetContextMenuBinding
 
@@ -124,8 +126,7 @@ class ContextMenuBottomSheetFragment :
             }
         }
 
-        val listener = (parentFragment as? Listener) ?: (activity as? Listener)
-        val job = listener?.onContextItemSelected(parent.title, item)
+        val job = listener.onContextItemSelected(parent.title, item)
         job?.invokeOnCompletion {
             if (isAdded) {
                 dismissAllowingStateLoss()

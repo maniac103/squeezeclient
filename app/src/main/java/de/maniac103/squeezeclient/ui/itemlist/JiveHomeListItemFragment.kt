@@ -27,6 +27,7 @@ import androidx.recyclerview.widget.RecyclerView
 import de.maniac103.squeezeclient.databinding.FragmentGenericListBinding
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.getParcelable
+import de.maniac103.squeezeclient.extfuncs.requireParentAs
 import de.maniac103.squeezeclient.extfuncs.showActionTimePicker
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.JiveActions
@@ -56,7 +57,7 @@ class JiveHomeListItemFragment :
 
     private val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)
     private val nodeId get() = requireArguments().getString("nodeId")!!
-
+    private val listener get() = requireParentAs<NavigationListener>()
     override val scrollingTargetView get() = binding.recycler
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -97,7 +98,6 @@ class JiveHomeListItemFragment :
     }
 
     override fun onItemSelected(item: JiveHomeMenuItem): Job? {
-        val listener = activity as? NavigationListener ?: return null
         when {
             item.input != null -> showInput(item)
             item.choices != null -> showChoices(item)
@@ -117,8 +117,7 @@ class JiveHomeListItemFragment :
 
     override fun onInputSubmitted(title: String, action: JiveAction, isGoAction: Boolean) =
         if (isGoAction) {
-            val listener = activity as? NavigationListener
-            listener?.onGoAction(title, action)
+            listener.onGoAction(title, action)
         } else {
             lifecycleScope.launch {
                 connectionHelper.executeAction(playerId, action)

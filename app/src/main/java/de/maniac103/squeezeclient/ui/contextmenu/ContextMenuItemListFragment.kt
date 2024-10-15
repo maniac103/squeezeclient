@@ -26,6 +26,7 @@ import de.maniac103.squeezeclient.databinding.FragmentContextMenuListBinding
 import de.maniac103.squeezeclient.databinding.ListItemContextMenuBinding
 import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.extfuncs.getParcelableList
+import de.maniac103.squeezeclient.extfuncs.requireParentAs
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.ui.common.BasePrepopulatedListAdapter
 import de.maniac103.squeezeclient.ui.common.ViewBindingFragment
@@ -42,12 +43,12 @@ class ContextMenuItemListFragment : ViewBindingFragment<FragmentContextMenuListB
         requireArguments().getParcelable("parent", SlimBrowseItemList.SlimBrowseItem::class)
     private val items get() =
         requireArguments().getParcelableList("items", SlimBrowseItemList.SlimBrowseItem::class)
+    private val listener get() = requireParentAs<ItemClickListener>()
 
     override fun onBindingCreated(binding: FragmentContextMenuListBinding) {
         val itemAdapter = ItemAdapter(items).apply {
             itemSelectionListener = BasePrepopulatedListAdapter.ItemSelectionListener { item ->
-                val listener = parentFragment as? ItemClickListener
-                listener?.onItemClicked(item)
+                listener.onItemClicked(item)
             }
         }
 

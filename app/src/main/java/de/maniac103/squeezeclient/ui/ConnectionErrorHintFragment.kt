@@ -23,6 +23,7 @@ import androidx.annotation.StringRes
 import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import de.maniac103.squeezeclient.databinding.FragmentConnectionFailHintBinding
+import de.maniac103.squeezeclient.extfuncs.requireParentAs
 import de.maniac103.squeezeclient.ui.common.ViewBindingFragment
 
 class ConnectionErrorHintFragment : ViewBindingFragment<FragmentConnectionFailHintBinding>(
@@ -41,10 +42,9 @@ class ConnectionErrorHintFragment : ViewBindingFragment<FragmentConnectionFailHi
     }
 
     private fun Button.bindToAction(index: Int, labelResId: Int, tag: String?) {
-        val listener = activity as? Listener
-        if (labelResId != 0 && listener != null) {
+        if (labelResId != 0) {
             text = getString(labelResId)
-            setOnClickListener { listener.onActionInvoked(index, tag) }
+            setOnClickListener { requireParentAs<Listener>().onActionInvoked(index, tag) }
             isVisible = true
         } else {
             isVisible = false

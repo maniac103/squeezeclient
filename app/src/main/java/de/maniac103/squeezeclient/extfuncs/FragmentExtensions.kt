@@ -32,6 +32,11 @@ import kotlinx.datetime.toLocalDateTime
 val Fragment.connectionHelper get() = requireContext().connectionHelper
 val Fragment.prefs get() = requireContext().prefs
 
+inline fun <reified T> Fragment.parentAs() = parentFragment as? T ?: activity as? T
+inline fun <reified T> Fragment.requireParentAs() = parentAs<T>() ?: throw IllegalStateException(
+    "Parent of fragment $this doesn't implement required interface ${T::class.java.simpleName}"
+)
+
 fun Fragment.showActionTimePicker(playerId: PlayerId, title: String, input: JiveActions.Input) {
     val (hour, minute) = input.initialText?.toIntOrNull()?.let { (it / 3600) to (it / 60) }
         ?: (Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).hour to 0)

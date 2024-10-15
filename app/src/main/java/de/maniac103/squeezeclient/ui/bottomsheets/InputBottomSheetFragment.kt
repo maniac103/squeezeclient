@@ -92,7 +92,7 @@ class InputBottomSheetFragment : BaseBottomSheet() {
     }
 
     private fun submitInput(inputText: String) {
-        val job = when (val parent = parentFragment) {
+        val job = when (val parent = parentFragment ?: activity) {
             is ItemSubmitListener -> {
                 val action = input.action.withInputValue(inputText)
                 parent.onInputSubmitted(requireNotNull(parentItem), action, input.actionHasTarget)

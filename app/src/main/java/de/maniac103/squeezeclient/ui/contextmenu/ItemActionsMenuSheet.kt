@@ -31,6 +31,7 @@ import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.databinding.BottomSheetItemActionsBinding
 import de.maniac103.squeezeclient.databinding.ListItemContextMenuBinding
 import de.maniac103.squeezeclient.extfuncs.getParcelable
+import de.maniac103.squeezeclient.extfuncs.requireParentAs
 import de.maniac103.squeezeclient.model.DownloadRequestData
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
@@ -45,6 +46,7 @@ class ItemActionsMenuSheet : BottomSheetDialogFragment() {
 
     private val item get() =
         requireArguments().getParcelable("item", SlimBrowseItemList.SlimBrowseItem::class)
+    private val listener get() = requireParentAs<Listener>()
 
     private lateinit var binding: BottomSheetItemActionsBinding
 
@@ -84,11 +86,10 @@ class ItemActionsMenuSheet : BottomSheetDialogFragment() {
         val itemAdapter = ItemAdapter(actionItems).apply {
             itemSelectionListener =
                 BasePrepopulatedListAdapter.ItemSelectionListener { actionItem ->
-                    val listener = parentFragment as? Listener
                     val job = if (actionItem.download != null) {
-                        listener?.onDownloadSelected(actionItem.download)
+                        listener.onDownloadSelected(actionItem.download)
                     } else {
-                        listener?.onActionSelected(requireNotNull(actionItem.action))
+                        listener.onActionSelected(requireNotNull(actionItem.action))
                     }
                     job?.invokeOnCompletion { dismissAllowingStateLoss() }
                     job

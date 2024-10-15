@@ -36,6 +36,7 @@ import de.maniac103.squeezeclient.databinding.ListItemSearchCategoryBinding
 import de.maniac103.squeezeclient.extfuncs.animateScale
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.getParcelable
+import de.maniac103.squeezeclient.extfuncs.requireParentAs
 import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.ui.common.BasePrepopulatedListAdapter
@@ -54,6 +55,7 @@ class SearchFragment : ViewBindingFragment<FragmentSearchBinding>(FragmentSearch
     }
 
     private val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)
+    private val listener get() = requireParentAs<Listener>()
 
     private var submitJob: Job? = null
 
@@ -80,7 +82,7 @@ class SearchFragment : ViewBindingFragment<FragmentSearchBinding>(FragmentSearch
 
     private val onBackPressedCallback = object : OnBackPressedCallback(true) {
         override fun handleOnBackPressed() {
-            (activity as? Listener)?.onCloseSearch()
+            listener.onCloseSearch()
         }
 
         override fun handleOnBackProgressed(backEvent: BackEventCompat) {
@@ -115,9 +117,8 @@ class SearchFragment : ViewBindingFragment<FragmentSearchBinding>(FragmentSearch
             layoutManager = LinearLayoutManager(requireContext(), RecyclerView.VERTICAL, false)
             adapter = Adapter(categories).apply {
                 itemSelectionListener = BasePrepopulatedListAdapter.ItemSelectionListener { cat ->
-                    val listener = (activity as? Listener)
                     val query = binding.editor.text?.toString()
-                    if (listener != null && query != null && cat.count != null) {
+                    if (query != null && cat.count != null) {
                         if (cat.type != null) {
                             listener.onOpenLocalSearchPage(query, cat.type)
                         } else {
@@ -165,13 +166,13 @@ class SearchFragment : ViewBindingFragment<FragmentSearchBinding>(FragmentSearch
             }
         }
         binding.backButton.setOnClickListener {
-            (activity as? Listener)?.onCloseSearch()
+            listener.onCloseSearch()
         }
         binding.clearButton.setOnClickListener {
             binding.editor.text.clear()
         }
         binding.root.setOnClickListener {
-            (activity as? Listener)?.onCloseSearch()
+            listener.onCloseSearch()
         }
     }
 

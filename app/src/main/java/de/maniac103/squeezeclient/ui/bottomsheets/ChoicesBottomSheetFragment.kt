@@ -26,6 +26,7 @@ import androidx.core.view.forEach
 import de.maniac103.squeezeclient.databinding.BottomSheetContentChoicesBinding
 import de.maniac103.squeezeclient.databinding.ListItemChoiceRadioBinding
 import de.maniac103.squeezeclient.extfuncs.getParcelable
+import de.maniac103.squeezeclient.extfuncs.requireParentAs
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.JiveActions
 import kotlinx.coroutines.Job
@@ -41,6 +42,7 @@ class ChoicesBottomSheetFragment : BaseBottomSheet() {
     private val onClickRefresh get() = requireArguments().getString("onClick")?.let {
         JiveActions.RefreshBehavior.valueOf(it)
     }
+    private val listener get() = requireParentAs<SelectionListener>()
 
     private lateinit var binding: BottomSheetContentChoicesBinding
 
@@ -61,9 +63,7 @@ class ChoicesBottomSheetFragment : BaseBottomSheet() {
         binding.radioGroup.apply {
             check(choices.selectedIndex)
             setOnCheckedChangeListener { _, index ->
-                val listener = parentFragment as? SelectionListener
-                    ?: activity as? SelectionListener
-                val job = listener?.onChoiceSelected(choices.items[index].action, onClickRefresh)
+                val job = listener.onChoiceSelected(choices.items[index].action, onClickRefresh)
                 handleAction(job, true)
             }
         }

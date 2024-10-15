@@ -25,6 +25,7 @@ import androidx.core.os.bundleOf
 import com.google.android.material.slider.Slider
 import de.maniac103.squeezeclient.databinding.BottomSheetContentSliderBinding
 import de.maniac103.squeezeclient.extfuncs.getParcelable
+import de.maniac103.squeezeclient.extfuncs.requireParentAs
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.JiveActions
 import kotlin.math.roundToInt
@@ -37,6 +38,7 @@ class SliderBottomSheetFragment : BaseBottomSheet(), Slider.OnSliderTouchListene
 
     override val title get() = requireArguments().getString("title")!!
     private val slider get() = requireArguments().getParcelable("slider", JiveActions.Slider::class)
+    private val listener get() = requireParentAs<ChangeListener>()
 
     private lateinit var binding: BottomSheetContentSliderBinding
 
@@ -64,8 +66,7 @@ class SliderBottomSheetFragment : BaseBottomSheet(), Slider.OnSliderTouchListene
     override fun onStopTrackingTouch(slider: Slider) {
         val inputValue = slider.value.roundToInt().toString()
         val action = this@SliderBottomSheetFragment.slider.action.withInputValue(inputValue)
-        val listener = parentFragment as? ChangeListener ?: activity as? ChangeListener
-        val job = listener?.onSliderChanged(action)
+        val job = listener.onSliderChanged(action)
         handleAction(job, false)
     }
 

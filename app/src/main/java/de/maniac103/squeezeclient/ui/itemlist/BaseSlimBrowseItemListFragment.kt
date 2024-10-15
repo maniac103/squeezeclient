@@ -31,6 +31,7 @@ import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.databinding.FragmentGenericListBinding
 import de.maniac103.squeezeclient.extfuncs.await
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
+import de.maniac103.squeezeclient.extfuncs.requireParentAs
 import de.maniac103.squeezeclient.extfuncs.showActionTimePicker
 import de.maniac103.squeezeclient.model.DownloadRequestData
 import de.maniac103.squeezeclient.model.JiveAction
@@ -80,6 +81,7 @@ abstract class BaseSlimBrowseItemListFragment :
 
     override val scrollingTargetView get() = binding.recycler
     override val titleFlow get() = flowOf(title)
+    private val listener get() = requireParentAs<NavigationListener>()
 
     override fun onBindingCreated(binding: FragmentGenericListBinding) {
         super.onBindingCreated(binding)
@@ -109,7 +111,6 @@ abstract class BaseSlimBrowseItemListFragment :
     }
 
     override fun onItemSelected(item: SlimBrowseItemList.SlimBrowseItem): Job? {
-        val listener = activity as? NavigationListener ?: return null
         val actions = item.actions ?: return null
         return when {
             actions.input != null -> {
@@ -180,8 +181,7 @@ abstract class BaseSlimBrowseItemListFragment :
         action: JiveAction,
         isGoAction: Boolean
     ) = if (isGoAction) {
-        val listener = activity as? NavigationListener
-        listener?.onGoAction(title, null, action, item.nextWindow)
+        listener.onGoAction(title, null, action, item.nextWindow)
     } else {
         executeAction(action, item.nextWindow, item.actions?.onClickRefresh)
     }
@@ -190,7 +190,6 @@ abstract class BaseSlimBrowseItemListFragment :
         parentTitle: String,
         item: SlimBrowseItemList.SlimBrowseItem
     ): Job? {
-        val listener = activity as? NavigationListener
         val actions = item.actions ?: return null
 
         val translateNextWindow = { action: JiveAction ->
@@ -229,7 +228,7 @@ abstract class BaseSlimBrowseItemListFragment :
                         )
                     }
                     else -> {
-                        listener?.onGoAction(
+                        listener.onGoAction(
                             parentTitle,
                             item.title,
                             actions.goAction,
@@ -272,14 +271,13 @@ abstract class BaseSlimBrowseItemListFragment :
                 refresh()
             else -> {}
         }
-        val listener = activity as? NavigationListener
         when (refresh) {
             JiveActions.RefreshBehavior.RefreshSelf ->
                 refresh()
             JiveActions.RefreshBehavior.RefreshParent ->
-                listener?.onHandleMultiLevelRefresh(1)
+                listener.onHandleMultiLevelRefresh(1)
             JiveActions.RefreshBehavior.RefreshGrandParent ->
-                listener?.onHandleMultiLevelRefresh(2)
+                listener.onHandleMultiLevelRefresh(2)
             else -> {}
         }
     }

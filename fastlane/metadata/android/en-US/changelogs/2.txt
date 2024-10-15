@@ -1,0 +1,3 @@
+- Add support for predictive back animation
+- Fix (temporary) server disconnection handling
+- Fix artwork loading in media session for some cases (e.g. for Youtube plugin)

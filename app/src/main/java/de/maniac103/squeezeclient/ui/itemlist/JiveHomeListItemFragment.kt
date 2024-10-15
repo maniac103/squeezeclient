@@ -18,9 +18,6 @@
 package de.maniac103.squeezeclient.ui.itemlist
 
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import androidx.core.os.bundleOf
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -35,10 +32,11 @@ import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.JiveActions
 import de.maniac103.squeezeclient.model.JiveHomeMenuItem
 import de.maniac103.squeezeclient.model.PlayerId
+import de.maniac103.squeezeclient.ui.MainListHolderFragment
 import de.maniac103.squeezeclient.ui.bottomsheets.ChoicesBottomSheetFragment
 import de.maniac103.squeezeclient.ui.bottomsheets.InputBottomSheetFragment
 import de.maniac103.squeezeclient.ui.common.BasePrepopulatedListAdapter
-import de.maniac103.squeezeclient.ui.common.MainContentFragment
+import de.maniac103.squeezeclient.ui.common.ViewBindingFragment
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.flatMapLatest
@@ -46,7 +44,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 class JiveHomeListItemFragment :
-    MainContentFragment(),
+    ViewBindingFragment<FragmentGenericListBinding>(FragmentGenericListBinding::inflate),
+    MainListHolderFragment.Child,
     BasePrepopulatedListAdapter.ItemSelectionListener<JiveHomeMenuItem>,
     ChoicesBottomSheetFragment.SelectionListener,
     InputBottomSheetFragment.InputSubmitListener {
@@ -57,6 +56,7 @@ class JiveHomeListItemFragment :
 
     private val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)
     private val nodeId get() = requireArguments().getString("nodeId")!!
+
     override val scrollingTargetView get() = binding.recycler
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -65,7 +65,6 @@ class JiveHomeListItemFragment :
         .flatMapLatest { it.homeMenu }
         .map { it[nodeId]?.title }
 
-    private lateinit var binding: FragmentGenericListBinding
     private var adapter: JiveHomeItemListAdapter? = null
     private var latestMenu = mapOf<String, JiveHomeMenuItem>()
 
@@ -83,17 +82,7 @@ class JiveHomeListItemFragment :
         }
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        binding = FragmentGenericListBinding.inflate(inflater, container, false)
-        return binding.root
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+    override fun onBindingCreated(binding: FragmentGenericListBinding) {
         binding.root.enableMainContentBackground()
         binding.recycler.layoutManager = LinearLayoutManager(
             requireContext(),

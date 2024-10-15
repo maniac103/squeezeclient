@@ -60,7 +60,7 @@ import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.service.MediaService
 import de.maniac103.squeezeclient.ui.bottomsheets.InfoBottomSheet
 import de.maniac103.squeezeclient.ui.bottomsheets.SliderBottomSheetFragment
-import de.maniac103.squeezeclient.ui.common.BaseSlimBrowseItemListFragment
+import de.maniac103.squeezeclient.ui.itemlist.BaseSlimBrowseItemListFragment
 import de.maniac103.squeezeclient.ui.itemlist.JiveHomeListItemFragment
 import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseItemListFragment
 import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseSubItemListFragment

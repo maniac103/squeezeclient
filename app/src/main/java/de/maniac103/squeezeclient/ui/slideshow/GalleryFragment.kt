@@ -19,9 +19,7 @@ package de.maniac103.squeezeclient.ui.slideshow
 
 import android.app.Activity
 import android.app.ActivityOptions
-import android.os.Bundle
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
 import androidx.core.os.bundleOf
 import androidx.recyclerview.widget.GridLayoutManager
@@ -32,28 +30,19 @@ import de.maniac103.squeezeclient.extfuncs.getParcelableList
 import de.maniac103.squeezeclient.extfuncs.loadSlideshowImage
 import de.maniac103.squeezeclient.extfuncs.withRoundedCorners
 import de.maniac103.squeezeclient.model.SlideshowImage
+import de.maniac103.squeezeclient.ui.MainListHolderFragment
 import de.maniac103.squeezeclient.ui.common.BasePrepopulatedListAdapter
-import de.maniac103.squeezeclient.ui.common.MainContentFragment
+import de.maniac103.squeezeclient.ui.common.ViewBindingFragment
 import kotlinx.coroutines.flow.flowOf
 
-class GalleryFragment : MainContentFragment() {
+class GalleryFragment :
+    ViewBindingFragment<FragmentGenericListBinding>(FragmentGenericListBinding::inflate),
+    MainListHolderFragment.Child {
     private val items get() = requireArguments().getParcelableList("items", SlideshowImage::class)
     override val titleFlow get() = flowOf(requireArguments().getString("title"))
     override val scrollingTargetView get() = binding.recycler
 
-    private lateinit var binding: FragmentGenericListBinding
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        binding = FragmentGenericListBinding.inflate(inflater, container, false)
-        return binding.root
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+    override fun onBindingCreated(binding: FragmentGenericListBinding) {
         binding.root.enableMainContentBackground()
         binding.recycler.apply {
             layoutManager = GridLayoutManager(requireContext(), 2, RecyclerView.VERTICAL, false)

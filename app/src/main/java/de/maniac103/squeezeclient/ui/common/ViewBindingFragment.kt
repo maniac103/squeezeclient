@@ -17,11 +17,33 @@
 
 package de.maniac103.squeezeclient.ui.common
 
+import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import kotlinx.coroutines.flow.Flow
+import androidx.viewbinding.ViewBinding
 
-abstract class MainContentFragment : Fragment() {
-    abstract val scrollingTargetView: View
-    abstract val titleFlow: Flow<String?>
+abstract class ViewBindingFragment<T : ViewBinding>(private val creator: ViewBindingCreator<T>) :
+    Fragment() {
+    protected lateinit var binding: T
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        binding = creator(inflater, container, false)
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        onBindingCreated(binding)
+    }
+
+    protected abstract fun onBindingCreated(binding: T)
 }
+
+typealias ViewBindingCreator<T> =
+    (inflater: LayoutInflater, parent: ViewGroup?, attachToParent: Boolean) -> T

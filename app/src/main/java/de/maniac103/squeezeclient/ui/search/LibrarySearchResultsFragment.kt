@@ -26,7 +26,7 @@ import de.maniac103.squeezeclient.model.ListResponse
 import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
-import de.maniac103.squeezeclient.ui.common.BaseSlimBrowseItemListFragment
+import de.maniac103.squeezeclient.ui.itemlist.BaseSlimBrowseItemListFragment
 
 class LibrarySearchResultsFragment : BaseSlimBrowseItemListFragment() {
     override val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)

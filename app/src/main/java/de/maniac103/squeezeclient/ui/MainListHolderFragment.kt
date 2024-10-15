@@ -18,9 +18,7 @@
 package de.maniac103.squeezeclient.ui
 
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import androidx.activity.BackEventCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
@@ -32,14 +30,20 @@ import androidx.lifecycle.repeatOnLifecycle
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.databinding.FragmentMainlistcontainerBinding
 import de.maniac103.squeezeclient.ui.common.BasePagingListFragment
-import de.maniac103.squeezeclient.ui.common.MainContentFragment
+import de.maniac103.squeezeclient.ui.common.ViewBindingFragment
 import java.lang.IllegalStateException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
-class MainListHolderFragment : Fragment(), FragmentManager.OnBackStackChangedListener {
+class MainListHolderFragment :
+    ViewBindingFragment<FragmentMainlistcontainerBinding>(
+        FragmentMainlistcontainerBinding::inflate
+    ),
+    FragmentManager.OnBackStackChangedListener {
+
     interface Listener {
         fun onScrollTargetChanged(scrollTarget: View?)
         fun onContentStackChanged(
@@ -47,6 +51,11 @@ class MainListHolderFragment : Fragment(), FragmentManager.OnBackStackChangedLis
             pendingTitle: String?,
             pendingProgress: Float
         )
+    }
+
+    interface Child {
+        val scrollingTargetView: View
+        val titleFlow: Flow<String?>
     }
 
     enum class ReplacementMode {
@@ -63,12 +72,15 @@ class MainListHolderFragment : Fragment(), FragmentManager.OnBackStackChangedLis
         var progress: Float = 0F
     )
 
-    private lateinit var binding: FragmentMainlistcontainerBinding
     private var titleSubscription: Job? = null
     private var contentTitles = emptyMap<String, String?>()
     private var pendingBack: PendingBackInfo? = null
 
-    fun replaceContent(content: MainContentFragment, tag: String, mode: ReplacementMode) {
+    fun <T> replaceContent(
+        content: T,
+        tag: String,
+        mode: ReplacementMode
+    ) where T : Fragment, T : Child {
         if (mode != ReplacementMode.OnTopOfStack) {
             clearBackStack()
         }
@@ -116,7 +128,7 @@ class MainListHolderFragment : Fragment(), FragmentManager.OnBackStackChangedLis
                 object : FragmentLifecycleCallbacks() {
                     override fun onFragmentStarted(fm: FragmentManager, f: Fragment) {
                         super.onFragmentStarted(fm, f)
-                        val scrollTarget = (f as? MainContentFragment)?.scrollingTargetView
+                        val scrollTarget = (f as? Child)?.scrollingTargetView
                         (activity as? Listener)?.onScrollTargetChanged(scrollTarget)
                         binding.root.background.alpha = 255
                     }
@@ -169,17 +181,7 @@ class MainListHolderFragment : Fragment(), FragmentManager.OnBackStackChangedLis
         handleStackUpdate()
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        binding = FragmentMainlistcontainerBinding.inflate(inflater, container, false)
-        return binding.root
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+    override fun onBindingCreated(binding: FragmentMainlistcontainerBinding) {
         // background is only meant to be visible during child fragment transitions,
         // so suppress it until a child fragment is loaded
         binding.root.background.alpha = 0
@@ -193,7 +195,7 @@ class MainListHolderFragment : Fragment(), FragmentManager.OnBackStackChangedLis
                 .mapNotNull { entry ->
                     val tag = entry.name ?: throw IllegalStateException()
                     val f = findFragmentByTag(tag)
-                    (f as? MainContentFragment)?.titleFlow?.map { tag to it }
+                    (f as? Child)?.titleFlow?.map { tag to it }
                 }
         }
 

@@ -17,14 +17,9 @@
 
 package de.maniac103.squeezeclient.ui.volume
 
-import android.os.Bundle
 import android.view.KeyEvent
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import android.widget.SeekBar
 import androidx.core.os.bundleOf
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -33,6 +28,7 @@ import de.maniac103.squeezeclient.databinding.FragmentVolumeBinding
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.model.PlayerId
+import de.maniac103.squeezeclient.ui.common.ViewBindingFragment
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -42,27 +38,15 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 
-class VolumeFragment : Fragment() {
+class VolumeFragment : ViewBindingFragment<FragmentVolumeBinding>(FragmentVolumeBinding::inflate) {
     private val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)
 
-    private lateinit var binding: FragmentVolumeBinding
     private var currentPlayerVolume = 0
     private var isMuted = false
     private var hideJob: Job? = null
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        binding = FragmentVolumeBinding.inflate(inflater, container, false)
-        return binding.root
-    }
-
     @OptIn(ExperimentalCoroutinesApi::class)
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
+    override fun onBindingCreated(binding: FragmentVolumeBinding) {
         binding.background.setOnClickListener {
             hideImmediately()
         }

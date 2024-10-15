@@ -17,37 +17,22 @@
 
 package de.maniac103.squeezeclient.ui
 
-import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import android.widget.Button
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
-import androidx.fragment.app.Fragment
 import de.maniac103.squeezeclient.databinding.FragmentConnectionFailHintBinding
+import de.maniac103.squeezeclient.ui.common.ViewBindingFragment
 
-class ConnectionErrorHintFragment : Fragment() {
+class ConnectionErrorHintFragment : ViewBindingFragment<FragmentConnectionFailHintBinding>(
+    FragmentConnectionFailHintBinding::inflate
+) {
     fun interface Listener {
         fun onActionInvoked(index: Int, tag: String?)
     }
 
-    private lateinit var binding: FragmentConnectionFailHintBinding
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        binding = FragmentConnectionFailHintBinding.inflate(inflater, container, false)
-        return binding.root
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
+    override fun onBindingCreated(binding: FragmentConnectionFailHintBinding) {
         val args = requireArguments()
         binding.image.setImageResource(args.getInt("icon"))
         binding.hintText.text = getString(args.getInt("text"), args.getString("textArgument"))

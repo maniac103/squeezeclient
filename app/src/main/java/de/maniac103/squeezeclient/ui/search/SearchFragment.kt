@@ -17,10 +17,8 @@
 
 package de.maniac103.squeezeclient.ui.search
 
-import android.os.Bundle
 import android.view.KeyEvent
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import androidx.activity.BackEventCompat
@@ -28,7 +26,6 @@ import androidx.activity.OnBackPressedCallback
 import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -42,13 +39,14 @@ import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.ui.common.BasePrepopulatedListAdapter
+import de.maniac103.squeezeclient.ui.common.ViewBindingFragment
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class SearchFragment : Fragment() {
+class SearchFragment : ViewBindingFragment<FragmentSearchBinding>(FragmentSearchBinding::inflate) {
     interface Listener {
         fun onCloseSearch()
         fun onOpenLocalSearchPage(searchTerm: String, type: LibrarySearchRequest.Mode)
@@ -57,7 +55,6 @@ class SearchFragment : Fragment() {
 
     private val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)
 
-    private lateinit var binding: FragmentSearchBinding
     private var submitJob: Job? = null
 
     private val artistCategory = Category(
@@ -101,18 +98,7 @@ class SearchFragment : Fragment() {
         }
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        binding = FragmentSearchBinding.inflate(inflater, container, false)
-        return binding.root
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
+    override fun onBindingCreated(binding: FragmentSearchBinding) {
         requireActivity().onBackPressedDispatcher.addCallback(
             viewLifecycleOwner,
             onBackPressedCallback

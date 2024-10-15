@@ -17,12 +17,9 @@
 
 package de.maniac103.squeezeclient.ui.contextmenu
 
-import android.os.Bundle
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
 import androidx.core.os.bundleOf
-import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import de.maniac103.squeezeclient.databinding.FragmentContextMenuListBinding
@@ -31,9 +28,12 @@ import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.extfuncs.getParcelableList
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.ui.common.BasePrepopulatedListAdapter
+import de.maniac103.squeezeclient.ui.common.ViewBindingFragment
 import kotlinx.coroutines.Job
 
-class ContextMenuItemListFragment : Fragment() {
+class ContextMenuItemListFragment : ViewBindingFragment<FragmentContextMenuListBinding>(
+    FragmentContextMenuListBinding::inflate
+) {
     fun interface ItemClickListener {
         fun onItemClicked(item: SlimBrowseItemList.SlimBrowseItem): Job?
     }
@@ -43,20 +43,7 @@ class ContextMenuItemListFragment : Fragment() {
     private val items get() =
         requireArguments().getParcelableList("items", SlimBrowseItemList.SlimBrowseItem::class)
 
-    private lateinit var binding: FragmentContextMenuListBinding
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        binding = FragmentContextMenuListBinding.inflate(inflater, container, false)
-        return binding.root
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
+    override fun onBindingCreated(binding: FragmentContextMenuListBinding) {
         val itemAdapter = ItemAdapter(items).apply {
             itemSelectionListener = BasePrepopulatedListAdapter.ItemSelectionListener { item ->
                 val listener = parentFragment as? ItemClickListener
@@ -65,7 +52,7 @@ class ContextMenuItemListFragment : Fragment() {
         }
 
         binding.items.apply {
-            layoutManager = LinearLayoutManager(view.context, RecyclerView.VERTICAL, false)
+            layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, false)
             adapter = itemAdapter
         }
     }

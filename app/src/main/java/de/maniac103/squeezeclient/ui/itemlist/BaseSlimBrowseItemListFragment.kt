@@ -15,12 +15,10 @@
  *
  */
 
-package de.maniac103.squeezeclient.ui.common
+package de.maniac103.squeezeclient.ui.itemlist
 
 import android.net.Uri
 import android.os.Build
-import android.os.Bundle
-import android.view.View
 import androidx.core.net.toUri
 import androidx.lifecycle.lifecycleScope
 import androidx.paging.PagingDataAdapter
@@ -30,6 +28,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.markodevcic.peko.PermissionRequester
 import com.markodevcic.peko.PermissionResult
 import de.maniac103.squeezeclient.R
+import de.maniac103.squeezeclient.databinding.FragmentGenericListBinding
 import de.maniac103.squeezeclient.extfuncs.await
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.showActionTimePicker
@@ -40,8 +39,12 @@ import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.service.DownloadWorker
+import de.maniac103.squeezeclient.ui.MainListHolderFragment
 import de.maniac103.squeezeclient.ui.bottomsheets.ChoicesBottomSheetFragment
 import de.maniac103.squeezeclient.ui.bottomsheets.InputBottomSheetFragment
+import de.maniac103.squeezeclient.ui.common.BasePagingListFragment
+import de.maniac103.squeezeclient.ui.common.SlimBrowseItemListAdapter
+import de.maniac103.squeezeclient.ui.common.SlimBrowseItemListViewHolder
 import de.maniac103.squeezeclient.ui.contextmenu.ContextMenuBottomSheetFragment
 import de.maniac103.squeezeclient.ui.contextmenu.ItemActionsMenuSheet
 import kotlinx.coroutines.Job
@@ -51,6 +54,7 @@ import kotlinx.coroutines.launch
 
 abstract class BaseSlimBrowseItemListFragment :
     BasePagingListFragment<SlimBrowseItemList.SlimBrowseItem, SlimBrowseItemListViewHolder>(),
+    MainListHolderFragment.Child,
     SlimBrowseItemListAdapter.ItemSelectionListener,
     ChoicesBottomSheetFragment.SelectionListener,
     ContextMenuBottomSheetFragment.Listener,
@@ -74,10 +78,11 @@ abstract class BaseSlimBrowseItemListFragment :
     protected abstract val showIcons: Boolean
     protected open val fetchAction: JiveAction? = null
 
+    override val scrollingTargetView get() = binding.recycler
     override val titleFlow get() = flowOf(title)
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+    override fun onBindingCreated(binding: FragmentGenericListBinding) {
+        super.onBindingCreated(binding)
         binding.root.enableMainContentBackground()
     }
 

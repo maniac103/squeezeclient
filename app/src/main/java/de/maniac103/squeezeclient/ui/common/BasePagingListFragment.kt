@@ -17,10 +17,6 @@
 
 package de.maniac103.squeezeclient.ui.common
 
-import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.paging.LoadState
@@ -46,11 +42,10 @@ import kotlinx.coroutines.launch
 import me.zhanghai.android.fastscroll.FastScrollerBuilder
 
 abstract class BasePagingListFragment<T : Any, VH : RecyclerView.ViewHolder> :
-    MainContentFragment() {
-    protected lateinit var binding: FragmentGenericListBinding
+    ViewBindingFragment<FragmentGenericListBinding>(
+        FragmentGenericListBinding::inflate
+    ) {
     private lateinit var adapter: PagingDataAdapter<T, VH>
-
-    override val scrollingTargetView get() = binding.recycler
 
     protected abstract val fastScrollEnabled: Boolean
     protected open val useGrid get() = resources.getBoolean(R.bool.use_grid_items_for_lists)
@@ -67,18 +62,7 @@ abstract class BasePagingListFragment<T : Any, VH : RecyclerView.ViewHolder> :
         adapter.refresh()
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        binding = FragmentGenericListBinding.inflate(inflater, container, false)
-        return binding.root
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
+    override fun onBindingCreated(binding: FragmentGenericListBinding) {
         val diffCallback = object : DiffUtil.ItemCallback<T>() {
             override fun areItemsTheSame(oldItem: T, newItem: T): Boolean {
                 return this@BasePagingListFragment.areItemsTheSame(oldItem, newItem)

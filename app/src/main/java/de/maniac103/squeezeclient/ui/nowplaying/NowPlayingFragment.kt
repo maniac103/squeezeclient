@@ -19,12 +19,10 @@ package de.maniac103.squeezeclient.ui.nowplaying
 
 import android.os.Bundle
 import android.text.format.DateUtils
-import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
-import android.view.ViewGroup
 import androidx.activity.BackEventCompat
 import androidx.activity.OnBackPressedCallback
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -36,7 +34,6 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
-import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -59,6 +56,7 @@ import de.maniac103.squeezeclient.model.PlayerStatus
 import de.maniac103.squeezeclient.model.Playlist
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.ui.bottomsheets.InputBottomSheetFragment
+import de.maniac103.squeezeclient.ui.common.ViewBindingFragment
 import de.maniac103.squeezeclient.ui.contextmenu.ContextMenuBottomSheetFragment
 import kotlin.math.max
 import kotlin.time.Duration.Companion.milliseconds
@@ -71,7 +69,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 
 class NowPlayingFragment :
-    Fragment(),
+    ViewBindingFragment<FragmentNowplayingBinding>(FragmentNowplayingBinding::inflate),
     MenuProvider,
     ContextMenuBottomSheetFragment.Listener,
     InputBottomSheetFragment.PlainSubmitListener {
@@ -85,7 +83,6 @@ class NowPlayingFragment :
     private val playlistFragment get() =
         childFragmentManager.findFragmentById(binding.playlistFragment.id) as? PlaylistFragment
 
-    private lateinit var binding: FragmentNowplayingBinding
     private lateinit var playlistBottomSheetBehavior: BottomSheetBehavior<ConstraintLayout>
     private var timeUpdateJob: Job? = null
     private var sliderDragUpdateJob: Job? = null
@@ -140,19 +137,8 @@ class NowPlayingFragment :
         }
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        binding = FragmentNowplayingBinding.inflate(inflater, container, false)
-        return binding.root
-    }
-
     @OptIn(ExperimentalCoroutinesApi::class)
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
+    override fun onBindingCreated(binding: FragmentNowplayingBinding) {
         requireActivity().onBackPressedDispatcher.addCallback(
             viewLifecycleOwner,
             onBackPressedCallback

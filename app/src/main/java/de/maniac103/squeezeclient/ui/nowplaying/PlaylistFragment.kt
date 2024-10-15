@@ -17,8 +17,6 @@
 
 package de.maniac103.squeezeclient.ui.nowplaying
 
-import android.os.Bundle
-import android.view.View
 import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -31,7 +29,7 @@ import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
-import de.maniac103.squeezeclient.R
+import de.maniac103.squeezeclient.databinding.FragmentGenericListBinding
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.model.ListResponse
@@ -41,14 +39,12 @@ import de.maniac103.squeezeclient.model.Playlist
 import de.maniac103.squeezeclient.ui.common.BasePagingListFragment
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant
 
 class PlaylistFragment :
     BasePagingListFragment<Playlist.PlaylistItem, PlaylistItemViewHolder>() {
     private val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)
-    override val titleFlow get() = flowOf(getString(R.string.playlist))
     override val fastScrollEnabled = true
     override val useGrid = false
 
@@ -109,8 +105,8 @@ class PlaylistFragment :
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+    override fun onBindingCreated(binding: FragmentGenericListBinding) {
+        super.onBindingCreated(binding)
         ViewCompat.setOnApplyWindowInsetsListener(binding.recycler) { v, windowInsets ->
             val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.updatePadding(left = insets.left, right = insets.right, bottom = insets.bottom)

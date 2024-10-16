@@ -17,6 +17,8 @@
 
 package de.maniac103.squeezeclient.ui.nowplaying
 
+import android.content.res.Configuration
+import android.view.View
 import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -108,8 +110,19 @@ class PlaylistFragment :
     override fun onBindingCreated(binding: FragmentGenericListBinding) {
         super.onBindingCreated(binding)
         ViewCompat.setOnApplyWindowInsetsListener(binding.recycler) { v, windowInsets ->
-            val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.updatePadding(left = insets.left, right = insets.right, bottom = insets.bottom)
+            val insets = windowInsets.getInsets(
+                WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
+            )
+            if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                // in landscape we're placed at the end edge -> only apply respective inset
+                val startIsLeft = v.layoutDirection == View.LAYOUT_DIRECTION_LTR
+                val leftPadding = if (startIsLeft) 0 else insets.left
+                val rightPadding = if (startIsLeft) insets.right else 0
+                v.updatePadding(left = leftPadding, right = rightPadding, bottom = insets.bottom)
+            } else {
+                // in portrait, we fill the whole width -> apply both inset sides
+                v.updatePadding(left = insets.left, right = insets.right, bottom = insets.bottom)
+            }
             windowInsets
         }
 

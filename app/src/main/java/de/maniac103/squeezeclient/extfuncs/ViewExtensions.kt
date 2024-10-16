@@ -23,8 +23,12 @@ import android.widget.ImageView
 import androidx.appcompat.app.AlertDialog
 import androidx.constraintlayout.motion.widget.MotionLayout
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import coil.load
 import coil.request.ImageRequest
+import com.google.android.material.appbar.AppBarLayout
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.model.ArtworkItem
 import de.maniac103.squeezeclient.model.SlideshowImage
@@ -56,6 +60,36 @@ fun ImageView.loadSlideshowImage(
         }
         builder()
     }
+}
+
+fun View.addSystemBarAndCutoutInsetsListener(applyTop: Boolean, applyBottom: Boolean) {
+    ViewCompat.setOnApplyWindowInsetsListener(this) { v, windowInsets ->
+        val barInsets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+        val cutoutInsets = windowInsets.getInsets(WindowInsetsCompat.Type.displayCutout())
+        val startIsLeft = layoutDirection == View.LAYOUT_DIRECTION_LTR
+        val leftBarInset = if (startIsLeft) barInsets.left else 0
+        val rightBarInset = if (startIsLeft) 0 else barInsets.right
+        v.updatePadding(
+            left = cutoutInsets.left + leftBarInset,
+            right = cutoutInsets.right + rightBarInset,
+        )
+        if (applyTop) {
+            v.updatePadding(top = barInsets.top)
+        }
+        if (applyBottom) {
+            v.updatePadding(bottom = barInsets.bottom)
+        }
+        windowInsets
+    }
+
+}
+
+fun AppBarLayout.addSystemBarAndCutoutInsetsListener() {
+    addSystemBarAndCutoutInsetsListener(applyTop = true, applyBottom = false)
+}
+
+fun View.addContentSystemBarAndCutoutInsetsListeneer() {
+    addSystemBarAndCutoutInsetsListener(applyTop = false, applyBottom = true)
 }
 
 inline fun MotionLayout.doOnTransitionCompleted(crossinline action: (id: Int) -> Unit) {

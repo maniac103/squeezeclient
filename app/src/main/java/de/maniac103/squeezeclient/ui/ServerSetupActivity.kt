@@ -31,6 +31,8 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.databinding.ActivityServerSetupBinding
+import de.maniac103.squeezeclient.extfuncs.addContentSystemBarAndCutoutInsetsListeneer
+import de.maniac103.squeezeclient.extfuncs.addSystemBarAndCutoutInsetsListener
 import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.extfuncs.putServerConfig
 import de.maniac103.squeezeclient.extfuncs.serverConfig
@@ -67,6 +69,8 @@ class ServerSetupActivity : AppCompatActivity() {
             binding.toolbar.setNavigationIcon(R.drawable.ic_arrow_left_24dp)
             binding.toolbar.setNavigationOnClickListener { finish() }
         }
+        binding.appbarContainer.addSystemBarAndCutoutInsetsListener()
+        binding.content.addContentSystemBarAndCutoutInsetsListeneer()
         binding.serverAddress.doAfterTextChanged { validateInput() }
         binding.username.doAfterTextChanged { validateInput() }
         binding.password.doAfterTextChanged { validateInput() }

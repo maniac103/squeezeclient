@@ -22,6 +22,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.commit
 import de.maniac103.squeezeclient.databinding.ActivitySettingsBinding
+import de.maniac103.squeezeclient.extfuncs.addContentSystemBarAndCutoutInsetsListeneer
+import de.maniac103.squeezeclient.extfuncs.addSystemBarAndCutoutInsetsListener
 
 class SettingsActivity : AppCompatActivity() {
     private lateinit var binding: ActivitySettingsBinding
@@ -32,6 +34,8 @@ class SettingsActivity : AppCompatActivity() {
         binding = ActivitySettingsBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        binding.appbarContainer.addSystemBarAndCutoutInsetsListener()
+        binding.container.addContentSystemBarAndCutoutInsetsListeneer()
         binding.toolbar.setNavigationOnClickListener { finish() }
 
         if (savedInstanceState == null) {

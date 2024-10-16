@@ -43,6 +43,8 @@ import de.maniac103.squeezeclient.cometd.ConnectionState
 import de.maniac103.squeezeclient.cometd.request.LibrarySearchRequest
 import de.maniac103.squeezeclient.databinding.ActivityMainBinding
 import de.maniac103.squeezeclient.databinding.NavDrawerHeaderBinding
+import de.maniac103.squeezeclient.extfuncs.addContentSystemBarAndCutoutInsetsListeneer
+import de.maniac103.squeezeclient.extfuncs.addSystemBarAndCutoutInsetsListener
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.getParcelableOrNull
 import de.maniac103.squeezeclient.extfuncs.lastSelectedPlayer
@@ -167,17 +169,27 @@ class MainActivity :
 
         drawerHeaderBinding = NavDrawerHeaderBinding.bind(binding.navigationView.getHeaderView(0))
         drawerHeaderBinding.serverSetup.setOnClickListener { openServerSetup(true) }
+        ViewCompat.setOnApplyWindowInsetsListener(binding.navigationView) { v, windowInsets ->
+            val insets = windowInsets.getInsets(
+                WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
+            )
+            val startIsLeft = v.layoutDirection == View.LAYOUT_DIRECTION_LTR
+            v.updatePadding(
+                left = if (startIsLeft) insets.left else 0,
+                right = if (startIsLeft) 0 else insets.right,
+            )
+            windowInsets
+        }
         ViewCompat.setOnApplyWindowInsetsListener(drawerHeaderBinding.root) { v, windowInsets ->
-            val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val insets = windowInsets.getInsets(
+                WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
+            )
             v.updatePadding(top = insets.top)
             windowInsets
         }
 
-        ViewCompat.setOnApplyWindowInsetsListener(binding.container) { v, windowInsets ->
-            val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.updatePadding(bottom = insets.bottom)
-            windowInsets
-        }
+        binding.container.addContentSystemBarAndCutoutInsetsListeneer()
+        binding.appbarContainer.addSystemBarAndCutoutInsetsListener()
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {

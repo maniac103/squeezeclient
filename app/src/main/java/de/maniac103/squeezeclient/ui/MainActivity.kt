@@ -625,6 +625,7 @@ class MainActivity :
     private fun hideContentAndShowLoadingIndicator() {
         supportFragmentManager.commit {
             mainListContainer?.let { hide(it) }
+            errorFragment?.let { hide(it) }
             nowPlayingFragment?.let { hide(it) }
             searchFragment?.let { hide(it) }
             setPrimaryNavigationFragment(null)

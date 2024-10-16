@@ -20,9 +20,6 @@ package de.maniac103.squeezeclient.ui.playermanagement
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.updatePadding
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -32,6 +29,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.cometd.ConnectionState
 import de.maniac103.squeezeclient.databinding.ActivityPlayerManagementBinding
+import de.maniac103.squeezeclient.extfuncs.addContentSystemBarAndCutoutInsetsListeneer
+import de.maniac103.squeezeclient.extfuncs.addSystemBarAndCutoutInsetsListener
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.PlayerStatus
@@ -59,6 +58,8 @@ class PlayerManagementActivity : AppCompatActivity() {
         binding = ActivityPlayerManagementBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        binding.appbarContainer.addSystemBarAndCutoutInsetsListener()
+        binding.recycler.addContentSystemBarAndCutoutInsetsListeneer()
         binding.toolbar.setNavigationIcon(R.drawable.ic_arrow_left_24dp)
         binding.toolbar.setNavigationOnClickListener { finish() }
 
@@ -99,11 +100,6 @@ class PlayerManagementActivity : AppCompatActivity() {
 
         binding.recycler.layoutManager = LinearLayoutManager(this)
         binding.recycler.adapter = ConcatAdapter(adapter, dragTargetAdapter)
-        ViewCompat.setOnApplyWindowInsetsListener(binding.recycler) { v, windowInsets ->
-            val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.updatePadding(bottom = insets.bottom)
-            windowInsets
-        }
         itemTouchHelper.attachToRecyclerView(binding.recycler)
 
         lifecycleScope.launch {

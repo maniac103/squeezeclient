@@ -32,6 +32,62 @@
             app:touchAnchorSide="start" />
 
         <KeyFrameSet>
+            <KeyPosition
+                app:keyPositionType="deltaRelative"
+                app:percentX="0.5"
+                app:percentY="0.2"
+                app:framePosition="50"
+                app:motionTarget="@id/artwork" />
+
+            <KeyAttribute
+                app:framePosition="30"
+                android:scaleX="0.5"
+                android:scaleY="0.5"
+                app:motionTarget="@id/artwork" />
+
+            <KeyPosition
+                app:keyPositionType="deltaRelative"
+                app:percentX="0.3"
+                app:percentY="0"
+                app:framePosition="30"
+                app:motionTarget="@id/repeat" />
+
+            <KeyPosition
+                app:keyPositionType="deltaRelative"
+                app:percentX="0.35"
+                app:percentY="0"
+                app:framePosition="30"
+                app:motionTarget="@id/prev" />
+
+            <KeyPosition
+                app:keyPositionType="deltaRelative"
+                app:percentX="0.4"
+                app:percentY="0"
+                app:framePosition="30"
+                app:motionTarget="@id/play_pause_wrapper" />
+
+            <KeyPosition
+                app:keyPositionType="deltaRelative"
+                app:percentX="0.45"
+                app:percentY="0"
+                app:framePosition="30"
+                app:motionTarget="@id/next" />
+
+            <KeyPosition
+                app:keyPositionType="deltaRelative"
+                app:percentX="0.5"
+                app:percentY="0"
+                app:framePosition="30"
+                app:motionTarget="@id/shuffle" />
+
+            <KeyPosition
+                app:keyPositionType="deltaRelative"
+                app:percentY="-0.5"
+                app:framePosition="85"
+                app:motionTarget="@id/playlist_sheet" />
+        </KeyFrameSet>
+
+        <KeyFrameSet>
             <KeyAttribute
                 app:framePosition="70"
                 android:alpha="0.0"

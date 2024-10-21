@@ -394,8 +394,13 @@ class NowPlayingFragment :
                 value = status.currentPlayPosition?.toDouble(DurationUnit.SECONDS)?.toFloat() ?: 0F
                 isEnabled = true
             }
+            binding.progressMinimized.apply {
+                max = status.currentSongDuration.toInt(DurationUnit.SECONDS)
+                progress = status.currentPlayPosition?.toInt(DurationUnit.SECONDS) ?: 0
+            }
             binding.totalTime.text =
                 DateUtils.formatElapsedTime(status.currentSongDuration.toLong(DurationUnit.SECONDS))
+
             if (status.playbackStartTimestamp != null) {
                 timeUpdateJob = lifecycleScope.launch {
                     while (true) {
@@ -409,14 +414,6 @@ class NowPlayingFragment :
                         binding.progressMinimized.progress = positionSeconds.toInt()
                     }
                 }
-            } else {
-                binding.progressSlider.value = 0F
-                binding.progressMinimized.progress = 0
-                binding.elapsedTime.text = DateUtils.formatElapsedTime(0)
-            }
-            binding.progressMinimized.apply {
-                max = status.currentSongDuration.toInt(DurationUnit.SECONDS)
-                progress = status.currentPlayPosition?.toInt(DurationUnit.SECONDS) ?: 0
             }
         } else {
             binding.progressSlider.apply {

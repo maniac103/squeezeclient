@@ -17,34 +17,11 @@
   ~
   -->
 
-<LinearLayout
+<com.google.android.material.slider.Slider
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/slider"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingTop="8dp"
-    android:orientation="vertical">
-
-    <TextView
-        android:id="@+id/title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:textAppearance="?textAppearanceHeadline6"
-        tools:text="Title" />
-
-    <View
-        android:id="@+id/divider"
-        android:background="?dividerHorizontal"
-        android:layout_height="1dp"
-        android:layout_width="match_parent"
-        android:layout_marginTop="8dp" />
-
-    <com.google.android.material.slider.Slider
-        android:id="@+id/slider"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingHorizontal="16dp"
-        android:paddingBottom="8dp" />
-
-</LinearLayout>
+    android:layout_marginTop="16dp"
+    android:layout_marginBottom="32dp"
+    android:paddingHorizontal="16dp" />

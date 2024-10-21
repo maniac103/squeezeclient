@@ -20,7 +20,6 @@ package de.maniac103.squeezeclient.ui.prefs
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.fragment.app.commit
 import de.maniac103.squeezeclient.databinding.ActivitySettingsBinding
 import de.maniac103.squeezeclient.extfuncs.addContentSystemBarAndCutoutInsetsListeneer
 import de.maniac103.squeezeclient.extfuncs.addSystemBarAndCutoutInsetsListener
@@ -37,11 +36,5 @@ class SettingsActivity : AppCompatActivity() {
         binding.appbarContainer.addSystemBarAndCutoutInsetsListener()
         binding.container.addContentSystemBarAndCutoutInsetsListeneer()
         binding.toolbar.setNavigationOnClickListener { finish() }
-
-        if (savedInstanceState == null) {
-            supportFragmentManager.commit {
-                replace(binding.container.id, SettingsFragment())
-            }
-        }
     }
 }

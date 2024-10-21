@@ -50,6 +50,7 @@
         app:layout_constraintTop_toBottomOf="@id/appbar_container"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        android:name="de.maniac103.squeezeclient.ui.prefs.SettingsFragment" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

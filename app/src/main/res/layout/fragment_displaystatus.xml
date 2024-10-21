@@ -17,6 +17,7 @@
 
 <FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="8dp">
@@ -34,7 +35,8 @@
             android:layout_width="32dp"
             android:layout_height="32dp"
             android:layout_gravity="center_vertical"
-            android:scaleType="fitCenter" />
+            android:scaleType="fitCenter"
+            tools:visibility="gone" />
 
         <TextView
             android:id="@+id/text"
@@ -42,7 +44,8 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
             android:layout_marginHorizontal="8dp"
-            android:textColor="?colorOnSecondaryContainer" />
+            android:textColor="?colorOnSecondaryContainer"
+            tools:text="Display message\nSecond line" />
 
     </LinearLayout>
 </FrameLayout>

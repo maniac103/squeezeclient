@@ -19,12 +19,14 @@
 <de.maniac103.squeezeclient.ui.volume.VolumeFragmentRootView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/background"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:translationX="1000dp"
     android:orientation="vertical"
-    android:padding="8dp">
+    android:padding="8dp"
+    tools:translationX="0dp">
 
     <Space
         android:layout_width="0dp"

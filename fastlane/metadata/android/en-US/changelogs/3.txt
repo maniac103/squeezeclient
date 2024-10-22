@@ -1,0 +1,4 @@
+- Fix a number of landscape layout issues
+- Fix play position shown as 0 when paused
+- Properly refresh settings pages when changing alarm settings
+- Misc. fixes and improvements

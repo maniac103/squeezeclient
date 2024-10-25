@@ -30,6 +30,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.content.edit
+import androidx.core.view.GravityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
@@ -158,10 +159,14 @@ class MainActivity :
                         }
                     }
                 }
-                R.id.manage_players ->
+                R.id.manage_players -> {
                     startActivity(Intent(this, PlayerManagementActivity::class.java))
-                R.id.menu_settings ->
+                    binding.drawerLayout.closeDrawer(GravityCompat.START, false)
+                }
+                R.id.menu_settings -> {
                     startActivity(Intent(this, SettingsActivity::class.java))
+                    binding.drawerLayout.closeDrawer(GravityCompat.START, false)
+                }
             }
             binding.drawerLayout.close()
             true

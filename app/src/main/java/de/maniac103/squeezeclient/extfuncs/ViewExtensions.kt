@@ -71,7 +71,7 @@ fun View.addSystemBarAndCutoutInsetsListener(applyTop: Boolean, applyBottom: Boo
         val rightBarInset = if (startIsLeft) 0 else barInsets.right
         v.updatePadding(
             left = cutoutInsets.left + leftBarInset,
-            right = cutoutInsets.right + rightBarInset,
+            right = cutoutInsets.right + rightBarInset
         )
         if (applyTop) {
             v.updatePadding(top = barInsets.top)
@@ -81,7 +81,6 @@ fun View.addSystemBarAndCutoutInsetsListener(applyTop: Boolean, applyBottom: Boo
         }
         windowInsets
     }
-
 }
 
 fun AppBarLayout.addSystemBarAndCutoutInsetsListener() {

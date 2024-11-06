@@ -181,7 +181,7 @@ class MainActivity :
             val startIsLeft = v.layoutDirection == View.LAYOUT_DIRECTION_LTR
             v.updatePadding(
                 left = if (startIsLeft) insets.left else 0,
-                right = if (startIsLeft) 0 else insets.right,
+                right = if (startIsLeft) 0 else insets.right
             )
             windowInsets
         }

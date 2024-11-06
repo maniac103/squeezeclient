@@ -290,12 +290,37 @@ abstract class BaseSlimBrowseItemListFragment :
             loadedItems.items
         } else {
             loadedItems.items.toMutableList().apply {
+                // Create a fake slimbrowse item for the download, which has some constraints:
+                // - Must contain a go action (otherwise it's assumed to be non-clickable)
+                // - Go action must not point to a context menu
+                // - Download data must match that of the base item
                 val item = SlimBrowseItemList.SlimBrowseItem(
-                    size,
-                    getString(R.string.action_download),
-                    null, null, null, null, null, null,
-                    actions,
-                    null, null, null
+                    listPosition = size,
+                    title = getString(R.string.action_download),
+                    subText = null,
+                    textKey = null,
+                    type = null,
+                    trackType = null,
+                    icon = null,
+                    iconId = null,
+                    actions = JiveActions(
+                        goAction = JiveAction(emptyList(), emptyMap(), null, null),
+                        doAction = null,
+                        moreAction = null,
+                        playAction = null,
+                        addAction = null,
+                        insertAction = null,
+                        downloadData = actions.downloadData,
+                        checkbox = null,
+                        choices = null,
+                        radio = null,
+                        input = null,
+                        slider = null,
+                        onClickRefresh = null
+                    ),
+                    nextWindow = null,
+                    subItems = null,
+                    webLink = null
                 )
                 add(item)
             }

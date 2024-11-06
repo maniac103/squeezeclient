@@ -272,7 +272,10 @@ fun Json.combineItemAndBaseActions(item: JsonObject, base: JsonObject?): JiveAct
                 )
             }
             else -> {
-                val params = playAction.params.filter { (k, v) ->
+                // Depending on server settings, for a single track playAction might point to either
+                // the track or the album it belongs to, so prefer the parameters of the moreAction
+                // if available
+                val params = (moreAction ?: playAction).params.filter { (k, v) ->
                     k in setOf("track_id", "album_id", "artist_id", "genre_id", "year") && v != null
                 }
                 DownloadRequestData(

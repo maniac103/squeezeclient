@@ -73,6 +73,12 @@
     <string name="download_notification_subtext">Downloading</string>
     <string name="download_notification_content">Downloading song %1$d of %2$d</string>
     <string name="download_notification_action_cancel">Cancel</string>
+    <string name="download_failure_notification_title">Song download failed</string>
+    <plurals name="download_failure_notification_text">
+        <item quantity="one">1 song could not be downloaded</item>
+        <item quantity="other">%d songs could not be downloaded</item>
+    </plurals>
+    <string name="download_failure_notification_action_retry">Retry download</string>
     <string name="download_permission_rationale_title">Permission required</string>
     <string name="download_permission_rationale_message">Downloading songs requires notification permission to inform about the download progress.</string>
     <string name="download_permission_rationale_cancel">Cancel download</string>

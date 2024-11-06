@@ -72,6 +72,12 @@
     <string name="download_notification_subtext">Wird heruntergeladen</string>
     <string name="download_notification_content">Titel %1$d von %2$d wird heruntergeladen</string>
     <string name="download_notification_action_cancel">Abbrechen</string>
+    <string name="download_failure_notification_title">Titel-Download fehlgeschlagen</string>
+    <plurals name="download_failure_notification_text">
+        <item quantity="one">1 Titel konnte nicht heruntergeladen werden</item>
+        <item quantity="other">%d Titel konnten nicht heruntergeladen werden</item>
+    </plurals>
+    <string name="download_failure_notification_action_retry">Erneut versuchen</string>
     <string name="download_permission_rationale_title">Berechtigung erforderlich</string>
     <string name="download_permission_rationale_message">Das Herunterladen von Titeln erfordert die Berechtigung zur Anzeige von Benachrichtigungen, um über den Fortschritt des Downloads informieren zu können.</string>
     <string name="download_permission_rationale_cancel">Download abbrechen</string>

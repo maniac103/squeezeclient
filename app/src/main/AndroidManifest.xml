@@ -79,6 +79,14 @@
             android:foregroundServiceType="dataSync"
             tools:node="merge" />
 
+        <receiver
+            android:name=".NotificationActionReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="${applicationId}.action.RETRY_DOWNLOAD" />
+            </intent-filter>
+        </receiver>
+
         <provider
             android:name=".CacheFileProvider"
             android:authorities="${applicationId}.cachefiles"

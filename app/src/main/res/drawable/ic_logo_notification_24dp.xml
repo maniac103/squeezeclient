@@ -1,0 +1,48 @@
+<!--
+  ~ This file is part of Squeeze Client, an Android client for the LMS music server.
+  ~ Copyright (c) 2024 Danny Baumann
+  ~
+  ~ This program is free software: you can redistribute it and/or modify it under the terms of the
+  ~ GNU General Public License as published by the Free Software Foundation,
+  ~ either version 3 of the License, or (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+  ~ without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+  ~ See the GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License along with this program.
+  ~ If not, see <http://www.gnu.org/licenses/>.
+  ~
+  -->
+
+<!-- same as ic_launcher_foreground, just scaled to be 24dp and fill container as much as possible -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="28"
+    android:viewportHeight="28">
+    <group
+        android:scaleX="1.8"
+        android:scaleY="1.8"
+        android:pivotX="15"
+        android:pivotY="16">
+        <path
+            android:pathData="M15.376,9.071A0.403,0.403 0,0 0,15.002 9.021l0.003,-0.001 -4.884,1.736a0.407,0.407 0,0 0,-0.27 0.383V16.801A1.696,1.696 0,0 0,9.037 16.593h-0a1.567,1.567 0,0 0,-1.628 1.489v0.004a1.568,1.568 0,0 0,1.631 1.493h-0.003a1.567,1.567 0,0 0,1.628 -1.489v-5.684l4.07,-1.421v3.956a1.702,1.702 0,0 0,-0.814 -0.207h-0a1.566,1.566 0,0 0,-1.627 1.489v0.004a1.567,1.567 0,0 0,1.631 1.493h-0.003l0.046,0.001a1.597,1.597 0,0 0,1.549 -1.208l0.002,-0.011a0.4,0.4 0,0 0,0.03 -0.15V9.403A0.406,0.406 0,0 0,15.377 9.072l-0.001,-0.001z"
+            android:fillColor="#000"/>
+        <path
+            android:pathData="m20.174,9.856a3.969,7.937 0,0 1,1.162 5.612,3.969 7.937,0 0,1 -1.162,5.612"
+            android:strokeWidth="0.66142"
+            android:strokeColor="#000"
+            android:strokeLineCap="round"/>
+        <path
+            android:pathData="m19.116,11.708a2.646,5.291 0,0 1,0 7.483"
+            android:strokeWidth="0.661433"
+            android:strokeColor="#000"
+            android:strokeLineCap="round"/>
+        <path
+            android:pathData="m17.793,12.674a1.984,3.969 0,0 1,0 5.613"
+            android:strokeWidth="0.661458"
+            android:strokeColor="#000"
+            android:strokeLineCap="round"/>
+    </group>
+</vector>

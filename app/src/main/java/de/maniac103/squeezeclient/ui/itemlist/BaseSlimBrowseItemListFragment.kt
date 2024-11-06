@@ -23,7 +23,6 @@ import androidx.core.net.toUri
 import androidx.lifecycle.lifecycleScope
 import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
-import androidx.work.WorkManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.markodevcic.peko.PermissionRequester
 import com.markodevcic.peko.PermissionResult
@@ -308,8 +307,7 @@ abstract class BaseSlimBrowseItemListFragment :
             return@launch
         }
         val items = connectionHelper.fetchSongInfosForDownload(data)
-        val request = DownloadWorker.buildRequest(requireContext(), items)
-        WorkManager.getInstance(requireContext()).enqueue(request)
+        DownloadWorker.enqueue(requireContext(), items)
     }
 
     private suspend fun requestNotificationPermissionForDownload(): Boolean {

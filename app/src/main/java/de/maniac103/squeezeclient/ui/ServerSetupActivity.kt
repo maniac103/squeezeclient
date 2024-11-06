@@ -113,12 +113,11 @@ class ServerSetupActivity : AppCompatActivity() {
                     launch {
                         listenForDiscoveryResults(socket, discoveryResultsChannel)
                     }
-                    if (sendDiscoverRequest(socket)) {
-                        val results = discoveryResultsChannel.consumeAsFlow().toList()
-                        updateUiForDiscoveryResults(results)
-                    } else {
-                        updateUiForDiscoveryResults(emptyList())
-                    }
+                    val results = sendDiscoverRequest(socket)
+                        .map { discoveryResultsChannel.consumeAsFlow().toList() }
+                        .onFailure { Log.d(TAG, "could not send discovery request", it) }
+                        .getOrElse { emptyList() }
+                    updateUiForDiscoveryResults(results)
                 }
             }
         }
@@ -189,7 +188,7 @@ class ServerSetupActivity : AppCompatActivity() {
         binding.passwordWrapper.error = credsError
     }
 
-    private suspend fun sendDiscoverRequest(socket: DatagramSocket): Boolean {
+    private suspend fun sendDiscoverRequest(socket: DatagramSocket): Result<Unit> {
         val requestData = "eIPAD\u0000NAME\u0000JSON\u0000".toByteArray(Charsets.US_ASCII)
         return withContext(Dispatchers.IO) {
             val broadcastAddress = InetAddress.getByName("255.255.255.255")
@@ -199,12 +198,8 @@ class ServerSetupActivity : AppCompatActivity() {
                 broadcastAddress,
                 DISCOVERY_PORT
             )
-            try {
+            runCatching {
                 socket.send(discoveryPacket)
-                true
-            } catch (e: IOException) {
-                Log.d(TAG, "could not send discovery request", e)
-                false
             }
         }
     }

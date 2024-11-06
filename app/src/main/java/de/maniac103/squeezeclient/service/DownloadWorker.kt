@@ -276,7 +276,9 @@ class DownloadWorker(
         private const val NOTIFICATION_CHANNEL = "background_download"
 
         fun buildRequest(context: Context, items: List<DownloadSongInfo>): OneTimeWorkRequest {
-            val dataJsonArray = items.map { context.jsonParser.encodeToString(it) }.toTypedArray()
+            val dataJsonArray: Array<String?> = items
+                .map { context.jsonParser.encodeToString(it) }
+                .toTypedArray()
             return OneTimeWorkRequestBuilder<DownloadWorker>()
                 .setConstraints(Constraints(requiredNetworkType = NetworkType.CONNECTED))
                 .setInputData(Data.Builder().putStringArray("items", dataJsonArray).build())

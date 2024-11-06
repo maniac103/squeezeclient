@@ -16,7 +16,7 @@ plugins {
 
 android {
     namespace = "de.maniac103.squeezeclient.wearapi"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         minSdk = 26

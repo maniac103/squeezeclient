@@ -21,7 +21,7 @@ import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import de.maniac103.squeezeclient.databinding.ActivitySettingsBinding
-import de.maniac103.squeezeclient.extfuncs.addContentSystemBarAndCutoutInsetsListeneer
+import de.maniac103.squeezeclient.extfuncs.addContentSystemBarAndCutoutInsetsListener
 import de.maniac103.squeezeclient.extfuncs.addSystemBarAndCutoutInsetsListener
 
 class SettingsActivity : AppCompatActivity() {
@@ -34,7 +34,7 @@ class SettingsActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         binding.appbarContainer.addSystemBarAndCutoutInsetsListener()
-        binding.container.addContentSystemBarAndCutoutInsetsListeneer()
+        binding.container.addContentSystemBarAndCutoutInsetsListener()
         binding.toolbar.setNavigationOnClickListener { finish() }
     }
 }

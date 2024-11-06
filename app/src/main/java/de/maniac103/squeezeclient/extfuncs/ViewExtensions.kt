@@ -87,7 +87,7 @@ fun AppBarLayout.addSystemBarAndCutoutInsetsListener() {
     addSystemBarAndCutoutInsetsListener(applyTop = true, applyBottom = false)
 }
 
-fun View.addContentSystemBarAndCutoutInsetsListeneer() {
+fun View.addContentSystemBarAndCutoutInsetsListener() {
     addSystemBarAndCutoutInsetsListener(applyTop = false, applyBottom = true)
 }
 

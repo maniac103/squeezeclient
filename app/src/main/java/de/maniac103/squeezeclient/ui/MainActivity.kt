@@ -44,7 +44,7 @@ import de.maniac103.squeezeclient.cometd.ConnectionState
 import de.maniac103.squeezeclient.cometd.request.LibrarySearchRequest
 import de.maniac103.squeezeclient.databinding.ActivityMainBinding
 import de.maniac103.squeezeclient.databinding.NavDrawerHeaderBinding
-import de.maniac103.squeezeclient.extfuncs.addContentSystemBarAndCutoutInsetsListeneer
+import de.maniac103.squeezeclient.extfuncs.addContentSystemBarAndCutoutInsetsListener
 import de.maniac103.squeezeclient.extfuncs.addSystemBarAndCutoutInsetsListener
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.getParcelableOrNull
@@ -193,7 +193,7 @@ class MainActivity :
             windowInsets
         }
 
-        binding.container.addContentSystemBarAndCutoutInsetsListeneer()
+        binding.container.addContentSystemBarAndCutoutInsetsListener()
         binding.appbarContainer.addSystemBarAndCutoutInsetsListener()
 
         lifecycleScope.launch {

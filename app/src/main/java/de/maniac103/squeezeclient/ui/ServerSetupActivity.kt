@@ -31,7 +31,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.databinding.ActivityServerSetupBinding
-import de.maniac103.squeezeclient.extfuncs.addContentSystemBarAndCutoutInsetsListeneer
+import de.maniac103.squeezeclient.extfuncs.addContentSystemBarAndCutoutInsetsListener
 import de.maniac103.squeezeclient.extfuncs.addSystemBarAndCutoutInsetsListener
 import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.extfuncs.putServerConfig
@@ -70,7 +70,7 @@ class ServerSetupActivity : AppCompatActivity() {
             binding.toolbar.setNavigationOnClickListener { finish() }
         }
         binding.appbarContainer.addSystemBarAndCutoutInsetsListener()
-        binding.content.addContentSystemBarAndCutoutInsetsListeneer()
+        binding.content.addContentSystemBarAndCutoutInsetsListener()
         binding.serverAddress.doAfterTextChanged { validateInput() }
         binding.username.doAfterTextChanged { validateInput() }
         binding.password.doAfterTextChanged { validateInput() }

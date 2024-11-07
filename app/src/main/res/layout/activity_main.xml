@@ -55,7 +55,8 @@
                 android:orientation="horizontal"
                 android:visibility="gone"
                 android:animateLayoutChanges="true"
-                tools:visibility="visible">
+                tools:visibility="visible"
+                tools:ignore="UseCompoundDrawables">
 
                 <ImageView
                     android:id="@+id/breadcrumbs_home"

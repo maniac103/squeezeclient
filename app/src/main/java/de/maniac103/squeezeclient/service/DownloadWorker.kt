@@ -136,7 +136,7 @@ class DownloadWorker(
                 }
             } catch (e: Exception) {
                 Log.w(TAG, "Downloading item $item failed", e)
-                DownloadResult.Failure(item, e)
+                DownloadResult.Failure(item)
             }
         }
 
@@ -310,7 +310,7 @@ class DownloadWorker(
     sealed class DownloadResult(val item: DownloadSongInfo) {
         class Success(item: DownloadSongInfo) : DownloadResult(item)
         class AlreadyPresent(item: DownloadSongInfo) : DownloadResult(item)
-        class Failure(item: DownloadSongInfo, val error: Throwable) : DownloadResult(item)
+        class Failure(item: DownloadSongInfo) : DownloadResult(item)
     }
 
     companion object {

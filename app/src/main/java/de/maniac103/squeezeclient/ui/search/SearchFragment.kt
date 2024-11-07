@@ -17,6 +17,7 @@
 
 package de.maniac103.squeezeclient.ui.search
 
+import android.annotation.SuppressLint
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -201,6 +202,7 @@ class SearchFragment : ViewBindingFragment<FragmentSearchBinding>(FragmentSearch
         }
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     private fun updateAdapter() = binding.categories.adapter?.notifyDataSetChanged()
 
     private class Adapter(items: List<Category>) :

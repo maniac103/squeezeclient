@@ -33,7 +33,7 @@ class SlimBrowseItemListViewHolder(private val binding: SlimBrowseItemListAdapte
     RecyclerView.ViewHolder(binding.root) {
     val contextMenu: View? = itemView.findViewById(R.id.context_menu)
     val radio: RadioButton? = itemView.findViewById(R.id.radio)
-    val checkbox: CheckBox? = itemView.findViewById(R.id.checkbox)
+    private val checkbox: CheckBox? = itemView.findViewById(R.id.checkbox)
     private val choiceLabel: TextView? = itemView.findViewById(R.id.choice_label)
 
     fun bind(item: SlimBrowseItemList.SlimBrowseItem) {

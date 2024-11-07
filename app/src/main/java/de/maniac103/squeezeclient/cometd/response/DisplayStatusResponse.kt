@@ -27,6 +27,7 @@ data class DisplayStatusResponse(
     val display: DisplayMessage
 ) {
     @Serializable
+    @Suppress("unused")
     enum class StatusType {
         @SerialName("update")
         Update,

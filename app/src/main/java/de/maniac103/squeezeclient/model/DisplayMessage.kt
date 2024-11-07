@@ -45,6 +45,7 @@ data class DisplayMessage(
     val duration get() = durationInternal?.milliseconds
 
     @Serializable
+    @Suppress("unused")
     enum class MessageType {
         @SerialName("icon")
         Icon,

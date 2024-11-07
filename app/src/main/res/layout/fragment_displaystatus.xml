@@ -15,37 +15,31 @@
   ~
   -->
 
-<FrameLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:padding="8dp">
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="bottom|center_horizontal"
+    android:layout_margin="8dp"
+    android:padding="8dp"
+    android:background="@drawable/display_status_background">
 
-    <LinearLayout
+    <ImageView
+        android:id="@+id/icon"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_gravity="center_vertical"
+        android:scaleType="fitCenter"
+        tools:visibility="gone" />
+
+    <TextView
+        android:id="@+id/text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|center_horizontal"
-        android:orientation="horizontal"
-        android:padding="8dp"
-        android:background="@drawable/display_status_background">
+        android:layout_gravity="center_vertical"
+        android:layout_marginHorizontal="8dp"
+        android:textColor="?colorOnSecondaryContainer"
+        tools:text="Display message\nSecond line" />
 
-        <ImageView
-            android:id="@+id/icon"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:layout_gravity="center_vertical"
-            android:scaleType="fitCenter"
-            tools:visibility="gone" />
-
-        <TextView
-            android:id="@+id/text"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:layout_marginHorizontal="8dp"
-            android:textColor="?colorOnSecondaryContainer"
-            tools:text="Display message\nSecond line" />
-
-    </LinearLayout>
-</FrameLayout>
+</LinearLayout>

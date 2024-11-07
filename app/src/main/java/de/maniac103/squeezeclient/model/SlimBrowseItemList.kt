@@ -50,6 +50,7 @@ data class SlimBrowseItemList(
 
     @Serializable
     @OptIn(ExperimentalSerializationApi::class)
+    @Suppress("unused")
     enum class NextWindow {
         @SerialName("home")
         Home,
@@ -77,6 +78,7 @@ data class SlimBrowseItemList(
     }
 
     @Serializable
+    @Suppress("unused")
     enum class ItemType {
         @SerialName("text")
         Text,
@@ -110,6 +112,7 @@ data class SlimBrowseItemList(
     }
 
     @Serializable
+    @Suppress("unused")
     enum class TrackType {
         @SerialName("local")
         Local,

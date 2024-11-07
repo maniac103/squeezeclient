@@ -128,6 +128,7 @@ class InputBottomSheetFragment : BaseBottomSheet() {
             }
 
         fun createPlain(
+            title: String,
             minLength: Int = 0,
             initialText: String? = null,
             allowedChars: String? = null,
@@ -142,7 +143,7 @@ class InputBottomSheetFragment : BaseBottomSheet() {
                 dummyAction,
                 false
             )
-            return createForInput("", dummyInput)
+            return createForInput(title, dummyInput)
         }
 
         fun createForInput(parentTitle: String, input: JiveActions.Input) =

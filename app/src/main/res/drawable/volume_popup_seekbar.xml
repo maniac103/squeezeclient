@@ -32,7 +32,8 @@
     </item>
     <item android:id="@android:id/progress"
         android:gravity="center_vertical|fill_horizontal">
-        <de.maniac103.squeezeclient.ui.widget.RoundedCornerProgressDrawable
+        <drawable
+            class="de.maniac103.squeezeclient.ui.widget.RoundedCornerProgressDrawable"
             android:drawable="@drawable/volume_popup_seekbar_progress" />
     </item>
 </layer-list>

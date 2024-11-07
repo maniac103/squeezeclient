@@ -33,7 +33,7 @@
         android:layout_height="0dp"
         android:layout_weight="0.4" />
 
-    <FrameLayout
+    <LinearLayout
         android:layout_height="wrap_content"
         android:layout_width="@dimen/volume_popup_panel_width"
         android:layout_gravity="end"
@@ -42,61 +42,55 @@
         android:gravity="center"
         android:paddingTop="8dp"
         android:paddingBottom="8dp"
+        android:orientation="vertical"
         android:background="@drawable/volume_popup_background">
 
-        <LinearLayout
+        <TextView
+            android:id="@+id/volume_header"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_width="@dimen/volume_popup_panel_width"
-            android:gravity="center"
-            android:layout_gravity="center"
-            android:orientation="vertical" >
-            <TextView
-                android:id="@+id/volume_header"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:ellipsize="end"
-                android:maxLength="10"
-                android:maxLines="1"
-                android:visibility="gone"
-                android:textColor="?android:attr/colorControlNormal"
-                android:textAppearance="@style/TextAppearance.AppCompat.Volume.Header" />
-            <FrameLayout
-                android:id="@+id/volume_slider_frame"
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/volume_popup_slider_height">
-                <SeekBar
-                    android:id="@+id/volume_slider"
-                    android:paddingLeft="0dp"
-                    android:paddingRight="0dp"
-                    android:paddingStart="0dp"
-                    android:paddingEnd="0dp"
-                    android:clickable="true"
-                    android:layout_width="@dimen/volume_popup_slider_height"
-                    android:layout_height="match_parent"
-                    android:layout_gravity="center"
-                    android:thumb="@null"
-                    android:splitTrack="false"
-                    android:min="0"
-                    android:max="100"
-                    android:progressDrawable="@drawable/volume_popup_seekbar"
-                    android:background="@null"
-                    android:layoutDirection="ltr"
-                    android:rotation="270" />
-            </FrameLayout>
+            android:ellipsize="end"
+            android:maxLength="10"
+            android:maxLines="1"
+            android:visibility="gone"
+            android:textColor="?android:attr/colorControlNormal"
+            android:textAppearance="@style/TextAppearance.AppCompat.Volume.Header" />
 
-            <ImageView
-                android:id="@+id/volume_mute"
-                android:layout_width="@dimen/volume_popup_mute_button_size"
-                android:layout_height="@dimen/volume_popup_mute_button_size"
-                android:layout_marginTop="8dp"
-                android:background="@drawable/volume_mute_button_background"
-                android:scaleType="centerInside"
-                android:src="@drawable/ic_volume_muted_24dp"
-                app:tint="@color/volume_mute_button_tint" />
+        <FrameLayout
+            android:id="@+id/volume_slider_frame"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/volume_popup_slider_height">
+            <SeekBar
+                android:id="@+id/volume_slider"
+                android:paddingLeft="0dp"
+                android:paddingRight="0dp"
+                android:paddingStart="0dp"
+                android:paddingEnd="0dp"
+                android:clickable="true"
+                android:layout_width="@dimen/volume_popup_slider_height"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                android:thumb="@null"
+                android:splitTrack="false"
+                android:min="0"
+                android:max="100"
+                android:progressDrawable="@drawable/volume_popup_seekbar"
+                android:background="@null"
+                android:layoutDirection="ltr"
+                android:rotation="270" />
+        </FrameLayout>
 
-        </LinearLayout>
+        <ImageView
+            android:id="@+id/volume_mute"
+            android:layout_width="@dimen/volume_popup_mute_button_size"
+            android:layout_height="@dimen/volume_popup_mute_button_size"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/volume_mute_button_background"
+            android:scaleType="centerInside"
+            android:src="@drawable/ic_volume_muted_24dp"
+            app:tint="@color/volume_mute_button_tint" />
 
-    </FrameLayout>
+    </LinearLayout>
 
     <Space
         android:layout_width="0dp"

@@ -299,7 +299,10 @@ class NowPlayingFragment :
             true
         }
         R.id.save_playlist -> {
-            val f = InputBottomSheetFragment.createPlain(minLength = 1)
+            val f = InputBottomSheetFragment.createPlain(
+                getString(R.string.playlist_save_title),
+                minLength = 1
+            )
             f.show(childFragmentManager, "playlist_name")
             true
         }

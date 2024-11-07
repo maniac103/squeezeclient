@@ -17,6 +17,7 @@
 
 package de.maniac103.squeezeclient.ui.common
 
+import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
@@ -46,6 +47,8 @@ abstract class BasePrepopulatedListAdapter<T, VH : RecyclerView.ViewHolder>(item
             notifyItemChanged(position)
         }
     }
+
+    @SuppressLint("NotifyDataSetChanged")
     fun replaceItems(items: List<T>) {
         if (items.size != internalItems.size) {
             internalItems.clear()

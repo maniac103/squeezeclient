@@ -19,12 +19,9 @@ package de.maniac103.squeezeclient.extfuncs
 
 import android.text.format.DateFormat
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
 import de.maniac103.squeezeclient.model.JiveActions
-import de.maniac103.squeezeclient.model.PlayerId
-import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -37,7 +34,13 @@ inline fun <reified T> Fragment.requireParentAs() = parentAs<T>() ?: throw Illeg
     "Parent of fragment $this doesn't implement required interface ${T::class.java.simpleName}"
 )
 
-fun Fragment.showActionTimePicker(playerId: PlayerId, title: String, input: JiveActions.Input) {
+// TODO: Refactor this into an own class after upgrading MDC, see
+// https://github.com/material-components/material-components-android/issues/4310
+fun Fragment.showActionTimePicker(
+    title: String,
+    input: JiveActions.Input,
+    resultConsumer: (secondsString: String) -> Unit
+) {
     val (hour, minute) = input.initialText?.toIntOrNull()?.let { (it / 3600) to (it / 60) }
         ?: (Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).hour to 0)
     val timeFormat = if (DateFormat.is24HourFormat(context)) {
@@ -52,11 +55,8 @@ fun Fragment.showActionTimePicker(playerId: PlayerId, title: String, input: Jive
         .setTimeFormat(timeFormat)
         .build()
     picker.addOnPositiveButtonClickListener {
-        lifecycleScope.launch {
-            val seconds = picker.hour * 3600 + picker.minute * 60
-            val action = input.action.withInputValue(seconds.toString())
-            connectionHelper.executeAction(playerId, action)
-        }
+        val seconds = picker.hour * 3600 + picker.minute * 60
+        resultConsumer(seconds.toString())
     }
     picker.show(childFragmentManager, "timepicker")
 }

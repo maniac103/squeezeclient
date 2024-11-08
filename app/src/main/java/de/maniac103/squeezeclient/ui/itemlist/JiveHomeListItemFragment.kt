@@ -127,7 +127,9 @@ class JiveHomeListItemFragment :
     private fun showInput(item: JiveHomeMenuItem) {
         val input = requireNotNull(item.input)
         if (input.type == JiveActions.Input.Type.Time) {
-            showActionTimePicker(playerId, item.title, input)
+            showActionTimePicker(item.title, input) {
+                onInputSubmitted(item.title, input.action.withInputValue(it), false)
+            }
         } else {
             val f = InputBottomSheetFragment.createForInput(item.title, input)
             f.show(childFragmentManager, "input")

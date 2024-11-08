@@ -182,7 +182,11 @@ abstract class BaseSlimBrowseItemListFragment :
     ) = if (isGoAction) {
         listener.onGoAction(title, null, action, item.nextWindow)
     } else {
-        executeAction(action, item.nextWindow, item.actions?.onClickRefresh)
+        executeAction(
+            action,
+            item.nextWindow,
+            item.actions?.onClickRefresh ?: JiveActions.RefreshBehavior.RefreshSelf
+        )
     }
 
     override fun onContextItemSelected(
@@ -245,7 +249,9 @@ abstract class BaseSlimBrowseItemListFragment :
     private fun showInput(item: SlimBrowseItemList.SlimBrowseItem) {
         val input = requireNotNull(item.actions?.input)
         if (input.type == JiveActions.Input.Type.Time) {
-            showActionTimePicker(playerId, item.title, input)
+            showActionTimePicker(item.title, input) {
+                onInputSubmitted(item, input.action.withInputValue(it), false)
+            }
         } else {
             val f = InputBottomSheetFragment.createForItem(item, input)
             f.show(childFragmentManager, "input")

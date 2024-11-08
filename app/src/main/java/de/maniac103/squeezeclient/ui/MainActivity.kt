@@ -18,7 +18,6 @@
 package de.maniac103.squeezeclient.ui
 
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.text.SpannableStringBuilder
 import android.util.Log
@@ -28,7 +27,6 @@ import android.view.View
 import android.view.animation.AnimationUtils
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.content.edit
 import androidx.core.view.GravityCompat
 import androidx.core.view.ViewCompat
@@ -54,27 +52,15 @@ import de.maniac103.squeezeclient.extfuncs.putLastSelectedPlayer
 import de.maniac103.squeezeclient.extfuncs.serverConfig
 import de.maniac103.squeezeclient.extfuncs.useVolumeButtonsForPlayerVolume
 import de.maniac103.squeezeclient.model.JiveAction
-import de.maniac103.squeezeclient.model.JiveActions
-import de.maniac103.squeezeclient.model.JiveHomeMenuItem
-import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.Player
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.PlayerStatus
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.service.MediaService
-import de.maniac103.squeezeclient.ui.bottomsheets.InfoBottomSheet
-import de.maniac103.squeezeclient.ui.bottomsheets.SliderBottomSheetFragment
-import de.maniac103.squeezeclient.ui.itemlist.BaseSlimBrowseItemListFragment
-import de.maniac103.squeezeclient.ui.itemlist.JiveHomeListItemFragment
-import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseItemListFragment
-import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseSubItemListFragment
 import de.maniac103.squeezeclient.ui.nowplaying.NowPlayingFragment
 import de.maniac103.squeezeclient.ui.playermanagement.PlayerManagementActivity
 import de.maniac103.squeezeclient.ui.prefs.SettingsActivity
-import de.maniac103.squeezeclient.ui.search.LibrarySearchResultsFragment
-import de.maniac103.squeezeclient.ui.search.RadioSearchResultsFragment
 import de.maniac103.squeezeclient.ui.search.SearchFragment
-import de.maniac103.squeezeclient.ui.slideshow.GalleryFragment
 import de.maniac103.squeezeclient.ui.volume.VolumeFragment
 import de.maniac103.squeezeclient.ui.widget.AlphaSpan
 import kotlin.time.Duration.Companion.seconds
@@ -87,20 +73,15 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
-import kotlin.math.max
 
 class MainActivity :
     AppCompatActivity(),
     MainListHolderFragment.Listener,
-    JiveHomeListItemFragment.NavigationListener,
-    BaseSlimBrowseItemListFragment.NavigationListener,
-    SliderBottomSheetFragment.ChangeListener,
     NowPlayingFragment.Listener,
     ConnectionErrorHintFragment.Listener,
     SearchFragment.Listener {
 
     private var currentPlayerScope: CoroutineScope? = null
-    private var pendingNavigation: Job? = null
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var drawerHeaderBinding: NavDrawerHeaderBinding
@@ -108,7 +89,6 @@ class MainActivity :
     private var allPlayers: List<Player>? = null
     private var player: Player? = null
     private var playerIsActive = false
-    private var homeMenu: Map<String, JiveHomeMenuItem> = mapOf()
     private var consecutiveUnsuccessfulConnectAttempts = 0
     private val breadcrumbsProgressInterpolator by lazy {
         AnimationUtils.loadInterpolator(this, android.R.interpolator.decelerate_quint)
@@ -206,7 +186,7 @@ class MainActivity :
         }
 
         binding.breadcrumbsHome.setOnClickListener {
-            mainListContainer?.clearBackStack()
+            mainListContainer?.goToHome()
         }
 
         savedInstanceState?.let {
@@ -284,132 +264,8 @@ class MainActivity :
         }
     }
 
-    // JiveHomeListItemFragment.NavigationListener implementation
-
-    override fun onNodeSelected(nodeId: String) {
-        val player = this.player ?: return
-        if (homeMenu.values.any { it.node == nodeId }) {
-            val f = JiveHomeListItemFragment.create(player.id, nodeId)
-            val mode = if (nodeId == "home") {
-                MainListHolderFragment.ReplacementMode.SetAsHome
-            } else {
-                MainListHolderFragment.ReplacementMode.OnTopOfStack
-            }
-            mainListContainer?.replaceContent(f, "home:$nodeId", mode)
-        }
-    }
-
-    override fun onGoAction(title: String, action: JiveAction): Job? =
-        handleGoAction(title, null, action)
-
-    // BaseSlimBrowseItemListFragment.NavigationListener implementation
-
-    override fun onHandleDoOrGoAction(
-        action: JiveAction,
-        isGoAction: Boolean,
-        item: SlimBrowseItemList.SlimBrowseItem,
-        parentItem: SlimBrowseItemList.SlimBrowseItem?
-    ): Job? {
-        val playerId = player?.id ?: return null
-
-        // The logic below both translates nextWindow to adjust for whether it came from a
-        // context menu or not, and splits navigation and refresh which are combined in the
-        // protocol. Since it's a little hard to understand, here are the translation tables:
-        //
-        // nextWindow           without parent item         with parent item
-        // Home                 keep                        keep
-        // Parent               keep (go up 1 level)        discard (navigate to parent of menu)
-        // GrandParent          keep (go up 2 levels)       adjust (go up 1 level)
-        // NowPlaying           keep                        keep
-        // RefreshSelf          keep (refresh 1 level)      discard (no need to refresh menu)
-        // MyMusic              keep                        keep
-        // ParentWithRefresh    keep (go up 1, refresh 2)   adjust (refresh 1 level)
-        // Presets              keep                        keep
-        //
-        // refresh              without parent item         with parent item
-        // RefreshSelf          1 level                     ---
-        // RefreshParent        2 levels                    1 level
-        // RefreshGrandParent   3 levels                    2 levels
-        val nextWindow = action.nextWindow ?: item.nextWindow
-        val actualNextWindow = when {
-            nextWindow == SlimBrowseItemList.NextWindow.Parent && parentItem != null ->
-                null
-            nextWindow == SlimBrowseItemList.NextWindow.GrandParent && parentItem != null ->
-                SlimBrowseItemList.NextWindow.Parent
-            nextWindow == SlimBrowseItemList.NextWindow.ParentWithRefresh ->
-                if (parentItem != null) null else SlimBrowseItemList.NextWindow.Parent
-            else -> nextWindow
-        }
-        val refreshLevelsFromNextWindow = when {
-            nextWindow == SlimBrowseItemList.NextWindow.RefreshSelf && parentItem == null ->
-                1
-            nextWindow == SlimBrowseItemList.NextWindow.ParentWithRefresh ->
-                if (parentItem != null) 1 else 2
-            else -> 0
-        }
-        val refreshLevelsFromRefresh = when (item.actions?.onClickRefresh) {
-            JiveActions.RefreshBehavior.RefreshSelf ->
-                if (parentItem != null) 0 else 1
-            JiveActions.RefreshBehavior.RefreshParent ->
-                if (parentItem != null) 1 else 2
-            JiveActions.RefreshBehavior.RefreshGrandParent ->
-                if (parentItem != null) 2 else 3
-            else -> 0
-        }
-        val refreshLevels = max(refreshLevelsFromNextWindow, refreshLevelsFromRefresh)
-
-        return if (isGoAction && actualNextWindow == null) {
-            handleGoAction(item.title, parentItem?.title, action)
-        } else {
-            lifecycleScope.launch {
-                connectionHelper.executeAction(playerId, action)
-                when (actualNextWindow) {
-                    SlimBrowseItemList.NextWindow.Parent ->
-                        mainListContainer?.popLevels(1)
-                    SlimBrowseItemList.NextWindow.GrandParent ->
-                        mainListContainer?.popLevels(2)
-                    SlimBrowseItemList.NextWindow.Home,
-                    SlimBrowseItemList.NextWindow.MyMusic ->
-                        mainListContainer?.clearBackStack()
-                    SlimBrowseItemList.NextWindow.NowPlaying -> {
-                        mainListContainer?.clearBackStack()
-                        nowPlayingFragment?.expandIfNeeded()
-                    }
-                    else -> {}
-                }
-                mainListContainer?.handleMultiLevelRefresh(refreshLevels)
-            }
-        }
-    }
-
-    override fun onOpenSubItemList(
-        item: SlimBrowseItemList.SlimBrowseItem,
-        itemFetchAction: JiveAction
-    ) {
-        val player = this.player ?: return
-        val f = SlimBrowseSubItemListFragment.create(
-            player.id,
-            item.title,
-            itemFetchAction,
-            item.listPosition
-        )
-        mainListContainer?.replaceContent(
-            f,
-            "pos${item.listPosition}-subitems",
-            MainListHolderFragment.ReplacementMode.OnTopOfStack
-        )
-    }
-
-    override fun onOpenWebLink(title: String, link: Uri) {
-        val intent = CustomTabsIntent.Builder()
-            .build()
-        intent.launchUrl(this, link)
-    }
-
-    // SliderBottomSheetFragment.ChangeListener implementation
-
-    override fun onSliderChanged(input: JiveAction): Job = lifecycleScope.launch {
-        player?.let { player -> connectionHelper.executeAction(player.id, input) }
+    override fun openNowPlayingIfNeeded() {
+        nowPlayingFragment?.expandIfNeeded()
     }
 
     // NowPlayingFragment.Listener implementation
@@ -422,9 +278,9 @@ class MainActivity :
         action: JiveAction,
         parentItem: SlimBrowseItemList.SlimBrowseItem,
         contextItem: SlimBrowseItemList.SlimBrowseItem
-    ): Job? {
-        mainListContainer?.clearBackStack()
-        return handleGoAction(contextItem.title, parentItem.title, action)
+    ) = mainListContainer?.run {
+        goToHome()
+        handleGoAction(contextItem.title, parentItem.title, action)
     }
 
     // ConnectionErrorHintFragment.Listener implementation
@@ -445,75 +301,15 @@ class MainActivity :
 
     override fun onOpenLocalSearchPage(searchTerm: String, type: LibrarySearchRequest.Mode) {
         onCloseSearch()
-        val playerId = player?.id ?: return
-        val f = LibrarySearchResultsFragment.create(playerId, type, searchTerm)
-        mainListContainer?.replaceContent(
-            f,
-            "localsearch-$searchTerm",
-            MainListHolderFragment.ReplacementMode.OnTopOfHome
-        )
+        mainListContainer?.openLocalSearchResults(searchTerm, type)
     }
 
     override fun onOpenRadioSearchPage(searchTerm: String) {
         onCloseSearch()
-        val playerId = player?.id ?: return
-        val f = RadioSearchResultsFragment.create(playerId, searchTerm)
-        mainListContainer?.replaceContent(
-            f,
-            "radiosearch-$searchTerm",
-            MainListHolderFragment.ReplacementMode.OnTopOfHome
-        )
+        mainListContainer?.openRadioSearchResults(searchTerm)
     }
 
     // internal implementation details
-
-    private fun handleGoAction(title: String, parentTitle: String?, action: JiveAction): Job? {
-        val player = this.player ?: return null
-        pendingNavigation?.cancel()
-        pendingNavigation = currentPlayerScope?.launch {
-            if (action.isSlideshow) {
-                val items = connectionHelper.fetchSlideshowImages(player.id, action)
-                val f = GalleryFragment.create(items, title, parentTitle)
-                mainListContainer?.replaceContent(
-                    f,
-                    "gallery",
-                    MainListHolderFragment.ReplacementMode.OnTopOfStack
-                )
-                return@launch
-            }
-            // Fetch first item of page to check whether we're dealing with a slider or a normal page
-            val result = connectionHelper.fetchItemsForAction(player.id, action, PagingParams(0, 1))
-            val firstItem = result.items.getOrNull(0)
-            when {
-                result.totalCount == 1 && firstItem?.actions?.slider != null -> {
-                    val f = SliderBottomSheetFragment.create(title, firstItem.actions.slider)
-                    f.show(supportFragmentManager, "slider")
-                }
-                result.totalCount == 0 && result.window?.textArea != null -> {
-                    val f = InfoBottomSheet.create(
-                        result.title ?: title,
-                        result.window.textArea
-                    )
-                    f.show(supportFragmentManager, "info")
-                }
-                else -> {
-                    val f = SlimBrowseItemListFragment.create(
-                        player.id,
-                        title,
-                        parentTitle,
-                        action,
-                        result.window?.windowStyle
-                    )
-                    mainListContainer?.replaceContent(
-                        f,
-                        "items",
-                        MainListHolderFragment.ReplacementMode.OnTopOfStack
-                    )
-                }
-            }
-        }
-        return pendingNavigation
-    }
 
     private fun updatePlayerList(players: List<Player>) {
         binding.navigationView.menu.apply {
@@ -539,10 +335,9 @@ class MainActivity :
         if (player.id != this.player?.id) {
             currentPlayerScope?.cancel()
             currentPlayerScope = null
-            homeMenu = emptyMap()
             this.player = player
             supportFragmentManager.commit {
-                val mainListHolder = MainListHolderFragment.create()
+                val mainListHolder = MainListHolderFragment.create(player.id)
                 replace(binding.container.id, mainListHolder)
                 setPrimaryNavigationFragment(mainListHolder)
 
@@ -575,19 +370,13 @@ class MainActivity :
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun updatePlayerStateSubscriptions(playerId: PlayerId, scope: CoroutineScope) {
-        val stateFlow = connectionHelper.playerState(playerId)
-        stateFlow.flatMapLatest { it.playStatus }.onEach { status ->
-            binding.toolbar.subtitle = status.playerName
-            playerIsActive =
-                status.powered && status.playbackState == PlayerStatus.PlayState.Playing
-        }.launchIn(scope)
-
-        stateFlow.flatMapLatest { it.homeMenu }.onEach { items ->
-            homeMenu = items
-            if (mainListContainer?.hasContent != true || errorFragment != null) {
-                onNodeSelected("home")
-            }
-        }.launchIn(scope)
+        connectionHelper.playerState(playerId)
+            .flatMapLatest { it.playStatus }
+            .onEach { status ->
+                binding.toolbar.subtitle = status.playerName
+                playerIsActive =
+                    status.powered && status.playbackState == PlayerStatus.PlayState.Playing
+            }.launchIn(scope)
     }
 
     private fun updateContentForConnectionState(state: ConnectionState) = when (state) {

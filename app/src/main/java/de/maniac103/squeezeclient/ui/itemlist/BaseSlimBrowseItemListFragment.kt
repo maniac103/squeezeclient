@@ -64,17 +64,6 @@ abstract class BaseSlimBrowseItemListFragment :
     ItemActionsMenuSheet.Listener,
     InputBottomSheetFragment.ItemSubmitListener {
 
-    interface NavigationListener {
-        fun onOpenSubItemList(item: SlimBrowseItemList.SlimBrowseItem, itemFetchAction: JiveAction)
-        fun onOpenWebLink(title: String, link: Uri)
-        fun onHandleDoOrGoAction(
-            action: JiveAction,
-            isGoAction: Boolean,
-            item: SlimBrowseItemList.SlimBrowseItem,
-            parentItem: SlimBrowseItemList.SlimBrowseItem?
-        ): Job?
-    }
-
     protected abstract val playerId: PlayerId
     protected abstract val title: List<String>
     protected abstract val showIcons: Boolean
@@ -82,7 +71,7 @@ abstract class BaseSlimBrowseItemListFragment :
 
     override val scrollingTargetView get() = binding.recycler
     override val titleFlow get() = flowOf(title)
-    private val listener get() = requireParentAs<NavigationListener>()
+    private val listener get() = requireParentAs<SlimBrowseItemListNavigationListener>()
 
     override fun onBindingCreated(binding: FragmentGenericListBinding) {
         super.onBindingCreated(binding)
@@ -307,4 +296,15 @@ abstract class BaseSlimBrowseItemListFragment :
         return requester.request(android.Manifest.permission.POST_NOTIFICATIONS)
             .first() is PermissionResult.Granted
     }
+}
+
+interface SlimBrowseItemListNavigationListener {
+    fun onOpenSubItemList(item: SlimBrowseItemList.SlimBrowseItem, itemFetchAction: JiveAction)
+    fun onOpenWebLink(title: String, link: Uri)
+    fun onHandleDoOrGoAction(
+        action: JiveAction,
+        isGoAction: Boolean,
+        item: SlimBrowseItemList.SlimBrowseItem,
+        parentItem: SlimBrowseItemList.SlimBrowseItem?
+    ): Job?
 }

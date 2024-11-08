@@ -43,7 +43,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
-import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 
 class JiveHomeListItemFragment :
@@ -52,14 +51,10 @@ class JiveHomeListItemFragment :
     BasePrepopulatedListAdapter.ItemSelectionListener<JiveHomeMenuItem>,
     ChoicesBottomSheetFragment.SelectionListener,
     InputBottomSheetFragment.InputSubmitListener {
-    interface NavigationListener {
-        fun onNodeSelected(nodeId: String)
-        fun onGoAction(title: String, action: JiveAction): Job?
-    }
 
     private val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)
     private val nodeId get() = requireArguments().getString("nodeId")!!
-    private val listener get() = requireParentAs<NavigationListener>()
+    private val listener get() = requireParentAs<JiveHomeItemListNavigationListener>()
     override val scrollingTargetView get() = binding.recycler
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -154,4 +149,9 @@ class JiveHomeListItemFragment :
             arguments = bundleOf("playerId" to playerId, "nodeId" to nodeId)
         }
     }
+}
+
+interface JiveHomeItemListNavigationListener {
+    fun onNodeSelected(nodeId: String)
+    fun onGoAction(title: String, action: JiveAction): Job?
 }

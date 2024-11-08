@@ -235,7 +235,10 @@ class MainListHolderFragment :
                 if (parentItem != null) 1 else 2
             JiveActions.RefreshBehavior.RefreshGrandParent ->
                 if (parentItem != null) 2 else 3
-            else -> 0
+            null ->
+                // fall back to refreshing the page for do actions without next window, since
+                // choices and checkboxes usually do not have that
+                if (isGoAction) 0 else 1
         }
         val refreshLevels = max(refreshLevelsFromNextWindow, refreshLevelsFromRefresh)
 

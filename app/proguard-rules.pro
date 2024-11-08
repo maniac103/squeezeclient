@@ -24,3 +24,5 @@
 -keepclassmembers class * extends androidx.constraintlayout.motion.widget.Key {
   public <init>();
 }
+
+-keep class de.maniac103.squeezeclient.ui.widget.RoundedCornerProgressDrawable

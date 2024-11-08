@@ -262,6 +262,8 @@ class NowPlayingFragment :
         }
     }
 
+    // MenuProvider implementation
+
     override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
         val playlistExpanded = binding.container.currentState == R.id.expanded &&
             playlistBottomSheetBehavior.state == BottomSheetBehavior.STATE_EXPANDED
@@ -319,9 +321,13 @@ class NowPlayingFragment :
         else -> false
     }
 
+    // InputBottomSheetFragment.PlainSubmitListener implementation
+
     override fun onInputSubmitted(value: String) = lifecycleScope.launch {
         connectionHelper.saveCurrentPlaylist(playerId, value)
     }
+
+    // ContextMenuBottomSheetFragment.Listener implementation
 
     override fun onContextItemSelected(
         parentItem: SlimBrowseItemList.SlimBrowseItem,
@@ -342,6 +348,8 @@ class NowPlayingFragment :
         }
         return job
     }
+
+    // Private implementation details
 
     private fun applyInsetsToSpacer(spacer: View, side: Int, insetSelector: (Insets) -> Int) {
         ViewCompat.setOnApplyWindowInsetsListener(spacer) { v, windowInsets ->

@@ -289,7 +289,6 @@ class DownloadWorker(
         return itemIsPresent == true
     }
 
-
     private object ProgressKeys {
         const val ITEMS_DONE = "items_done"
         const val ITEMS_TOTAL = "items_total"

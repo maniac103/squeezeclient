@@ -100,6 +100,8 @@ abstract class BaseSlimBrowseItemListFragment :
         return lhs == rhs
     }
 
+    // SlimBrowseItemListAdapter.ItemSelectionListener implementation
+
     override fun onItemSelected(item: SlimBrowseItemList.SlimBrowseItem): Job? {
         val actions = item.actions ?: return null
         return when {
@@ -154,17 +156,23 @@ abstract class BaseSlimBrowseItemListFragment :
         }
     }
 
+    // ChoicesBottomSheetFragment.SelectionListener implementation
+
     override fun onChoiceSelected(choice: JiveAction, extraData: Bundle?): Job? {
         val item = requireNotNull(extraData)
             .getParcelable("item", SlimBrowseItemList.SlimBrowseItem::class)
         return listener.onHandleDoOrGoAction(choice, false, item, null)
     }
 
+    // InputBottomSheetFragment.ItemSubmitListeber implementation
+
     override fun onInputSubmitted(
         item: SlimBrowseItemList.SlimBrowseItem,
         action: JiveAction,
         isGoAction: Boolean
     ) = listener.onHandleDoOrGoAction(action, isGoAction, item, null)
+
+    // ContextMenuBottomSheetFragment.Listener implementation
 
     override fun onContextItemSelected(
         parentItem: SlimBrowseItemList.SlimBrowseItem,
@@ -175,21 +183,24 @@ abstract class BaseSlimBrowseItemListFragment :
         return when {
             // FIXME: the item title check is kinda ugly, but there's no proper way to
             // implement a marker object it seems, since SlimBrowseItem is a data class
-            actions.downloadData != null && selectedItem.title == getString(R.string.action_download) ->
+            actions.downloadData != null &&
+                selectedItem.title == getString(R.string.action_download) ->
                 triggerDownload(actions.downloadData)
-            actions.doAction != null -> {
+            actions.doAction != null ->
                 listener.onHandleDoOrGoAction(actions.doAction, false, parentItem, selectedItem)
-            }
-            actions.goAction != null -> {
+            actions.goAction != null ->
                 listener.onHandleDoOrGoAction(actions.goAction, true, parentItem, selectedItem)
-            }
             else -> null
         }
     }
 
+    // ItemActionsMenuSheet.Listener implementation
+
     override fun onActionSelected(action: JiveAction, item: SlimBrowseItemList.SlimBrowseItem) =
         listener.onHandleDoOrGoAction(action, false, item, null)
     override fun onDownloadSelected(data: DownloadRequestData) = triggerDownload(data)
+
+    // Private implementation details
 
     private fun showInput(item: SlimBrowseItemList.SlimBrowseItem) {
         val input = requireNotNull(item.actions?.input)

@@ -73,16 +73,13 @@ class ChoicesBottomSheetFragment : BaseBottomSheet() {
     }
 
     companion object {
-        fun create(
-            parentTitle: String,
-            choices: JiveActions.Choices,
-            extraData: Bundle? = null
-        ) = ChoicesBottomSheetFragment().apply {
-            arguments = bundleOf(
-                "parentTitle" to parentTitle,
-                "choices" to choices,
-                "extra" to extraData
-            )
-        }
+        fun create(parentTitle: String, choices: JiveActions.Choices, extraData: Bundle? = null) =
+            ChoicesBottomSheetFragment().apply {
+                arguments = bundleOf(
+                    "parentTitle" to parentTitle,
+                    "choices" to choices,
+                    "extra" to extraData
+                )
+            }
     }
 }

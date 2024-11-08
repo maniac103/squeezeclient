@@ -95,22 +95,36 @@ class JiveHomeListItemFragment :
         updateMenuData()
     }
 
-    override fun onItemSelected(item: JiveHomeMenuItem): Job? {
-        when {
-            item.input != null -> showInput(item)
-            item.choices != null -> showChoices(item)
-            item.doAction != null -> return lifecycleScope.launch {
-                connectionHelper.executeAction(playerId, item.doAction)
-            }
-            item.goAction != null -> return listener.onGoAction(item.title, item.goAction)
-            else -> listener.onNodeSelected(item.id)
+    // JiveHomeItemListAdapter.SelectionListener implementation
+
+    override fun onItemSelected(item: JiveHomeMenuItem) = when {
+        item.input != null -> {
+            showInput(item)
+            null
         }
-        return null
+        item.choices != null -> {
+            showChoices(item)
+            null
+        }
+        item.doAction != null -> lifecycleScope.launch {
+            connectionHelper.executeAction(playerId, item.doAction)
+        }
+        item.goAction != null -> {
+            listener.onGoAction(item.title, item.goAction)
+        }
+        else -> {
+            listener.onNodeSelected(item.id)
+            null
+        }
     }
+
+    // ChoicesBottomSheetFragment.SelectionListener implementation
 
     override fun onChoiceSelected(choice: JiveAction, extraData: Bundle?) = lifecycleScope.launch {
         connectionHelper.executeAction(playerId, choice)
     }
+
+    // InputBottomSheetFragment.InputSubmitListener implementation
 
     override fun onInputSubmitted(title: String, action: JiveAction, isGoAction: Boolean) =
         if (isGoAction) {
@@ -120,6 +134,8 @@ class JiveHomeListItemFragment :
                 connectionHelper.executeAction(playerId, action)
             }
         }
+
+    // Private implementation details
 
     private fun showInput(item: JiveHomeMenuItem) {
         val input = requireNotNull(item.input)

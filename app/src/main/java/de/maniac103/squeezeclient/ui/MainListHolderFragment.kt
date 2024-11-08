@@ -54,8 +54,10 @@ import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseSubItemListFragment
 import de.maniac103.squeezeclient.ui.search.LibrarySearchResultsFragment
 import de.maniac103.squeezeclient.ui.search.RadioSearchResultsFragment
 import de.maniac103.squeezeclient.ui.slideshow.GalleryFragment
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import java.lang.IllegalStateException
+import kotlin.math.max
+import kotlin.math.min
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
@@ -63,8 +65,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlin.math.max
-import kotlin.math.min
 
 class MainListHolderFragment :
     ViewBindingFragment<FragmentMainlistcontainerBinding>(
@@ -308,7 +308,7 @@ class MainListHolderFragment :
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 connectionHelper.playerState(playerId)
-                    .flatMapLatest {  it.homeMenu }
+                    .flatMapLatest { it.homeMenu }
                     .collectLatest { items ->
                         homeMenu = items
                         if (childFragmentManager.fragments.isEmpty()) {

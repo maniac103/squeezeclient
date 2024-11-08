@@ -39,7 +39,7 @@ class GalleryFragment :
     ViewBindingFragment<FragmentGenericListBinding>(FragmentGenericListBinding::inflate),
     MainListHolderFragment.Child {
     private val items get() = requireArguments().getParcelableList("items", SlideshowImage::class)
-    override val titleFlow get() = flowOf(requireArguments().getString("title"))
+    override val titleFlow get() = flowOf(requireArguments().getStringArrayList("title")!!)
     override val scrollingTargetView get() = binding.recycler
 
     override fun onBindingCreated(binding: FragmentGenericListBinding) {
@@ -85,8 +85,10 @@ class GalleryFragment :
         RecyclerView.ViewHolder(binding.root)
 
     companion object {
-        fun create(items: List<SlideshowImage>, title: String) = GalleryFragment().apply {
-            arguments = bundleOf("items" to ArrayList(items), "title" to title)
-        }
+        fun create(items: List<SlideshowImage>, title: String, parentTitle: String?) =
+            GalleryFragment().apply {
+                val titleList = listOfNotNull(parentTitle, title)
+                arguments = bundleOf("items" to ArrayList(items), "title" to ArrayList(titleList))
+            }
     }
 }

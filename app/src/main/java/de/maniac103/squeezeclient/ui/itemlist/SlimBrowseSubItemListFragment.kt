@@ -28,7 +28,7 @@ import de.maniac103.squeezeclient.model.SlimBrowseItemList
 
 class SlimBrowseSubItemListFragment : BaseSlimBrowseItemListFragment() {
     override val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)
-    override val title: String get() = requireArguments().getString("title")!!
+    override val title get() = listOf(requireArguments().getString("title")!!)
     private val parentFetchAction get() =
         requireArguments().getParcelable("fetchAction", JiveAction::class)
     private val parentItemPosition get() = requireArguments().getInt("listPosition")

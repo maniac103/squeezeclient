@@ -42,6 +42,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 
 class JiveHomeListItemFragment :
@@ -64,7 +66,8 @@ class JiveHomeListItemFragment :
     override val titleFlow get() = connectionHelper
         .playerState(playerId)
         .flatMapLatest { it.homeMenu }
-        .map { it[nodeId]?.title }
+        .mapNotNull { it[nodeId]?.title }
+        .map { listOf(it) }
 
     private var adapter: JiveHomeItemListAdapter? = null
     private var latestMenu = mapOf<String, JiveHomeMenuItem>()
@@ -110,10 +113,9 @@ class JiveHomeListItemFragment :
         return null
     }
 
-    override fun onChoiceSelected(choice: JiveAction, refresh: JiveActions.RefreshBehavior?) =
-        lifecycleScope.launch {
-            connectionHelper.executeAction(playerId, choice)
-        }
+    override fun onChoiceSelected(choice: JiveAction, extraData: Bundle?) = lifecycleScope.launch {
+        connectionHelper.executeAction(playerId, choice)
+    }
 
     override fun onInputSubmitted(title: String, action: JiveAction, isGoAction: Boolean) =
         if (isGoAction) {

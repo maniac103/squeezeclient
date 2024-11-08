@@ -44,8 +44,8 @@ class ContextMenuBottomSheetFragment :
     ContextMenuItemListFragment.ItemClickListener {
     interface Listener {
         fun onContextItemSelected(
-            parentTitle: String,
-            item: SlimBrowseItemList.SlimBrowseItem
+            parentItem: SlimBrowseItemList.SlimBrowseItem,
+            selectedItem: SlimBrowseItemList.SlimBrowseItem
         ): Job?
     }
 
@@ -126,7 +126,7 @@ class ContextMenuBottomSheetFragment :
             }
         }
 
-        val job = listener.onContextItemSelected(parent.title, item)
+        val job = listener.onContextItemSelected(parent, item)
         job?.invokeOnCompletion {
             if (isAdded) {
                 dismissAllowingStateLoss()

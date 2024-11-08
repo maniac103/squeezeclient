@@ -76,7 +76,11 @@ class NowPlayingFragment :
     InputBottomSheetFragment.PlainSubmitListener {
 
     interface Listener {
-        fun onContextMenuAction(title: String, actionTitle: String?, action: JiveAction): Job?
+        fun onContextMenuAction(
+            action: JiveAction,
+            parentItem: SlimBrowseItemList.SlimBrowseItem,
+            contextItem: SlimBrowseItemList.SlimBrowseItem
+        ): Job?
         fun showVolumePopup()
     }
 
@@ -315,23 +319,21 @@ class NowPlayingFragment :
         else -> false
     }
 
-    override fun onInputSubmitted(value: String): Job {
-        return lifecycleScope.launch {
-            connectionHelper.saveCurrentPlaylist(playerId, value)
-        }
+    override fun onInputSubmitted(value: String) = lifecycleScope.launch {
+        connectionHelper.saveCurrentPlaylist(playerId, value)
     }
 
     override fun onContextItemSelected(
-        parentTitle: String,
-        item: SlimBrowseItemList.SlimBrowseItem
+        parentItem: SlimBrowseItemList.SlimBrowseItem,
+        selectedItem: SlimBrowseItemList.SlimBrowseItem
     ): Job? {
-        val actions = item.actions ?: return null
+        val actions = selectedItem.actions ?: return null
         val job = when {
             actions.doAction != null -> lifecycleScope.launch {
                 connectionHelper.executeAction(playerId, actions.doAction)
             }
             actions.goAction != null -> {
-                listener.onContextMenuAction(parentTitle, item.title, actions.goAction)
+                listener.onContextMenuAction(actions.goAction, parentItem, selectedItem)
             }
             else -> null
         }

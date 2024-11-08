@@ -29,7 +29,7 @@ import de.maniac103.squeezeclient.model.WindowStyle
 
 class SlimBrowseItemListFragment : BaseSlimBrowseItemListFragment() {
     override val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)
-    override val title get() = requireArguments().getString("title")!!
+    override val title get() = requireArguments().getStringArrayList("title")!!
     override val showIcons get() = requireArguments().getBoolean("showIcons")
     override val useGrid get() = super.useGrid && requireArguments().getBoolean("canUseGrid")
     override val fetchAction get() =
@@ -46,15 +46,17 @@ class SlimBrowseItemListFragment : BaseSlimBrowseItemListFragment() {
         fun create(
             playerId: PlayerId,
             title: String,
+            parentTitle: String?,
             fetchAction: JiveAction,
             windowStyle: WindowStyle?
         ) = SlimBrowseItemListFragment().apply {
             val showIcons = windowStyle != WindowStyle.TextOnlyList
             val canUseGrid =
                 windowStyle == WindowStyle.IconList || windowStyle == WindowStyle.HomeMenu
+            val titleList = listOfNotNull(parentTitle, title)
             arguments = bundleOf(
                 "playerId" to playerId,
-                "title" to title,
+                "title" to ArrayList(titleList),
                 "fetchAction" to fetchAction,
                 "canUseGrid" to canUseGrid,
                 "showIcons" to showIcons

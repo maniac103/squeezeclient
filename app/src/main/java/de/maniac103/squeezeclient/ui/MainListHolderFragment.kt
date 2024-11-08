@@ -38,6 +38,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlin.math.max
+import kotlin.math.min
 
 class MainListHolderFragment :
     ViewBindingFragment<FragmentMainlistcontainerBinding>(
@@ -49,14 +51,14 @@ class MainListHolderFragment :
         fun onScrollTargetChanged(scrollTarget: View?)
         fun onContentStackChanged(
             titles: List<String>,
-            pendingTitle: String?,
+            pendingTitle: List<String>?,
             pendingProgress: Float
         )
     }
 
     interface Child {
         val scrollingTargetView: View
-        val titleFlow: Flow<String?>
+        val titleFlow: Flow<List<String>>
     }
 
     enum class ReplacementMode {
@@ -75,7 +77,7 @@ class MainListHolderFragment :
     )
 
     private var titleSubscription: Job? = null
-    private var contentTitles = emptyMap<String, String?>()
+    private var contentTitles = emptyMap<String, List<String>>()
     private var pendingBack: PendingBackInfo? = null
 
     fun <T> replaceContent(
@@ -114,12 +116,16 @@ class MainListHolderFragment :
         }
     }
 
+    fun popLevels(levels: Int) = childFragmentManager.apply {
+        (0 until min(levels, backStackEntryCount)).forEach { _ -> popBackStackImmediate() }
+    }
+
     fun handleMultiLevelRefresh(levels: Int) = childFragmentManager.run {
-        (backStackEntryCount - levels)
-            .takeIf { it >= 0 }
-            ?.let { getBackStackEntryAt(it) }
-            ?.let { findFragmentByTag(it.name) as? BasePagingListFragment<*, *> }
-            ?.refresh()
+        val start = max(0, backStackEntryCount - levels)
+        (start until backStackEntryCount)
+            .map { getBackStackEntryAt(it) }
+            .mapNotNull { findFragmentByTag(it.name) as? BasePagingListFragment<*, *> }
+            .forEach { it.refresh() }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -222,10 +228,13 @@ class MainListHolderFragment :
     private fun handleStackUpdate() {
         val titles = childFragmentManager.run {
             (0 until backStackEntryCount)
+                .asSequence()
                 .map { index -> getBackStackEntryAt(index) }
                 .distinctBy { it.name }
                 .filter { it.name != pendingBack?.tag }
                 .mapNotNull { contentTitles[it.name] }
+                .flatten()
+                .toList()
         }
         val pendingTitle = pendingBack?.tag?.let { contentTitles[it] }
         val progress = pendingBack?.progress ?: 0F

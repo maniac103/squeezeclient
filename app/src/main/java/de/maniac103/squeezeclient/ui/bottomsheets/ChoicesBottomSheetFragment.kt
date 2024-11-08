@@ -33,15 +33,13 @@ import kotlinx.coroutines.Job
 
 class ChoicesBottomSheetFragment : BaseBottomSheet() {
     interface SelectionListener {
-        fun onChoiceSelected(choice: JiveAction, refresh: JiveActions.RefreshBehavior?): Job?
+        fun onChoiceSelected(choice: JiveAction, extraData: Bundle?): Job?
     }
 
     override val title get() = requireArguments().getString("parentTitle")!!
     private val choices get() =
         requireArguments().getParcelable("choices", JiveActions.Choices::class)
-    private val onClickRefresh get() = requireArguments().getString("onClick")?.let {
-        JiveActions.RefreshBehavior.valueOf(it)
-    }
+    private val extraData get() = requireArguments().getBundle("extra")
     private val listener get() = requireParentAs<SelectionListener>()
 
     private lateinit var binding: BottomSheetContentChoicesBinding
@@ -63,7 +61,7 @@ class ChoicesBottomSheetFragment : BaseBottomSheet() {
         binding.radioGroup.apply {
             check(choices.selectedIndex)
             setOnCheckedChangeListener { _, index ->
-                val job = listener.onChoiceSelected(choices.items[index].action, onClickRefresh)
+                val job = listener.onChoiceSelected(choices.items[index].action, extraData)
                 handleAction(job, true)
             }
         }
@@ -78,12 +76,12 @@ class ChoicesBottomSheetFragment : BaseBottomSheet() {
         fun create(
             parentTitle: String,
             choices: JiveActions.Choices,
-            onClickRefresh: JiveActions.RefreshBehavior?
+            extraData: Bundle? = null
         ) = ChoicesBottomSheetFragment().apply {
             arguments = bundleOf(
                 "parentTitle" to parentTitle,
                 "choices" to choices,
-                "onClick" to onClickRefresh?.name
+                "extra" to extraData
             )
         }
     }

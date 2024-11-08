@@ -54,6 +54,7 @@ import de.maniac103.squeezeclient.extfuncs.putLastSelectedPlayer
 import de.maniac103.squeezeclient.extfuncs.serverConfig
 import de.maniac103.squeezeclient.extfuncs.useVolumeButtonsForPlayerVolume
 import de.maniac103.squeezeclient.model.JiveAction
+import de.maniac103.squeezeclient.model.JiveActions
 import de.maniac103.squeezeclient.model.JiveHomeMenuItem
 import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.Player
@@ -86,6 +87,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
+import kotlin.math.max
 
 class MainActivity :
     AppCompatActivity(),
@@ -259,7 +261,7 @@ class MainActivity :
 
     override fun onContentStackChanged(
         titles: List<String>,
-        pendingTitle: String?,
+        pendingTitle: List<String>?,
         pendingProgress: Float
     ) {
         val hasBreadcrumbs = titles.isNotEmpty() || pendingTitle != null
@@ -268,9 +270,9 @@ class MainActivity :
             val breadcrumbs = SpannableStringBuilder()
             val alpha = 1F - breadcrumbsProgressInterpolator.getInterpolation(pendingProgress)
             titles.forEach { breadcrumbs.append(" › ").append(it) }
-            pendingTitle?.let {
+            pendingTitle?.let { pending ->
                 val posBeforePending = breadcrumbs.length
-                breadcrumbs.append(" › ").append(it)
+                pending.forEach { breadcrumbs.append(" › ").append(it) }
                 breadcrumbs.setSpan(
                     AlphaSpan(alpha),
                     posBeforePending,
@@ -298,9 +300,87 @@ class MainActivity :
     }
 
     override fun onGoAction(title: String, action: JiveAction): Job? =
-        handleGoAction(listOf(title), action)
+        handleGoAction(title, null, action)
 
     // BaseSlimBrowseItemListFragment.NavigationListener implementation
+
+    override fun onHandleDoOrGoAction(
+        action: JiveAction,
+        isGoAction: Boolean,
+        item: SlimBrowseItemList.SlimBrowseItem,
+        parentItem: SlimBrowseItemList.SlimBrowseItem?
+    ): Job? {
+        val playerId = player?.id ?: return null
+
+        // The logic below both translates nextWindow to adjust for whether it came from a
+        // context menu or not, and splits navigation and refresh which are combined in the
+        // protocol. Since it's a little hard to understand, here are the translation tables:
+        //
+        // nextWindow           without parent item         with parent item
+        // Home                 keep                        keep
+        // Parent               keep (go up 1 level)        discard (navigate to parent of menu)
+        // GrandParent          keep (go up 2 levels)       adjust (go up 1 level)
+        // NowPlaying           keep                        keep
+        // RefreshSelf          keep (refresh 1 level)      discard (no need to refresh menu)
+        // MyMusic              keep                        keep
+        // ParentWithRefresh    keep (go up 1, refresh 2)   adjust (refresh 1 level)
+        // Presets              keep                        keep
+        //
+        // refresh              without parent item         with parent item
+        // RefreshSelf          1 level                     ---
+        // RefreshParent        2 levels                    1 level
+        // RefreshGrandParent   3 levels                    2 levels
+        val nextWindow = action.nextWindow ?: item.nextWindow
+        val actualNextWindow = when {
+            nextWindow == SlimBrowseItemList.NextWindow.Parent && parentItem != null ->
+                null
+            nextWindow == SlimBrowseItemList.NextWindow.GrandParent && parentItem != null ->
+                SlimBrowseItemList.NextWindow.Parent
+            nextWindow == SlimBrowseItemList.NextWindow.ParentWithRefresh ->
+                if (parentItem != null) null else SlimBrowseItemList.NextWindow.Parent
+            else -> nextWindow
+        }
+        val refreshLevelsFromNextWindow = when {
+            nextWindow == SlimBrowseItemList.NextWindow.RefreshSelf && parentItem == null ->
+                1
+            nextWindow == SlimBrowseItemList.NextWindow.ParentWithRefresh ->
+                if (parentItem != null) 1 else 2
+            else -> 0
+        }
+        val refreshLevelsFromRefresh = when (item.actions?.onClickRefresh) {
+            JiveActions.RefreshBehavior.RefreshSelf ->
+                if (parentItem != null) 0 else 1
+            JiveActions.RefreshBehavior.RefreshParent ->
+                if (parentItem != null) 1 else 2
+            JiveActions.RefreshBehavior.RefreshGrandParent ->
+                if (parentItem != null) 2 else 3
+            else -> 0
+        }
+        val refreshLevels = max(refreshLevelsFromNextWindow, refreshLevelsFromRefresh)
+
+        return if (isGoAction && actualNextWindow == null) {
+            handleGoAction(item.title, parentItem?.title, action)
+        } else {
+            lifecycleScope.launch {
+                connectionHelper.executeAction(playerId, action)
+                when (actualNextWindow) {
+                    SlimBrowseItemList.NextWindow.Parent ->
+                        mainListContainer?.popLevels(1)
+                    SlimBrowseItemList.NextWindow.GrandParent ->
+                        mainListContainer?.popLevels(2)
+                    SlimBrowseItemList.NextWindow.Home,
+                    SlimBrowseItemList.NextWindow.MyMusic ->
+                        mainListContainer?.clearBackStack()
+                    SlimBrowseItemList.NextWindow.NowPlaying -> {
+                        mainListContainer?.clearBackStack()
+                        nowPlayingFragment?.expandIfNeeded()
+                    }
+                    else -> {}
+                }
+                mainListContainer?.handleMultiLevelRefresh(refreshLevels)
+            }
+        }
+    }
 
     override fun onOpenSubItemList(
         item: SlimBrowseItemList.SlimBrowseItem,
@@ -326,26 +406,6 @@ class MainActivity :
         intent.launchUrl(this, link)
     }
 
-    override fun onGoAction(
-        title: String,
-        actionTitle: String?,
-        action: JiveAction,
-        nextWindow: SlimBrowseItemList.NextWindow?
-    ): Job? {
-        return if (nextWindow != null) {
-            lifecycleScope.launch {
-                player?.let { connectionHelper.executeAction(it.id, action) }
-                handleNextWindow(nextWindow)
-            }
-        } else {
-            handleGoAction(listOfNotNull(title, actionTitle), action)
-        }
-    }
-
-    override fun onHandleMultiLevelRefresh(levels: Int) {
-        mainListContainer?.handleMultiLevelRefresh(levels)
-    }
-
     // SliderBottomSheetFragment.ChangeListener implementation
 
     override fun onSliderChanged(input: JiveAction): Job = lifecycleScope.launch {
@@ -359,12 +419,12 @@ class MainActivity :
     }
 
     override fun onContextMenuAction(
-        title: String,
-        actionTitle: String?,
-        action: JiveAction
+        action: JiveAction,
+        parentItem: SlimBrowseItemList.SlimBrowseItem,
+        contextItem: SlimBrowseItemList.SlimBrowseItem
     ): Job? {
         mainListContainer?.clearBackStack()
-        return handleGoAction(listOfNotNull(title, actionTitle), action)
+        return handleGoAction(contextItem.title, parentItem.title, action)
     }
 
     // ConnectionErrorHintFragment.Listener implementation
@@ -407,13 +467,13 @@ class MainActivity :
 
     // internal implementation details
 
-    private fun handleGoAction(title: List<String>, action: JiveAction): Job? {
+    private fun handleGoAction(title: String, parentTitle: String?, action: JiveAction): Job? {
         val player = this.player ?: return null
         pendingNavigation?.cancel()
         pendingNavigation = currentPlayerScope?.launch {
             if (action.isSlideshow) {
                 val items = connectionHelper.fetchSlideshowImages(player.id, action)
-                val f = GalleryFragment.create(items, title.joinToString(" › "))
+                val f = GalleryFragment.create(items, title, parentTitle)
                 mainListContainer?.replaceContent(
                     f,
                     "gallery",
@@ -426,12 +486,12 @@ class MainActivity :
             val firstItem = result.items.getOrNull(0)
             when {
                 result.totalCount == 1 && firstItem?.actions?.slider != null -> {
-                    val f = SliderBottomSheetFragment.create(title.last(), firstItem.actions.slider)
+                    val f = SliderBottomSheetFragment.create(title, firstItem.actions.slider)
                     f.show(supportFragmentManager, "slider")
                 }
                 result.totalCount == 0 && result.window?.textArea != null -> {
                     val f = InfoBottomSheet.create(
-                        result.title ?: title.last(),
+                        result.title ?: title,
                         result.window.textArea
                     )
                     f.show(supportFragmentManager, "info")
@@ -439,7 +499,8 @@ class MainActivity :
                 else -> {
                     val f = SlimBrowseItemListFragment.create(
                         player.id,
-                        title.joinToString(" › "),
+                        title,
+                        parentTitle,
                         action,
                         result.window?.windowStyle
                     )
@@ -452,28 +513,6 @@ class MainActivity :
             }
         }
         return pendingNavigation
-    }
-
-    private fun handleNextWindow(nextWindow: SlimBrowseItemList.NextWindow) {
-        when (nextWindow) {
-            SlimBrowseItemList.NextWindow.Parent ->
-                if (supportFragmentManager.backStackEntryCount > 0) {
-                    supportFragmentManager.popBackStackImmediate()
-                }
-            SlimBrowseItemList.NextWindow.GrandParent ->
-                if (supportFragmentManager.backStackEntryCount > 1) {
-                    supportFragmentManager.popBackStackImmediate()
-                    supportFragmentManager.popBackStackImmediate()
-                }
-            SlimBrowseItemList.NextWindow.Home,
-            SlimBrowseItemList.NextWindow.MyMusic ->
-                mainListContainer?.clearBackStack()
-            SlimBrowseItemList.NextWindow.NowPlaying -> {
-                mainListContainer?.clearBackStack()
-                nowPlayingFragment?.expandIfNeeded()
-            }
-            else -> {}
-        }
     }
 
     private fun updatePlayerList(players: List<Player>) {

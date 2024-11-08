@@ -40,7 +40,7 @@ import kotlinx.coroutines.Job
 
 class ItemActionsMenuSheet : BottomSheetDialogFragment() {
     interface Listener {
-        fun onActionSelected(action: JiveAction): Job?
+        fun onActionSelected(action: JiveAction, item: SlimBrowseItemList.SlimBrowseItem): Job?
         fun onDownloadSelected(data: DownloadRequestData): Job?
     }
 
@@ -89,7 +89,7 @@ class ItemActionsMenuSheet : BottomSheetDialogFragment() {
                     val job = if (actionItem.download != null) {
                         listener.onDownloadSelected(actionItem.download)
                     } else {
-                        listener.onActionSelected(requireNotNull(actionItem.action))
+                        listener.onActionSelected(requireNotNull(actionItem.action), item)
                     }
                     job?.invokeOnCompletion { dismissAllowingStateLoss() }
                     job

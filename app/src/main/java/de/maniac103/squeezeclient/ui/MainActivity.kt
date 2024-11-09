@@ -76,7 +76,7 @@ import kotlinx.coroutines.plus
 
 class MainActivity :
     AppCompatActivity(),
-    MainListHolderFragment.Listener,
+    MainContentContainerFragment.Listener,
     NowPlayingFragment.Listener,
     ConnectionErrorHintFragment.Listener,
     SearchFragment.Listener {
@@ -95,7 +95,7 @@ class MainActivity :
     }
 
     private val mainListContainer get() =
-        supportFragmentManager.findFragmentById(binding.container.id) as? MainListHolderFragment
+        supportFragmentManager.findFragmentById(binding.container.id) as? MainContentContainerFragment
     private val errorFragment get() =
         supportFragmentManager.findFragmentById(
             binding.container.id
@@ -337,7 +337,7 @@ class MainActivity :
             currentPlayerScope = null
             this.player = player
             supportFragmentManager.commit {
-                val mainListHolder = MainListHolderFragment.create(player.id)
+                val mainListHolder = MainContentContainerFragment.create(player.id)
                 replace(binding.container.id, mainListHolder)
                 setPrimaryNavigationFragment(mainListHolder)
 

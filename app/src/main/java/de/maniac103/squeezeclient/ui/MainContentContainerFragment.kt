@@ -46,10 +46,9 @@ import de.maniac103.squeezeclient.ui.bottomsheets.InfoBottomSheet
 import de.maniac103.squeezeclient.ui.bottomsheets.SliderBottomSheetFragment
 import de.maniac103.squeezeclient.ui.common.BasePagingListFragment
 import de.maniac103.squeezeclient.ui.common.ViewBindingFragment
-import de.maniac103.squeezeclient.ui.itemlist.JiveHomeItemListNavigationListener
+import de.maniac103.squeezeclient.ui.itemlist.BaseSlimBrowseItemListFragment
 import de.maniac103.squeezeclient.ui.itemlist.JiveHomeListItemFragment
 import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseItemListFragment
-import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseItemListNavigationListener
 import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseSubItemListFragment
 import de.maniac103.squeezeclient.ui.search.LibrarySearchResultsFragment
 import de.maniac103.squeezeclient.ui.search.RadioSearchResultsFragment
@@ -59,19 +58,18 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
-class MainListHolderFragment :
+class MainContentContainerFragment :
     ViewBindingFragment<FragmentMainlistcontainerBinding>(
         FragmentMainlistcontainerBinding::inflate
     ),
-    JiveHomeItemListNavigationListener,
-    SlimBrowseItemListNavigationListener,
+    JiveHomeListItemFragment.NavigationListener,
+    BaseSlimBrowseItemListFragment.NavigationListener,
     SliderBottomSheetFragment.ChangeListener,
     FragmentManager.OnBackStackChangedListener {
 
@@ -83,11 +81,6 @@ class MainListHolderFragment :
             pendingProgress: Float
         )
         fun openNowPlayingIfNeeded()
-    }
-
-    interface Child {
-        val scrollingTargetView: View
-        val titleFlow: Flow<List<String>>
     }
 
     private enum class ReplacementMode {
@@ -173,10 +166,9 @@ class MainListHolderFragment :
     override fun onNodeSelected(nodeId: String) {
         if (homeMenu.values.any { it.node == nodeId }) {
             val f = JiveHomeListItemFragment.create(playerId, nodeId)
-            val mode = if (nodeId == "home") {
-                ReplacementMode.SetAsHome
-            } else {
-                ReplacementMode.OnTopOfStack
+            val mode = when (nodeId) {
+                "home" -> ReplacementMode.SetAsHome
+                else -> ReplacementMode.OnTopOfStack
             }
             replaceContent(f, "home:$nodeId", mode)
         }
@@ -294,12 +286,12 @@ class MainListHolderFragment :
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         childFragmentManager.apply {
-            addOnBackStackChangedListener(this@MainListHolderFragment)
+            addOnBackStackChangedListener(this@MainContentContainerFragment)
             registerFragmentLifecycleCallbacks(
                 object : FragmentLifecycleCallbacks() {
                     override fun onFragmentStarted(fm: FragmentManager, f: Fragment) {
                         super.onFragmentStarted(fm, f)
-                        if (f is Child) {
+                        if (f is MainContentChild) {
                             listener.onScrollTargetChanged(f.scrollingTargetView)
                             binding.root.background.alpha = 255
                         }
@@ -379,7 +371,7 @@ class MainListHolderFragment :
         content: T,
         tag: String,
         mode: ReplacementMode
-    ) where T : Fragment, T : Child {
+    ) where T : Fragment, T : MainContentChild {
         if (mode != ReplacementMode.OnTopOfStack) {
             goToHome()
         }
@@ -425,7 +417,7 @@ class MainListHolderFragment :
                 .mapNotNull { entry ->
                     val tag = entry.name ?: throw IllegalStateException()
                     val f = findFragmentByTag(tag)
-                    (f as? Child)?.titleFlow?.map { tag to it }
+                    (f as? MainContentChild)?.titleFlow?.map { tag to it }
                 }
         }
 
@@ -464,7 +456,7 @@ class MainListHolderFragment :
     }
 
     companion object {
-        fun create(playerId: PlayerId) = MainListHolderFragment().apply {
+        fun create(playerId: PlayerId) = MainContentContainerFragment().apply {
             arguments = bundleOf("playerId" to playerId)
         }
     }

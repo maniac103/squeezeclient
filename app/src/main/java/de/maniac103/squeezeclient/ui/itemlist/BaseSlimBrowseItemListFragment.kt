@@ -42,7 +42,7 @@ import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.service.DownloadWorker
-import de.maniac103.squeezeclient.ui.MainListHolderFragment
+import de.maniac103.squeezeclient.ui.MainContentChild
 import de.maniac103.squeezeclient.ui.bottomsheets.ChoicesBottomSheetFragment
 import de.maniac103.squeezeclient.ui.bottomsheets.InputBottomSheetFragment
 import de.maniac103.squeezeclient.ui.common.BasePagingListFragment
@@ -57,12 +57,23 @@ import kotlinx.coroutines.launch
 
 abstract class BaseSlimBrowseItemListFragment :
     BasePagingListFragment<SlimBrowseItemList.SlimBrowseItem, SlimBrowseItemListViewHolder>(),
-    MainListHolderFragment.Child,
+    MainContentChild,
     SlimBrowseItemListAdapter.ItemSelectionListener,
     ChoicesBottomSheetFragment.SelectionListener,
     ContextMenuBottomSheetFragment.Listener,
     ItemActionsMenuSheet.Listener,
     InputBottomSheetFragment.ItemSubmitListener {
+
+    interface NavigationListener {
+        fun onOpenSubItemList(item: SlimBrowseItemList.SlimBrowseItem, itemFetchAction: JiveAction)
+        fun onOpenWebLink(title: String, link: Uri)
+        fun onHandleDoOrGoAction(
+            action: JiveAction,
+            isGoAction: Boolean,
+            item: SlimBrowseItemList.SlimBrowseItem,
+            parentItem: SlimBrowseItemList.SlimBrowseItem?
+        ): Job?
+    }
 
     protected abstract val playerId: PlayerId
     protected abstract val title: List<String>
@@ -71,7 +82,7 @@ abstract class BaseSlimBrowseItemListFragment :
 
     override val scrollingTargetView get() = binding.recycler
     override val titleFlow get() = flowOf(title)
-    private val listener get() = requireParentAs<SlimBrowseItemListNavigationListener>()
+    private val listener get() = requireParentAs<NavigationListener>()
 
     override fun onBindingCreated(binding: FragmentGenericListBinding) {
         super.onBindingCreated(binding)
@@ -307,15 +318,4 @@ abstract class BaseSlimBrowseItemListFragment :
         return requester.request(android.Manifest.permission.POST_NOTIFICATIONS)
             .first() is PermissionResult.Granted
     }
-}
-
-interface SlimBrowseItemListNavigationListener {
-    fun onOpenSubItemList(item: SlimBrowseItemList.SlimBrowseItem, itemFetchAction: JiveAction)
-    fun onOpenWebLink(title: String, link: Uri)
-    fun onHandleDoOrGoAction(
-        action: JiveAction,
-        isGoAction: Boolean,
-        item: SlimBrowseItemList.SlimBrowseItem,
-        parentItem: SlimBrowseItemList.SlimBrowseItem?
-    ): Job?
 }

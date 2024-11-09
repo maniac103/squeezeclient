@@ -33,7 +33,7 @@ import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.JiveActions
 import de.maniac103.squeezeclient.model.JiveHomeMenuItem
 import de.maniac103.squeezeclient.model.PlayerId
-import de.maniac103.squeezeclient.ui.MainListHolderFragment
+import de.maniac103.squeezeclient.ui.MainContentChild
 import de.maniac103.squeezeclient.ui.bottomsheets.ChoicesBottomSheetFragment
 import de.maniac103.squeezeclient.ui.bottomsheets.InputBottomSheetFragment
 import de.maniac103.squeezeclient.ui.common.BasePrepopulatedListAdapter
@@ -47,14 +47,19 @@ import kotlinx.coroutines.launch
 
 class JiveHomeListItemFragment :
     ViewBindingFragment<FragmentGenericListBinding>(FragmentGenericListBinding::inflate),
-    MainListHolderFragment.Child,
+    MainContentChild,
     BasePrepopulatedListAdapter.ItemSelectionListener<JiveHomeMenuItem>,
     ChoicesBottomSheetFragment.SelectionListener,
     InputBottomSheetFragment.InputSubmitListener {
 
+    interface NavigationListener {
+        fun onNodeSelected(nodeId: String)
+        fun onGoAction(title: String, action: JiveAction): Job?
+    }
+
     private val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)
     private val nodeId get() = requireArguments().getString("nodeId")!!
-    private val listener get() = requireParentAs<JiveHomeItemListNavigationListener>()
+    private val listener get() = requireParentAs<NavigationListener>()
     override val scrollingTargetView get() = binding.recycler
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -165,9 +170,4 @@ class JiveHomeListItemFragment :
             arguments = bundleOf("playerId" to playerId, "nodeId" to nodeId)
         }
     }
-}
-
-interface JiveHomeItemListNavigationListener {
-    fun onNodeSelected(nodeId: String)
-    fun onGoAction(title: String, action: JiveAction): Job?
 }

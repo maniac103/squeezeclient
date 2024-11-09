@@ -30,14 +30,14 @@ import de.maniac103.squeezeclient.extfuncs.getParcelableList
 import de.maniac103.squeezeclient.extfuncs.loadSlideshowImage
 import de.maniac103.squeezeclient.extfuncs.withRoundedCorners
 import de.maniac103.squeezeclient.model.SlideshowImage
-import de.maniac103.squeezeclient.ui.MainListHolderFragment
+import de.maniac103.squeezeclient.ui.MainContentChild
 import de.maniac103.squeezeclient.ui.common.BasePrepopulatedListAdapter
 import de.maniac103.squeezeclient.ui.common.ViewBindingFragment
 import kotlinx.coroutines.flow.flowOf
 
 class GalleryFragment :
     ViewBindingFragment<FragmentGenericListBinding>(FragmentGenericListBinding::inflate),
-    MainListHolderFragment.Child {
+    MainContentChild {
     private val items get() = requireArguments().getParcelableList("items", SlideshowImage::class)
     override val titleFlow get() = flowOf(requireArguments().getStringArrayList("title")!!)
     override val scrollingTargetView get() = binding.recycler

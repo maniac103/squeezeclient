@@ -24,7 +24,6 @@ import android.util.Log
 import android.view.KeyEvent
 import android.view.Menu
 import android.view.View
-import android.view.animation.AnimationUtils
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.edit
@@ -44,6 +43,7 @@ import de.maniac103.squeezeclient.databinding.ActivityMainBinding
 import de.maniac103.squeezeclient.databinding.NavDrawerHeaderBinding
 import de.maniac103.squeezeclient.extfuncs.addContentSystemBarAndCutoutInsetsListener
 import de.maniac103.squeezeclient.extfuncs.addSystemBarAndCutoutInsetsListener
+import de.maniac103.squeezeclient.extfuncs.backProgressInterpolator
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.getParcelableOrNull
 import de.maniac103.squeezeclient.extfuncs.lastSelectedPlayer
@@ -90,9 +90,6 @@ class MainActivity :
     private var player: Player? = null
     private var playerIsActive = false
     private var consecutiveUnsuccessfulConnectAttempts = 0
-    private val breadcrumbsProgressInterpolator by lazy {
-        AnimationUtils.loadInterpolator(this, android.R.interpolator.decelerate_quint)
-    }
 
     private val mainListContainer get() =
         supportFragmentManager.findFragmentById(binding.container.id) as? MainContentContainerFragment
@@ -248,7 +245,7 @@ class MainActivity :
         binding.breadcrumbsContainer.isVisible = hasBreadcrumbs
         if (hasBreadcrumbs) {
             val breadcrumbs = SpannableStringBuilder()
-            val alpha = 1F - breadcrumbsProgressInterpolator.getInterpolation(pendingProgress)
+            val alpha = 1F - backProgressInterpolator.getInterpolation(pendingProgress)
             titles.forEach { breadcrumbs.append(" › ").append(it) }
             pendingTitle?.let { pending ->
                 val posBeforePending = breadcrumbs.length

@@ -28,7 +28,7 @@ import kotlinx.datetime.toLocalDateTime
 
 val Fragment.connectionHelper get() = requireContext().connectionHelper
 val Fragment.prefs get() = requireContext().prefs
-
+val Fragment.backProgressInterpolator get() = requireContext().backProgressInterpolator
 inline fun <reified T> Fragment.parentAs() = parentFragment as? T ?: activity as? T
 inline fun <reified T> Fragment.requireParentAs() = parentAs<T>() ?: throw IllegalStateException(
     "Parent of fragment $this doesn't implement required interface ${T::class.java.simpleName}"

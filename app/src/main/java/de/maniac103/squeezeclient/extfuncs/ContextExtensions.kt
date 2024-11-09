@@ -30,3 +30,5 @@ val Context.httpClient get() =
     (applicationContext as SqueezeClientApplication).httpClient
 val Context.prefs: SharedPreferences get() =
     PreferenceManager.getDefaultSharedPreferences(this)
+val Context.backProgressInterpolator get() =
+    (applicationContext as SqueezeClientApplication).backProgressInterpolator

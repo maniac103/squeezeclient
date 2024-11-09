@@ -45,6 +45,7 @@ import com.google.android.material.slider.LabelFormatter
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.cometd.request.PlaybackButtonRequest
 import de.maniac103.squeezeclient.databinding.FragmentNowplayingBinding
+import de.maniac103.squeezeclient.extfuncs.backProgressInterpolator
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.doOnTransitionCompleted
 import de.maniac103.squeezeclient.extfuncs.getParcelable
@@ -120,8 +121,12 @@ class NowPlayingFragment :
 
         override fun handleOnBackProgressed(backEvent: BackEventCompat) {
             when {
-                canCollapsePlaylist() -> playlistBottomSheetBehavior.updateBackProgress(backEvent)
-                startedCollapse -> binding.container.progress = 0.25F * backEvent.progress
+                canCollapsePlaylist() ->
+                    playlistBottomSheetBehavior.updateBackProgress(backEvent)
+                startedCollapse -> {
+                    val progress = backProgressInterpolator.getInterpolation(backEvent.progress)
+                    binding.container.progress = 0.2F * progress
+                }
             }
         }
 

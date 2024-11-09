@@ -35,6 +35,7 @@ import de.maniac103.squeezeclient.cometd.request.LibrarySearchRequest
 import de.maniac103.squeezeclient.databinding.FragmentSearchBinding
 import de.maniac103.squeezeclient.databinding.ListItemSearchCategoryBinding
 import de.maniac103.squeezeclient.extfuncs.animateScale
+import de.maniac103.squeezeclient.extfuncs.backProgressInterpolator
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.extfuncs.requireParentAs
@@ -87,12 +88,12 @@ class SearchFragment : ViewBindingFragment<FragmentSearchBinding>(FragmentSearch
         }
 
         override fun handleOnBackProgressed(backEvent: BackEventCompat) {
-            val scale = 1F - 0.2F * backEvent.progress
+            val progress = 1F - 0.3F * backProgressInterpolator.getInterpolation(backEvent.progress)
             binding.searchPill.apply {
-                scaleX = scale
-                scaleY = scale
+                scaleX = progress
+                scaleY = progress
             }
-            binding.root.background.alpha = (255F * (1F - 0.5F * backEvent.progress)).toInt()
+            binding.root.background.alpha = (255F * progress).toInt()
         }
 
         override fun handleOnBackCancelled() {

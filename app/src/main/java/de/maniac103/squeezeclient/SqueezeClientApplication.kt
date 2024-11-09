@@ -20,6 +20,7 @@ package de.maniac103.squeezeclient
 import android.app.Application
 import android.content.SharedPreferences
 import android.os.Build
+import android.view.animation.AnimationUtils
 import androidx.appcompat.app.AppCompatDelegate
 import com.google.android.material.color.DynamicColors
 import com.markodevcic.peko.PermissionRequester
@@ -51,6 +52,9 @@ class SqueezeClientApplication : Application(), SharedPreferences.OnSharedPrefer
         .followRedirects(true)
         .build()
     val connectionHelper = ConnectionHelper(this)
+    val backProgressInterpolator by lazy {
+        AnimationUtils.loadInterpolator(this, android.R.interpolator.decelerate_quint)
+    }
 
     override fun onCreate() {
         DynamicColors.applyToActivitiesIfAvailable(this)

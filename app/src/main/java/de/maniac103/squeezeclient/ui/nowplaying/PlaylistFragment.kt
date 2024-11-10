@@ -34,7 +34,6 @@ import androidx.recyclerview.widget.RecyclerView
 import de.maniac103.squeezeclient.databinding.FragmentGenericListBinding
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.getParcelable
-import de.maniac103.squeezeclient.model.ListResponse
 import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.Playlist
@@ -62,7 +61,7 @@ class PlaylistFragment :
         diffCallback: DiffUtil.ItemCallback<Playlist.PlaylistItem>
     ): PagingDataAdapter<Playlist.PlaylistItem, PlaylistItemViewHolder> {
         adapter = PlaylistItemAdapter(diffCallback)
-        val itemTouchCallback = PlaylistItemDragCallback(requireContext(), adapter, { (from, to) ->
+        val itemTouchCallback = PlaylistItemDragCallback(requireContext(), adapter, { from, to ->
             lifecycleScope.launch {
                 connectionHelper.movePlaylistItem(playerId, from, to)
             }
@@ -87,7 +86,7 @@ class PlaylistFragment :
         return adapter
     }
 
-    override suspend fun onLoadPage(page: PagingParams): ListResponse<Playlist.PlaylistItem> =
+    override suspend fun onLoadPage(page: PagingParams) =
         connectionHelper.fetchPlaylist(playerId, page)
 
     override fun areItemsTheSame(lhs: Playlist.PlaylistItem, rhs: Playlist.PlaylistItem): Boolean {
@@ -99,11 +98,6 @@ class PlaylistFragment :
         rhs: Playlist.PlaylistItem
     ): Boolean {
         return lhs == rhs
-    }
-
-    override fun onDataLoaded(data: PagingData<Playlist.PlaylistItem>) {
-        super.onDataLoaded(data)
-        adapter.adjustRecentSwapPositions()
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)

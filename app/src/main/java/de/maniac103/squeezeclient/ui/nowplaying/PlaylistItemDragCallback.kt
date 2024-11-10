@@ -30,7 +30,7 @@ import kotlin.math.abs
 class PlaylistItemDragCallback(
     context: Context,
     private val adapter: PlaylistItemAdapter,
-    private val doMoveCallback: (PlaylistItemAdapter.SwapInfo) -> Unit,
+    private val doMoveCallback: (fromPos: Int, toPos: Int) -> Unit,
     private val doRemoveCallback: (Int) -> Unit
 ) : ItemTouchHelper.Callback() {
     private val deleteIcon = requireNotNull(
@@ -40,9 +40,12 @@ class PlaylistItemDragCallback(
         color = context.getColor(R.color.playlist_swipe_delete_background)
     }
     private val tmpRect = RectF()
-    private var pendingSwapInfo: PlaylistItemAdapter.SwapInfo? = null
+    private var pendingMoveInfo: PendingMoveInfo? = null
+
     override fun isLongPressDragEnabled(): Boolean = true
     override fun isItemViewSwipeEnabled(): Boolean = true
+
+    data class PendingMoveInfo(val initialPos: Int, var targetPos: Int)
 
     override fun getMovementFlags(
         recyclerView: RecyclerView,
@@ -58,10 +61,15 @@ class PlaylistItemDragCallback(
         viewHolder: RecyclerView.ViewHolder,
         target: RecyclerView.ViewHolder
     ): Boolean {
-        pendingSwapInfo = adapter.onItemMove(
-            viewHolder.bindingAdapterPosition,
-            target.bindingAdapterPosition
-        )
+        val fromPos = viewHolder.bindingAdapterPosition
+        val toPos = target.bindingAdapterPosition
+        val existingMoveInfo = pendingMoveInfo
+        if (existingMoveInfo == null) {
+            pendingMoveInfo = PendingMoveInfo(fromPos, toPos)
+        } else {
+            existingMoveInfo.targetPos = toPos
+        }
+        adapter.onItemMove(fromPos, toPos)
         return true
     }
 
@@ -79,10 +87,11 @@ class PlaylistItemDragCallback(
 
     override fun clearView(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder) {
         super.clearView(recyclerView, viewHolder)
-        pendingSwapInfo?.let {
-            adapter.onItemFinishedMove(it)
-            doMoveCallback.invoke(it)
+        pendingMoveInfo?.let {
+            adapter.onItemFinishedMove(it.initialPos, it.targetPos)
+            doMoveCallback.invoke(it.initialPos, it.targetPos)
         }
+        pendingMoveInfo = null
         viewHolder.itemView.isPressed = false
     }
 

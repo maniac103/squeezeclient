@@ -30,19 +30,31 @@ import de.maniac103.squeezeclient.model.Playlist
 class PlaylistItemAdapter(
     diffCallback: DiffUtil.ItemCallback<Playlist.PlaylistItem>
 ) : PagingDataAdapter<Playlist.PlaylistItem, PlaylistItemViewHolder>(diffCallback) {
-    data class SwapInfo(val fromPos: Int, val toPos: Int)
+    private data class SwapInfo(val fromPos: Int, val toPos: Int)
+    private data class PendingSelection(val position: Int?)
 
     private var swapInfo: SwapInfo? = null
     var dragStartListener: ((PlaylistItemViewHolder) -> Unit)? = null
     var itemClickListener: ((PlaylistItemViewHolder) -> Unit)? = null
     var selectedItemPosition: Int? = null
         set(value) {
-            if (field != value) {
+            if (swapInfo == null) {
                 field?.let { notifyItemChanged(it) }
                 value?.let { notifyItemChanged(it) }
                 field = value
+            } else {
+                pendingSelectedPosition = PendingSelection(value)
             }
         }
+    private var pendingSelectedPosition: PendingSelection? = null
+
+    init {
+        addOnPagesUpdatedListener {
+            swapInfo = null
+            pendingSelectedPosition?.let { selectedItemPosition = it.position }
+            pendingSelectedPosition = null
+        }
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PlaylistItemViewHolder {
         val inflater = LayoutInflater.from(parent.context)
@@ -67,24 +79,15 @@ class PlaylistItemAdapter(
         }
     }
 
-    // Called in touch helper's onMove
-    fun onItemMove(fromPos: Int, toPos: Int): SwapInfo {
+    fun onItemMove(fromPos: Int, toPos: Int) {
         notifyItemMoved(fromPos, toPos)
-        return SwapInfo(fromPos, toPos)
     }
 
-    // Called in touch helper's clearView() to save the result of this drag and drop
-    fun onItemFinishedMove(info: SwapInfo) {
-        swapInfo = info
+    fun onItemFinishedMove(fromPos: Int, toPos: Int) {
+        swapInfo = SwapInfo(fromPos, toPos)
     }
 
     fun onItemRemoved(position: Int) {
         notifyItemRemoved(position)
-    }
-
-    fun adjustRecentSwapPositions() {
-        // "Undo" the notifyItemMoved we did before that messed up positions
-        swapInfo?.let { swap -> notifyItemMoved(swap.toPos, swap.fromPos) }
-        swapInfo = null
     }
 }

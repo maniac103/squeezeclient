@@ -56,7 +56,6 @@ abstract class BasePagingListFragment<T : Any, VH : RecyclerView.ViewHolder> :
     protected abstract suspend fun onLoadPage(page: PagingParams): ListResponse<T>
     protected abstract fun areItemsTheSame(lhs: T, rhs: T): Boolean
     protected abstract fun areItemContentsTheSame(lhs: T, rhs: T): Boolean
-    protected open fun onDataLoaded(data: PagingData<T>) {}
 
     fun refresh() {
         adapter.refresh()
@@ -101,7 +100,6 @@ abstract class BasePagingListFragment<T : Any, VH : RecyclerView.ViewHolder> :
         val flow = pager.flow.cachedIn(lifecycleScope)
         lifecycleScope.launch {
             flow.collectLatest {
-                onDataLoaded(it)
                 adapter.submitData(it)
             }
         }

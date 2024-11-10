@@ -17,11 +17,13 @@
 
 package de.maniac103.squeezeclient.ui
 
+import android.view.ViewGroup.MarginLayoutParams
 import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isGone
-import androidx.core.view.updatePadding
+import androidx.core.view.updateLayoutParams
+import androidx.fragment.app.commitNow
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -50,7 +52,9 @@ class DisplayStatusFragment : ViewBindingFragment<FragmentDisplaystatusBinding>(
     override fun onBindingCreated(binding: FragmentDisplaystatusBinding) {
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, windowInsets ->
             val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.updatePadding(bottom = insets.bottom)
+            v.updateLayoutParams<MarginLayoutParams> {
+                bottomMargin = insets.bottom
+            }
             windowInsets
         }
 
@@ -73,17 +77,17 @@ class DisplayStatusFragment : ViewBindingFragment<FragmentDisplaystatusBinding>(
         binding.icon.isGone = message.extractIconUrl(requireContext()) == null
 
         if (!isVisible) {
-            parentFragmentManager.beginTransaction()
-                .show(this)
-                .commitNow()
+            parentFragmentManager.commitNow {
+                show(this@DisplayStatusFragment)
+            }
         }
 
         hideJob?.cancel()
         hideJob = lifecycleScope.launch {
             delay(message.duration ?: 2.seconds)
-            parentFragmentManager.beginTransaction()
-                .hide(this@DisplayStatusFragment)
-                .commitNowAllowingStateLoss()
+            parentFragmentManager.commitNow(true) {
+                hide(this@DisplayStatusFragment)
+            }
         }
     }
 

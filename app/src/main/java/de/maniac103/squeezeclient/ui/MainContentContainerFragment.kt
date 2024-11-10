@@ -234,7 +234,7 @@ class MainContentContainerFragment :
         }
         val refreshLevels = max(refreshLevelsFromNextWindow, refreshLevelsFromRefresh)
 
-        return if (isGoAction && actualNextWindow == null) {
+        return if (isGoAction && nextWindow == null) {
             handleGoAction(item.title, parentItem?.title, action)
         } else {
             lifecycleScope.launch {

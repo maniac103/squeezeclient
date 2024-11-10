@@ -68,7 +68,7 @@ class DisplayStatusFragment : ViewBindingFragment<FragmentDisplaystatusBinding>(
             return
         }
 
-        binding.text.text = message.text.joinToString("\n")
+        binding.text.text = message.text.joinToString("\n").trim()
         binding.icon.loadArtwork(message)
         binding.icon.isGone = message.extractIconUrl(requireContext()) == null
 

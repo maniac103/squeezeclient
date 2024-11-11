@@ -18,4 +18,5 @@
 
 <resources>
     <attr name="colorDraggedItemBackground" format="reference|color" />
+    <drawable name="media3_notification_small_icon">@drawable/ic_logo_notification_24dp</drawable>
 </resources>

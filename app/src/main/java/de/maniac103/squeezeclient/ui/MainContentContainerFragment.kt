@@ -17,6 +17,7 @@
 
 package de.maniac103.squeezeclient.ui
 
+import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
@@ -35,6 +36,8 @@ import de.maniac103.squeezeclient.cometd.request.LibrarySearchRequest
 import de.maniac103.squeezeclient.databinding.FragmentMainlistcontainerBinding
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.getParcelable
+import de.maniac103.squeezeclient.extfuncs.imageCacheContains
+import de.maniac103.squeezeclient.extfuncs.loadImage
 import de.maniac103.squeezeclient.extfuncs.requireParentAs
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.JiveActions
@@ -61,7 +64,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 
 class MainContentContainerFragment :
@@ -76,8 +79,8 @@ class MainContentContainerFragment :
     interface Listener {
         fun onScrollTargetChanged(scrollTarget: View?)
         fun onContentStackChanged(
-            titles: List<String>,
-            pendingTitle: List<String>?,
+            titles: List<PageTitleInfo>,
+            pendingTitle: PageTitleInfo?,
             pendingProgress: Float
         )
         fun openNowPlayingIfNeeded()
@@ -99,51 +102,18 @@ class MainContentContainerFragment :
     )
 
     private var titleSubscription: Job? = null
-    private var contentTitles = emptyMap<String, List<String>>()
+    private var contentTitles = emptyMap<String, PageTitleInfo>()
     private var pendingBack: PendingBackInfo? = null
     private var pendingNavigation: Job? = null
     private var homeMenu: Map<String, JiveHomeMenuItem> = mapOf()
 
     // Public methods
 
-    fun handleGoAction(title: String, parentTitle: String?, action: JiveAction): Job? {
-        pendingNavigation?.cancel()
-        pendingNavigation = lifecycleScope.launch {
-            if (action.isSlideshow) {
-                val items = connectionHelper.fetchSlideshowImages(playerId, action)
-                val f = GalleryFragment.create(items, title, parentTitle)
-                replaceContent(f, "gallery", ReplacementMode.OnTopOfStack)
-                return@launch
-            }
-            // Fetch first item of page to check whether we're dealing with a slider or a normal page
-            val result = connectionHelper.fetchItemsForAction(playerId, action, PagingParams(0, 1))
-            val firstItem = result.items.getOrNull(0)
-            when {
-                result.totalCount == 1 && firstItem?.actions?.slider != null -> {
-                    val f = SliderBottomSheetFragment.create(title, firstItem.actions.slider)
-                    f.show(childFragmentManager, "slider")
-                }
-                result.totalCount == 0 && result.window?.textArea != null -> {
-                    val f = InfoBottomSheet.create(
-                        result.title ?: title,
-                        result.window.textArea
-                    )
-                    f.show(childFragmentManager, "info")
-                }
-                else -> {
-                    val f = SlimBrowseItemListFragment.create(
-                        playerId,
-                        title,
-                        parentTitle,
-                        action,
-                        result.window?.windowStyle
-                    )
-                    replaceContent(f, "items", ReplacementMode.OnTopOfStack)
-                }
-            }
-        }
-        return pendingNavigation
-    }
+    fun handleGoAction(
+        item: SlimBrowseItemList.SlimBrowseItem,
+        parentItem: SlimBrowseItemList.SlimBrowseItem?,
+        action: JiveAction
+    ) = handleGoAction(item.title, item, parentItem, action)
 
     fun goToHome() = childFragmentManager.apply {
         while (backStackEntryCount > 0) {
@@ -175,7 +145,7 @@ class MainContentContainerFragment :
     }
 
     override fun onGoAction(title: String, action: JiveAction): Job? =
-        handleGoAction(title, null, action)
+        handleGoAction(title, null, null, action)
 
     // BaseSlimBrowseItemListFragment.NavigationListener implementation
 
@@ -235,7 +205,7 @@ class MainContentContainerFragment :
         val refreshLevels = max(refreshLevelsFromNextWindow, refreshLevelsFromRefresh)
 
         return if (isGoAction && nextWindow == null) {
-            handleGoAction(item.title, parentItem?.title, action)
+            handleGoAction(item.title, item, parentItem, action)
         } else {
             lifecycleScope.launch {
                 connectionHelper.executeAction(playerId, action)
@@ -367,6 +337,51 @@ class MainContentContainerFragment :
 
     // Internal implementation details
 
+    private fun handleGoAction(
+        title: String,
+        item: SlimBrowseItemList.SlimBrowseItem?,
+        parentItem: SlimBrowseItemList.SlimBrowseItem?,
+        action: JiveAction
+    ): Job? {
+        pendingNavigation?.cancel()
+        pendingNavigation = lifecycleScope.launch {
+            if (action.isSlideshow) {
+                val items = connectionHelper.fetchSlideshowImages(playerId, action)
+                val f = GalleryFragment.create(items, title, parentItem?.title)
+                replaceContent(f, "gallery", ReplacementMode.OnTopOfStack)
+                return@launch
+            }
+            // Fetch first item of page to check whether we're dealing with a slider or a normal page
+            val result = connectionHelper.fetchItemsForAction(playerId, action, PagingParams(0, 1))
+            val firstItem = result.items.getOrNull(0)
+            when {
+                result.totalCount == 1 && firstItem?.actions?.slider != null -> {
+                    val f = SliderBottomSheetFragment.create(title, firstItem.actions.slider)
+                    f.show(childFragmentManager, "slider")
+                }
+                result.totalCount == 0 && result.window?.textArea != null -> {
+                    val f = InfoBottomSheet.create(
+                        result.title ?: title,
+                        result.window.textArea
+                    )
+                    f.show(childFragmentManager, "info")
+                }
+                else -> {
+                    val f = SlimBrowseItemListFragment.create(
+                        playerId,
+                        title,
+                        parentItem?.title,
+                        parentItem ?: item,
+                        action,
+                        result.window?.windowStyle
+                    )
+                    replaceContent(f, "items", ReplacementMode.OnTopOfStack)
+                }
+            }
+        }
+        return pendingNavigation
+    }
+
     private fun <T> replaceContent(
         content: T,
         tag: String,
@@ -409,28 +424,44 @@ class MainContentContainerFragment :
             .forEach { it.refresh() }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     private fun updateBreadcrumbsSubscription() {
-        val tagToTitleFlows = childFragmentManager.run {
+        val context = requireContext()
+        val iconSize = context.resources.getDimensionPixelSize(R.dimen.breadcrumbs_icon_size)
+
+        val tagToTitleAndIconFlows = childFragmentManager.run {
             (0 until backStackEntryCount)
                 .map { index -> getBackStackEntryAt(index) }
                 .distinctBy { it.name }
                 .mapNotNull { entry ->
                     val tag = entry.name ?: throw IllegalStateException()
-                    val f = findFragmentByTag(tag)
-                    (f as? MainContentChild)?.titleFlow?.map { tag to it }
+                    val f = findFragmentByTag(tag) as? MainContentChild
+                        ?: return@mapNotNull null
+                    val iconFlow = f.iconFlow.flatMapLatest { icon ->
+                        flow {
+                            val url = icon?.extractIconUrl(context)
+                            // Make sure displaying text isn't stalled by loading icons by emitting
+                            // an intermediate null value if network access is needed for loading
+                            if (url == null || context.imageCacheContains(url)) {
+                                emit(null)
+                            }
+                            url?.let { emit(context.loadImage(it, iconSize)) }
+                        }
+                    }
+                    f.titleFlow.combine(iconFlow) { t, i -> tag to PageTitleInfo(t, i) }
                 }
         }
 
         titleSubscription?.cancel()
 
-        if (tagToTitleFlows.isEmpty()) {
+        if (tagToTitleAndIconFlows.isEmpty()) {
             contentTitles = emptyMap()
             handleStackUpdate()
         } else {
-            val tagsToTitlesFlow = combine(tagToTitleFlows) { it.toList() }
+            val tagsToTitlesAndIconsFlow = combine(tagToTitleAndIconFlows) { it.toList() }
             titleSubscription = lifecycleScope.launch {
                 repeatOnLifecycle(Lifecycle.State.STARTED) {
-                    tagsToTitlesFlow.collect { tagsAndTitles ->
+                    tagsToTitlesAndIconsFlow.collect { tagsAndTitles ->
                         contentTitles = tagsAndTitles.associate { it.first to it.second }
                         handleStackUpdate()
                     }
@@ -442,18 +473,17 @@ class MainContentContainerFragment :
     private fun handleStackUpdate() {
         val titles = childFragmentManager.run {
             (0 until backStackEntryCount)
-                .asSequence()
                 .map { index -> getBackStackEntryAt(index) }
                 .distinctBy { it.name }
                 .filter { it.name != pendingBack?.tag }
                 .mapNotNull { contentTitles[it.name] }
-                .flatten()
-                .toList()
         }
         val pendingTitle = pendingBack?.tag?.let { contentTitles[it] }
         val progress = pendingBack?.progress ?: 0F
         listener.onContentStackChanged(titles, pendingTitle, progress)
     }
+
+    data class PageTitleInfo(val title: List<String>, val icon: Drawable?)
 
     companion object {
         fun create(playerId: PlayerId) = MainContentContainerFragment().apply {

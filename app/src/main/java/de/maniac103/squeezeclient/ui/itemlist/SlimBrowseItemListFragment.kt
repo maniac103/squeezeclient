@@ -20,16 +20,24 @@ package de.maniac103.squeezeclient.ui.itemlist
 import androidx.core.os.bundleOf
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.getParcelable
+import de.maniac103.squeezeclient.extfuncs.getParcelableOrNull
+import de.maniac103.squeezeclient.model.ArtworkItem
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.ListResponse
 import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.model.WindowStyle
+import kotlinx.coroutines.flow.flowOf
 
 class SlimBrowseItemListFragment : BaseSlimBrowseItemListFragment() {
     override val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)
-    override val title get() = requireArguments().getStringArrayList("title")!!
+    override val titleFlow get() = requireArguments().run {
+        flowOf(listOfNotNull(getString("parentTitle"), getString("title")))
+    }
+    override val iconFlow get() = flowOf(
+        requireArguments().getParcelableOrNull("icon", ArtworkItem::class)
+    )
     override val showIcons get() = requireArguments().getBoolean("showIcons")
     override val useGrid get() = super.useGrid && requireArguments().getBoolean("canUseGrid")
     override val fetchAction get() =
@@ -47,16 +55,18 @@ class SlimBrowseItemListFragment : BaseSlimBrowseItemListFragment() {
             playerId: PlayerId,
             title: String,
             parentTitle: String?,
+            icon: ArtworkItem?,
             fetchAction: JiveAction,
             windowStyle: WindowStyle?
         ) = SlimBrowseItemListFragment().apply {
             val showIcons = windowStyle != WindowStyle.TextOnlyList
             val canUseGrid =
                 windowStyle == WindowStyle.IconList || windowStyle == WindowStyle.HomeMenu
-            val titleList = listOfNotNull(parentTitle, title)
             arguments = bundleOf(
                 "playerId" to playerId,
-                "title" to ArrayList(titleList),
+                "title" to title,
+                "parentTitle" to parentTitle,
+                "icon" to icon,
                 "fetchAction" to fetchAction,
                 "canUseGrid" to canUseGrid,
                 "showIcons" to showIcons

@@ -20,6 +20,7 @@ package de.maniac103.squeezeclient.ui
 import android.content.Intent
 import android.os.Bundle
 import android.text.SpannableStringBuilder
+import android.text.style.ImageSpan
 import android.util.Log
 import android.view.KeyEvent
 import android.view.Menu
@@ -27,6 +28,8 @@ import android.view.View
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.edit
+import androidx.core.text.buildSpannedString
+import androidx.core.text.inSpans
 import androidx.core.view.GravityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -63,6 +66,7 @@ import de.maniac103.squeezeclient.ui.prefs.SettingsActivity
 import de.maniac103.squeezeclient.ui.search.SearchFragment
 import de.maniac103.squeezeclient.ui.volume.VolumeFragment
 import de.maniac103.squeezeclient.ui.widget.AlphaSpan
+import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -237,28 +241,41 @@ class MainActivity :
     }
 
     override fun onContentStackChanged(
-        titles: List<String>,
-        pendingTitle: List<String>?,
+        titles: List<MainContentContainerFragment.PageTitleInfo>,
+        pendingTitle: MainContentContainerFragment.PageTitleInfo?,
         pendingProgress: Float
     ) {
         val hasBreadcrumbs = titles.isNotEmpty() || pendingTitle != null
         binding.breadcrumbsContainer.isVisible = hasBreadcrumbs
-        if (hasBreadcrumbs) {
-            val breadcrumbs = SpannableStringBuilder()
-            val alpha = 1F - backProgressInterpolator.getInterpolation(pendingProgress)
-            titles.forEach { breadcrumbs.append(" › ").append(it) }
-            pendingTitle?.let { pending ->
-                val posBeforePending = breadcrumbs.length
-                pending.forEach { breadcrumbs.append(" › ").append(it) }
-                breadcrumbs.setSpan(
-                    AlphaSpan(alpha),
-                    posBeforePending,
-                    breadcrumbs.length,
-                    SpannableStringBuilder.SPAN_INCLUSIVE_INCLUSIVE
-                )
+        binding.breadcrumbs.text = if (hasBreadcrumbs) {
+            buildSpannedString {
+                titles.forEach { info -> appendPage(info, 1F) }
+                pendingTitle?.let { pending ->
+                    val alpha = 1F - backProgressInterpolator.getInterpolation(pendingProgress)
+                    appendPage(pending, alpha)
+                }
             }
-            binding.breadcrumbs.text = breadcrumbs
+        } else {
+            null
         }
+    }
+
+    private fun SpannableStringBuilder.appendPage(
+        pageInfo: MainContentContainerFragment.PageTitleInfo,
+        alpha: Float
+    ) = inSpans(AlphaSpan(alpha)) {
+        append(" › ")
+        val icon = pageInfo.icon?.mutate()?.apply {
+            setBounds(0, 0, intrinsicWidth, intrinsicHeight)
+            setAlpha((alpha * 255F).roundToInt())
+        }
+        icon?.let {
+            inSpans(ImageSpan(it)) {
+                append(" ")
+            }
+            append(" ")
+        }
+        append(pageInfo.title.joinToString(" › "))
     }
 
     override fun openNowPlayingIfNeeded() {
@@ -277,7 +294,7 @@ class MainActivity :
         contextItem: SlimBrowseItemList.SlimBrowseItem
     ) = mainListContainer?.run {
         goToHome()
-        handleGoAction(contextItem.title, parentItem.title, action)
+        handleGoAction(contextItem, parentItem, action)
     }
 
     // ConnectionErrorHintFragment.Listener implementation

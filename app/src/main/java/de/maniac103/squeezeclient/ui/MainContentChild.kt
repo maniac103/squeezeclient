@@ -18,9 +18,11 @@
 package de.maniac103.squeezeclient.ui
 
 import android.view.View
+import de.maniac103.squeezeclient.model.ArtworkItem
 import kotlinx.coroutines.flow.Flow
 
 interface MainContentChild {
     val scrollingTargetView: View
     val titleFlow: Flow<List<String>>
+    val iconFlow: Flow<ArtworkItem?>
 }

@@ -25,10 +25,12 @@ import de.maniac103.squeezeclient.model.ListResponse
 import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
+import kotlinx.coroutines.flow.flowOf
 
 class SlimBrowseSubItemListFragment : BaseSlimBrowseItemListFragment() {
     override val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)
-    override val title get() = listOf(requireArguments().getString("title")!!)
+    override val titleFlow get() = flowOf(listOfNotNull(requireArguments().getString("title")))
+    override val iconFlow get() = flowOf(null)
     private val parentFetchAction get() =
         requireArguments().getParcelable("fetchAction", JiveAction::class)
     private val parentItemPosition get() = requireArguments().getInt("listPosition")

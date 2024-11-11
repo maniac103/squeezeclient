@@ -40,6 +40,7 @@ class GalleryFragment :
     MainContentChild {
     private val items get() = requireArguments().getParcelableList("items", SlideshowImage::class)
     override val titleFlow get() = flowOf(requireArguments().getStringArrayList("title")!!)
+    override val iconFlow get() = flowOf(null)
     override val scrollingTargetView get() = binding.recycler
 
     override fun onBindingCreated(binding: FragmentGenericListBinding) {

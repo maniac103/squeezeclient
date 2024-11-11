@@ -26,10 +26,12 @@ import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.ui.itemlist.BaseSlimBrowseItemListFragment
+import kotlinx.coroutines.flow.flowOf
 
 class RadioSearchResultsFragment : BaseSlimBrowseItemListFragment() {
     override val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)
-    override val title get() = listOf(getString(R.string.page_title_radio_search, searchTerm))
+    override val titleFlow get() = flowOf(listOf(getString(R.string.page_title_radio_search, searchTerm)))
+    override val iconFlow get() = flowOf(null)
     private val searchTerm get() = requireArguments().getString("query")!!
     override val showIcons = true
     override val fastScrollEnabled = true

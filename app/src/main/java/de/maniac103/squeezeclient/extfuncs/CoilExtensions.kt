@@ -17,10 +17,13 @@
 
 package de.maniac103.squeezeclient.extfuncs
 
+import android.content.Context
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.widget.ImageView
 import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory
+import coil.imageLoader
+import coil.memory.MemoryCache
 import coil.request.ImageRequest
 import coil.target.ImageViewTarget
 import kotlin.math.max
@@ -30,14 +33,28 @@ fun ImageRequest.Builder.withRoundedCorners(view: ImageView) =
         override var drawable: Drawable?
             get() = super.drawable
             set(value) {
-                super.drawable = if (value is BitmapDrawable) {
-                    val bitmap = value.bitmap
-                    RoundedBitmapDrawableFactory.create(view.context.resources, bitmap).apply {
-                        val bitmapSize = max(bitmap.width, bitmap.height).toFloat()
-                        cornerRadius = bitmapSize / 10F
-                    }
-                } else {
-                    value
-                }
+                super.drawable = value?.withRoundedCorners(view.context)
             }
     })
+
+fun Context.imageCacheContains(url: String) =
+    imageLoader.memoryCache?.keys?.contains(MemoryCache.Key(url)) == true
+
+suspend fun Context.loadImage(url: String, size: Int): Drawable? {
+    val request = ImageRequest.Builder(this)
+        .data(url)
+        .size(size)
+        .build()
+    return imageLoader.execute(request)
+        .drawable
+        ?.withRoundedCorners(this)
+}
+
+fun Drawable.withRoundedCorners(context: Context) = if (this is BitmapDrawable) {
+    val bitmapSize = max(bitmap.width, bitmap.height).toFloat()
+    RoundedBitmapDrawableFactory.create(context.resources, bitmap).apply {
+        cornerRadius = bitmapSize / 10F
+    }
+} else {
+    this
+}

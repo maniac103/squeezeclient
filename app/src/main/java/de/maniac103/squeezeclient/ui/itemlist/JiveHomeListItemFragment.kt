@@ -41,6 +41,7 @@ import de.maniac103.squeezeclient.ui.common.ViewBindingFragment
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
@@ -68,6 +69,7 @@ class JiveHomeListItemFragment :
         .flatMapLatest { it.homeMenu }
         .mapNotNull { it[nodeId]?.title }
         .map { listOf(it) }
+    override val iconFlow = flowOf(null)
 
     private var adapter: JiveHomeItemListAdapter? = null
     private var latestMenu = mapOf<String, JiveHomeMenuItem>()

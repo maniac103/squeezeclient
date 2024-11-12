@@ -187,18 +187,10 @@ class NowPlayingFragment :
             }
         }
 
-        applyInsetsToSpacer(binding.topInsetSpacer, ConstraintSet.TOP) { insets ->
-            insets.top
-        }
-        applyInsetsToSpacer(binding.bottomInsetSpacer, ConstraintSet.BOTTOM) { insets ->
-            insets.bottom
-        }
-        applyInsetsToSpacer(binding.leftInsetSpacer, ConstraintSet.START) { insets ->
-            insets.left
-        }
-        applyInsetsToSpacer(binding.rightInsetSpacer, ConstraintSet.END) { insets ->
-            insets.right
-        }
+        binding.topInsetSpacer.applyInsetsAsMargin(ConstraintSet.TOP) { it.top }
+        binding.bottomInsetSpacer.applyInsetsAsMargin(ConstraintSet.BOTTOM) { it.bottom }
+        binding.leftInsetSpacer.applyInsetsAsMargin(ConstraintSet.START) { it.left }
+        binding.rightInsetSpacer.applyInsetsAsMargin(ConstraintSet.END) { it.right }
 
         binding.toolbar.apply {
             setNavigationOnClickListener {
@@ -233,10 +225,10 @@ class NowPlayingFragment :
             min = 0
         }
 
-        bindToRequest(binding.repeat, PlaybackButtonRequest.ToggleRepeat(playerId))
-        bindToRequest(binding.shuffle, PlaybackButtonRequest.ToggleShuffle(playerId))
-        bindToRequest(binding.prev, PlaybackButtonRequest.PreviousTrack(playerId))
-        bindToRequest(binding.next, PlaybackButtonRequest.NextTrack(playerId))
+        binding.repeat.bindToRequest(PlaybackButtonRequest.ToggleRepeat(playerId))
+        binding.shuffle.bindToRequest(PlaybackButtonRequest.ToggleShuffle(playerId))
+        binding.prev.bindToRequest(PlaybackButtonRequest.PreviousTrack(playerId))
+        binding.next.bindToRequest(PlaybackButtonRequest.NextTrack(playerId))
 
         lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -355,8 +347,8 @@ class NowPlayingFragment :
 
     // Private implementation details
 
-    private fun applyInsetsToSpacer(spacer: View, side: Int, insetSelector: (Insets) -> Int) {
-        ViewCompat.setOnApplyWindowInsetsListener(spacer) { v, windowInsets ->
+    private fun View.applyInsetsAsMargin(side: Int, insetSelector: View.(Insets) -> Int) {
+        ViewCompat.setOnApplyWindowInsetsListener(this) { v, windowInsets ->
             val insets = windowInsets.getInsets(
                 WindowInsetsCompat.Type.systemBars() or
                     WindowInsetsCompat.Type.displayCutout()
@@ -368,6 +360,12 @@ class NowPlayingFragment :
                 }
             }
             windowInsets
+        }
+    }
+
+    private fun View.bindToRequest(request: PlaybackButtonRequest) = setOnClickListener {
+        lifecycleScope.launch {
+            connectionHelper.sendButtonRequest(request)
         }
     }
 
@@ -482,14 +480,6 @@ class NowPlayingFragment :
                 val targetState =
                     if (isPlaying) PlayerStatus.PlayState.Paused else PlayerStatus.PlayState.Playing
                 connectionHelper.changePlaybackState(playerId, targetState)
-            }
-        }
-    }
-
-    private fun bindToRequest(view: View, request: PlaybackButtonRequest) {
-        view.setOnClickListener {
-            lifecycleScope.launch {
-                connectionHelper.sendButtonRequest(request)
             }
         }
     }

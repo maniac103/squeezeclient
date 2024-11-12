@@ -21,6 +21,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.graphics.drawable.Drawable
 import androidx.preference.PreferenceManager
+import androidx.work.WorkManager
 import coil.imageLoader
 import coil.memory.MemoryCache
 import coil.request.ImageRequest
@@ -33,6 +34,7 @@ val Context.jsonParser get() =
     (applicationContext as SqueezeClientApplication).json
 val Context.httpClient get() =
     (applicationContext as SqueezeClientApplication).httpClient
+val Context.workManager get() = WorkManager.getInstance(this)
 val Context.prefs: SharedPreferences get() =
     PreferenceManager.getDefaultSharedPreferences(this)
 val Context.backProgressInterpolator get() =

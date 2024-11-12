@@ -32,6 +32,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.PendingIntentCompat
 import androidx.core.content.contentValuesOf
+import androidx.core.content.getSystemService
 import androidx.core.net.toUri
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
@@ -41,7 +42,6 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkInfo
-import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import coil.network.HttpException
@@ -54,6 +54,7 @@ import de.maniac103.squeezeclient.extfuncs.httpClient
 import de.maniac103.squeezeclient.extfuncs.jsonParser
 import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.extfuncs.serverConfig
+import de.maniac103.squeezeclient.extfuncs.workManager
 import de.maniac103.squeezeclient.model.DownloadSongInfo
 import java.util.UUID
 import kotlin.time.Duration.Companion.seconds
@@ -161,7 +162,7 @@ class DownloadWorker(
 
     override suspend fun getForegroundInfo(): ForegroundInfo {
         val context = applicationContext
-        val cancelIntent = WorkManager.getInstance(context).createCancelPendingIntent(id)
+        val cancelIntent = context.workManager.createCancelPendingIntent(id)
         val cancelActionText = context.getString(R.string.download_notification_action_cancel)
         val finishedItems = progress.getInt(ProgressKeys.ITEMS_DONE, 0)
         val totalItems = progress.getInt(ProgressKeys.ITEMS_TOTAL, -1)
@@ -337,12 +338,12 @@ class DownloadWorker(
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .addTag(WORK_TAG)
                 .build()
-            WorkManager.getInstance(context).enqueue(request)
+            context.workManager.enqueue(request)
         }
 
         fun startObservingStatus(context: Context) {
-            val notificationManager = context.getSystemService(NotificationManager::class.java)
-            val workManager = WorkManager.getInstance(context)
+            val notificationManager = context.getSystemService<NotificationManager>()
+            val workManager = context.workManager
 
             workManager.getWorkInfosByTagLiveData(WORK_TAG).observeForever { workInfos ->
                 val lastFailedWork = workInfos.lastOrNull { it.state == WorkInfo.State.FAILED }
@@ -355,7 +356,7 @@ class DownloadWorker(
                         lastFailedItems,
                         lastFailedWork.id
                     )
-                    notificationManager.notify(lastFailedWork.id.toNotificationId(), notification)
+                    notificationManager?.notify(lastFailedWork.id.toNotificationId(), notification)
                 }
 
                 // Make sure we don't notify about this again
@@ -369,8 +370,8 @@ class DownloadWorker(
                 ?.let { infos -> enqueue(context, infos) }
             intent.getStringExtra(RETRY_DOWNLOAD_EXTRA_WORKER_ID)
                 ?.let { idString ->
-                    val nm = context.getSystemService(NotificationManager::class.java)
-                    nm.cancel(UUID.fromString(idString).toNotificationId())
+                    val nm = context.getSystemService<NotificationManager>()
+                    nm?.cancel(UUID.fromString(idString).toNotificationId())
                 }
         }
 

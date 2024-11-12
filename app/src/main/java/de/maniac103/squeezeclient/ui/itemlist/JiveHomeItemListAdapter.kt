@@ -18,10 +18,10 @@
 package de.maniac103.squeezeclient.ui.itemlist
 
 import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.core.graphics.drawable.toDrawable
 import androidx.core.view.forEach
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
@@ -77,7 +77,7 @@ class JiveHomeItemListAdapter(items: List<JiveHomeMenuItem> = listOf()) :
             val iconResId = ICON_MAPPING[item.id]
             when {
                 iconResId != null -> binding.icon.setImageResource(iconResId)
-                BuildConfig.DEBUG -> binding.icon.setImageDrawable(ColorDrawable(Color.RED))
+                BuildConfig.DEBUG -> binding.icon.setImageDrawable(Color.RED.toDrawable())
                 else -> binding.icon.setImageDrawable(null)
             }
         }

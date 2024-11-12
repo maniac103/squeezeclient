@@ -21,11 +21,15 @@ import android.graphics.Color
 import android.text.TextPaint
 import android.text.style.CharacterStyle
 import android.text.style.UpdateAppearance
+import androidx.core.graphics.alpha
+import androidx.core.graphics.blue
+import androidx.core.graphics.green
+import androidx.core.graphics.red
 
 class AlphaSpan(private val alpha: Float) : CharacterStyle(), UpdateAppearance {
     override fun updateDrawState(paint: TextPaint) {
         val color = paint.color
-        val newAlpha = (alpha * Color.alpha(color)).toInt()
-        paint.color = Color.argb(newAlpha, Color.red(color), Color.green(color), Color.blue(color))
+        val newAlpha = (alpha * color.alpha).toInt()
+        paint.color = Color.argb(newAlpha, color.red, color.green, color.blue)
     }
 }

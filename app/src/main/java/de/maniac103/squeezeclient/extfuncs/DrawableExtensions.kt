@@ -18,16 +18,15 @@
 package de.maniac103.squeezeclient.extfuncs
 
 import android.content.Context
-import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory
+import androidx.core.graphics.drawable.toBitmap
 import kotlin.math.max
 
-fun Drawable.withRoundedCorners(context: Context) = if (this is BitmapDrawable) {
+fun Drawable.withRoundedCorners(context: Context): Drawable {
+    val bitmap = toBitmap()
     val bitmapSize = max(bitmap.width, bitmap.height).toFloat()
-    RoundedBitmapDrawableFactory.create(context.resources, bitmap).apply {
+    return RoundedBitmapDrawableFactory.create(context.resources, bitmap).apply {
         cornerRadius = bitmapSize / 10F
     }
-} else {
-    this
 }

@@ -24,6 +24,7 @@ import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import androidx.activity.BackEventCompat
 import androidx.activity.OnBackPressedCallback
+import androidx.core.content.getSystemService
 import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
@@ -161,8 +162,8 @@ class SearchFragment : ViewBindingFragment<FragmentSearchBinding>(FragmentSearch
             setOnFocusChangeListener { _, hasFocus ->
                 if (hasFocus) {
                     post {
-                        val imm = requireContext().getSystemService(InputMethodManager::class.java)
-                        imm.showSoftInput(this, InputMethodManager.SHOW_IMPLICIT)
+                        val imm = requireContext().getSystemService<InputMethodManager>()
+                        imm?.showSoftInput(this, InputMethodManager.SHOW_IMPLICIT)
                     }
                 }
             }

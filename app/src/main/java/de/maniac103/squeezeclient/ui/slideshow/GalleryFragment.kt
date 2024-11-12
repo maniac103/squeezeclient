@@ -28,7 +28,6 @@ import de.maniac103.squeezeclient.databinding.FragmentGenericListBinding
 import de.maniac103.squeezeclient.databinding.GridItemGalleryBinding
 import de.maniac103.squeezeclient.extfuncs.getParcelableList
 import de.maniac103.squeezeclient.extfuncs.loadSlideshowImage
-import de.maniac103.squeezeclient.extfuncs.withRoundedCorners
 import de.maniac103.squeezeclient.model.SlideshowImage
 import de.maniac103.squeezeclient.ui.MainContentChild
 import de.maniac103.squeezeclient.ui.common.BasePrepopulatedListAdapter
@@ -75,9 +74,7 @@ class GalleryFragment :
                 }
                 context.startActivity(intent, options?.toBundle())
             }
-            holder.binding.image.loadSlideshowImage(item) {
-                withRoundedCorners(holder.binding.image)
-            }
+            holder.binding.image.loadSlideshowImage(item, true)
             holder.binding.text.text = item.caption
         }
     }

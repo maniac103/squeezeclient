@@ -25,7 +25,7 @@ import androidx.core.view.forEach
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import de.maniac103.squeezeclient.R
-import de.maniac103.squeezeclient.extfuncs.loadArtwork
+import de.maniac103.squeezeclient.extfuncs.loadArtworkOrPlaceholder
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import kotlinx.coroutines.Job
 
@@ -41,7 +41,7 @@ class SlimBrowseItemListViewHolder(private val binding: SlimBrowseItemListAdapte
         binding.subText.text = item.subText
         binding.subText.isVisible = !item.subText.isNullOrEmpty()
         if (binding.icon.isVisible) {
-            binding.icon.loadArtwork(item)
+            binding.icon.loadArtworkOrPlaceholder(item)
         }
         item.actions?.radio?.let { radio?.isChecked = it.state }
         item.actions?.checkbox?.let { checkbox?.isChecked = it.state }

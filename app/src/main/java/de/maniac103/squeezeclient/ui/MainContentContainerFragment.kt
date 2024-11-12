@@ -37,7 +37,7 @@ import de.maniac103.squeezeclient.databinding.FragmentMainlistcontainerBinding
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.extfuncs.imageCacheContains
-import de.maniac103.squeezeclient.extfuncs.loadImage
+import de.maniac103.squeezeclient.extfuncs.loadArtwork
 import de.maniac103.squeezeclient.extfuncs.requireParentAs
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.JiveActions
@@ -439,13 +439,12 @@ class MainContentContainerFragment :
                         ?: return@mapNotNull null
                     val iconFlow = f.iconFlow.flatMapLatest { icon ->
                         flow {
-                            val url = icon?.extractIconUrl(context)
                             // Make sure displaying text isn't stalled by loading icons by emitting
                             // an intermediate null value if network access is needed for loading
-                            if (url == null || context.imageCacheContains(url)) {
+                            if (context.imageCacheContains(icon) != true) {
                                 emit(null)
                             }
-                            url?.let { emit(context.loadImage(it, iconSize)) }
+                            emit(context.loadArtwork(icon, iconSize))
                         }
                     }
                     f.titleFlow.combine(iconFlow) { t, i -> tag to PageTitleInfo(t, i) }

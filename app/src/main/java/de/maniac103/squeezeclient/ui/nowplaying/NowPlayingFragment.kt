@@ -38,7 +38,6 @@ import androidx.fragment.app.commit
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import coil.load
 import coil.size.Size
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.slider.LabelFormatter
@@ -49,8 +48,8 @@ import de.maniac103.squeezeclient.extfuncs.backProgressInterpolator
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.doOnTransitionCompleted
 import de.maniac103.squeezeclient.extfuncs.getParcelable
+import de.maniac103.squeezeclient.extfuncs.loadArtwork
 import de.maniac103.squeezeclient.extfuncs.requireParentAs
-import de.maniac103.squeezeclient.extfuncs.withRoundedCorners
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
@@ -382,8 +381,7 @@ class NowPlayingFragment :
             binding.container.isInteractionEnabled = true
         }
 
-        binding.artwork.load(currentSong?.extractIconUrl(requireContext())) {
-            withRoundedCorners(binding.artwork)
+        binding.artwork.loadArtwork(currentSong) {
             // TODO: placeholder?
             size(Size.ORIGINAL)
         }

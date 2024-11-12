@@ -18,21 +18,16 @@
 package de.maniac103.squeezeclient.extfuncs
 
 import android.content.Context
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
-import android.widget.ImageView
-import coil.request.ImageRequest
-import coil.target.ImageViewTarget
+import androidx.core.graphics.drawable.RoundedBitmapDrawableFactory
+import kotlin.math.max
 
-fun ImageRequest.Builder.addServerCredentialsIfNeeded(context: Context) = apply {
-    context.prefs.serverConfig?.credentialsAsAuthorizationHeader?.let {
-        addHeader("Authorization", it)
+fun Drawable.withRoundedCorners(context: Context) = if (this is BitmapDrawable) {
+    val bitmapSize = max(bitmap.width, bitmap.height).toFloat()
+    RoundedBitmapDrawableFactory.create(context.resources, bitmap).apply {
+        cornerRadius = bitmapSize / 10F
     }
-}
-
-class RoundedCornerImageViewTarget(view: ImageView) : ImageViewTarget(view) {
-    override var drawable: Drawable?
-        get() = super.drawable
-        set(value) {
-            super.drawable = value?.withRoundedCorners(view.context)
-        }
+} else {
+    this
 }

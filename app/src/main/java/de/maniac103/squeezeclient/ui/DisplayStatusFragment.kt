@@ -30,7 +30,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import de.maniac103.squeezeclient.databinding.FragmentDisplaystatusBinding
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.getParcelable
-import de.maniac103.squeezeclient.extfuncs.loadArtwork
+import de.maniac103.squeezeclient.extfuncs.loadArtworkOrPlaceholder
 import de.maniac103.squeezeclient.model.DisplayMessage
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.ui.common.ViewBindingFragment
@@ -73,7 +73,7 @@ class DisplayStatusFragment : ViewBindingFragment<FragmentDisplaystatusBinding>(
         }
 
         binding.text.text = message.text.joinToString("\n").trim()
-        binding.icon.loadArtwork(message)
+        binding.icon.loadArtworkOrPlaceholder(message)
         binding.icon.isGone = message.extractIconUrl(requireContext()) == null
 
         if (!isVisible) {

@@ -40,23 +40,32 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 fun View.animateScale(scale: Float, duration: Duration) =
     animate().scaleX(scale).scaleY(scale).setDuration(duration.inWholeMilliseconds)
 
-fun ImageView.loadArtwork(item: ArtworkItem?) = load(item?.extractIconUrl(context)) {
-    context.prefs.serverConfig?.credentialsAsAuthorizationHeader?.let {
-        addHeader("Authorization", it)
+fun ImageView.loadArtwork(item: ArtworkItem?, builder: ImageRequest.Builder.() -> Unit = {}) =
+    load(item?.extractIconUrl(context)) {
+        addServerCredentialsIfNeeded(context)
+        target(RoundedCornerImageViewTarget(this@loadArtwork))
+        builder()
     }
-    withRoundedCorners(this@loadArtwork)
+
+fun ImageView.loadArtworkOrPlaceholder(
+    item: ArtworkItem?,
+    builder: ImageRequest.Builder.() -> Unit = {}
+) = loadArtwork(item) {
     placeholder(ContextCompat.getDrawable(context, R.drawable.ic_disc_24dp))
+    builder()
 }
 
 fun ImageView.loadSlideshowImage(
     item: SlideshowImage,
+    roundCorners: Boolean,
     builder: ImageRequest.Builder.() -> Unit = {}
 ) = item.imageUrl.let { url ->
     val baseUrl = context.prefs.serverConfig?.url
     val absoluteUrl = baseUrl?.resolve(url)?.toString() ?: url
     load(absoluteUrl) {
-        context.prefs.serverConfig?.credentialsAsAuthorizationHeader?.let {
-            addHeader("Authorization", it)
+        addServerCredentialsIfNeeded(context)
+        if (roundCorners) {
+            target(RoundedCornerImageViewTarget(this@loadSlideshowImage))
         }
         builder()
     }

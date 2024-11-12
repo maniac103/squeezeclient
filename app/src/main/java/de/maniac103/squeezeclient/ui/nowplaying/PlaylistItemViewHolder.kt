@@ -21,7 +21,7 @@ import android.view.View
 import androidx.recyclerview.widget.RecyclerView
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.databinding.ListItemSlimbrowseBinding
-import de.maniac103.squeezeclient.extfuncs.loadArtwork
+import de.maniac103.squeezeclient.extfuncs.loadArtworkOrPlaceholder
 import de.maniac103.squeezeclient.model.Playlist
 
 class PlaylistItemViewHolder(private val binding: ListItemSlimbrowseBinding) :
@@ -35,6 +35,6 @@ class PlaylistItemViewHolder(private val binding: ListItemSlimbrowseBinding) :
             item.album.isEmpty() -> item.artist
             else -> "${item.artist} · ${item.album}"
         }
-        binding.icon.loadArtwork(item)
+        binding.icon.loadArtworkOrPlaceholder(item)
     }
 }

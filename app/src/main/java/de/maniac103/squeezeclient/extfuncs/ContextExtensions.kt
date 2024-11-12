@@ -19,8 +19,13 @@ package de.maniac103.squeezeclient.extfuncs
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.graphics.drawable.Drawable
 import androidx.preference.PreferenceManager
+import coil.imageLoader
+import coil.memory.MemoryCache
+import coil.request.ImageRequest
 import de.maniac103.squeezeclient.SqueezeClientApplication
+import de.maniac103.squeezeclient.model.ArtworkItem
 
 val Context.connectionHelper get() =
     (applicationContext as SqueezeClientApplication).connectionHelper
@@ -32,3 +37,18 @@ val Context.prefs: SharedPreferences get() =
     PreferenceManager.getDefaultSharedPreferences(this)
 val Context.backProgressInterpolator get() =
     (applicationContext as SqueezeClientApplication).backProgressInterpolator
+
+fun Context.imageCacheContains(item: ArtworkItem?) = item?.extractIconUrl(this)
+    ?.let { MemoryCache.Key(it) }
+    ?.let { imageLoader.memoryCache?.keys?.contains(it) == true }
+
+suspend fun Context.loadArtwork(item: ArtworkItem?, size: Int): Drawable? {
+    val request = ImageRequest.Builder(this)
+        .data(item?.extractIconUrl(this))
+        .size(size)
+        .addServerCredentialsIfNeeded(this)
+        .build()
+    return imageLoader.execute(request)
+        .drawable
+        ?.withRoundedCorners(this)
+}

@@ -31,7 +31,8 @@ import kotlinx.coroutines.flow.flowOf
 
 class LibrarySearchResultsFragment : BaseSlimBrowseItemListFragment() {
     override val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)
-    override val titleFlow get() = flowOf(listOf(getString(R.string.page_title_library_search, searchTerm)))
+    override val titleFlow get() =
+        flowOf(listOf(getString(R.string.page_title_library_search, searchTerm)))
     override val iconFlow get() = flowOf(null)
     private val searchType get() =
         requireArguments().getParcelable("type", LibrarySearchRequest.Mode::class)

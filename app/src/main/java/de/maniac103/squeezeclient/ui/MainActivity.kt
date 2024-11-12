@@ -96,7 +96,9 @@ class MainActivity :
     private var consecutiveUnsuccessfulConnectAttempts = 0
 
     private val mainListContainer get() =
-        supportFragmentManager.findFragmentById(binding.container.id) as? MainContentContainerFragment
+        supportFragmentManager.findFragmentById(
+            binding.container.id
+        ) as? MainContentContainerFragment
     private val errorFragment get() =
         supportFragmentManager.findFragmentById(
             binding.container.id

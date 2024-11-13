@@ -167,18 +167,16 @@ class DownloadWorker(
         val finishedItems = progress.getInt(ProgressKeys.ITEMS_DONE, 0)
         val totalItems = progress.getInt(ProgressKeys.ITEMS_TOTAL, -1)
         val itemProgress = progress.getInt(ProgressKeys.CURRENT_ITEM_PROGRESS, 0)
-        val currentTitle = progress.getString(ProgressKeys.CURRENT_ITEM)
-        val content = context.getString(
-            R.string.download_notification_content,
+        val currentItem = progress.getString(ProgressKeys.CURRENT_ITEM)
+        val title = context.getString(
+            R.string.download_notification_title,
             finishedItems + 1,
             totalItems
         )
         val notification = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL)
             .setSmallIcon(R.drawable.ic_download_24dp)
-            .setContentTitle(currentTitle)
-            .setTicker(currentTitle)
-            .setContentText(content)
-            .setSubText(context.getString(R.string.download_notification_subtext))
+            .setContentTitle(title)
+            .setContentText(currentItem)
             .setProgress(totalItems * 100, finishedItems * 100 + itemProgress, totalItems < 0)
             .addAction(R.drawable.ic_close_24dp, cancelActionText, cancelIntent)
             .setOngoing(true)

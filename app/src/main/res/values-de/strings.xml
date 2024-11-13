@@ -69,8 +69,7 @@
 
     <string name="download_notification_channel_name">Download</string>
     <string name="download_notification_channel_description">Benachrichtigungen über den Fortschritt des Titel-Downloads</string>
-    <string name="download_notification_subtext">Wird heruntergeladen</string>
-    <string name="download_notification_content">Titel %1$d von %2$d wird heruntergeladen</string>
+    <string name="download_notification_title">Titel %1$d von %2$d wird heruntergeladen</string>
     <string name="download_notification_action_cancel">Abbrechen</string>
     <string name="download_failure_notification_title">Titel-Download fehlgeschlagen</string>
     <plurals name="download_failure_notification_text">

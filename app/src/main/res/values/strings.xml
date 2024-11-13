@@ -70,8 +70,7 @@
 
     <string name="download_notification_channel_name">Download</string>
     <string name="download_notification_channel_description">Used for notifications reporting download progress</string>
-    <string name="download_notification_subtext">Downloading</string>
-    <string name="download_notification_content">Downloading song %1$d of %2$d</string>
+    <string name="download_notification_title">Downloading song %1$d of %2$d</string>
     <string name="download_notification_action_cancel">Cancel</string>
     <string name="download_failure_notification_title">Song download failed</string>
     <plurals name="download_failure_notification_text">

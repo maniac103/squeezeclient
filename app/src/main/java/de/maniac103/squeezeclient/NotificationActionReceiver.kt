@@ -27,6 +27,8 @@ class NotificationActionReceiver : BroadcastReceiver() {
         when (intent?.action) {
             DownloadWorker.NOTIFICATION_ACTION_RETRY_DOWNLOAD ->
                 DownloadWorker.handleRetryAction(context, intent)
+            DownloadWorker.NOTIFICATION_ACTION_DISMISS_FAILED ->
+                DownloadWorker.handleDismissAction(context)
         }
     }
 }

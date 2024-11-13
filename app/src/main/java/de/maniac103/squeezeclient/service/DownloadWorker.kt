@@ -318,9 +318,11 @@ class DownloadWorker(
         private const val WORK_TAG = "song_download"
         private const val NOTIFICATION_CHANNEL = "background_download"
 
+        const val NOTIFICATION_ACTION_DISMISS_FAILED =
+            BuildConfig.APPLICATION_ID + ".action.DISMISS_FAILED"
         const val NOTIFICATION_ACTION_RETRY_DOWNLOAD =
             BuildConfig.APPLICATION_ID + ".action.RETRY_DOWNLOAD"
-        private const val RETRY_DOWNLOAD_EXTRA_WORKER_ID = "worker_id"
+        private const val RETRY_DOWNLOAD_EXTRA_NOTIFICATION_ID = "notification_id"
         private const val RETRY_DOWNLOAD_EXTRA_ITEMS = "items"
 
         private fun List<DownloadSongInfo>.toDataValue(context: Context): Array<String?> =
@@ -346,21 +348,22 @@ class DownloadWorker(
             val workManager = context.workManager
 
             workManager.getWorkInfosByTagLiveData(WORK_TAG).observeForever { workInfos ->
-                val lastFailedWork = workInfos.lastOrNull { it.state == WorkInfo.State.FAILED }
-                val lastFailedItems = lastFailedWork
-                    ?.outputData
-                    ?.getStringArray(OutputDataKeys.FAILED_ITEMS)
-                if (lastFailedItems != null) {
-                    val notification = createDownloadRetryNotification(
-                        context,
-                        lastFailedItems,
-                        lastFailedWork.id
-                    )
-                    notificationManager?.notify(lastFailedWork.id.toNotificationId(), notification)
+                val failedEntries = workInfos.filter { it.state == WorkInfo.State.FAILED }
+                if (failedEntries.isEmpty()) {
+                    return@observeForever
                 }
 
-                // Make sure we don't notify about this again
-                workManager.pruneWork()
+                val notificationId = failedEntries.first().id.toNotificationId()
+                val failedItems = failedEntries
+                    .mapNotNull { it.outputData.getStringArray(OutputDataKeys.FAILED_ITEMS) }
+                    .toTypedArray()
+                    .flatten()
+                val notification = createDownloadRetryNotification(
+                    context,
+                    failedItems,
+                    notificationId
+                )
+                notificationManager?.notify(notificationId, notification)
             }
         }
 
@@ -368,31 +371,38 @@ class DownloadWorker(
             intent.getStringArrayExtra(RETRY_DOWNLOAD_EXTRA_ITEMS)
                 ?.toSongInfos(context)
                 ?.let { infos -> enqueue(context, infos) }
-            intent.getStringExtra(RETRY_DOWNLOAD_EXTRA_WORKER_ID)
-                ?.let { idString ->
-                    val nm = context.getSystemService<NotificationManager>()
-                    nm?.cancel(UUID.fromString(idString).toNotificationId())
-                }
+            // Since we re-enqueued the failed downloads,we can now safely remove the old entries
+            context.workManager.pruneWork()
+            val nm = context.getSystemService<NotificationManager>()
+            nm?.cancel(intent.getIntExtra(RETRY_DOWNLOAD_EXTRA_NOTIFICATION_ID, 0))
+        }
+
+        fun handleDismissAction(context: Context) {
+            context.workManager.pruneWork()
         }
 
         private fun createDownloadRetryNotification(
             context: Context,
-            itemData: Array<String>,
-            workerId: UUID
+            itemData: List<String>,
+            notificationId: Int
         ): Notification {
-            val retryPi = Intent(context, NotificationActionReceiver::class.java).apply {
-                action = NOTIFICATION_ACTION_RETRY_DOWNLOAD
-                putExtra(RETRY_DOWNLOAD_EXTRA_ITEMS, itemData)
-                putExtra(RETRY_DOWNLOAD_EXTRA_WORKER_ID, workerId.toString())
-            }.let { intent ->
-                PendingIntentCompat.getBroadcast(
-                    context,
-                    0,
-                    intent,
-                    PendingIntent.FLAG_UPDATE_CURRENT,
-                    false
-                )
-            }
+            val retryPi = Intent(context, NotificationActionReceiver::class.java)
+                .setAction(NOTIFICATION_ACTION_RETRY_DOWNLOAD)
+                .putExtra(RETRY_DOWNLOAD_EXTRA_ITEMS, itemData.toTypedArray())
+                .putExtra(RETRY_DOWNLOAD_EXTRA_NOTIFICATION_ID, notificationId)
+                .let { intent ->
+                    PendingIntentCompat.getBroadcast(
+                        context,
+                        0,
+                        intent,
+                        PendingIntent.FLAG_UPDATE_CURRENT,
+                        false
+                    )
+                }
+
+            val dismissPi = Intent(context, NotificationActionReceiver::class.java)
+                .setAction(NOTIFICATION_ACTION_DISMISS_FAILED)
+                .let { intent -> PendingIntentCompat.getBroadcast(context, 0, intent, 0, false) }
 
             return NotificationCompat.Builder(context, NOTIFICATION_CHANNEL)
                 .setSmallIcon(R.drawable.ic_logo_notification_24dp)
@@ -404,6 +414,7 @@ class DownloadWorker(
                         itemData.size
                     )
                 )
+                .setDeleteIntent(dismissPi)
                 .addAction(
                     R.drawable.ic_refresh_24dp,
                     context.getString(R.string.download_failure_notification_action_retry),

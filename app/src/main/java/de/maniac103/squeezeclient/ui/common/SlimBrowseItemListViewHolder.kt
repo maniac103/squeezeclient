@@ -18,29 +18,35 @@
 package de.maniac103.squeezeclient.ui.common
 
 import android.view.View
+import android.view.ViewGroup
 import android.widget.CheckBox
+import android.widget.ImageView
 import android.widget.RadioButton
 import android.widget.TextView
 import androidx.core.view.forEach
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.progressindicator.CircularProgressIndicator
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.extfuncs.loadArtworkOrPlaceholder
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import kotlinx.coroutines.Job
 
-class SlimBrowseItemListViewHolder(private val binding: SlimBrowseItemListAdapter.ItemBinding) :
-    RecyclerView.ViewHolder(binding.root) {
-    val contextMenu: View? = itemView.findViewById(R.id.context_menu)
-    val radio: RadioButton? = itemView.findViewById(R.id.radio)
-    private val checkbox: CheckBox? = itemView.findViewById(R.id.checkbox)
-    private val choiceLabel: TextView? = itemView.findViewById(R.id.choice_label)
+class SlimBrowseItemListViewHolder(
+    private val binding: ItemBinding,
+    private val showIcon: Boolean
+) : RecyclerView.ViewHolder(binding.root) {
+    val contextMenu: View? = binding.contextContainer.findViewById(R.id.context_menu)
+    private val radio: RadioButton? = binding.contextContainer.findViewById(R.id.radio)
+    private val checkbox: CheckBox? = binding.contextContainer.findViewById(R.id.checkbox)
+    private val choiceLabel: TextView? = binding.contextContainer.findViewById(R.id.choice_label)
 
     fun bind(item: SlimBrowseItemList.SlimBrowseItem) {
         binding.title.text = item.title
         binding.subText.text = item.subText
         binding.subText.isVisible = !item.subText.isNullOrEmpty()
-        if (binding.icon.isVisible) {
+        binding.icon.isVisible = showIcon
+        if (showIcon) {
             binding.icon.loadArtworkOrPlaceholder(item)
         }
         item.actions?.radio?.let { radio?.isChecked = it.state }
@@ -58,4 +64,13 @@ class SlimBrowseItemListViewHolder(private val binding: SlimBrowseItemListAdapte
         updateBusyState(true)
         job.invokeOnCompletion { updateBusyState(false) }
     }
+
+    data class ItemBinding(
+        val root: View,
+        val icon: ImageView,
+        val title: TextView,
+        val subText: TextView,
+        val contextContainer: ViewGroup,
+        val loadingIndicator: CircularProgressIndicator
+    )
 }

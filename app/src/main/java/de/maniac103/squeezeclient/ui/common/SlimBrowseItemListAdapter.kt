@@ -20,12 +20,8 @@ package de.maniac103.squeezeclient.ui.common
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
-import android.widget.TextView
-import androidx.core.view.isVisible
 import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
-import com.google.android.material.progressindicator.CircularProgressIndicator
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.databinding.GridItemSlimbrowseBinding
 import de.maniac103.squeezeclient.databinding.ListItemSlimbrowseBinding
@@ -43,14 +39,6 @@ class SlimBrowseItemListAdapter(
         fun onItemSelected(item: SlimBrowseItemList.SlimBrowseItem): Job?
         fun onContextMenu(item: SlimBrowseItemList.SlimBrowseItem): Job?
     }
-    data class ItemBinding(
-        val root: View,
-        val icon: ImageView,
-        val title: TextView,
-        val subText: TextView,
-        val contextContainer: ViewGroup,
-        val loadingIndicator: CircularProgressIndicator
-    )
 
     var itemSelectionListener: ItemSelectionListener? = null
 
@@ -61,7 +49,7 @@ class SlimBrowseItemListAdapter(
         val inflater = LayoutInflater.from(parent.context)
         val binding = if (isGrid) {
             val original = GridItemSlimbrowseBinding.inflate(inflater, parent, false)
-            ItemBinding(
+            SlimBrowseItemListViewHolder.ItemBinding(
                 original.root,
                 original.icon,
                 original.title,
@@ -71,7 +59,7 @@ class SlimBrowseItemListAdapter(
             )
         } else {
             val original = ListItemSlimbrowseBinding.inflate(inflater, parent, false)
-            ItemBinding(
+            SlimBrowseItemListViewHolder.ItemBinding(
                 original.root,
                 original.icon,
                 original.title,
@@ -89,20 +77,16 @@ class SlimBrowseItemListAdapter(
         }
         contextLayoutResource?.let { inflater.inflate(it, binding.contextContainer) }
 
-        val holder = SlimBrowseItemListViewHolder(binding)
-        binding.root.setOnClickListener {
-            val item = getItem(holder.bindingAdapterPosition) ?: return@setOnClickListener
-            itemSelectionListener?.onItemSelected(item)?.let { holder.setupBusyListener(it) }
+        return SlimBrowseItemListViewHolder(binding, showIcons).apply {
+            itemView.setOnClickListener {
+                val item = getItem(bindingAdapterPosition) ?: return@setOnClickListener
+                itemSelectionListener?.onItemSelected(item)?.let { setupBusyListener(it) }
+            }
+            contextMenu?.setOnClickListener {
+                val item = getItem(bindingAdapterPosition) ?: return@setOnClickListener
+                itemSelectionListener?.onContextMenu(item)?.let { setupBusyListener(it) }
+            }
         }
-
-        holder.contextMenu?.setOnClickListener {
-            val item = getItem(holder.bindingAdapterPosition) ?: return@setOnClickListener
-            itemSelectionListener?.onContextMenu(item)?.let { holder.setupBusyListener(it) }
-        }
-
-        binding.icon.isVisible = showIcons
-
-        return holder
     }
 
     override fun onBindViewHolder(holder: SlimBrowseItemListViewHolder, position: Int) {

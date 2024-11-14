@@ -41,13 +41,6 @@ abstract class BasePrepopulatedListAdapter<T, VH : RecyclerView.ViewHolder>(item
     protected open fun onHolderBusyStateChanged(holder: VH, busy: Boolean) {}
     protected open fun getItemViewType(item: T): Int = 0
 
-    private fun replaceItem(position: Int, item: T) {
-        if (position >= 0 && position < internalItems.size && item != internalItems[position]) {
-            internalItems[position] = item
-            notifyItemChanged(position)
-        }
-    }
-
     @SuppressLint("NotifyDataSetChanged")
     fun replaceItems(items: List<T>) {
         if (items.size != internalItems.size) {
@@ -55,23 +48,29 @@ abstract class BasePrepopulatedListAdapter<T, VH : RecyclerView.ViewHolder>(item
             internalItems.addAll(items)
             notifyDataSetChanged()
         } else {
-            items.indices.forEach { replaceItem(it, items[it]) }
+            items.forEachIndexed { index, item ->
+                if (item != internalItems[index]) {
+                    internalItems[index] = item
+                    notifyItemChanged(index)
+                }
+            }
         }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
         val inflater = LayoutInflater.from(parent.context)
-        val holder = onCreateViewHolder(inflater, parent, viewType)
-        holder.itemView.setOnClickListener {
-            val position = holder.bindingAdapterPosition
-            if (position != RecyclerView.NO_POSITION) {
-                itemSelectionListener?.onItemSelected(internalItems[position])?.let { job ->
-                    onHolderBusyStateChanged(holder, true)
-                    job.invokeOnCompletion { onHolderBusyStateChanged(holder, false) }
-                }
+        return onCreateViewHolder(inflater, parent, viewType).apply {
+            itemView.setOnClickListener {
+                bindingAdapterPosition
+                    .takeIf { it != RecyclerView.NO_POSITION }
+                    ?.let { internalItems[it] }
+                    ?.let { itemSelectionListener?.onItemSelected(it) }
+                    ?.let { job ->
+                        onHolderBusyStateChanged(this, true)
+                        job.invokeOnCompletion { onHolderBusyStateChanged(this, false) }
+                    }
             }
         }
-        return holder
     }
 
     override fun onBindViewHolder(holder: VH, position: Int) {

@@ -59,26 +59,34 @@ class PlaylistFragment :
     override fun onCreateAdapter(
         diffCallback: DiffUtil.ItemCallback<Playlist.PlaylistItem>
     ): PagingDataAdapter<Playlist.PlaylistItem, PlaylistItemViewHolder> {
-        adapter = PlaylistItemAdapter(diffCallback)
-        val itemTouchCallback = PlaylistItemDragCallback(requireContext(), adapter, { from, to ->
+        val itemTouchCallback = PlaylistItemDragCallback(requireContext(), { from, to ->
+            // Item was dragged to another position
+            adapter.onItemMove(from, to)
+        }, { initial, drop ->
+            // Item was dropped after being dragged
             lifecycleScope.launch {
-                connectionHelper.movePlaylistItem(playerId, from, to)
+                adapter.onItemFinishedMove(initial, drop)
+                connectionHelper.movePlaylistItem(playerId, initial, drop)
             }
         }, { position ->
+            // Item was removed via swipe
             lifecycleScope.launch {
                 connectionHelper.removePlaylistItem(playerId, position)
                 adapter.onItemRemoved(position)
             }
         })
+
         val itemTouchHelper = ItemTouchHelper(itemTouchCallback)
-        adapter.dragStartListener = { holder -> itemTouchHelper.startDrag(holder) }
         itemTouchHelper.attachToRecyclerView(binding.recycler)
 
-        adapter.itemClickListener = { holder ->
-            val position = holder.bindingAdapterPosition
-            if (position != RecyclerView.NO_POSITION) {
-                lifecycleScope.launch {
-                    connectionHelper.advanceToPlaylistPosition(playerId, position)
+        adapter = PlaylistItemAdapter(diffCallback).apply {
+            dragStartListener = { holder -> itemTouchHelper.startDrag(holder) }
+            itemClickListener = { holder ->
+                val position = holder.bindingAdapterPosition
+                if (position != RecyclerView.NO_POSITION) {
+                    lifecycleScope.launch {
+                        connectionHelper.advanceToPlaylistPosition(playerId, position)
+                    }
                 }
             }
         }

@@ -56,27 +56,27 @@ class PlaylistItemAdapter(
         }
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PlaylistItemViewHolder {
         val inflater = LayoutInflater.from(parent.context)
         val binding = ListItemSlimbrowseBinding.inflate(inflater, parent, false)
         inflater.inflate(R.layout.list_item_extension_drag_handle, binding.contextContainer)
-        val holder = PlaylistItemViewHolder(binding)
-        holder.itemView.setOnClickListener { itemClickListener?.invoke(holder) }
-        return holder
+
+        return PlaylistItemViewHolder(binding).apply {
+            itemView.setOnClickListener { itemClickListener?.invoke(this) }
+            dragHandle.setOnTouchListener { _, event ->
+                if (event.actionMasked == MotionEvent.ACTION_DOWN) {
+                    dragStartListener?.invoke(this)
+                }
+                false
+            }
+        }
     }
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onBindViewHolder(holder: PlaylistItemViewHolder, position: Int) {
         holder.itemView.isActivated = position == selectedItemPosition
-        getItem(position)?.let {
-            holder.bind(it)
-            holder.dragHandle.setOnTouchListener { _, event ->
-                if (event.actionMasked == MotionEvent.ACTION_DOWN) {
-                    dragStartListener?.invoke(holder)
-                }
-                false
-            }
-        }
+        getItem(position)?.let { holder.bind(it) }
     }
 
     fun onItemMove(fromPos: Int, toPos: Int) {

@@ -29,9 +29,9 @@ import kotlin.math.abs
 
 class PlaylistItemDragCallback(
     context: Context,
-    private val adapter: PlaylistItemAdapter,
-    private val doMoveCallback: (fromPos: Int, toPos: Int) -> Unit,
-    private val doRemoveCallback: (Int) -> Unit
+    private val itemDragCallback: (fromPos: Int, toPos: Int) -> Unit,
+    private val itemDropCallback: (initialPos: Int, dropPos: Int) -> Unit,
+    private val itemRemoveCallback: (Int) -> Unit
 ) : ItemTouchHelper.Callback() {
     private val deleteIcon = requireNotNull(
         AppCompatResources.getDrawable(context, R.drawable.ic_delete_24dp)
@@ -69,12 +69,12 @@ class PlaylistItemDragCallback(
         } else {
             existingMoveInfo.targetPos = toPos
         }
-        adapter.onItemMove(fromPos, toPos)
+        itemDragCallback(fromPos, toPos)
         return true
     }
 
     override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-        doRemoveCallback(viewHolder.bindingAdapterPosition)
+        itemRemoveCallback(viewHolder.bindingAdapterPosition)
     }
 
     override fun onSelectedChanged(viewHolder: RecyclerView.ViewHolder?, actionState: Int) {
@@ -87,10 +87,7 @@ class PlaylistItemDragCallback(
 
     override fun clearView(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder) {
         super.clearView(recyclerView, viewHolder)
-        pendingMoveInfo?.let {
-            adapter.onItemFinishedMove(it.initialPos, it.targetPos)
-            doMoveCallback.invoke(it.initialPos, it.targetPos)
-        }
+        pendingMoveInfo?.let { itemDropCallback(it.initialPos, it.targetPos) }
         pendingMoveInfo = null
         viewHolder.itemView.isPressed = false
     }

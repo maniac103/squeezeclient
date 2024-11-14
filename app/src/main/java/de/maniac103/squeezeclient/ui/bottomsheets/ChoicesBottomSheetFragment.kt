@@ -18,9 +18,6 @@
 package de.maniac103.squeezeclient.ui.bottomsheets
 
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import androidx.core.os.bundleOf
 import androidx.core.view.forEach
 import de.maniac103.squeezeclient.databinding.BottomSheetContentChoicesBinding
@@ -31,7 +28,9 @@ import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.JiveActions
 import kotlinx.coroutines.Job
 
-class ChoicesBottomSheetFragment : BaseBottomSheet() {
+class ChoicesBottomSheetFragment : BaseBottomSheet<BottomSheetContentChoicesBinding>(
+    BottomSheetContentChoicesBinding::inflate
+) {
     interface SelectionListener {
         fun onChoiceSelected(choice: JiveAction, extraData: Bundle?): Job?
     }
@@ -42,23 +41,16 @@ class ChoicesBottomSheetFragment : BaseBottomSheet() {
     private val extraData get() = requireArguments().getBundle("extra")
     private val listener get() = requireParentAs<SelectionListener>()
 
-    private lateinit var binding: BottomSheetContentChoicesBinding
-
-    override fun onInflateContent(inflater: LayoutInflater, container: ViewGroup): View {
-        binding = BottomSheetContentChoicesBinding.inflate(inflater, container, false)
-        choices.items.forEachIndexed { index, item ->
-            val radio = ListItemChoiceRadioBinding.inflate(inflater, binding.radioGroup, false)
-                .root
-            radio.text = item.title
-            radio.id = index
-            binding.radioGroup.addView(radio)
-        }
-        return binding.root
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        binding.radioGroup.apply {
+    override fun onContentInflated(content: BottomSheetContentChoicesBinding) {
+        val inflater = layoutInflater
+        content.radioGroup.apply {
+            choices.items.forEachIndexed { index, item ->
+                val radio = ListItemChoiceRadioBinding.inflate(inflater, this, false).root.apply {
+                    text = item.title
+                    id = index
+                }
+                addView(radio)
+            }
             check(choices.selectedIndex)
             setOnCheckedChangeListener { _, index ->
                 val job = listener.onChoiceSelected(choices.items[index].action, extraData)
@@ -67,9 +59,9 @@ class ChoicesBottomSheetFragment : BaseBottomSheet() {
         }
     }
 
-    override fun onIndicateBusyState(busy: Boolean) {
-        super.onIndicateBusyState(busy)
-        binding.radioGroup.forEach { it.isEnabled = !busy }
+    override fun onIndicateBusyState(content: BottomSheetContentChoicesBinding, busy: Boolean) {
+        super.onIndicateBusyState(content, busy)
+        content.radioGroup.forEach { it.isEnabled = !busy }
     }
 
     companion object {

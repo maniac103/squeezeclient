@@ -17,27 +17,17 @@
 
 package de.maniac103.squeezeclient.ui.bottomsheets
 
-import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import androidx.core.os.bundleOf
 import de.maniac103.squeezeclient.databinding.BottomSheetContentInfoBinding
 
-class InfoBottomSheet : BaseBottomSheet() {
+class InfoBottomSheet : BaseBottomSheet<BottomSheetContentInfoBinding>(
+    BottomSheetContentInfoBinding::inflate
+) {
     override val title get() = requireArguments().getString("title")!!
     private val text get() = requireArguments().getString("text")!!
 
-    private lateinit var binding: BottomSheetContentInfoBinding
-
-    override fun onInflateContent(inflater: LayoutInflater, container: ViewGroup): View {
-        binding = BottomSheetContentInfoBinding.inflate(inflater, container, false)
-        return binding.root
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        binding.text.text = text
+    override fun onContentInflated(content: BottomSheetContentInfoBinding) {
+        content.text.text = text
     }
 
     companion object {

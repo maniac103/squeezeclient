@@ -17,10 +17,6 @@
 
 package de.maniac103.squeezeclient.ui.bottomsheets
 
-import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import androidx.core.os.bundleOf
 import androidx.core.widget.doAfterTextChanged
@@ -33,7 +29,9 @@ import de.maniac103.squeezeclient.model.JiveActions
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import kotlinx.coroutines.Job
 
-class InputBottomSheetFragment : BaseBottomSheet() {
+class InputBottomSheetFragment : BaseBottomSheet<BottomSheetContentInputBinding>(
+    BottomSheetContentInputBinding::inflate
+) {
     interface ItemSubmitListener {
         fun onInputSubmitted(
             item: SlimBrowseItemList.SlimBrowseItem,
@@ -53,22 +51,13 @@ class InputBottomSheetFragment : BaseBottomSheet() {
         requireArguments().getParcelableOrNull("item", SlimBrowseItemList.SlimBrowseItem::class)
     private val input get() = requireArguments().getParcelable("input", JiveActions.Input::class)
 
-    private lateinit var binding: BottomSheetContentInputBinding
-
-    override fun onInflateContent(inflater: LayoutInflater, container: ViewGroup): View {
-        binding = BottomSheetContentInputBinding.inflate(inflater, container, false)
-        return binding.root
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
+    override fun onContentInflated(content: BottomSheetContentInputBinding) {
         val input = input
-        binding.editor.apply {
+        content.editor.apply {
             doAfterTextChanged { text ->
                 text?.let {
-                    binding.editorWrapper.error = determineErrorState(text, input)
-                    binding.sendButton.isEnabled = binding.editorWrapper.error == null
+                    content.editorWrapper.error = determineErrorState(text, input)
+                    content.sendButton.isEnabled = content.editorWrapper.error == null
                 }
             }
             setText(input.initialText)
@@ -81,14 +70,14 @@ class InputBottomSheetFragment : BaseBottomSheet() {
                 }
             }
         }
-        binding.sendButton.setOnClickListener {
-            binding.editor.text?.toString()?.let { submitInput(it) }
+        content.sendButton.setOnClickListener {
+            content.editor.text?.toString()?.let { submitInput(it) }
         }
     }
 
-    override fun onIndicateBusyState(busy: Boolean) {
-        super.onIndicateBusyState(busy)
-        binding.sendButton.isEnabled = !busy
+    override fun onIndicateBusyState(content: BottomSheetContentInputBinding, busy: Boolean) {
+        super.onIndicateBusyState(content, busy)
+        content.sendButton.isEnabled = !busy
     }
 
     private fun submitInput(inputText: String) {

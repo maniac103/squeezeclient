@@ -17,10 +17,6 @@
 
 package de.maniac103.squeezeclient.ui.bottomsheets
 
-import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import androidx.core.os.bundleOf
 import com.google.android.material.slider.Slider
 import de.maniac103.squeezeclient.databinding.BottomSheetContentSliderBinding
@@ -31,7 +27,9 @@ import de.maniac103.squeezeclient.model.JiveActions
 import kotlin.math.roundToInt
 import kotlinx.coroutines.Job
 
-class SliderBottomSheetFragment : BaseBottomSheet(), Slider.OnSliderTouchListener {
+class SliderBottomSheetFragment :
+    BaseBottomSheet<BottomSheetContentSliderBinding>(BottomSheetContentSliderBinding::inflate),
+    Slider.OnSliderTouchListener {
     interface ChangeListener {
         fun onSliderChanged(input: JiveAction): Job
     }
@@ -40,17 +38,9 @@ class SliderBottomSheetFragment : BaseBottomSheet(), Slider.OnSliderTouchListene
     private val slider get() = requireArguments().getParcelable("slider", JiveActions.Slider::class)
     private val listener get() = requireParentAs<ChangeListener>()
 
-    private lateinit var binding: BottomSheetContentSliderBinding
-
-    override fun onInflateContent(inflater: LayoutInflater, container: ViewGroup): View {
-        binding = BottomSheetContentSliderBinding.inflate(inflater, container, false)
-        return binding.root
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+    override fun onContentInflated(content: BottomSheetContentSliderBinding) {
         val slider = slider
-        binding.slider.apply {
+        content.slider.apply {
             valueFrom = slider.min.toFloat()
             valueTo = slider.max.toFloat()
             value = slider.initialValue.toFloat()
@@ -70,9 +60,9 @@ class SliderBottomSheetFragment : BaseBottomSheet(), Slider.OnSliderTouchListene
         handleAction(job, false)
     }
 
-    override fun onIndicateBusyState(busy: Boolean) {
-        super.onIndicateBusyState(busy)
-        binding.slider.isEnabled = !busy
+    override fun onIndicateBusyState(content: BottomSheetContentSliderBinding, busy: Boolean) {
+        super.onIndicateBusyState(content, busy)
+        content.slider.isEnabled = !busy
     }
 
     companion object {

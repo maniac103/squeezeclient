@@ -195,9 +195,9 @@ abstract class BaseSlimBrowseItemListFragment :
                 selectedItem.title == getString(R.string.action_download) ->
                 triggerDownload(actions.downloadData)
             actions.doAction != null ->
-                listener.onHandleDoOrGoAction(actions.doAction, false, parentItem, selectedItem)
+                listener.onHandleDoOrGoAction(actions.doAction, false, selectedItem, parentItem)
             actions.goAction != null ->
-                listener.onHandleDoOrGoAction(actions.goAction, true, parentItem, selectedItem)
+                listener.onHandleDoOrGoAction(actions.goAction, true, selectedItem, parentItem)
             else -> null
         }
     }

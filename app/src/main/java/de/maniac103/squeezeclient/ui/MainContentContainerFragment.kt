@@ -286,7 +286,7 @@ class MainContentContainerFragment :
 
     override fun onStart() {
         super.onStart()
-        handleStackUpdate()
+        updateBreadcrumbsSubscription()
     }
 
     override fun onBindingCreated(binding: FragmentMainlistcontainerBinding) {
@@ -459,11 +459,9 @@ class MainContentContainerFragment :
         } else {
             val tagsToTitlesAndIconsFlow = combine(tagToTitleAndIconFlows) { it.toList() }
             titleSubscription = lifecycleScope.launch {
-                repeatOnLifecycle(Lifecycle.State.STARTED) {
-                    tagsToTitlesAndIconsFlow.collect { tagsAndTitles ->
-                        contentTitles = tagsAndTitles.associate { it.first to it.second }
-                        handleStackUpdate()
-                    }
+                tagsToTitlesAndIconsFlow.collect { tagsAndTitles ->
+                    contentTitles = tagsAndTitles.associate { it.first to it.second }
+                    handleStackUpdate()
                 }
             }
         }

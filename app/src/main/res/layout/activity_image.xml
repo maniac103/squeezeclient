@@ -37,21 +37,17 @@
         android:id="@+id/toolbar_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@drawable/image_view_toolbar_background"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:fitsSystemWindows="true">
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="96dp"
-            android:background="@drawable/image_view_toolbar_background" />
+        app:layout_constraintEnd_toEndOf="parent">
 
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:minHeight="?actionBarSize"
+            android:fitsSystemWindows="true"
             app:navigationIcon="@drawable/ic_arrow_left_24dp"
             app:navigationIconTint="?android:textColorPrimary" />
 

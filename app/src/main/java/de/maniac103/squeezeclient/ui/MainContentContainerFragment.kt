@@ -39,6 +39,7 @@ import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.extfuncs.imageCacheContains
 import de.maniac103.squeezeclient.extfuncs.loadArtwork
 import de.maniac103.squeezeclient.extfuncs.requireParentAs
+import de.maniac103.squeezeclient.model.ArtworkItem
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.JiveActions
 import de.maniac103.squeezeclient.model.JiveHomeMenuItem
@@ -61,11 +62,18 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
+
+interface MainContentChild {
+    val scrollingTargetView: View
+    val titleFlow: Flow<List<String>>
+    val iconFlow: Flow<ArtworkItem?>
+}
 
 class MainContentContainerFragment :
     ViewBindingFragment<FragmentMainlistcontainerBinding>(

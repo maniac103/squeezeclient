@@ -91,7 +91,11 @@ class ItemActionsMenuSheet : BottomSheetDialogFragment() {
                     } else {
                         listener.onActionSelected(requireNotNull(actionItem.action), item)
                     }
-                    job?.invokeOnCompletion { dismissAllowingStateLoss() }
+                    job?.invokeOnCompletion {
+                        if (isAdded) {
+                            dismissAllowingStateLoss()
+                        }
+                    }
                     job
                 }
         }

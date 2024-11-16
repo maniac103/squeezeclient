@@ -359,8 +359,12 @@ class MainContentContainerFragment :
                 replaceContent(f, "gallery", ReplacementMode.OnTopOfStack)
                 return@launch
             }
-            // Fetch first item of page to check whether we're dealing with a slider or a normal page
-            val result = connectionHelper.fetchItemsForAction(playerId, action, PagingParams(0, 1))
+            // Fetch first item of page to check whether we're dealing with a slider or a
+            // normal page. Caveat here is that some actions (most notably artist info) cache
+            // responses, so we need to make sure to fetch all entries for those as otherwise
+            // the paged response might be incomplete later.
+            val page = if (action.serverMightCacheResults) PagingParams.All else PagingParams(0, 1)
+            val result = connectionHelper.fetchItemsForAction(playerId, action, page)
             val firstItem = result.items.getOrNull(0)
             when {
                 result.totalCount == 1 && firstItem?.actions?.slider != null -> {

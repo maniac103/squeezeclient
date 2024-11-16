@@ -30,6 +30,8 @@ data class JiveAction(
 ) : Parcelable {
     val isContextMenu get() = params.containsKey("isContextMenu") || windowIsContextMenu == true
     val isSlideshow get() = params.containsKey("slideshow")
+    
+    val serverMightCacheResults get() = cmd.getOrNull(0) == "artistinfo"
 
     fun withAdditionalParams(params: Map<String, String?>): JiveAction {
         val mergedParams = this.params.toMutableMap().apply { putAll(params) }

@@ -27,13 +27,14 @@ import kotlinx.serialization.json.JsonPrimitive
 data class DisplayMessage(
     val type: MessageType? = null,
     @SerialName("duration")
-    private val durationInternal: Int? = null,
+    private val internalDuration: Int? = null,
     @SerialName("is-remote")
     @Serializable(with = BooleanAsIntSerializer::class)
     val isRemote: Boolean? = null,
     @SerialName("play-mode")
     val playMode: String? = null,
-    val text: List<String>,
+    @SerialName("text")
+    val internalText: List<String?>,
     @SerialName("icon-id")
     // may be string or number
     private val internalIconId: JsonPrimitive? = null,
@@ -42,7 +43,8 @@ data class DisplayMessage(
     val style: String? = null
 ) : ArtworkItem {
     override val iconId: String? get() = internalIconId?.content
-    val duration get() = durationInternal?.milliseconds
+    val duration get() = internalDuration?.milliseconds
+    val text get() = internalText.filterNotNull()
 
     @Serializable
     @Suppress("unused")

@@ -392,7 +392,8 @@ class MainActivity :
                 binding.toolbar.subtitle = status.playerName
                 playerIsActive =
                     status.powered && status.playbackState == PlayerStatus.PlayState.Playing
-            }.launchIn(scope)
+            }
+            .launchIn(scope)
     }
 
     private fun updateContentForConnectionState(state: ConnectionState) = when (state) {

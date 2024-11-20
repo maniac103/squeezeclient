@@ -22,7 +22,6 @@ import android.view.View
 import android.widget.ImageView
 import androidx.appcompat.app.AlertDialog
 import androidx.constraintlayout.motion.widget.MotionLayout
-import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
@@ -51,7 +50,8 @@ fun ImageView.loadArtworkOrPlaceholder(
     item: ArtworkItem?,
     builder: ImageRequest.Builder.() -> Unit = {}
 ) = loadArtwork(item) {
-    placeholder(ContextCompat.getDrawable(context, R.drawable.ic_disc_24dp))
+    placeholder(R.drawable.ic_disc_24dp)
+    fallback(R.drawable.ic_disc_24dp)
     builder()
 }
 

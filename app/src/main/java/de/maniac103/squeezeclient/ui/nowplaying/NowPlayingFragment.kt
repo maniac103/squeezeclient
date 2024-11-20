@@ -375,14 +375,15 @@ class NowPlayingFragment :
         if (currentSong == null) {
             binding.container.transitionToState(R.id.collapsed)
             binding.container.isInteractionEnabled = false
+            binding.artwork.setImageDrawable(null)
         } else {
             binding.container.isInteractionEnabled = true
+            binding.artwork.loadArtwork(currentSong) {
+                fallback(R.drawable.ic_album_placeholder)
+                size(Size.ORIGINAL)
+            }
         }
 
-        binding.artwork.loadArtwork(currentSong) {
-            // TODO: placeholder?
-            size(Size.ORIGINAL)
-        }
         listOf(binding.title, binding.titleMinimized).forEach {
             it.text = currentSong?.title ?: getString(R.string.nowplaying_empty_playlist)
         }

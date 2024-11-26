@@ -1,0 +1,7 @@
+- Fixed song download failure handling
+- Fixed download of single songs (previously the whole album was downloaded)
+- Respect server-isde navigation commands in alarm setup
+- Fixed playlist item drag handling
+- Show artist/album image in navigation overview
+- Added artwork image fallback in now playing screen
+- Misc. fixes and improvements

@@ -23,6 +23,10 @@ plugins {
     id("kotlin-parcelize")
 }
 
+val isBuildingGms = gradle.startParameter.taskRequests.any { req ->
+    req.args.any { it.startsWith("assembleGms") }
+}
+
 android {
     namespace = "de.maniac103.squeezeclient"
     compileSdk = 35
@@ -37,6 +41,12 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+    }
+
+    dependenciesInfo {
+        // Dependency info in APK is only useful for Play Store, so exclude it from FOSS build
+        includeInApk = isBuildingGms
+        includeInBundle = isBuildingGms
     }
 
     flavorDimensions += "distribution"

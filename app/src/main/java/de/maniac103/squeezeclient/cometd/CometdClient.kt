@@ -89,15 +89,11 @@ class CometdClient(
         if (existingClientId != null && eventFlow != null) {
             return existingClientId
         }
-        return try {
-            val newClientId = handshake()
-            eventFlow = startListening(newClientId, listenTimeout)
-            Log.d(TAG, "Connected to ${serverConfig.url} with client ID $newClientId")
-            clientId = newClientId
-            newClientId
-        } catch (e: IOException) {
-            throw CometdException("Handshake failure", e)
-        }
+        val newClientId = handshake()
+        eventFlow = startListening(newClientId, listenTimeout)
+        Log.d(TAG, "Connected to ${serverConfig.url} with client ID $newClientId")
+        clientId = newClientId
+        return newClientId
     }
 
     fun disconnect() {
@@ -128,11 +124,7 @@ class CometdClient(
         }
         val request = buildRequest(message)
         return withContext(Dispatchers.IO) {
-            val body = try {
-                requestClient.newCall(request).execute().body
-            } catch (e: IOException) {
-                throw CometdException("Could not send publish request", e)
-            } ?: throw CometdException("Empty response body")
+            val body = executeRequestAndGetResponseBody(requestClient, request)
             body.use {
                 val content = it.string()
                 val messages = content.parseToMessageArrayOrThrow()
@@ -143,7 +135,7 @@ class CometdClient(
         }
     }
 
-    @Throws(IOException::class)
+    @Throws(CometdException::class)
     private suspend fun handshake(): String {
         val message = buildJsonObject {
             put("channel", "/meta/handshake")
@@ -154,8 +146,7 @@ class CometdClient(
 
         val request = buildRequest(message)
         return withContext(Dispatchers.IO) {
-            val body = requestClient.newCall(request).execute().body
-                ?: throw CometdException("Empty response body")
+            val body = executeRequestAndGetResponseBody(requestClient, request)
             val messages = body.use {
                 it.string().parseToMessageArrayOrThrow()
             }
@@ -163,7 +154,7 @@ class CometdClient(
         }
     }
 
-    @Throws(IOException::class)
+    @Throws(CometdException::class)
     private suspend fun startListening(
         clientId: String,
         listenTimeout: Duration
@@ -185,9 +176,8 @@ class CometdClient(
             .readTimeout(listenTimeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
             .build()
         val body = withContext(Dispatchers.IO) {
-            subscriptionClient.newCall(request).execute().body
-        } ?: throw CometdException("No streaming response body")
-
+            executeRequestAndGetResponseBody(subscriptionClient, request)
+        }
         val listenScope = CoroutineScope(Dispatchers.Main) + SupervisorJob()
         val channel = readFromEventStream(body, listenScope)
 
@@ -214,6 +204,20 @@ class CometdClient(
         return channel.receiveAsFlow()
             .materializeCompletion()
             .shareIn(listenScope, SharingStarted.WhileSubscribed())
+    }
+
+    @Throws(CometdException::class)
+    private fun executeRequestAndGetResponseBody(
+        client: OkHttpClient,
+        request: Request
+    ): ResponseBody {
+        val response = try {
+            client.newCall(request).execute()
+        } catch (e: IOException) {
+            throw CometdException("Could not execute HTTP request", e)
+        }
+        if (!response.isSuccessful) throw CometdException("HTTP error ${response.code}")
+        return response.body ?: throw CometdException("Empty response body")
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)

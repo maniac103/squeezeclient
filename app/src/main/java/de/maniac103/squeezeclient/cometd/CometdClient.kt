@@ -271,7 +271,6 @@ class CometdClient(
             //        -> at some point we should get added to the UA list instead
             header("User-Agent", "Squeezer-squeezer/1.0")
             method("POST", json.encodeToString(messagesArray).toRequestBody(mimeType))
-            serverConfig.credentialsAsAuthorizationHeader?.let { addHeader("Authorization", it) }
         }.build()
     }
 

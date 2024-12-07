@@ -43,6 +43,7 @@ data class ServerConfiguration(
         get() = if (username.isNullOrEmpty() || password.isNullOrEmpty()) {
             null
         } else {
-            Base64.encode("Basic $username:$password".toByteArray())
+            val auth = Base64.encode("$username:$password".toByteArray())
+            "Basic $auth"
         }
 }

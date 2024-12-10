@@ -31,7 +31,7 @@
         android:layout_height="128dp"
         android:layout_gravity="center_horizontal"
         android:src="@drawable/drawer_logo"
-        app:tint="?colorControlNormal" />
+        app:tint="?colorOnPrimaryContainer" />
 
     <LinearLayout
         android:id="@+id/server_selector"

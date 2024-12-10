@@ -1,0 +1,2 @@
+- Fix server connection with authentication enabled
+- Remove dependency info blob from FOSS build

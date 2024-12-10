@@ -23,8 +23,8 @@ plugins {
     id("kotlin-parcelize")
 }
 
-val isBuildingGms = gradle.startParameter.taskRequests.any { req ->
-    req.args.any { it.startsWith("assembleGms") }
+val isBuildingFoss = gradle.startParameter.taskRequests.any { req ->
+    req.args.any { it.startsWith("assembleFoss") }
 }
 
 android {
@@ -45,8 +45,8 @@ android {
 
     dependenciesInfo {
         // Dependency info in APK is only useful for Play Store, so exclude it from FOSS build
-        includeInApk = isBuildingGms
-        includeInBundle = isBuildingGms
+        includeInApk = !isBuildingFoss
+        includeInBundle = !isBuildingFoss
     }
 
     flavorDimensions += "distribution"

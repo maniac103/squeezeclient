@@ -59,7 +59,7 @@ class SlimBrowseItemListFragment : BaseSlimBrowseItemListFragment() {
             fetchAction: JiveAction,
             windowStyle: WindowStyle?
         ) = SlimBrowseItemListFragment().apply {
-            val showIcons = windowStyle != WindowStyle.TextOnlyList
+            val showIcons = windowStyle != null && windowStyle != WindowStyle.TextOnlyList
             val canUseGrid =
                 windowStyle == WindowStyle.IconList || windowStyle == WindowStyle.HomeMenu
             arguments = bundleOf(

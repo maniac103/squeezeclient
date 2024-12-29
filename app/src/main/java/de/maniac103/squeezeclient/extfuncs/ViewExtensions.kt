@@ -39,23 +39,18 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 fun View.animateScale(scale: Float, duration: Duration) =
     animate().scaleX(scale).scaleY(scale).setDuration(duration.inWholeMilliseconds)
 
-fun ImageView.loadArtwork(item: ArtworkItem?, builder: ImageRequest.Builder.() -> Unit = {}) {
-    when (val url = item?.extractIconUrl(context)) {
-        null -> setImageDrawable(null)
-        else -> load(url) {
-            addServerCredentialsIfNeeded(context)
-            target(RoundedCornerImageViewTarget(this@loadArtwork))
-            builder()
-        }
+fun ImageView.loadArtwork(item: ArtworkItem?, builder: ImageRequest.Builder.() -> Unit = {}) =
+    load(item?.extractIconUrl(context)) {
+        addServerCredentialsIfNeeded(context)
+        target(RoundedCornerImageViewTarget(this@loadArtwork))
+        builder()
     }
-}
 
 fun ImageView.loadArtworkOrPlaceholder(
     item: ArtworkItem?,
     builder: ImageRequest.Builder.() -> Unit = {}
 ) = loadArtwork(item) {
     placeholder(R.drawable.ic_disc_24dp)
-    fallback(R.drawable.ic_disc_24dp)
     builder()
 }
 

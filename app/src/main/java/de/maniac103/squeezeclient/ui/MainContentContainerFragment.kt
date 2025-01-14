@@ -39,6 +39,7 @@ import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.extfuncs.imageCacheContains
 import de.maniac103.squeezeclient.extfuncs.loadArtwork
 import de.maniac103.squeezeclient.extfuncs.requireParentAs
+import de.maniac103.squeezeclient.extfuncs.serverMightCacheResults
 import de.maniac103.squeezeclient.model.ArtworkItem
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.JiveActions
@@ -363,7 +364,11 @@ class MainContentContainerFragment :
             // normal page. Caveat here is that some actions (most notably artist info) cache
             // responses, so we need to make sure to fetch all entries for those as otherwise
             // the paged response might be incomplete later.
-            val page = if (action.serverMightCacheResults) PagingParams.All else PagingParams(0, 1)
+            val page = if (action.serverMightCacheResults()) {
+                PagingParams.All
+            } else {
+                PagingParams(0, 1)
+            }
             val result = connectionHelper.fetchItemsForAction(playerId, action, page)
             val firstItem = result.items.getOrNull(0)
             when {

@@ -74,7 +74,7 @@ data class SlimBrowseListResponse(
         // slider, min, max, initial, sliderIcons
     )
 
-    fun asModelItems(json: Json): SlimBrowseItemList {
+    fun asModelItems(json: Json, subTextProvider: ((JsonObject) -> String?)? = null): SlimBrowseItemList {
         val modelItems = items.filter { it.isNotEmpty() }.mapIndexed { index, itemObject ->
             val item = json.decodeFromJsonElement<Item>(itemObject)
             val textLines = item.text.split("\n", limit = 2)
@@ -86,11 +86,12 @@ data class SlimBrowseListResponse(
             val subItems = item.subItems?.let {
                 SlimBrowseListResponse(items = it).asModelItems(json).items
             }
+            val subText = subTextProvider?.invoke(itemObject) ?: textLines.elementAtOrNull(1)
 
             SlimBrowseItemList.SlimBrowseItem(
                 offset + index,
                 textLines[0],
-                textLines.elementAtOrNull(1),
+                subText,
                 item.textKey,
                 item.type,
                 item.trackType,

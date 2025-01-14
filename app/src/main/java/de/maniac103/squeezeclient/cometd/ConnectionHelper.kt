@@ -21,6 +21,8 @@ import de.maniac103.squeezeclient.SqueezeClientApplication
 import de.maniac103.squeezeclient.cometd.request.ChangePlaybackStateRequest
 import de.maniac103.squeezeclient.cometd.request.ClearPlaylistRequest
 import de.maniac103.squeezeclient.cometd.request.ExecuteActionRequest
+import de.maniac103.squeezeclient.cometd.request.FetchTrackInfoRequest
+import de.maniac103.squeezeclient.cometd.request.FetchAlbumInfoRequest
 import de.maniac103.squeezeclient.cometd.request.FetchHomeMenuRequest
 import de.maniac103.squeezeclient.cometd.request.FetchItemsForActionRequest
 import de.maniac103.squeezeclient.cometd.request.FetchSongInfosForDownloadRequest
@@ -44,6 +46,7 @@ import de.maniac103.squeezeclient.cometd.request.SyncPlayersRequest
 import de.maniac103.squeezeclient.cometd.request.UnsyncPlayerRequest
 import de.maniac103.squeezeclient.cometd.request.UpdateDisplayStatusSubscriptionRequest
 import de.maniac103.squeezeclient.cometd.request.UpdatePlayerStatusSubscriptionRequest
+import de.maniac103.squeezeclient.cometd.response.AlbumInfoListResponse
 import de.maniac103.squeezeclient.cometd.response.DisplayStatusResponse
 import de.maniac103.squeezeclient.cometd.response.DownloadSongInfoListResponse
 import de.maniac103.squeezeclient.cometd.response.JiveHomeItemListResponse
@@ -52,8 +55,13 @@ import de.maniac103.squeezeclient.cometd.response.PlayerStatusResponse
 import de.maniac103.squeezeclient.cometd.response.ServerStatusResponse
 import de.maniac103.squeezeclient.cometd.response.SlideshowListResponse
 import de.maniac103.squeezeclient.cometd.response.SlimBrowseListResponse
+import de.maniac103.squeezeclient.cometd.response.TrackInfoListResponse
 import de.maniac103.squeezeclient.cometd.response.parseToJiveHomeMenuItem
+import de.maniac103.squeezeclient.extfuncs.extractSlimBrowseAlbumIdForAlbumListResponse
+import de.maniac103.squeezeclient.extfuncs.extractSlimBrowseTrackIdForTrackListResponse
 import de.maniac103.squeezeclient.extfuncs.fadeInDuration
+import de.maniac103.squeezeclient.extfuncs.fetchesAlbumList
+import de.maniac103.squeezeclient.extfuncs.fetchesAlbumTrackList
 import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.extfuncs.serverConfig
 import de.maniac103.squeezeclient.model.DisplayMessage
@@ -64,6 +72,7 @@ import de.maniac103.squeezeclient.model.LocalLibrarySearchResultCounts
 import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.PlayerStatus
+import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration.Companion.seconds
@@ -188,10 +197,45 @@ class ConnectionHelper(private val appContext: SqueezeClientApplication) {
         .mapNotNull { (it as? ConnectionState.Connected)?.players?.find { p -> p.id == playerId } }
         .mapNotNull { p -> playerStates[p.id] }
 
-    suspend fun fetchItemsForAction(playerId: PlayerId, action: JiveAction, page: PagingParams) =
-        doRequestWithResult<SlimBrowseListResponse>(
+    suspend fun fetchItemsForAction(
+        playerId: PlayerId,
+        action: JiveAction,
+        page: PagingParams
+    ): SlimBrowseItemList {
+        val response = doRequestWithResult<SlimBrowseListResponse>(
             FetchItemsForActionRequest(playerId, action, page)
-        ).asModelItems(json)
+        )
+        // If we're browsing an album list, augment it with release years
+        return when {
+            page.start == "0" && page.page == "1" -> response.asModelItems(json)
+            action.fetchesAlbumList() -> {
+                val yearsById = doRequestWithResult<AlbumInfoListResponse>(
+                    FetchAlbumInfoRequest(playerId, action)
+                ).yearsById()
+                response.asModelItems(json) { itemObject ->
+                    itemObject.extractSlimBrowseAlbumIdForAlbumListResponse()
+                        ?.let { yearsById[it] }
+                        ?.takeIf { it != 0 }
+                        ?.toString()
+                }
+            }
+            action.fetchesAlbumTrackList() -> {
+                val durationsById = doRequestWithResult<TrackInfoListResponse>(
+                    FetchTrackInfoRequest(playerId, action)
+                ).durationsById()
+                response.asModelItems(json) { itemObject ->
+                    itemObject.extractSlimBrowseTrackIdForTrackListResponse()
+                        ?.let { durationsById[it] }
+                        ?.let { duration ->
+                            duration.toComponents { minutes, seconds, _ ->
+                                "$minutes:${seconds.toString().padStart(2, '0')}"
+                            }
+                        }
+                }
+            }
+            else -> response.asModelItems(json)
+        }
+    }
 
     suspend fun fetchSongInfosForDownload(data: DownloadRequestData) =
         doRequestWithResult<DownloadSongInfoListResponse>(

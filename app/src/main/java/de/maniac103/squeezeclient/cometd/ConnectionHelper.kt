@@ -200,31 +200,31 @@ class ConnectionHelper(private val appContext: SqueezeClientApplication) {
     suspend fun fetchItemsForAction(
         playerId: PlayerId,
         action: JiveAction,
-        page: PagingParams
+        page: PagingParams,
+        fetchExtraInfoIfPossible: Boolean
     ): SlimBrowseItemList {
         val response = doRequestWithResult<SlimBrowseListResponse>(
             FetchItemsForActionRequest(playerId, action, page)
         )
-        // If we're browsing an album list, augment it with release years
         return when {
-            page.start == "0" && page.page == "1" -> response.asModelItems(json)
-            action.fetchesAlbumList() -> {
+            // If we're browsing an album list, augment it with release years
+            fetchExtraInfoIfPossible && action.fetchesAlbumList() -> {
                 val yearsById = doRequestWithResult<AlbumInfoListResponse>(
                     FetchAlbumInfoRequest(playerId, action)
                 ).yearsById()
-                response.asModelItems(json) { itemObject ->
-                    itemObject.extractSlimBrowseAlbumIdForAlbumListResponse()
+                response.asModelItems(json) { params ->
+                    params.extractSlimBrowseAlbumIdForAlbumListResponse()
                         ?.let { yearsById[it] }
                         ?.takeIf { it != 0 }
                         ?.toString()
                 }
             }
-            action.fetchesAlbumTrackList() -> {
+            fetchExtraInfoIfPossible && action.fetchesAlbumTrackList() -> {
                 val durationsById = doRequestWithResult<TrackInfoListResponse>(
                     FetchTrackInfoRequest(playerId, action)
                 ).durationsById()
-                response.asModelItems(json) { itemObject ->
-                    itemObject.extractSlimBrowseTrackIdForTrackListResponse()
+                response.asModelItems(json) { params ->
+                    params.extractSlimBrowseTrackIdForTrackListResponse()
                         ?.let { durationsById[it] }
                         ?.let { duration ->
                             duration.toComponents { minutes, seconds, _ ->

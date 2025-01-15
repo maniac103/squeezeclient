@@ -44,7 +44,7 @@ class SlimBrowseSubItemListFragment : BaseSlimBrowseItemListFragment() {
     ): ListResponse<SlimBrowseItemList.SlimBrowseItem> {
         val actualPage = PagingParams(parentItemPosition, 1)
         val parentItemList = connectionHelper
-            .fetchItemsForAction(playerId, parentFetchAction, actualPage)
+            .fetchItemsForAction(playerId, parentFetchAction, actualPage, false)
         val parentItem = if (parentItemList.offset == parentItemPosition) {
             parentItemList.items[0]
         } else {

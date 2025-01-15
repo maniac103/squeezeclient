@@ -47,7 +47,7 @@ class SlimBrowseItemListFragment : BaseSlimBrowseItemListFragment() {
     override suspend fun onLoadPage(
         page: PagingParams
     ): ListResponse<SlimBrowseItemList.SlimBrowseItem> {
-        return connectionHelper.fetchItemsForAction(playerId, fetchAction, page)
+        return connectionHelper.fetchItemsForAction(playerId, fetchAction, page, true)
     }
 
     companion object {

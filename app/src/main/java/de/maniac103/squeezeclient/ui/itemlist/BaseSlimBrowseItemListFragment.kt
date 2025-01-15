@@ -233,7 +233,12 @@ abstract class BaseSlimBrowseItemListFragment :
         action: JiveAction,
         actions: JiveActions
     ): List<SlimBrowseItemList.SlimBrowseItem> {
-        val loadedItems = connectionHelper.fetchItemsForAction(playerId, action, PagingParams.All)
+        val loadedItems = connectionHelper.fetchItemsForAction(
+            playerId,
+            action,
+            PagingParams.All,
+            false
+        )
         return if (actions.downloadData == null) {
             loadedItems.items
         } else {
@@ -246,6 +251,7 @@ abstract class BaseSlimBrowseItemListFragment :
                     listPosition = size,
                     title = getString(R.string.action_download),
                     subText = null,
+                    extraInfo = null,
                     textKey = null,
                     type = null,
                     trackType = null,

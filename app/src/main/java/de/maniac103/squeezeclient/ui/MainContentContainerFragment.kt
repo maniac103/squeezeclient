@@ -369,7 +369,7 @@ class MainContentContainerFragment :
             } else {
                 PagingParams(0, 1)
             }
-            val result = connectionHelper.fetchItemsForAction(playerId, action, page)
+            val result = connectionHelper.fetchItemsForAction(playerId, action, page, false)
             val firstItem = result.items.getOrNull(0)
             when {
                 result.totalCount == 1 && firstItem?.actions?.slider != null -> {

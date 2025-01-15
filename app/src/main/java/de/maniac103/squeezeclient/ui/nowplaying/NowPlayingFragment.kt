@@ -288,7 +288,8 @@ class NowPlayingFragment :
                     val items = connectionHelper.fetchItemsForAction(
                         playerId,
                         action,
-                        PagingParams.All
+                        PagingParams.All,
+                        false
                     )
                     val contextMenu = ContextMenuBottomSheetFragment.create(
                         playerId,

@@ -31,11 +31,9 @@ fun JiveAction.fetchesAlbumTrackList() =
     cmd == listOf("browselibrary", "items") && params["mode"] == "tracks"
 
 fun JsonObject.extractSlimBrowseAlbumIdForAlbumListResponse(): Long? {
-    val params = get("commonParams") as? JsonObject
-    return params?.get("album_id")?.jsonPrimitive?.longOrNull
+    return get("album_id")?.jsonPrimitive?.longOrNull
 }
 
 fun JsonObject.extractSlimBrowseTrackIdForTrackListResponse(): Long? {
-    val params = get("commonParams") as? JsonObject
-    return params?.get("track_id")?.jsonPrimitive?.longOrNull
+    return get("track_id")?.jsonPrimitive?.longOrNull
 }

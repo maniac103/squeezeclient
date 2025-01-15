@@ -42,9 +42,10 @@ class SlimBrowseItemListViewHolder(
     private val choiceLabel: TextView? = binding.contextContainer.findViewById(R.id.choice_label)
 
     fun bind(item: SlimBrowseItemList.SlimBrowseItem) {
+        val subText = item.extraInfo ?: item.subText
         binding.title.text = item.title
-        binding.subText.text = item.subText
-        binding.subText.isVisible = !item.subText.isNullOrEmpty()
+        binding.subText.text = subText
+        binding.subText.isVisible = !subText.isNullOrEmpty()
         binding.icon.isVisible = showIcon
         if (showIcon) {
             binding.icon.loadArtworkOrPlaceholder(item)

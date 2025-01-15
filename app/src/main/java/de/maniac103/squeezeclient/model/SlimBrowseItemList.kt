@@ -37,6 +37,7 @@ data class SlimBrowseItemList(
         val listPosition: Int,
         val title: String,
         val subText: String?,
+        val extraInfo: String?,
         val textKey: String?,
         val type: ItemType?,
         val trackType: TrackType?,

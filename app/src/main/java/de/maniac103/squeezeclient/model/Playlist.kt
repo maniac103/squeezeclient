@@ -41,6 +41,7 @@ data class Playlist(
             listPosition = 0,
             title = title,
             subText = null,
+            extraInfo = null,
             textKey = null,
             type = null,
             trackType = null,

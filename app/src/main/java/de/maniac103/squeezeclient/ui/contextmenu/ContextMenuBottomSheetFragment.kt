@@ -114,7 +114,8 @@ class ContextMenuBottomSheetFragment :
                 val newItems = connectionHelper.fetchItemsForAction(
                     playerId,
                     goAction,
-                    PagingParams.All
+                    PagingParams.All,
+                    false
                 )
                 childFragmentManager.commit(true) {
                     replace(

@@ -318,7 +318,7 @@ class ConnectionHelper(private val appContext: SqueezeClientApplication) {
         searchTerm: String
     ): LocalLibrarySearchResultCounts {
         val results = doRequestWithResult<LocalSearchResultsResponse>(
-            LocalSearchRequest(searchTerm, PagingParams.CountOnly)
+            LocalSearchRequest(escapeSearchTermIfNeeded(searchTerm), PagingParams.CountOnly)
         )
         return LocalLibrarySearchResultCounts(
             results.albumCount,
@@ -334,13 +334,23 @@ class ConnectionHelper(private val appContext: SqueezeClientApplication) {
         type: LibrarySearchRequest.Mode,
         page: PagingParams
     ) = doRequestWithResult<SlimBrowseListResponse>(
-        LibrarySearchRequest(playerId, searchTerm, type, page)
+        LibrarySearchRequest(playerId, escapeSearchTermIfNeeded(searchTerm), type, page)
     ).asModelItems(json)
 
     suspend fun getRadioSearchResults(playerId: PlayerId, searchTerm: String, page: PagingParams) =
         doRequestWithResult<SlimBrowseListResponse>(
-            RadioSearchRequest(playerId, searchTerm, page)
+            RadioSearchRequest(playerId, escapeSearchTermIfNeeded(searchTerm), page)
         ).asModelItems(json)
+
+    private fun escapeSearchTermIfNeeded(searchTerm: String) =
+        if (searchTerm.contains('"') || searchTerm.contains(' ')) {
+            // If the user provided a multi-word or quoted search, they likely know what
+            // they're doing
+            searchTerm
+        } else {
+            // Auto-quote trivial search terms to avoid the server messing with them
+            "\"$searchTerm\""
+        }
 
     private suspend fun fetchHomeMenu(playerId: PlayerId) =
         doRequestWithResult<JiveHomeItemListResponse>(

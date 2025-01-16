@@ -364,6 +364,7 @@ class MainContentContainerFragment :
             // normal page. Caveat here is that some actions (most notably artist info) cache
             // responses, so we need to make sure to fetch all entries for those as otherwise
             // the paged response might be incomplete later.
+            // (see https://github.com/LMS-Community/slimserver/issues/1298)
             val page = if (action.serverMightCacheResults()) {
                 PagingParams.All
             } else {

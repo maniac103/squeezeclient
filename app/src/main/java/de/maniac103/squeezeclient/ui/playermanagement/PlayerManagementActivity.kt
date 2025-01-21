@@ -20,6 +20,7 @@ package de.maniac103.squeezeclient.ui.playermanagement
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -35,7 +36,9 @@ import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.PlayerStatus
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
@@ -51,6 +54,7 @@ import kotlinx.coroutines.launch
 class PlayerManagementActivity : AppCompatActivity() {
     private lateinit var binding: ActivityPlayerManagementBinding
     private lateinit var dragTargetAdapter: DragTargetAdapter
+    private var disconnectFinishJob: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -106,6 +110,27 @@ class PlayerManagementActivity : AppCompatActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 playerInfoFlow().collectLatest {
                     adapter.submitList(it)
+                }
+            }
+        }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                connectionHelper.state.collectLatest { state ->
+                    disconnectFinishJob?.cancel()
+                    binding.recycler.isVisible = state is ConnectionState.Connected
+                    binding.loadingIndicator.isVisible = !binding.recycler.isVisible
+                    when (state) {
+                        is ConnectionState.Connected -> {}
+                        is ConnectionState.Connecting -> {}
+                        is ConnectionState.ConnectionFailure,
+                        is ConnectionState.Disconnected -> {
+                            disconnectFinishJob = launch {
+                                delay(2.seconds)
+                                finish()
+                            }
+                        }
+                    }
                 }
             }
         }

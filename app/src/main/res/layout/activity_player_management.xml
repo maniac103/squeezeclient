@@ -54,4 +54,18 @@
         app:layout_constraintEnd_toEndOf="parent"
         tools:listitem="@layout/list_item_master_player" />
 
+    <com.google.android.material.progressindicator.CircularProgressIndicator
+        android:id="@+id/loading_indicator"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/appbar_container"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_gravity="center"
+        android:indeterminate="true"
+        android:visibility="gone"
+        app:indicatorSize="128dp"
+        app:trackThickness="6dp" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

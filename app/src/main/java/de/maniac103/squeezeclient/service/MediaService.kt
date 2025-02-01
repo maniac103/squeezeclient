@@ -72,12 +72,15 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.guava.future
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
+import kotlin.time.Duration.Companion.minutes
 
 class MediaService : MediaSessionService(), LifecycleOwner, MediaSession.Callback {
     private val dispatcher = ServiceLifecycleDispatcher(this)
     override val lifecycle: Lifecycle get() = dispatcher.lifecycle
     private lateinit var player: SqueezeboxPlayer
     private lateinit var mediaSession: MediaSession
+    private var lastDisconnectionTime = Clock.System.now()
 
     @OptIn(UnstableApi::class)
     override fun onCreate() {
@@ -88,21 +91,11 @@ class MediaService : MediaSessionService(), LifecycleOwner, MediaSession.Callbac
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 connectionHelper.state.collectLatest { status ->
-                    // Update connection status first, because currentPlayer checked below
-                    // is updated on status changes
-                    player.isConnectedToServer = status is ConnectionState.Connected
                     when (status) {
-                        is ConnectionState.Disconnected -> connectionHelper.connect()
+                        is ConnectionState.Disconnected -> handleDisconnection()
                         is ConnectionState.Connecting -> {}
-                        is ConnectionState.Connected -> {
-                            player.currentPlayer?.let { playerId ->
-                                if (status.players.none { it.id == playerId }) {
-                                    // current player is gone
-                                    stopSelf()
-                                }
-                            }
-                        }
-                        is ConnectionState.ConnectionFailure -> connectionHelper.connect()
+                        is ConnectionState.Connected -> handleConnection(status)
+                        is ConnectionState.ConnectionFailure -> handleDisconnection()
                     }
                 }
             }
@@ -211,6 +204,34 @@ class MediaService : MediaSessionService(), LifecycleOwner, MediaSession.Callbac
             else -> SessionResult.RESULT_ERROR_NOT_SUPPORTED
         }
         SessionResult(result)
+    }
+
+    private fun handleConnection(status: ConnectionState.Connected) {
+        // Update connection status first, because currentPlayer checked below
+        // is updated on status changes
+        player.isConnectedToServer = true
+        player.currentPlayer?.let { playerId ->
+            if (status.players.none { it.id == playerId }) {
+                // current player is gone
+                stopSelf()
+            }
+        }
+    }
+
+    private fun handleDisconnection() {
+        if (player.isConnectedToServer) {
+            lastDisconnectionTime = Clock.System.now()
+            player.isConnectedToServer = false
+        }
+        // Try reconnecting for some amount of time to handle short interruptions. If we can't
+        // connect for longer amounts of time (using 15 minutes as an arbitrarily chosen timeout),
+        // stop retrying and shut down the service (which in turn removes the media notification)
+        val retryTime = Clock.System.now() - lastDisconnectionTime
+        if (retryTime < 15.minutes) {
+            connectionHelper.connect()
+        } else {
+            stopSelf()
+        }
     }
 
     companion object {

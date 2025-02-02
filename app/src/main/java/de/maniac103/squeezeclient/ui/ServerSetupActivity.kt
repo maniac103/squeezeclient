@@ -37,26 +37,28 @@ import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.extfuncs.putServerConfig
 import de.maniac103.squeezeclient.extfuncs.serverConfig
 import de.maniac103.squeezeclient.model.ServerConfiguration
-import java.io.IOException
+import kotlinx.coroutines.CoroutineScope
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.InetAddress
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.plus
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.internal.and
+import java.net.SocketException
 
 class ServerSetupActivity : AppCompatActivity() {
     private lateinit var binding: ActivityServerSetupBinding
-    private var progressUpdateJob: Job? = null
+    private var discoveryScope: CoroutineScope? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -69,6 +71,11 @@ class ServerSetupActivity : AppCompatActivity() {
             binding.toolbar.setNavigationIcon(R.drawable.ic_arrow_left_24dp)
             binding.toolbar.setNavigationOnClickListener { finish() }
         }
+        // We're not interested in MaterialAutoCompleteTextView's auto completion functionality
+        // (as we're using it like a spinner), so turn off its filtering by setting a threshold
+        // larger than any possible text
+        binding.discoveredServers.threshold = 10000
+        binding.discoveredServersWrapper.setStartIconOnClickListener { startDiscovery() }
         binding.appbarContainer.addSystemBarAndCutoutInsetsListener()
         binding.content.addContentSystemBarAndCutoutInsetsListener()
         binding.serverAddress.doAfterTextChanged { validateInput() }
@@ -104,30 +111,44 @@ class ServerSetupActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                val discoveryResultsChannel = Channel<ServerDiscoveryResult>()
-                withContext(Dispatchers.IO) {
-                    DatagramSocket()
-                }.use { socket ->
-                    socket.soTimeout = DISCOVERY_TIMEOUT.inWholeMilliseconds.toInt()
-                    updateUiForDiscoveryStart()
-                    launch {
-                        listenForDiscoveryResults(socket, discoveryResultsChannel)
-                    }
-                    val results = sendDiscoverRequest(socket)
-                        .map { discoveryResultsChannel.consumeAsFlow().toList() }
-                        .onFailure { Log.d(TAG, "could not send discovery request", it) }
-                        .getOrElse { emptyList() }
-                    updateUiForDiscoveryResults(results)
-                }
+                startDiscovery()
             }
         }
     }
 
-    private fun updateUiForDiscoveryStart() {
+    private fun startDiscovery() {
+        discoveryScope?.cancel()
+        val scope = (CoroutineScope(lifecycleScope.coroutineContext) + Job()).also {
+            discoveryScope = it
+        }
+        scope.launch {
+            doDiscovery(scope)
+        }
+    }
+
+    private suspend fun doDiscovery(scope: CoroutineScope) {
+        withContext(Dispatchers.IO) {
+            DatagramSocket()
+        }.use { socket ->
+            updateUiForDiscoveryStart(scope)
+            val resultsFlow = listenForDiscoveryResults(socket)
+            scope.launch {
+                delay(DISCOVERY_TIMEOUT)
+                socket.close()
+            }
+            val results = sendDiscoverRequest(socket)
+                .mapCatching { resultsFlow.toList() }
+                .onFailure { Log.d(TAG, "could not send discovery request", it) }
+                .getOrElse { emptyList() }
+            updateUiForDiscoveryResults(results)
+        }
+    }
+
+    private fun updateUiForDiscoveryStart(scope: CoroutineScope) {
         binding.discoveredServersWrapper.hint = getString(R.string.server_scanning)
         binding.discoveredServersWrapper.isEnabled = false
         binding.scanProgress.isVisible = true
-        progressUpdateJob = lifecycleScope.launch {
+        scope.launch {
             val stepDelay = DISCOVERY_TIMEOUT.div(100)
             (0 until 100).forEach {
                 delay(stepDelay)
@@ -204,30 +225,33 @@ class ServerSetupActivity : AppCompatActivity() {
         }
     }
 
-    private suspend fun listenForDiscoveryResults(
-        socket: DatagramSocket,
-        resultChannel: Channel<ServerDiscoveryResult>
-    ) = withContext(Dispatchers.IO) {
-        val buf = ByteArray(512)
-        val responsePacket = DatagramPacket(buf, buf.size)
+    private fun listenForDiscoveryResults(socket: DatagramSocket) = callbackFlow {
         while (isActive) {
+            val buf = ByteArray(512)
+            val responsePacket = DatagramPacket(buf, buf.size)
+
             try {
-                socket.receive(responsePacket)
-            } catch (e: IOException) {
-                Log.d(TAG, "Receiving discovery packet failed", e)
-                break
+                withContext(Dispatchers.IO) {
+                    socket.receive(responsePacket)
+                }
+            } catch (e: SocketException) {
+                channel.close()
             }
-            if (buf[0] == 'E'.code.toByte()) {
-                val keyValuePairs = parseDiscoveryResult(responsePacket.data, responsePacket.length)
+
+            if (isActive && buf[0] == 'E'.code.toByte()) {
+                val keyValuePairs = parseDiscoveryResult(
+                    responsePacket.data,
+                    responsePacket.length
+                )
                 val serverName = keyValuePairs["NAME"]
                 val hostName = responsePacket.address.hostAddress
+                Log.d(TAG, "Got discovery result from ${responsePacket.address}: $keyValuePairs")
                 if (serverName != null && hostName != null) {
                     val port = keyValuePairs["JSON"]?.toInt()
-                    resultChannel.send(ServerDiscoveryResult(serverName, hostName, port))
+                    send(ServerDiscoveryResult(serverName, hostName, port))
                 }
             }
         }
-        resultChannel.close()
     }
 
     private fun parseDiscoveryResult(data: ByteArray, packetLength: Int): Map<String, String> {

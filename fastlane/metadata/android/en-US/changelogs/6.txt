@@ -1,0 +1,4 @@
+- Show additional information in albums list (release years) and titles list (durations)
+- Fix server discovery if more than one server is present in the local network
+- Hide media notification if server connection is lost for longer time (more than 15 minutes)
+- Assorted bug fixes

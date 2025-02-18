@@ -32,7 +32,7 @@ data class TrackInfoListResponse(
         val id: Long,
         val title: String,
         @SerialName("tracknum")
-        val trackNumber: String,
+        val trackNumber: String? = null,
         val duration: Double
     )
 

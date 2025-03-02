@@ -78,10 +78,21 @@
         <item quantity="other">%d songs could not be downloaded</item>
     </plurals>
     <string name="download_failure_notification_action_retry">Retry download</string>
-    <string name="download_permission_rationale_title">Permission required</string>
+    <string name="permission_rationale_title">Permission required</string>
     <string name="download_permission_rationale_message">Downloading songs requires notification permission to inform about the download progress.</string>
     <string name="download_permission_rationale_cancel">Cancel download</string>
-    <string name="download_permission_rationale_allow">Allow</string>
+    <string name="permission_rationale_allow">Allow</string>
+
+    <string name="local_player_notification_title_disconnected">Local player disconnected</string>
+    <string name="local_player_notification_title_stopped">Local player ready</string>
+    <string name="local_player_notification_title_playing">Local player playing</string>
+    <string name="local_player_notification_channel_name">Local playback</string>
+    <string name="local_player_notification_channel_description">Used for local player state notifications</string>
+    <string name="local_player_notification_content_disconnected">Trying to connect to %1$s</string>
+    <string name="local_player_notification_content_stopped">Connected to server</string>
+    <string name="local_player_notification_content_playing">Playing \'%1$s\'</string>
+    <string name="local_player_notification_permission_rationale_message">Local playback requires notification permission to inform about the state of the background player.</string>
+    <string name="local_player_notification_permission_rationale_cancel">Cancel</string>
 
     <string name="server_setup_title">Server setup</string>
     <string name="server_scanning">Scanning for servers\u2026</string>
@@ -100,6 +111,10 @@
     <string name="settings_category_playback">Playback</string>
     <string name="settings_category_display">Display</string>
     <string name="settings_category_download">Download</string>
+    <string name="settings_category_local_player">Local playback</string>
+    <string name="settings_local_player_enabled_title">Use device as player</string>
+    <string name="settings_local_player_enabled_summary">Enable playback on this device by advertising it as player towards the server</string>
+    <string name="settings_local_player_volume_mode_title">Volume control mode</string>
     <string name="settings_volume_buttons_title">Volume control</string>
     <string name="settings_volume_buttons_summary">Use device volume buttons to control player volume</string>
     <string name="settings_fade_in_seconds_title">Fade in duration</string>
@@ -119,4 +134,10 @@
     <string name="settings_download_path_structure_entry_artist">Artist</string>
     <string name="settings_download_path_structure_entry_album_under_artist">Artist/Album</string>
     <string name="settings_download_path_structure_entry_artist_album">Artist - Album</string>
+    <string name="settings_local_player_volume_mode_player_only">In-app only</string>
+    <string name="settings_local_player_volume_mode_device">Use device volume</string>
+    <string name="settings_local_player_volume_mode_device_while_playing">Device volume while playing</string>
+    <string name="settings_local_player_volume_mode_summary_player_only">Server side volume only controls the in-app player. Final volume will depend on server volume and media volume set on device.</string>
+    <string name="settings_local_player_volume_mode_summary_device">Server side volume controls the device media volume. The volume set thus will also affect other apps.</string>
+    <string name="settings_local_player_volume_mode_summary_device_while_playing">Server side volume controls the device media volume during playback. When playback ends, volume is restored to its state at playback start.</string>
 </resources>

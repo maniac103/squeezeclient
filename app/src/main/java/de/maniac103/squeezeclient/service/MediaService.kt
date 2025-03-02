@@ -88,6 +88,15 @@ class MediaService : MediaSessionService(), LifecycleOwner, MediaSession.Callbac
         super.onCreate()
         player = SqueezeboxPlayer(applicationContext, connectionHelper, lifecycle)
 
+        /* TODO
+        setMediaNotificationProvider(
+            DefaultMediaNotificationProvider.Builder(this)
+                .setNotificationId()
+                .setChannelId()
+                .setChannelName()
+                .build()
+        ) */
+
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 connectionHelper.state.collectLatest { status ->

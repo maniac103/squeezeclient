@@ -46,7 +46,7 @@ data class JiveHomeItemListResponse(
     data class HomeMenuItemResponse(
         val id: String,
         val node: String,
-        val text: String,
+        val text: String = "", // Omitted in case of 'remove' messages
         val weight: Int = 0,
         val window: Window? = null
         // All action related attributes are handled manually. This includes:

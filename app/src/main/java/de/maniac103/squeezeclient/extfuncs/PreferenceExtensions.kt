@@ -18,8 +18,10 @@
 package de.maniac103.squeezeclient.extfuncs
 
 import android.content.SharedPreferences
+import androidx.core.content.edit
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.ServerConfiguration
+import java.util.UUID
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -65,6 +67,23 @@ val SharedPreferences.downloadFolderStructure: DownloadFolderStructure get() {
 val SharedPreferences.useVolumeButtonsForPlayerVolume: Boolean get() =
     getBoolean("use_volume_buttons", true)
 
+val SharedPreferences.localPlayerEnabled get() = getBoolean("local_player_enabled", false)
+
+enum class LocalPlayerVolumeMode(val prefValue: String) {
+    PlayerOnly("playeronly"),
+    Device("device"),
+    DeviceWhilePlaying("devicewhileplaying")
+}
+
+val SharedPreferences.localPlayerVolumeMode: LocalPlayerVolumeMode get() {
+    val value = getString(
+        "local_player_volume_mode",
+        LocalPlayerVolumeMode.DeviceWhilePlaying.prefValue
+    )
+    return LocalPlayerVolumeMode.entries.find { value == it.prefValue }
+        ?: throw IllegalStateException("Local player volume mode value $value has no mapping")
+}
+
 fun SharedPreferences.Editor.putServerConfig(config: ServerConfiguration) {
     putString("server_url", config.hostnameAndPort)
     putString("server_name", config.name)
@@ -78,4 +97,22 @@ fun SharedPreferences.Editor.putServerConfig(config: ServerConfiguration) {
 }
 fun SharedPreferences.Editor.putLastSelectedPlayer(playerId: PlayerId) {
     putString("active_player", playerId.id)
+}
+
+fun SharedPreferences.getOrCreateDeviceIdentifier(): UUID {
+    val existing = getString("device_identifier", null)
+    if (existing != null) {
+        return UUID.fromString(existing)
+    }
+    val uuid = UUID.randomUUID()
+    edit {
+        putString("device_identifier", uuid.toString())
+    }
+    return uuid
+}
+
+val SharedPreferences.localPlayerName: String? get() = getString("local_player_name", null)
+
+fun SharedPreferences.Editor.putLocalPlayerName(name: String) {
+    putString("local_player_name", name)
 }

@@ -308,11 +308,11 @@ abstract class BaseSlimBrowseItemListFragment :
         }
         // When we're here, we need to show a rationale dialog
         val dialogResult = MaterialAlertDialogBuilder(requireActivity())
-            .setTitle(R.string.download_permission_rationale_title)
+            .setTitle(R.string.permission_rationale_title)
             .setMessage(R.string.download_permission_rationale_message)
             .create()
             .await(
-                positiveText = getString(R.string.download_permission_rationale_allow),
+                positiveText = getString(R.string.permission_rationale_allow),
                 negativeText = getString(R.string.download_permission_rationale_cancel)
             )
         if (!dialogResult) {

@@ -36,4 +36,22 @@
         <item>@string/settings_download_path_structure_entry_album_under_artist</item>
         <item>@string/settings_download_path_structure_entry_artist_album</item>
     </string-array>
+
+    <string-array name="settings_local_player_volume_mode_values" translatable="false">
+        <item>playeronly</item>
+        <item>device</item>
+        <item>devicewhileplaying</item>
+    </string-array>
+
+    <string-array name="settings_local_player_volume_mode_entries" translatable="false">
+        <item>@string/settings_local_player_volume_mode_player_only</item>
+        <item>@string/settings_local_player_volume_mode_device</item>
+        <item>@string/settings_local_player_volume_mode_device_while_playing</item>
+    </string-array>
+
+    <string-array name="settings_local_player_volume_mode_summaries" translatable="false">
+        <item>@string/settings_local_player_volume_mode_summary_player_only</item>
+        <item>@string/settings_local_player_volume_mode_summary_device</item>
+        <item>@string/settings_local_player_volume_mode_summary_device_while_playing</item>
+    </string-array>
 </resources>

@@ -77,10 +77,21 @@
         <item quantity="other">%d Titel konnten nicht heruntergeladen werden</item>
     </plurals>
     <string name="download_failure_notification_action_retry">Erneut versuchen</string>
-    <string name="download_permission_rationale_title">Berechtigung erforderlich</string>
+    <string name="permission_rationale_title">Berechtigung erforderlich</string>
     <string name="download_permission_rationale_message">Das Herunterladen von Titeln erfordert die Berechtigung zur Anzeige von Benachrichtigungen, um über den Fortschritt des Downloads informieren zu können.</string>
     <string name="download_permission_rationale_cancel">Download abbrechen</string>
-    <string name="download_permission_rationale_allow">Erlauben</string>
+    <string name="permission_rationale_allow">Erlauben</string>
+
+    <string name="local_player_notification_title_disconnected">Lokale Wiedergabe getrennt</string>
+    <string name="local_player_notification_title_stopped">Lokale Wiedergabe bereit</string>
+    <string name="local_player_notification_title_playing">Lokale Wiedergabe läuft</string>
+    <string name="local_player_notification_channel_name">Lokale Wiedergabe</string>
+    <string name="local_player_notification_channel_description">Benachrichtung über den Zustand der lokalen Wiedergabe</string>
+    <string name="local_player_notification_content_disconnected">Verbindung zu %1$s wird aufgebaut</string>
+    <string name="local_player_notification_content_stopped">Verbunden mit Server</string>
+    <string name="local_player_notification_content_playing">\'%1$s\' wird wiedergegeben</string>
+    <string name="local_player_notification_permission_rationale_message">Die lokale Wiedergabe erfordert die Berechtigung zur Anzeige von Benachrichtigungen, um über den Zustand der Hintergundwiedergabe informieren zu können.</string>
+    <string name="local_player_notification_permission_rationale_cancel">Abbrechen</string>
 
     <string name="server_setup_title">Server-Einrichtung</string>
     <string name="server_scanning">Suche nach Servern\u2026</string>
@@ -99,6 +110,10 @@
     <string name="settings_category_playback">Wiedergabe</string>
     <string name="settings_category_display">Anzeige</string>
     <string name="settings_category_download">Titel-Download</string>
+    <string name="settings_category_local_player">Lokale Wiedergabe</string>
+    <string name="settings_local_player_enabled_title">Lokales Wiedergabegerät</string>
+    <string name="settings_local_player_enabled_summary">Musikwiedergabe auf diesem Gerät aktivieren, indem das Gerät beim Server als Wiedergabegerät angemeldet wird</string>
+    <string name="settings_local_player_volume_mode_title">Lautstärke-Modus</string>
     <string name="settings_volume_buttons_title">Lautstärkesteuerung</string>
     <string name="settings_volume_buttons_summary">Lautstärketasten des Gerätes nutzen, um die Lautstärke des Wiedergabegerätes zu steuern</string>
     <string name="settings_fade_in_seconds_title">Einblendezeit</string>
@@ -118,4 +133,10 @@
     <string name="settings_download_path_structure_entry_artist">Interpret</string>
     <string name="settings_download_path_structure_entry_album_under_artist">Interpret/Album</string>
     <string name="settings_download_path_structure_entry_artist_album">Interpret - Album</string>
+    <string name="settings_local_player_volume_mode_player_only">Nur in App</string>
+    <string name="settings_local_player_volume_mode_device">Gerätelautstärke verwenden</string>
+    <string name="settings_local_player_volume_mode_device_while_playing">Gerätelautstärke während der Wiedergabe</string>
+    <string name="settings_local_player_volume_mode_summary_player_only">Der vom Server gesetzte Lautstärkewert steuert nur die Lautstärke der Wiedergabe in der App. Die finale Wiedgergabelautstärke hängt sowohl von der serverseitigen Lautstärke als auch von der eingestellten Medienlautstärke des Gerätes ab.</string>
+    <string name="settings_local_player_volume_mode_summary_device">Die Medienlautstärke des Gerätes wird auf die vom Server gesetzte Lautstärke gesetzt. Dadurch wird dieser Wert auch für andere Apps verwendet.</string>
+    <string name="settings_local_player_volume_mode_summary_device_while_playing">Die Medienlautstärke des Gerätes wird während der Wiedergabe auf die vom Server gesetzte Lautstärke gesetzt. Bei Ende der Wiedergabe wird die zuvor eingestellte Lautstärke wiederhergestellt.</string>
 </resources>

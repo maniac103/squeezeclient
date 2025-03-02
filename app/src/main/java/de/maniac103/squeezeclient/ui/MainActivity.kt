@@ -54,6 +54,7 @@ import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.extfuncs.putLastSelectedPlayer
 import de.maniac103.squeezeclient.extfuncs.serverConfig
 import de.maniac103.squeezeclient.extfuncs.useVolumeButtonsForPlayerVolume
+import de.maniac103.squeezeclient.service.localplayer.LocalPlayerStartupWorker
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.Player
 import de.maniac103.squeezeclient.model.PlayerId
@@ -200,6 +201,11 @@ class MainActivity :
     override fun onSaveInstanceState(outState: Bundle) {
         player?.let { outState.putParcelable("player", it) }
         super.onSaveInstanceState(outState)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        LocalPlayerStartupWorker.triggerStartOrStop(this)
     }
 
     override fun onStop() {

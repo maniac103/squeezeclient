@@ -421,11 +421,12 @@ class MainActivity :
         }
         is ConnectionState.Connected -> {
             consecutiveUnsuccessfulConnectAttempts = 0
-            updatePlayerList(state.players)
+            val presentPlayers = state.players.filter { it.connected }
+            updatePlayerList(presentPlayers)
             val lastActivePlayer = prefs.lastSelectedPlayer
             val activePlayer = lastActivePlayer
-                .let { active -> state.players.find { it.id == active } }
-                ?: state.players.firstOrNull()
+                .let { active -> presentPlayers.find { it.id == active } }
+                ?: presentPlayers.firstOrNull()
             if (activePlayer != null) {
                 showContentAndHideLoadingIndicator()
                 if (lastActivePlayer == null) {

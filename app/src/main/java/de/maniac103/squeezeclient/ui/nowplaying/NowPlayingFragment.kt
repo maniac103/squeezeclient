@@ -401,6 +401,9 @@ class NowPlayingFragment :
             isVisible = !currentSong?.album.isNullOrEmpty()
         }
 
+        binding.totalTime.isVisible = status.currentSongDuration != null
+        binding.elapsedTime.isVisible = status.currentSongDuration != null
+
         timeUpdateJob?.cancel()
         if (status.currentSongDuration != null) {
             binding.progressSlider.apply {

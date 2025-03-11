@@ -216,6 +216,7 @@ class NowPlayingFragment :
                     sliderDragUpdateJob?.cancel()
                     sliderDragUpdateJob = lifecycleScope.launch {
                         delay(200.milliseconds)
+                        timeUpdateJob?.cancel()
                         connectionHelper.updatePlaybackPosition(playerId, value.toInt())
                     }
                 }

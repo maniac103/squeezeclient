@@ -25,7 +25,6 @@ import android.net.Uri
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
-import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.PendingIntentCompat
@@ -38,9 +37,11 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.util.UnstableApi
 import de.maniac103.squeezeclient.R
+import de.maniac103.squeezeclient.extfuncs.getOrCreateNotificationChannel
 import de.maniac103.squeezeclient.extfuncs.localPlayerName
 import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.extfuncs.putLocalPlayerName
+import de.maniac103.squeezeclient.service.NotificationIds
 import de.maniac103.squeezeclient.ui.MainActivity
 import de.maniac103.squeezeclient.ui.prefs.SettingsActivity
 import kotlin.time.Duration.Companion.milliseconds
@@ -184,23 +185,8 @@ class LocalPlaybackService : Service(), LifecycleOwner {
     private fun updateForegroundNotification(state: SlimprotoState) {
         Log.d(TAG, "update notification with state $state")
 
-        val id = 10001 // TODO: coordinate with MediaService and DownloadWorker
-        val channelId = "local_playback"
-
-        val nm = NotificationManagerCompat.from(this)
-        if (nm.getNotificationChannel(channelId) == null) {
-            val channel = NotificationChannelCompat.Builder(
-                channelId,
-                NotificationManagerCompat.IMPORTANCE_MIN
-            ).apply {
-                setName(getString(R.string.local_player_notification_channel_name))
-                setDescription(getString(R.string.local_player_notification_channel_description))
-                setLightsEnabled(false)
-                setVibrationEnabled(false)
-                setSound(null, null)
-            }.build()
-            nm.createNotificationChannel(channel)
-        }
+        val channel = NotificationManagerCompat.from(this)
+            .getOrCreateNotificationChannel(resources, NotificationIds.CHANNEL_LOCAL_PLAYBACK)
 
         val (title, content) = when {
             state is SlimprotoState.Disconnected ->
@@ -239,7 +225,7 @@ class LocalPlaybackService : Service(), LifecycleOwner {
             0,
             false
         )
-        val notification = NotificationCompat.Builder(this, channelId)
+        val notification = NotificationCompat.Builder(this, channel.id)
             .setContentTitle(title)
             .setContentText(content)
             .setContentIntent(contentIntent)
@@ -249,7 +235,7 @@ class LocalPlaybackService : Service(), LifecycleOwner {
 
         ServiceCompat.startForeground(
             this,
-            id,
+            NotificationIds.LOCAL_PLAYBACK,
             notification,
             ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK
         )

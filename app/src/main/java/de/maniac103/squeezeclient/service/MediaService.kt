@@ -45,6 +45,7 @@ import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.session.CacheBitmapLoader
 import androidx.media3.session.CommandButton
+import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSession.ConnectionResult
 import androidx.media3.session.MediaSessionService
@@ -88,14 +89,14 @@ class MediaService : MediaSessionService(), LifecycleOwner, MediaSession.Callbac
         super.onCreate()
         player = SqueezeboxPlayer(applicationContext, connectionHelper, lifecycle)
 
-        /* TODO
+        val channelInfo = NotificationIds.CHANNEL_MEDIA_CONTROL
         setMediaNotificationProvider(
             DefaultMediaNotificationProvider.Builder(this)
-                .setNotificationId()
-                .setChannelId()
-                .setChannelName()
+                .setNotificationId(NotificationIds.MEDIA_CONTTROL_SERVICE)
+                .setChannelId(channelInfo.id)
+                .setChannelName(channelInfo.nameResId)
                 .build()
-        ) */
+        )
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {

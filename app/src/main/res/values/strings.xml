@@ -68,6 +68,8 @@
     <string name="notif_action_player_power">Player power</string>
     <string name="notif_action_disconnect">Disconnect</string>
 
+    <string name="media_notification_channel_name">Media control</string>
+
     <string name="download_notification_channel_name">Download</string>
     <string name="download_notification_channel_description">Used for notifications reporting download progress</string>
     <string name="download_notification_title">Downloading song %1$d of %2$d</string>

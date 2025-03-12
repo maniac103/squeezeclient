@@ -89,14 +89,14 @@ class MediaService : MediaSessionService(), LifecycleOwner, MediaSession.Callbac
         super.onCreate()
         player = SqueezeboxPlayer(applicationContext, connectionHelper, lifecycle)
 
-        /* TODO
+        val channelInfo = NotificationIds.CHANNEL_MEDIA_CONTROL
         setMediaNotificationProvider(
             DefaultMediaNotificationProvider.Builder(this)
-                .setNotificationId()
-                .setChannelId()
-                .setChannelName()
+                .setNotificationId(NotificationIds.MEDIA_CONTTROL_SERVICE)
+                .setChannelId(channelInfo.id)
+                .setChannelName(channelInfo.nameResId)
                 .build()
-        ) */
+        )
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {

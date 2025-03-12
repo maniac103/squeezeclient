@@ -67,6 +67,8 @@
     <string name="notif_action_player_power">Wiedergabegerät an- oder ausschalten</string>
     <string name="notif_action_disconnect">Verbindung trennen</string>
 
+    <string name="media_notification_channel_name">Mediensteuerung</string>
+
     <string name="download_notification_channel_name">Download</string>
     <string name="download_notification_channel_description">Benachrichtigungen über den Fortschritt des Titel-Downloads</string>
     <string name="download_notification_title">Titel %1$d von %2$d wird heruntergeladen</string>

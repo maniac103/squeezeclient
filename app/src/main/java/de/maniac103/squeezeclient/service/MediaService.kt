@@ -344,9 +344,14 @@ class MediaService : MediaSessionService(), LifecycleOwner, MediaSession.Callbac
             val (playlist, currentIndex) = latestPlaylist?.let { list ->
                 val currentPosition = status.playlist.currentPosition - 1
                 val mediaList: List<MediaItemData> = list.items.mapIndexed { index, item ->
-                    val builder = item.toMediaItemDataBuilder(index)
-                    if (index + list.offset == currentPosition) {
-                        currentSongDurationUs?.let { builder.setDurationUs(it) }
+                    val builder = if (index + list.offset == currentPosition) {
+                        // Prefer current song from status over playlist item, because the former
+                        // may be more up to date (e.g. in case of radio streams)
+                        currentSong.toMediaItemDataBuilder(index).apply {
+                            currentSongDurationUs?.let { setDurationUs(it) }
+                        }
+                    } else {
+                        item.toMediaItemDataBuilder(index)
                     }
                     builder.build()
                 }

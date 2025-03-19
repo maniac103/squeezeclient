@@ -124,7 +124,9 @@ class CometdClient(
         }
         val request = buildRequest(message)
         executeRequestAndGetResponseBody(requestClient, request).use { body ->
-            val content = body.string()
+            val content = withContext(Dispatchers.IO) {
+                body.string()
+            }
             val messages = content.parseToMessageArrayOrThrow()
             if (!messages[0].successful) {
                 throw CometdException("Unexpected response for request $messageData: $content")
@@ -143,7 +145,9 @@ class CometdClient(
 
         val request = buildRequest(message)
         val messages = executeRequestAndGetResponseBody(requestClient, request).use { body ->
-            body.string().parseToMessageArrayOrThrow()
+            withContext(Dispatchers.IO) {
+                body.string().parseToMessageArrayOrThrow()
+            }
         }
         return messages[0].clientId ?: throw CometdException("No client ID in $messages")
     }

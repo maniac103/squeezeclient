@@ -27,7 +27,6 @@ import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore.Audio.Media
 import android.util.Log
-import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.PendingIntentCompat
@@ -50,13 +49,13 @@ import de.maniac103.squeezeclient.NotificationActionReceiver
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.extfuncs.DownloadFolderStructure
 import de.maniac103.squeezeclient.extfuncs.downloadFolderStructure
+import de.maniac103.squeezeclient.extfuncs.getOrCreateNotificationChannel
 import de.maniac103.squeezeclient.extfuncs.httpClient
 import de.maniac103.squeezeclient.extfuncs.jsonParser
 import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.extfuncs.serverConfig
 import de.maniac103.squeezeclient.extfuncs.workManager
 import de.maniac103.squeezeclient.model.DownloadSongInfo
-import java.util.UUID
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -89,7 +88,6 @@ class DownloadWorker(
         val folderStructure = applicationContext.prefs.downloadFolderStructure
 
         Log.d(TAG, "Starting download of ${items.size} items")
-        createNotificationChannelIfNeeded()
 
         val results = items.mapIndexed { index, item ->
             updateProgress(item, 0, null, index, items.size)
@@ -173,7 +171,8 @@ class DownloadWorker(
             finishedItems + 1,
             totalItems
         )
-        val notification = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL)
+        val channel = context.getOrCreateDownloadWorkerNotificationChannel()
+        val notification = NotificationCompat.Builder(context, channel.id)
             .setSmallIcon(R.drawable.ic_download_24dp)
             .setContentTitle(title)
             .setContentText(currentItem)
@@ -182,7 +181,7 @@ class DownloadWorker(
             .setOngoing(true)
             .build()
         return ForegroundInfo(
-            id.toNotificationId(),
+            NotificationIds.forDownloadWork(id),
             notification,
             ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
         )
@@ -204,25 +203,6 @@ class DownloadWorker(
         )
         setProgress(progress)
         setForeground(getForegroundInfo())
-    }
-
-    private fun createNotificationChannelIfNeeded() {
-        val context = applicationContext
-        val nm = NotificationManagerCompat.from(context)
-        if (nm.getNotificationChannel(NOTIFICATION_CHANNEL) != null) {
-            return
-        }
-        val channel = NotificationChannelCompat.Builder(
-            NOTIFICATION_CHANNEL,
-            NotificationManagerCompat.IMPORTANCE_LOW
-        ).apply {
-            setName(context.getString(R.string.download_notification_channel_name))
-            setDescription(context.getString(R.string.download_notification_channel_description))
-            setLightsEnabled(false)
-            setVibrationEnabled(false)
-            setSound(null, null)
-        }.build()
-        nm.createNotificationChannel(channel)
     }
 
     class ProgressReportingSource(
@@ -314,7 +294,6 @@ class DownloadWorker(
     companion object {
         private const val TAG = "DownloadWorker"
         private const val WORK_TAG = "song_download"
-        private const val NOTIFICATION_CHANNEL = "background_download"
 
         const val NOTIFICATION_ACTION_DISMISS_FAILED =
             BuildConfig.APPLICATION_ID + ".action.DISMISS_FAILED"
@@ -342,7 +321,7 @@ class DownloadWorker(
         }
 
         fun startObservingStatus(context: Context) {
-            val notificationManager = context.getSystemService<NotificationManager>()
+            val notifManager = NotificationManagerCompat.from(context)
             val workManager = context.workManager
 
             workManager.getWorkInfosByTagLiveData(WORK_TAG).observeForever { workInfos ->
@@ -351,17 +330,19 @@ class DownloadWorker(
                     return@observeForever
                 }
 
-                val notificationId = failedEntries.first().id.toNotificationId()
+                val notificationId = NotificationIds.forDownloadWork(failedEntries.first().id)
                 val failedItems = failedEntries
                     .mapNotNull { it.outputData.getStringArray(OutputDataKeys.FAILED_ITEMS) }
                     .toTypedArray()
                     .flatten()
+                val channel = context.getOrCreateDownloadWorkerNotificationChannel()
                 val notification = createDownloadRetryNotification(
                     context,
                     failedItems,
-                    notificationId
+                    notificationId,
+                    channel.id
                 )
-                notificationManager?.notify(notificationId, notification)
+                notifManager.notify(notificationId, notification)
             }
         }
 
@@ -382,7 +363,8 @@ class DownloadWorker(
         private fun createDownloadRetryNotification(
             context: Context,
             itemData: List<String>,
-            notificationId: Int
+            notificationId: Int,
+            channelId: String
         ): Notification {
             val retryPi = Intent(context, NotificationActionReceiver::class.java)
                 .setAction(NOTIFICATION_ACTION_RETRY_DOWNLOAD)
@@ -402,7 +384,7 @@ class DownloadWorker(
                 .setAction(NOTIFICATION_ACTION_DISMISS_FAILED)
                 .let { intent -> PendingIntentCompat.getBroadcast(context, 0, intent, 0, false) }
 
-            return NotificationCompat.Builder(context, NOTIFICATION_CHANNEL)
+            return NotificationCompat.Builder(context, channelId)
                 .setSmallIcon(R.drawable.ic_logo_notification_24dp)
                 .setContentTitle(context.getString(R.string.download_failure_notification_title))
                 .setContentText(
@@ -421,6 +403,10 @@ class DownloadWorker(
                 .build()
         }
 
-        private fun UUID.toNotificationId() = hashCode()
+        private fun Context.getOrCreateDownloadWorkerNotificationChannel() =
+            NotificationManagerCompat.from(this).getOrCreateNotificationChannel(
+                resources,
+                NotificationIds.CHANNEL_DOWNLOAD
+            )
     }
 }

@@ -231,6 +231,10 @@ class CometdClient(
                         cancel("Listen failure", e)
                         return@withContext
                     }
+                    if (readByteCount < 0) {
+                        cancel("EOF while reading event stream")
+                        return@withContext
+                    }
                     builder.append(String(buf, 0, readByteCount, Charsets.UTF_8))
                     when (builder.takeLast(2)) {
                         "[]" -> {

@@ -37,11 +37,12 @@ import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.extfuncs.putServerConfig
 import de.maniac103.squeezeclient.extfuncs.serverConfig
 import de.maniac103.squeezeclient.model.ServerConfiguration
-import kotlinx.coroutines.CoroutineScope
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.InetAddress
+import java.net.SocketException
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
@@ -54,7 +55,6 @@ import kotlinx.coroutines.plus
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.internal.and
-import java.net.SocketException
 
 class ServerSetupActivity : AppCompatActivity() {
     private lateinit var binding: ActivityServerSetupBinding

@@ -64,6 +64,7 @@ import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.PlayerStatus
 import de.maniac103.squeezeclient.model.Playlist
 import de.maniac103.squeezeclient.ui.MainActivity
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.DurationUnit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -73,7 +74,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.guava.future
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
-import kotlin.time.Duration.Companion.minutes
 
 class MediaService : MediaSessionService(), LifecycleOwner, MediaSession.Callback {
     private val dispatcher = ServiceLifecycleDispatcher(this)

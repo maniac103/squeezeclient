@@ -21,11 +21,11 @@ import de.maniac103.squeezeclient.SqueezeClientApplication
 import de.maniac103.squeezeclient.cometd.request.ChangePlaybackStateRequest
 import de.maniac103.squeezeclient.cometd.request.ClearPlaylistRequest
 import de.maniac103.squeezeclient.cometd.request.ExecuteActionRequest
-import de.maniac103.squeezeclient.cometd.request.FetchTrackInfoRequest
 import de.maniac103.squeezeclient.cometd.request.FetchAlbumInfoRequest
 import de.maniac103.squeezeclient.cometd.request.FetchHomeMenuRequest
 import de.maniac103.squeezeclient.cometd.request.FetchItemsForActionRequest
 import de.maniac103.squeezeclient.cometd.request.FetchSongInfosForDownloadRequest
+import de.maniac103.squeezeclient.cometd.request.FetchTrackInfoRequest
 import de.maniac103.squeezeclient.cometd.request.LibrarySearchRequest
 import de.maniac103.squeezeclient.cometd.request.LocalSearchRequest
 import de.maniac103.squeezeclient.cometd.request.MenuStatusRequest

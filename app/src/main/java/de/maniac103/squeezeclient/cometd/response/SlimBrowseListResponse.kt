@@ -74,7 +74,10 @@ data class SlimBrowseListResponse(
         // slider, min, max, initial, sliderIcons
     )
 
-    fun asModelItems(json: Json, infoProvider: ((JsonObject) -> String?)? = null): SlimBrowseItemList {
+    fun asModelItems(
+        json: Json,
+        infoProvider: (JsonObject) -> String? = { null }
+    ): SlimBrowseItemList {
         val modelItems = items.filter { it.isNotEmpty() }.mapIndexed { index, itemObject ->
             val item = json.decodeFromJsonElement<Item>(itemObject)
             val textLines = item.text.split("\n", limit = 2)
@@ -87,7 +90,7 @@ data class SlimBrowseListResponse(
                 SlimBrowseListResponse(items = it).asModelItems(json, infoProvider).items
             }
             val extraInfo = (itemObject["commonParams"] as? JsonObject)
-                ?.let { infoProvider?.invoke(it) }
+                ?.let { infoProvider(it) }
 
             SlimBrowseItemList.SlimBrowseItem(
                 offset + index,

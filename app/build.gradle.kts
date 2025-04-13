@@ -35,8 +35,8 @@ android {
         applicationId = "de.maniac103.squeezeclient"
         minSdk = 26
         targetSdk = 35
-        versionCode = 6
-        versionName = "1.5"
+        versionCode = 7
+        versionName = "1.6"
 
         vectorDrawables {
             useSupportLibrary = true

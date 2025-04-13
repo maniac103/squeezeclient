@@ -113,14 +113,12 @@ class MediaService : MediaSessionService(), LifecycleOwner, MediaSession.Callbac
 
         player.currentPlayer = prefs.lastSelectedPlayer
 
-        val powerButton = CommandButton.Builder()
+        val powerButton = CommandButton.Builder(R.drawable.ic_power_24dp)
             .setDisplayName(getString(R.string.notif_action_player_power))
-            .setIconResId(R.drawable.ic_power_24dp)
             .setSessionCommand(SessionCommand(SESSION_ACTION_POWER, bundleOf()))
             .build()
-        val disconnectButton = CommandButton.Builder()
+        val disconnectButton = CommandButton.Builder(R.drawable.ic_disconnect_24dp)
             .setDisplayName(getString(R.string.notif_action_disconnect))
-            .setIconResId(R.drawable.ic_disconnect_24dp)
             .setSessionCommand(SessionCommand(SESSION_ACTION_DISCONNECT, bundleOf()))
             .build()
 

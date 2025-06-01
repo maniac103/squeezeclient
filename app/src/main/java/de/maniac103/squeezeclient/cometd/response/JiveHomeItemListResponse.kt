@@ -37,10 +37,7 @@ data class JiveHomeItemListResponse(
     val items: List<JsonObject>
 ) {
     @Serializable
-    data class Window(
-        val titleStyle: String? = null,
-        val iconId: String? = null
-    )
+    data class Window(val titleStyle: String? = null, val iconId: String? = null)
 
     @Serializable
     data class HomeMenuItemResponse(

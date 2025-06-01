@@ -32,7 +32,9 @@ import de.maniac103.squeezeclient.service.localplayer.LocalPlayerStartupWorker
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 
-class SqueezeClientApplication : Application(), SharedPreferences.OnSharedPreferenceChangeListener {
+class SqueezeClientApplication :
+    Application(),
+    SharedPreferences.OnSharedPreferenceChangeListener {
     val json = Json {
         coerceInputValues = true
         ignoreUnknownKeys = true

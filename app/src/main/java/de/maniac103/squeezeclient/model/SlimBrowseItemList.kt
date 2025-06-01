@@ -31,7 +31,8 @@ data class SlimBrowseItemList(
     override val totalCount: Int,
     val title: String?,
     val window: Window? = null
-) : ListResponse<SlimBrowseItemList.SlimBrowseItem>, Parcelable {
+) : ListResponse<SlimBrowseItemList.SlimBrowseItem>,
+    Parcelable {
     @Parcelize
     data class SlimBrowseItem(
         val listPosition: Int,
@@ -47,7 +48,8 @@ data class SlimBrowseItemList(
         val nextWindow: NextWindow?,
         val subItems: List<SlimBrowseItem>?,
         val webLink: String?
-    ) : Parcelable, ArtworkItem
+    ) : Parcelable,
+        ArtworkItem
 
     @Serializable
     @OptIn(ExperimentalSerializationApi::class)

@@ -107,9 +107,8 @@ class VolumeFragment : ViewBindingFragment<FragmentVolumeBinding>(FragmentVolume
         return true
     }
 
-    fun handleKeyUp(keyCode: Int): Boolean {
-        return keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN
-    }
+    fun handleKeyUp(keyCode: Int) =
+        keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN
 
     fun showIfNeeded(duration: Duration = 2.seconds) {
         if (!isVisible) {
@@ -142,10 +141,8 @@ class VolumeFragment : ViewBindingFragment<FragmentVolumeBinding>(FragmentVolume
     }
 
     companion object {
-        fun create(playerId: PlayerId): VolumeFragment {
-            return VolumeFragment().apply {
-                arguments = bundleOf("playerId" to playerId)
-            }
+        fun create(playerId: PlayerId) = VolumeFragment().apply {
+            arguments = bundleOf("playerId" to playerId)
         }
     }
 }

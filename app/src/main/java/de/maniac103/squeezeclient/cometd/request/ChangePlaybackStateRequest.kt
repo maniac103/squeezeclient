@@ -22,17 +22,19 @@ import kotlin.time.Duration
 
 sealed class ChangePlaybackStateRequest(playerId: PlayerId, vararg cmd: String) :
     NonPagedPlayerRequest(playerId, *cmd) {
-    class Play(playerId: PlayerId, fadeInDuration: Duration) : ChangePlaybackStateRequest(
-        playerId,
-        "play",
-        fadeInDuration.inWholeSeconds.let { if (it > 0) " $it" else "" }
-    )
+    class Play(playerId: PlayerId, fadeInDuration: Duration) :
+        ChangePlaybackStateRequest(
+            playerId,
+            "play",
+            fadeInDuration.inWholeSeconds.let { if (it > 0) " $it" else "" }
+        )
     class Pause(playerId: PlayerId) : ChangePlaybackStateRequest(playerId, "pause", "1")
-    class Unpause(playerId: PlayerId, fadeInDuration: Duration) : ChangePlaybackStateRequest(
-        playerId,
-        "pause",
-        "0",
-        fadeInDuration.inWholeSeconds.let { if (it > 0) " $it" else "" }
-    )
+    class Unpause(playerId: PlayerId, fadeInDuration: Duration) :
+        ChangePlaybackStateRequest(
+            playerId,
+            "pause",
+            "0",
+            fadeInDuration.inWholeSeconds.let { if (it > 0) " $it" else "" }
+        )
     class Stop(playerId: PlayerId) : ChangePlaybackStateRequest(playerId, "stop")
 }

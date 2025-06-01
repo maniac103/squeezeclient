@@ -104,11 +104,7 @@ class MainContentContainerFragment :
     private val listener get() = requireParentAs<Listener>()
     private val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)
 
-    data class PendingBackInfo(
-        val fragment: Fragment,
-        val tag: String?,
-        var progress: Float = 0F
-    )
+    data class PendingBackInfo(val fragment: Fragment, val tag: String?, var progress: Float = 0F)
 
     private var titleSubscription: Job? = null
     private var contentTitles = emptyMap<String, PageTitleInfo>()

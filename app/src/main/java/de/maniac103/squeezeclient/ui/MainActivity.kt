@@ -396,8 +396,8 @@ class MainActivity :
             .flatMapLatest { it.playStatus }
             .onEach { status ->
                 binding.toolbar.subtitle = status.playerName
-                playerIsActive =
-                    status.powered && status.playbackState == PlayerStatus.PlayState.Playing
+                playerIsActive = status.powered &&
+                    status.playbackState == PlayerStatus.PlayState.Playing
             }
             .launchIn(scope)
     }

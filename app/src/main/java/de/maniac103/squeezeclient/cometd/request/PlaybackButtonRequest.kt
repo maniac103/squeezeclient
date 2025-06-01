@@ -19,10 +19,8 @@ package de.maniac103.squeezeclient.cometd.request
 
 import de.maniac103.squeezeclient.model.PlayerId
 
-sealed class PlaybackButtonRequest(
-    playerId: PlayerId,
-    type: String
-) : NonPagedPlayerRequest(playerId, "button", type) {
+sealed class PlaybackButtonRequest(playerId: PlayerId, type: String) :
+    NonPagedPlayerRequest(playerId, "button", type) {
     class PreviousTrack(playerId: PlayerId) : PlaybackButtonRequest(playerId, "jump_rew")
     class NextTrack(playerId: PlayerId) : PlaybackButtonRequest(playerId, "jump_fwd")
     class ToggleShuffle(playerId: PlayerId) : PlaybackButtonRequest(playerId, "shuffle")

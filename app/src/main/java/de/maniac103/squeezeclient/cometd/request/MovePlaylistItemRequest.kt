@@ -19,14 +19,11 @@ package de.maniac103.squeezeclient.cometd.request
 
 import de.maniac103.squeezeclient.model.PlayerId
 
-class MovePlaylistItemRequest(
-    playerId: PlayerId,
-    fromPosition: Int,
-    toPosition: Int
-) : NonPagedPlayerRequest(
-    playerId,
-    "playlist",
-    "move",
-    fromPosition.toString(),
-    toPosition.toString()
-)
+class MovePlaylistItemRequest(playerId: PlayerId, fromPosition: Int, toPosition: Int) :
+    NonPagedPlayerRequest(
+        playerId,
+        "playlist",
+        "move",
+        fromPosition.toString(),
+        toPosition.toString()
+    )

@@ -106,10 +106,8 @@ class ImageViewActivity : AppCompatActivity() {
     companion object {
         private const val EXTRA_ITEM = "item"
 
-        fun createIntent(context: Context, item: SlideshowImage): Intent {
-            return Intent(context, ImageViewActivity::class.java).apply {
-                putExtra(EXTRA_ITEM, item)
-            }
-        }
+        fun createIntent(context: Context, item: SlideshowImage) =
+            Intent(context, ImageViewActivity::class.java)
+                .putExtra(EXTRA_ITEM, item)
     }
 }

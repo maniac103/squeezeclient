@@ -23,10 +23,8 @@ import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.extfuncs.getParcelableOrNull
 import de.maniac103.squeezeclient.model.ArtworkItem
 import de.maniac103.squeezeclient.model.JiveAction
-import de.maniac103.squeezeclient.model.ListResponse
 import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
-import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.model.WindowStyle
 import kotlinx.coroutines.flow.flowOf
 
@@ -44,11 +42,8 @@ class SlimBrowseItemListFragment : BaseSlimBrowseItemListFragment() {
         requireArguments().getParcelable("fetchAction", JiveAction::class)
     override val fastScrollEnabled = true
 
-    override suspend fun onLoadPage(
-        page: PagingParams
-    ): ListResponse<SlimBrowseItemList.SlimBrowseItem> {
-        return connectionHelper.fetchItemsForAction(playerId, fetchAction, page, true)
-    }
+    override suspend fun onLoadPage(page: PagingParams) =
+        connectionHelper.fetchItemsForAction(playerId, fetchAction, page, true)
 
     companion object {
         fun create(

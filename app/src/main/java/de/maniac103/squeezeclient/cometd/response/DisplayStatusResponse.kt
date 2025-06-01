@@ -22,10 +22,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class DisplayStatusResponse(
-    val type: StatusType,
-    val display: DisplayMessage
-) {
+data class DisplayStatusResponse(val type: StatusType, val display: DisplayMessage) {
     @Serializable
     @Suppress("unused")
     enum class StatusType {

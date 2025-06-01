@@ -96,16 +96,11 @@ class PlaylistFragment :
     override suspend fun onLoadPage(page: PagingParams) =
         connectionHelper.fetchPlaylist(playerId, page)
 
-    override fun areItemsTheSame(lhs: Playlist.PlaylistItem, rhs: Playlist.PlaylistItem): Boolean {
-        return lhs == rhs
-    }
+    override fun areItemsTheSame(lhs: Playlist.PlaylistItem, rhs: Playlist.PlaylistItem) =
+        lhs == rhs
 
-    override fun areItemContentsTheSame(
-        lhs: Playlist.PlaylistItem,
-        rhs: Playlist.PlaylistItem
-    ): Boolean {
-        return lhs == rhs
-    }
+    override fun areItemContentsTheSame(lhs: Playlist.PlaylistItem, rhs: Playlist.PlaylistItem) =
+        lhs == rhs
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun onBindingCreated(binding: FragmentGenericListBinding) {

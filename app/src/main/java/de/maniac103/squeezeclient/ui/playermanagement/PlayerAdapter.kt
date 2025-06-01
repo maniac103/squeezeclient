@@ -24,9 +24,8 @@ import androidx.recyclerview.widget.ListAdapter
 import de.maniac103.squeezeclient.databinding.ListItemMasterPlayerBinding
 import de.maniac103.squeezeclient.databinding.ListItemSlavePlayerBinding
 
-class PlayerAdapter(
-    private val callback: PlayerViewHolder.Callback
-) : ListAdapter<PlayerData, PlayerViewHolder>(PlayerDataDiffCallback()) {
+class PlayerAdapter(private val callback: PlayerViewHolder.Callback) :
+    ListAdapter<PlayerData, PlayerViewHolder>(PlayerDataDiffCallback()) {
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PlayerViewHolder {
         val inflater = LayoutInflater.from(parent.context)
         return if (viewType == VIEW_TYPE_MASTER) {

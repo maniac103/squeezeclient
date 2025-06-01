@@ -45,16 +45,10 @@ data class JiveActions(
         downloadData != null
 
     @Parcelize
-    data class Choices(
-        val items: List<Choice>,
-        val selectedIndex: Int
-    ) : Parcelable
+    data class Choices(val items: List<Choice>, val selectedIndex: Int) : Parcelable
 
     @Parcelize
-    data class Choice(
-        val title: String,
-        val action: JiveAction
-    ) : Parcelable
+    data class Choice(val title: String, val action: JiveAction) : Parcelable
 
     @Parcelize
     data class Slider(
@@ -66,17 +60,11 @@ data class JiveActions(
     ) : Parcelable
 
     @Parcelize
-    data class Checkbox(
-        val state: Boolean,
-        val onAction: JiveAction,
-        val offAction: JiveAction
-    ) : Parcelable
+    data class Checkbox(val state: Boolean, val onAction: JiveAction, val offAction: JiveAction) :
+        Parcelable
 
     @Parcelize
-    data class Radio(
-        val state: Boolean,
-        val action: JiveAction
-    ) : Parcelable
+    data class Radio(val state: Boolean, val action: JiveAction) : Parcelable
 
     // inputStyle
     @Parcelize

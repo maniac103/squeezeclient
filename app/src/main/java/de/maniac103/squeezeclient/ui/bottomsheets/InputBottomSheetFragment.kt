@@ -29,9 +29,8 @@ import de.maniac103.squeezeclient.model.JiveActions
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import kotlinx.coroutines.Job
 
-class InputBottomSheetFragment : BaseBottomSheet<BottomSheetContentInputBinding>(
-    BottomSheetContentInputBinding::inflate
-) {
+class InputBottomSheetFragment :
+    BaseBottomSheet<BottomSheetContentInputBinding>(BottomSheetContentInputBinding::inflate) {
     interface ItemSubmitListener {
         fun onInputSubmitted(
             item: SlimBrowseItemList.SlimBrowseItem,

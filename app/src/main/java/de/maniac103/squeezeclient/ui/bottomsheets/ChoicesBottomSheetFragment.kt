@@ -28,9 +28,8 @@ import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.JiveActions
 import kotlinx.coroutines.Job
 
-class ChoicesBottomSheetFragment : BaseBottomSheet<BottomSheetContentChoicesBinding>(
-    BottomSheetContentChoicesBinding::inflate
-) {
+class ChoicesBottomSheetFragment :
+    BaseBottomSheet<BottomSheetContentChoicesBinding>(BottomSheetContentChoicesBinding::inflate) {
     interface SelectionListener {
         fun onChoiceSelected(choice: JiveAction, extraData: Bundle?): Job?
     }

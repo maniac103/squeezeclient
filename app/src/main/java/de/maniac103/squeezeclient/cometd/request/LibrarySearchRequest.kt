@@ -22,12 +22,8 @@ import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
 import kotlinx.parcelize.Parcelize
 
-class LibrarySearchRequest(
-    playerId: PlayerId,
-    searchTerm: String,
-    mode: Mode,
-    page: PagingParams
-) : Request(playerId, page, "browselibrary", "items") {
+class LibrarySearchRequest(playerId: PlayerId, searchTerm: String, mode: Mode, page: PagingParams) :
+    Request(playerId, page, "browselibrary", "items") {
     init {
         params["mode"] = mode.cmd
         params["search"] = searchTerm

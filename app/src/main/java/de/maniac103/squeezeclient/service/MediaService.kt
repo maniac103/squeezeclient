@@ -76,7 +76,10 @@ import kotlinx.coroutines.guava.future
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 
-class MediaService : MediaSessionService(), LifecycleOwner, MediaSession.Callback {
+class MediaService :
+    MediaSessionService(),
+    LifecycleOwner,
+    MediaSession.Callback {
     private val dispatcher = ServiceLifecycleDispatcher(this)
     override val lifecycle: Lifecycle get() = dispatcher.lifecycle
     private lateinit var player: SqueezeboxPlayer
@@ -262,7 +265,8 @@ class MediaService : MediaSessionService(), LifecycleOwner, MediaSession.Callbac
         private val appContext: Context,
         private val connectionHelper: ConnectionHelper,
         private val lifecycle: Lifecycle
-    ) : SimpleBasePlayer(Looper.getMainLooper()), CoroutineScope by lifecycle.coroutineScope {
+    ) : SimpleBasePlayer(Looper.getMainLooper()),
+        CoroutineScope by lifecycle.coroutineScope {
         var currentPlayer: PlayerId? = null
             set(value) {
                 if (field != value) {

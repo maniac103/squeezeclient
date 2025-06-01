@@ -20,9 +20,8 @@ package de.maniac103.squeezeclient.ui.bottomsheets
 import androidx.core.os.bundleOf
 import de.maniac103.squeezeclient.databinding.BottomSheetContentInfoBinding
 
-class InfoBottomSheet : BaseBottomSheet<BottomSheetContentInfoBinding>(
-    BottomSheetContentInfoBinding::inflate
-) {
+class InfoBottomSheet :
+    BaseBottomSheet<BottomSheetContentInfoBinding>(BottomSheetContentInfoBinding::inflate) {
     override val title get() = requireArguments().getString("title")!!
     private val text get() = requireArguments().getString("text")!!
 

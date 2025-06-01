@@ -105,20 +105,18 @@ sealed class PlayerViewHolder(
         volumeSlider.value = data.volume.toFloat()
     }
 
-    class MasterPlayerViewHolder(
-        val binding: ListItemMasterPlayerBinding,
-        callback: Callback
-    ) : PlayerViewHolder(
-        binding.root,
-        binding.content,
-        binding.dragHandle.dragHandle,
-        binding.name,
-        binding.model,
-        binding.power,
-        binding.playState,
-        binding.volume,
-        callback
-    ) {
+    class MasterPlayerViewHolder(val binding: ListItemMasterPlayerBinding, callback: Callback) :
+        PlayerViewHolder(
+            binding.root,
+            binding.content,
+            binding.dragHandle.dragHandle,
+            binding.name,
+            binding.model,
+            binding.power,
+            binding.playState,
+            binding.volume,
+            callback
+        ) {
         override fun bindTo(data: PlayerData) {
             super.bindTo(data)
             binding.nowplaying.isVisible = data.nowPlayingInfo != null
@@ -128,18 +126,16 @@ sealed class PlayerViewHolder(
         }
     }
 
-    class SlavePlayerViewHolder(
-        val binding: ListItemSlavePlayerBinding,
-        callback: Callback
-    ) : PlayerViewHolder(
-        binding.root,
-        binding.content,
-        binding.dragHandle.dragHandle,
-        binding.name,
-        binding.model,
-        binding.power,
-        null,
-        binding.volume,
-        callback
-    )
+    class SlavePlayerViewHolder(val binding: ListItemSlavePlayerBinding, callback: Callback) :
+        PlayerViewHolder(
+            binding.root,
+            binding.content,
+            binding.dragHandle.dragHandle,
+            binding.name,
+            binding.model,
+            binding.power,
+            null,
+            binding.volume,
+            callback
+        )
 }

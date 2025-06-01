@@ -32,9 +32,10 @@ import de.maniac103.squeezeclient.ui.common.BasePrepopulatedListAdapter
 import de.maniac103.squeezeclient.ui.common.ViewBindingFragment
 import kotlinx.coroutines.Job
 
-class ContextMenuItemListFragment : ViewBindingFragment<FragmentContextMenuListBinding>(
-    FragmentContextMenuListBinding::inflate
-) {
+class ContextMenuItemListFragment :
+    ViewBindingFragment<FragmentContextMenuListBinding>(
+        FragmentContextMenuListBinding::inflate
+    ) {
     fun interface ItemClickListener {
         fun onItemClicked(item: SlimBrowseItemList.SlimBrowseItem): Job?
     }
@@ -58,9 +59,8 @@ class ContextMenuItemListFragment : ViewBindingFragment<FragmentContextMenuListB
         }
     }
 
-    private class ItemAdapter(
-        items: List<SlimBrowseItemList.SlimBrowseItem>
-    ) : BasePrepopulatedListAdapter<SlimBrowseItemList.SlimBrowseItem, ItemViewHolder>(items) {
+    private class ItemAdapter(items: List<SlimBrowseItemList.SlimBrowseItem>) :
+        BasePrepopulatedListAdapter<SlimBrowseItemList.SlimBrowseItem, ItemViewHolder>(items) {
         override fun onCreateViewHolder(
             inflater: LayoutInflater,
             parent: ViewGroup,

@@ -28,10 +28,8 @@ import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.extfuncs.doOnTransitionCompleted
 import de.maniac103.squeezeclient.ui.widget.AbstractMotionLayoutTransitionListener
 
-class NowPlayingScreenMotionLayout(
-    context: Context,
-    attributeSet: AttributeSet? = null
-) : MotionLayout(context, attributeSet) {
+class NowPlayingScreenMotionLayout(context: Context, attributeSet: AttributeSet? = null) :
+    MotionLayout(context, attributeSet) {
     private val viewToDetectTouch by lazy {
         findViewById<View>(R.id.player_background)
     }

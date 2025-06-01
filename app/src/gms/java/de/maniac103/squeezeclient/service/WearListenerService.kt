@@ -51,7 +51,9 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.tasks.asTask
 import kotlinx.coroutines.withTimeoutOrNull
 
-class WearListenerService : WearableListenerService(), LifecycleOwner {
+class WearListenerService :
+    WearableListenerService(),
+    LifecycleOwner {
     private val dispatcher = ServiceLifecycleDispatcher(this)
     override val lifecycle: Lifecycle get() = dispatcher.lifecycle
 

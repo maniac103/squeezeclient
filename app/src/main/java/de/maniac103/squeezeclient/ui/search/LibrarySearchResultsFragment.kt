@@ -22,10 +22,8 @@ import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.cometd.request.LibrarySearchRequest
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.getParcelable
-import de.maniac103.squeezeclient.model.ListResponse
 import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
-import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.ui.itemlist.BaseSlimBrowseItemListFragment
 import kotlinx.coroutines.flow.flowOf
 
@@ -40,11 +38,8 @@ class LibrarySearchResultsFragment : BaseSlimBrowseItemListFragment() {
     override val fastScrollEnabled = true
     override val showIcons = true
 
-    override suspend fun onLoadPage(
-        page: PagingParams
-    ): ListResponse<SlimBrowseItemList.SlimBrowseItem> {
-        return connectionHelper.getLocalLibrarySearchResults(playerId, searchTerm, searchType, page)
-    }
+    override suspend fun onLoadPage(page: PagingParams) =
+        connectionHelper.getLocalLibrarySearchResults(playerId, searchTerm, searchType, page)
 
     companion object {
         fun create(playerId: PlayerId, type: LibrarySearchRequest.Mode, searchTerm: String) =

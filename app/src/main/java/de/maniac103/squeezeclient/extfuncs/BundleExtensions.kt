@@ -21,14 +21,11 @@ import android.os.Bundle
 import androidx.core.os.BundleCompat
 import kotlin.reflect.KClass
 
-inline fun <reified T : Any> Bundle.getParcelable(key: String, clazz: KClass<T>): T {
-    return BundleCompat.getParcelable(this, key, clazz.java)!!
-}
+inline fun <reified T : Any> Bundle.getParcelable(key: String, clazz: KClass<T>) =
+    BundleCompat.getParcelable(this, key, clazz.java)!!
 
-inline fun <reified T : Any> Bundle.getParcelableOrNull(key: String, clazz: KClass<T>): T? {
-    return BundleCompat.getParcelable(this, key, clazz.java)
-}
+inline fun <reified T : Any> Bundle.getParcelableOrNull(key: String, clazz: KClass<T>): T? =
+    BundleCompat.getParcelable(this, key, clazz.java)
 
-inline fun <reified T : Any> Bundle.getParcelableList(key: String, clazz: KClass<T>): List<T> {
-    return BundleCompat.getParcelableArrayList(this, key, clazz.java)!!
-}
+inline fun <reified T : Any> Bundle.getParcelableList(key: String, clazz: KClass<T>) =
+    BundleCompat.getParcelableArrayList(this, key, clazz.java)!!

@@ -60,7 +60,9 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import okhttp3.Response
 
-class LocalPlaybackService : Service(), LifecycleOwner {
+class LocalPlaybackService :
+    Service(),
+    LifecycleOwner {
     private val dispatcher = ServiceLifecycleDispatcher(this)
     private lateinit var slimproto: SlimprotoSocket
     private lateinit var player: LocalPlayer

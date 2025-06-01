@@ -26,7 +26,9 @@ import androidx.core.graphics.blue
 import androidx.core.graphics.green
 import androidx.core.graphics.red
 
-class AlphaSpan(private val alpha: Float) : CharacterStyle(), UpdateAppearance {
+class AlphaSpan(private val alpha: Float) :
+    CharacterStyle(),
+    UpdateAppearance {
     override fun updateDrawState(paint: TextPaint) {
         val color = paint.color
         val newAlpha = (alpha * color.alpha).toInt()

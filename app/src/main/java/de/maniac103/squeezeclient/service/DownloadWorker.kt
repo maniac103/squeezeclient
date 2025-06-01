@@ -70,10 +70,8 @@ import okio.buffer
 import okio.sink
 import okio.use
 
-class DownloadWorker(
-    context: Context,
-    params: WorkerParameters
-) : CoroutineWorker(context, params) {
+class DownloadWorker(context: Context, params: WorkerParameters) :
+    CoroutineWorker(context, params) {
     private var progress = Data.EMPTY
 
     override suspend fun doWork(): Result {

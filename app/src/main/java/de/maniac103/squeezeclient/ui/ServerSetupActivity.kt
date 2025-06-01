@@ -284,11 +284,7 @@ class ServerSetupActivity : AppCompatActivity() {
         return keyValuePairs
     }
 
-    data class ServerDiscoveryResult(
-        val serverName: String,
-        val hostName: String,
-        val port: Int?
-    ) {
+    data class ServerDiscoveryResult(val serverName: String, val hostName: String, val port: Int?) {
         override fun toString() = serverName
     }
 
@@ -299,10 +295,8 @@ class ServerSetupActivity : AppCompatActivity() {
 
         private const val EXTRA_ALLOW_BACK = "allowBack"
 
-        fun createIntent(context: Context, allowBack: Boolean): Intent {
-            return Intent(context, ServerSetupActivity::class.java).apply {
-                putExtra(EXTRA_ALLOW_BACK, allowBack)
-            }
-        }
+        fun createIntent(context: Context, allowBack: Boolean) =
+            Intent(context, ServerSetupActivity::class.java)
+                .putExtra(EXTRA_ALLOW_BACK, allowBack)
     }
 }

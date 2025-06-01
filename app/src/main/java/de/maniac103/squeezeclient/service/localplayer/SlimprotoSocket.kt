@@ -94,10 +94,7 @@ class SlimprotoSocket(prefs: SharedPreferences) {
     }
 
     sealed class CommandPacket {
-        data class AudioEnable(
-            val spdifEnable: Boolean,
-            val dacEnable: Boolean
-        ) : CommandPacket()
+        data class AudioEnable(val spdifEnable: Boolean, val dacEnable: Boolean) : CommandPacket()
         data class AudioGain(
             val digitalVolume: Boolean,
             val preamp: UByte,

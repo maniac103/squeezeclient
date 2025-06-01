@@ -24,9 +24,8 @@ import android.graphics.drawable.Drawable
 import android.graphics.drawable.DrawableWrapper
 import android.graphics.drawable.InsetDrawable
 
-class RoundedCornerProgressDrawable @JvmOverloads constructor(
-    drawable: Drawable? = null
-) : InsetDrawable(drawable, 0) {
+class RoundedCornerProgressDrawable @JvmOverloads constructor(drawable: Drawable? = null) :
+    InsetDrawable(drawable, 0) {
 
     companion object {
         private const val MAX_LEVEL = 10000 // Taken from Drawable
@@ -55,30 +54,21 @@ class RoundedCornerProgressDrawable @JvmOverloads constructor(
         return RoundedCornerState(super.getConstantState()!!)
     }
 
-    override fun getChangingConfigurations(): Int {
-        return super.getChangingConfigurations() or ActivityInfo.CONFIG_DENSITY
-    }
+    override fun getChangingConfigurations() =
+        super.getChangingConfigurations() or ActivityInfo.CONFIG_DENSITY
 
-    override fun canApplyTheme(): Boolean {
-        return (drawable?.canApplyTheme() ?: false) || super.canApplyTheme()
-    }
+    override fun canApplyTheme() = (drawable?.canApplyTheme() == true) || super.canApplyTheme()
 
     private class RoundedCornerState(private val wrappedState: ConstantState) : ConstantState() {
-        override fun newDrawable(): Drawable {
-            return newDrawable(null, null)
-        }
+        override fun newDrawable() = newDrawable(null, null)
 
         override fun newDrawable(res: Resources?, theme: Resources.Theme?): Drawable {
             val wrapper = wrappedState.newDrawable(res, theme) as DrawableWrapper
             return RoundedCornerProgressDrawable(wrapper.drawable)
         }
 
-        override fun getChangingConfigurations(): Int {
-            return wrappedState.changingConfigurations
-        }
+        override fun getChangingConfigurations() = wrappedState.changingConfigurations
 
-        override fun canApplyTheme(): Boolean {
-            return true
-        }
+        override fun canApplyTheme() = true
     }
 }

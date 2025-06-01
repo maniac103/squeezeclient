@@ -77,11 +77,7 @@ abstract class BasePrepopulatedListAdapter<T, VH : RecyclerView.ViewHolder>(item
         onBindViewHolder(holder, internalItems[position])
     }
 
-    override fun getItemViewType(position: Int): Int {
-        return getItemViewType(internalItems[position])
-    }
+    override fun getItemViewType(position: Int) = getItemViewType(internalItems[position])
 
-    override fun getItemCount(): Int {
-        return internalItems.size
-    }
+    override fun getItemCount() = internalItems.size
 }

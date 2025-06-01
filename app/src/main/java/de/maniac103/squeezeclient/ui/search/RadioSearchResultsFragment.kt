@@ -21,10 +21,8 @@ import androidx.core.os.bundleOf
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.getParcelable
-import de.maniac103.squeezeclient.model.ListResponse
 import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
-import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.ui.itemlist.BaseSlimBrowseItemListFragment
 import kotlinx.coroutines.flow.flowOf
 
@@ -37,11 +35,8 @@ class RadioSearchResultsFragment : BaseSlimBrowseItemListFragment() {
     override val showIcons = true
     override val fastScrollEnabled = true
 
-    override suspend fun onLoadPage(
-        page: PagingParams
-    ): ListResponse<SlimBrowseItemList.SlimBrowseItem> {
-        return connectionHelper.getRadioSearchResults(playerId, searchTerm, page)
-    }
+    override suspend fun onLoadPage(page: PagingParams) =
+        connectionHelper.getRadioSearchResults(playerId, searchTerm, page)
 
     companion object {
         fun create(playerId: PlayerId, searchTerm: String) = RadioSearchResultsFragment().apply {

@@ -27,9 +27,8 @@ import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.databinding.ListItemSlimbrowseBinding
 import de.maniac103.squeezeclient.model.Playlist
 
-class PlaylistItemAdapter(
-    diffCallback: DiffUtil.ItemCallback<Playlist.PlaylistItem>
-) : PagingDataAdapter<Playlist.PlaylistItem, PlaylistItemViewHolder>(diffCallback) {
+class PlaylistItemAdapter(diffCallback: DiffUtil.ItemCallback<Playlist.PlaylistItem>) :
+    PagingDataAdapter<Playlist.PlaylistItem, PlaylistItemViewHolder>(diffCallback) {
     private data class SwapInfo(val fromPos: Int, val toPos: Int)
     private data class PendingSelection(val position: Int?)
 

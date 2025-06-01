@@ -29,10 +29,8 @@ import de.maniac103.squeezeclient.extfuncs.localPlayerEnabled
 import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.extfuncs.workManager
 
-class LocalPlayerStartupWorker(
-    context: Context,
-    params: WorkerParameters
-) : CoroutineWorker(context, params) {
+class LocalPlayerStartupWorker(context: Context, params: WorkerParameters) :
+    CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
         val intent = Intent(applicationContext, LocalPlaybackService::class.java)
         applicationContext.startForegroundService(intent)

@@ -97,16 +97,12 @@ abstract class BaseSlimBrowseItemListFragment :
     override fun areItemsTheSame(
         lhs: SlimBrowseItemList.SlimBrowseItem,
         rhs: SlimBrowseItemList.SlimBrowseItem
-    ): Boolean {
-        return lhs.listPosition == rhs.listPosition
-    }
+    ) = lhs.listPosition == rhs.listPosition
 
     override fun areItemContentsTheSame(
         lhs: SlimBrowseItemList.SlimBrowseItem,
         rhs: SlimBrowseItemList.SlimBrowseItem
-    ): Boolean {
-        return lhs == rhs
-    }
+    ) = lhs == rhs
 
     // SlimBrowseItemListAdapter.ItemSelectionListener implementation
 

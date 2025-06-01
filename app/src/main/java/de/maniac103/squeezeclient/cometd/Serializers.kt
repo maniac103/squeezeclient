@@ -29,9 +29,7 @@ import kotlinx.serialization.encoding.Encoder
 object BooleanAsIntSerializer : KSerializer<Boolean> {
     override val descriptor: SerialDescriptor get() =
         PrimitiveSerialDescriptor("BooleanAsInt", PrimitiveKind.INT)
-    override fun deserialize(decoder: Decoder): Boolean {
-        return decoder.decodeInt() != 0
-    }
+    override fun deserialize(decoder: Decoder) = decoder.decodeInt() != 0
     override fun serialize(encoder: Encoder, value: Boolean) {
         encoder.encodeInt(if (value) 1 else 0)
     }
@@ -56,9 +54,7 @@ object TimestampAsInstantSerializer : KSerializer<Instant> {
 object PlayerIdSerializer : KSerializer<PlayerId> {
     override val descriptor: SerialDescriptor get() =
         PrimitiveSerialDescriptor("PlayerId", PrimitiveKind.STRING)
-    override fun deserialize(decoder: Decoder): PlayerId {
-        return PlayerId(decoder.decodeString())
-    }
+    override fun deserialize(decoder: Decoder) = PlayerId(decoder.decodeString())
     override fun serialize(encoder: Encoder, value: PlayerId) {
         encoder.encodeString(value.id)
     }
@@ -67,9 +63,8 @@ object PlayerIdSerializer : KSerializer<PlayerId> {
 object PlayerIdListAsStringSerializer : KSerializer<List<PlayerId>> {
     override val descriptor: SerialDescriptor get() =
         PrimitiveSerialDescriptor("PlayerIdList", PrimitiveKind.STRING)
-    override fun deserialize(decoder: Decoder): List<PlayerId> {
-        return decoder.decodeString().split(',').map { PlayerId(it) }
-    }
+    override fun deserialize(decoder: Decoder) =
+        decoder.decodeString().split(',').map { PlayerId(it) }
     override fun serialize(encoder: Encoder, value: List<PlayerId>) {
         encoder.encodeString(value.joinToString(",") { it.id })
     }
@@ -78,9 +73,7 @@ object PlayerIdListAsStringSerializer : KSerializer<List<PlayerId>> {
 object ChannelIdSerializer : KSerializer<CometdClient.ChannelId> {
     override val descriptor: SerialDescriptor get() =
         PrimitiveSerialDescriptor("PlayerId", PrimitiveKind.STRING)
-    override fun deserialize(decoder: Decoder): CometdClient.ChannelId {
-        return CometdClient.ChannelId(decoder.decodeString())
-    }
+    override fun deserialize(decoder: Decoder) = CometdClient.ChannelId(decoder.decodeString())
     override fun serialize(encoder: Encoder, value: CometdClient.ChannelId) {
         encoder.encodeString(value.channel)
     }

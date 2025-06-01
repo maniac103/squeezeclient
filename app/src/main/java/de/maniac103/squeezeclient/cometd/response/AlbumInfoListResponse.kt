@@ -27,10 +27,7 @@ data class AlbumInfoListResponse(
     val items: List<AlbumInfo>
 ) {
     @Serializable
-    data class AlbumInfo(
-        val id: Long,
-        val year: Int
-    )
+    data class AlbumInfo(val id: Long, val year: Int)
 
     fun yearsById() = items.associate { it.id to it.year }
 }

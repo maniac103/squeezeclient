@@ -41,9 +41,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 
-class DisplayStatusFragment : ViewBindingFragment<FragmentDisplaystatusBinding>(
-    FragmentDisplaystatusBinding::inflate
-) {
+class DisplayStatusFragment :
+    ViewBindingFragment<FragmentDisplaystatusBinding>(FragmentDisplaystatusBinding::inflate) {
     private val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)
 
     private var hideJob: Job? = null
@@ -92,10 +91,8 @@ class DisplayStatusFragment : ViewBindingFragment<FragmentDisplaystatusBinding>(
     }
 
     companion object {
-        fun create(playerId: PlayerId): DisplayStatusFragment {
-            return DisplayStatusFragment().apply {
-                arguments = bundleOf("playerId" to playerId)
-            }
+        fun create(playerId: PlayerId) = DisplayStatusFragment().apply {
+            arguments = bundleOf("playerId" to playerId)
         }
     }
 }

@@ -20,16 +20,13 @@ package de.maniac103.squeezeclient.cometd.request
 import de.maniac103.squeezeclient.model.PlayerId
 import kotlin.time.Duration
 
-class SetPlaylistPositionRequest(
-    playerId: PlayerId,
-    position: Int,
-    fadeInDuration: Duration
-) : NonPagedPlayerRequest(
-    playerId,
-    "playlist",
-    "index",
-    position.toString(),
-    fadeInDuration.inWholeSeconds.toString(),
-    // noplay
-    "1"
-)
+class SetPlaylistPositionRequest(playerId: PlayerId, position: Int, fadeInDuration: Duration) :
+    NonPagedPlayerRequest(
+        playerId,
+        "playlist",
+        "index",
+        position.toString(),
+        fadeInDuration.inWholeSeconds.toString(),
+        // noplay
+        "1"
+    )

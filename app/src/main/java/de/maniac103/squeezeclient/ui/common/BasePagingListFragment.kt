@@ -62,13 +62,11 @@ abstract class BasePagingListFragment<T : Any, VH : RecyclerView.ViewHolder> :
 
     override fun onBindingCreated(binding: FragmentGenericListBinding) {
         val diffCallback = object : DiffUtil.ItemCallback<T>() {
-            override fun areItemsTheSame(oldItem: T, newItem: T): Boolean {
-                return this@BasePagingListFragment.areItemsTheSame(oldItem, newItem)
-            }
+            override fun areItemsTheSame(oldItem: T, newItem: T) =
+                this@BasePagingListFragment.areItemsTheSame(oldItem, newItem)
 
-            override fun areContentsTheSame(oldItem: T, newItem: T): Boolean {
-                return this@BasePagingListFragment.areItemContentsTheSame(oldItem, newItem)
-            }
+            override fun areContentsTheSame(oldItem: T, newItem: T) =
+                this@BasePagingListFragment.areItemContentsTheSame(oldItem, newItem)
         }
 
         binding.recycler.layoutManager = if (useGrid) {
@@ -112,12 +110,11 @@ abstract class BasePagingListFragment<T : Any, VH : RecyclerView.ViewHolder> :
     private class ItemSource<T : Any>(
         private val producer: suspend (PagingParams) -> ListResponse<T>
     ) : PagingSource<Int, T>() {
-        override fun getRefreshKey(state: PagingState<Int, T>): Int? {
-            return state.anchorPosition?.let { anchorPosition ->
+        override fun getRefreshKey(state: PagingState<Int, T>) =
+            state.anchorPosition?.let { anchorPosition ->
                 val anchorPage = state.closestPageToPosition(anchorPosition)
                 anchorPage?.prevKey?.plus(1) ?: anchorPage?.nextKey?.minus(1)
             }
-        }
 
         override suspend fun load(params: LoadParams<Int>): LoadResult<Int, T> = try {
             val pageNumber = params.key ?: 0

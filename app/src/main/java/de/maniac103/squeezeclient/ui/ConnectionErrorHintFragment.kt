@@ -26,9 +26,10 @@ import de.maniac103.squeezeclient.databinding.FragmentConnectionFailHintBinding
 import de.maniac103.squeezeclient.extfuncs.requireParentAs
 import de.maniac103.squeezeclient.ui.common.ViewBindingFragment
 
-class ConnectionErrorHintFragment : ViewBindingFragment<FragmentConnectionFailHintBinding>(
-    FragmentConnectionFailHintBinding::inflate
-) {
+class ConnectionErrorHintFragment :
+    ViewBindingFragment<FragmentConnectionFailHintBinding>(
+        FragmentConnectionFailHintBinding::inflate
+    ) {
     fun interface Listener {
         fun onActionInvoked(index: Int, tag: String?)
     }

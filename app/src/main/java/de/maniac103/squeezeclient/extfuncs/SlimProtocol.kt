@@ -30,10 +30,8 @@ fun JiveAction.fetchesAlbumList() =
 fun JiveAction.fetchesAlbumTrackList() =
     cmd == listOf("browselibrary", "items") && params["mode"] == "tracks"
 
-fun JsonObject.extractSlimBrowseAlbumIdForAlbumListResponse(): Long? {
-    return get("album_id")?.jsonPrimitive?.longOrNull
-}
+fun JsonObject.extractSlimBrowseAlbumIdForAlbumListResponse() =
+    get("album_id")?.jsonPrimitive?.longOrNull
 
-fun JsonObject.extractSlimBrowseTrackIdForTrackListResponse(): Long? {
-    return get("track_id")?.jsonPrimitive?.longOrNull
-}
+fun JsonObject.extractSlimBrowseTrackIdForTrackListResponse() =
+    get("track_id")?.jsonPrimitive?.longOrNull

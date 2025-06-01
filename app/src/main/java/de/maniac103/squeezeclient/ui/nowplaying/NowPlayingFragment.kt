@@ -274,7 +274,7 @@ class NowPlayingFragment :
 
     override fun onPrepareMenu(menu: Menu) {
         super.onPrepareMenu(menu)
-        menu.findItem(R.id.info)?.setVisible(currentSong?.actions?.moreAction != null)
+        menu.findItem(R.id.info)?.isVisible = currentSong?.actions?.moreAction != null
     }
 
     override fun onMenuItemSelected(menuItem: MenuItem) = when (menuItem.itemId) {

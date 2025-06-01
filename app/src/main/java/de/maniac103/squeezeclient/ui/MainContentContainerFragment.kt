@@ -58,7 +58,6 @@ import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseSubItemListFragment
 import de.maniac103.squeezeclient.ui.search.LibrarySearchResultsFragment
 import de.maniac103.squeezeclient.ui.search.RadioSearchResultsFragment
 import de.maniac103.squeezeclient.ui.slideshow.GalleryFragment
-import java.lang.IllegalStateException
 import kotlin.math.max
 import kotlin.math.min
 import kotlinx.coroutines.ExperimentalCoroutinesApi

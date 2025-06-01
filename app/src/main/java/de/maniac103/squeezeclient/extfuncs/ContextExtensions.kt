@@ -20,6 +20,7 @@ package de.maniac103.squeezeclient.extfuncs
 import android.content.Context
 import android.content.SharedPreferences
 import android.graphics.drawable.Drawable
+import android.view.animation.Interpolator
 import androidx.preference.PreferenceManager
 import androidx.work.WorkManager
 import coil.imageLoader
@@ -37,7 +38,7 @@ val Context.httpClient get() =
 val Context.workManager get() = WorkManager.getInstance(this)
 val Context.prefs: SharedPreferences get() =
     PreferenceManager.getDefaultSharedPreferences(this)
-val Context.backProgressInterpolator get() =
+val Context.backProgressInterpolator: Interpolator? get() =
     (applicationContext as SqueezeClientApplication).backProgressInterpolator
 
 fun Context.imageCacheContains(item: ArtworkItem?) = item?.extractIconUrl(this)

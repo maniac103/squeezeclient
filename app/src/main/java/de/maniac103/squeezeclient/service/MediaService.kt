@@ -320,17 +320,17 @@ class MediaService :
         override fun handleSeek(mediaItemIndex: Int, positionMs: Long, seekCommand: Int) = future {
             val playerId = currentPlayer ?: return@future
             when (seekCommand) {
-                Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM, Player.COMMAND_SEEK_TO_NEXT ->
+                COMMAND_SEEK_TO_NEXT_MEDIA_ITEM, COMMAND_SEEK_TO_NEXT ->
                     connectionHelper.sendButtonRequest(PlaybackButtonRequest.NextTrack(playerId))
-                Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM, Player.COMMAND_SEEK_TO_PREVIOUS ->
+                COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM, COMMAND_SEEK_TO_PREVIOUS ->
                     connectionHelper.sendButtonRequest(
                         PlaybackButtonRequest.PreviousTrack(playerId)
                     )
-                Player.COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM -> {
+                COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM -> {
                     val positionSeconds = ((positionMs + 500) / 1000).toInt()
                     connectionHelper.updatePlaybackPosition(playerId, positionSeconds)
                 }
-                Player.COMMAND_SEEK_TO_MEDIA_ITEM -> {
+                COMMAND_SEEK_TO_MEDIA_ITEM -> {
                     val positionSeconds = ((positionMs + 500) / 1000).toInt()
                     connectionHelper.advanceToPlaylistPosition(playerId, mediaItemIndex)
                     if (positionSeconds > 0) {

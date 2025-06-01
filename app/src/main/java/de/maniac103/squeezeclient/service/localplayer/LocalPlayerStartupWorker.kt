@@ -50,7 +50,8 @@ class LocalPlayerStartupWorker(context: Context, params: WorkerParameters) :
                     .build()
                 context.workManager.enqueue(request)
             } else {
-                context.stopService(Intent(context, LocalPlaybackService::class.java))
+                val intent = Intent(context, LocalPlaybackService::class.java)
+                context.stopService(intent)
             }
         }
     }

@@ -21,6 +21,7 @@ import android.app.Application
 import android.content.SharedPreferences
 import android.os.Build
 import android.view.animation.AnimationUtils
+import android.view.animation.Interpolator
 import androidx.appcompat.app.AppCompatDelegate
 import com.google.android.material.color.DynamicColors
 import com.markodevcic.peko.PermissionRequester
@@ -55,7 +56,7 @@ class SqueezeClientApplication :
         .followRedirects(true)
         .build()
     val connectionHelper = ConnectionHelper(this)
-    val backProgressInterpolator by lazy {
+    val backProgressInterpolator: Interpolator? by lazy {
         AnimationUtils.loadInterpolator(this, android.R.interpolator.decelerate_quint)
     }
 

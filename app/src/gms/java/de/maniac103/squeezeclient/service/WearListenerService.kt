@@ -180,7 +180,8 @@ class WearListenerService :
     }
 
     private fun handleStopMediaService() {
-        stopService(Intent(this, MediaService::class.java))
+        val intent = Intent(this, MediaService::class.java)
+        stopService(intent)
     }
 
     companion object {

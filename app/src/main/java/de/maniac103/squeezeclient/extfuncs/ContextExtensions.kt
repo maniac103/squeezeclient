@@ -38,7 +38,7 @@ val Context.httpClient get() =
 val Context.workManager get() = WorkManager.getInstance(this)
 val Context.prefs: SharedPreferences get() =
     PreferenceManager.getDefaultSharedPreferences(this)
-val Context.backProgressInterpolator: Interpolator? get() =
+val Context.backProgressInterpolator: Interpolator get() =
     (applicationContext as SqueezeClientApplication).backProgressInterpolator
 
 fun Context.imageCacheContains(item: ArtworkItem?) = item?.extractIconUrl(this)

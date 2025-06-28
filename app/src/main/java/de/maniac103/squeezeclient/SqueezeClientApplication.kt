@@ -56,8 +56,8 @@ class SqueezeClientApplication :
         .followRedirects(true)
         .build()
     val connectionHelper = ConnectionHelper(this)
-    val backProgressInterpolator: Interpolator? by lazy {
-        AnimationUtils.loadInterpolator(this, android.R.interpolator.decelerate_quint)
+    val backProgressInterpolator: Interpolator by lazy {
+        AnimationUtils.loadInterpolator(this, android.R.interpolator.decelerate_quint)!!
     }
 
     override fun onCreate() {

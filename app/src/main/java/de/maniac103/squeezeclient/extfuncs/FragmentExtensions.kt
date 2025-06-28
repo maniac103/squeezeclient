@@ -29,7 +29,7 @@ import kotlinx.datetime.toLocalDateTime
 
 val Fragment.connectionHelper get() = requireContext().connectionHelper
 val Fragment.prefs get() = requireContext().prefs
-val Fragment.backProgressInterpolator: Interpolator? get() =
+val Fragment.backProgressInterpolator: Interpolator get() =
     requireContext().backProgressInterpolator
 inline fun <reified T> Fragment.parentAs() = parentFragment as? T ?: activity as? T
 inline fun <reified T> Fragment.requireParentAs() = parentAs<T>() ?: throw IllegalStateException(

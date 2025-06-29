@@ -18,7 +18,8 @@
 package de.maniac103.squeezeclient.cometd
 
 import de.maniac103.squeezeclient.model.PlayerId
-import kotlinx.datetime.Instant
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
@@ -35,6 +36,7 @@ object BooleanAsIntSerializer : KSerializer<Boolean> {
     }
 }
 
+@OptIn(ExperimentalTime::class)
 object TimestampAsInstantSerializer : KSerializer<Instant> {
     override val descriptor: SerialDescriptor get() =
         PrimitiveSerialDescriptor("TimestampAsInstant", PrimitiveKind.DOUBLE)

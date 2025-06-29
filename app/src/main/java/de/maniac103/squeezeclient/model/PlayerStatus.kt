@@ -17,15 +17,17 @@
 
 package de.maniac103.squeezeclient.model
 
+import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 import kotlin.time.toDuration
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-data class PlayerStatus(
+@OptIn(ExperimentalTime::class)
+data class PlayerStatus constructor(
     val playbackState: PlayState,
     val playlist: PlaylistInfo,
     val currentSongDuration: Duration? = null,

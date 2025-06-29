@@ -26,10 +26,11 @@ import de.maniac103.squeezeclient.model.PlayerStatus
 import de.maniac103.squeezeclient.model.Playlist
 import kotlin.math.abs
 import kotlin.math.roundToLong
+import kotlin.time.Clock
 import kotlin.time.DurationUnit
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 import kotlin.time.toDuration
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -38,6 +39,7 @@ import kotlinx.serialization.json.decodeFromJsonElement
 
 // offset and item_loop are not returned when fetching non-existing pages
 @Serializable
+@OptIn(ExperimentalTime::class)
 data class PlayerStatusResponse(
     @SerialName("mode")
     val state: PlayerStatus.PlayState,
@@ -48,6 +50,7 @@ data class PlayerStatusResponse(
     private val base: JsonObject? = null,
     @SerialName("time")
     val playPosition: Float = 0F,
+    @Serializable(with = TimestampAsInstantSerializer::class)
     val eventTimestamp: Instant = Clock.System.now(),
     @SerialName("duration")
     val currentSongDuration: Float? = null,

@@ -56,11 +56,12 @@ import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.extfuncs.serverConfig
 import de.maniac103.squeezeclient.extfuncs.workManager
 import de.maniac103.squeezeclient.model.DownloadSongInfo
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.Clock
 import okhttp3.Request
 import okhttp3.ResponseBody
 import okio.Buffer
@@ -202,6 +203,7 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
         setForeground(getForegroundInfo())
     }
 
+    @OptIn(ExperimentalTime::class)
     class ProgressReportingSource(
         body: ResponseBody,
         private val progressConsumer: (bytesRead: Long, totalLength: Long) -> Unit

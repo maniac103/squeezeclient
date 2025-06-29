@@ -18,9 +18,11 @@
 package de.maniac103.squeezeclient.model
 
 import android.os.Parcelable
-import kotlinx.datetime.Instant
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 import kotlinx.parcelize.Parcelize
 
+@OptIn(ExperimentalTime::class)
 data class Playlist(
     override val items: List<PlaylistItem>,
     override val offset: Int,

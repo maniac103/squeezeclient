@@ -63,6 +63,7 @@ import kotlin.math.max
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
+import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -371,6 +372,7 @@ class NowPlayingFragment :
         }
     }
 
+    @OptIn(ExperimentalTime::class)
     private fun update(status: PlayerStatus) {
         val currentSong = status.playlist.nowPlaying
 

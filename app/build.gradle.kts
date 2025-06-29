@@ -15,6 +15,7 @@
  */
 
 import java.util.Properties
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.android.application)
@@ -29,7 +30,7 @@ val isBuildingFoss = gradle.startParameter.taskRequests.any { req ->
 
 android {
     namespace = "de.maniac103.squeezeclient"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "de.maniac103.squeezeclient"
@@ -108,8 +109,10 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
         isCoreLibraryDesugaringEnabled = true
     }
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_11)
+        }
     }
     packaging {
         resources {

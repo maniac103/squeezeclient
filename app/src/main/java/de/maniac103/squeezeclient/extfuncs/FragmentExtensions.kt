@@ -23,7 +23,8 @@ import androidx.fragment.app.Fragment
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
 import de.maniac103.squeezeclient.model.JiveActions
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
@@ -38,6 +39,7 @@ inline fun <reified T> Fragment.requireParentAs() = parentAs<T>() ?: throw Illeg
 
 // TODO: Refactor this into an own class after upgrading MDC, see
 // https://github.com/material-components/material-components-android/issues/4310
+@OptIn(ExperimentalTime::class)
 fun Fragment.showActionTimePicker(
     title: String,
     input: JiveActions.Input,

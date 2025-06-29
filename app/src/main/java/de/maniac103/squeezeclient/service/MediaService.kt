@@ -65,8 +65,10 @@ import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.PlayerStatus
 import de.maniac103.squeezeclient.model.Playlist
 import de.maniac103.squeezeclient.ui.MainActivity
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.DurationUnit
+import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -74,8 +76,8 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.guava.future
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 
+@kotlin.OptIn(ExperimentalTime::class)
 class MediaService :
     MediaSessionService(),
     LifecycleOwner,

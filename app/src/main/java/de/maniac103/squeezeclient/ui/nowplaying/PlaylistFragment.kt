@@ -37,11 +37,13 @@ import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.Playlist
 import de.maniac103.squeezeclient.ui.common.BasePagingListFragment
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Instant
 
+@OptIn(ExperimentalTime::class)
 class PlaylistFragment :
     BasePagingListFragment<Playlist.PlaylistItem, PlaylistItemViewHolder>() {
     private val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)

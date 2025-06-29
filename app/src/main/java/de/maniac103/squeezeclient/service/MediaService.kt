@@ -118,12 +118,14 @@ class MediaService :
 
         player.currentPlayer = prefs.lastSelectedPlayer
 
-        val powerButton = CommandButton.Builder(R.drawable.ic_power_24dp)
+        val powerButton = CommandButton.Builder(CommandButton.ICON_UNDEFINED)
             .setDisplayName(getString(R.string.notif_action_player_power))
+            .setCustomIconResId(R.drawable.ic_power_24dp)
             .setSessionCommand(SessionCommand(SESSION_ACTION_POWER, bundleOf()))
             .build()
-        val disconnectButton = CommandButton.Builder(R.drawable.ic_disconnect_24dp)
+        val disconnectButton = CommandButton.Builder(CommandButton.ICON_UNDEFINED)
             .setDisplayName(getString(R.string.notif_action_disconnect))
+            .setCustomIconResId(R.drawable.ic_disconnect_24dp)
             .setSessionCommand(SessionCommand(SESSION_ACTION_DISCONNECT, bundleOf()))
             .build()
 

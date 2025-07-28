@@ -181,8 +181,8 @@ class LocalPlaybackService :
                         connected = slimproto.reconnect()
                     }
             }
+            slimprotoStateFlow.emit(SlimprotoState.Disconnected)
         }
-        slimprotoStateFlow.emit(SlimprotoState.Disconnected)
     }
 
     @SuppressLint("InlinedApi")

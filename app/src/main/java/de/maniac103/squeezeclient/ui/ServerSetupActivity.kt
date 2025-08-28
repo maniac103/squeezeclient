@@ -54,7 +54,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import okhttp3.internal.and
 
 class ServerSetupActivity : AppCompatActivity() {
     private lateinit var binding: ActivityServerSetupBinding
@@ -194,7 +193,7 @@ class ServerSetupActivity : AppCompatActivity() {
 
         val (addressEnabled, addressError) = when {
             addressValue.isNullOrEmpty() -> Pair(false, null)
-            addressValue.toString().let { "http://$it" }.toHttpUrlOrNull() != null ->
+            addressValue.let { "http://$it" }.toHttpUrlOrNull() != null ->
                 Pair(true, null)
             else -> Pair(false, getString(R.string.server_address_error, addressValue))
         }
@@ -234,7 +233,7 @@ class ServerSetupActivity : AppCompatActivity() {
                 withContext(Dispatchers.IO) {
                     socket.receive(responsePacket)
                 }
-            } catch (e: SocketException) {
+            } catch (_: SocketException) {
                 channel.close()
             }
 
@@ -268,8 +267,8 @@ class ServerSetupActivity : AppCompatActivity() {
             val key = String(data, position, 4)
             position += 4
 
-            // Read the length, and skip over it.& 0xff to it is an unsigned byte
-            val valueLength = data[position++] and 0xff
+            // Read the length, and skip over it
+            val valueLength = data[position++].toInt()
 
             // Check if the buffer is truncated by the server, and bail out if it is.
             if (position + valueLength > packetLength) {

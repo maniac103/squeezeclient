@@ -29,8 +29,8 @@ object NotificationIds {
 
     data class ChannelInfo(
         val id: String,
-        @StringRes val nameResId: Int,
-        @StringRes val descResId: Int,
+        @param:StringRes val nameResId: Int,
+        @param:StringRes val descResId: Int,
         val importance: Int
     )
 

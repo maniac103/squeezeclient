@@ -69,6 +69,10 @@ val SharedPreferences.useVolumeButtonsForPlayerVolume: Boolean get() =
 
 val SharedPreferences.localPlayerEnabled get() = getBoolean("local_player_enabled", false)
 
+fun SharedPreferences.Editor.putLocalPlayerEnabled(enabled: Boolean) {
+    putBoolean("local_player_enabled", enabled)
+}
+
 enum class LocalPlayerVolumeMode(val prefValue: String) {
     PlayerOnly("playeronly"),
     Device("device"),

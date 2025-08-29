@@ -25,6 +25,7 @@ import android.util.Log
 import android.view.KeyEvent
 import android.view.Menu
 import android.view.View
+import android.widget.CompoundButton
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.edit
@@ -50,8 +51,10 @@ import de.maniac103.squeezeclient.extfuncs.backProgressInterpolator
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.getParcelableOrNull
 import de.maniac103.squeezeclient.extfuncs.lastSelectedPlayer
+import de.maniac103.squeezeclient.extfuncs.localPlayerEnabled
 import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.extfuncs.putLastSelectedPlayer
+import de.maniac103.squeezeclient.extfuncs.putLocalPlayerEnabled
 import de.maniac103.squeezeclient.extfuncs.serverConfig
 import de.maniac103.squeezeclient.extfuncs.useVolumeButtonsForPlayerVolume
 import de.maniac103.squeezeclient.model.JiveAction
@@ -90,6 +93,7 @@ class MainActivity :
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var drawerHeaderBinding: NavDrawerHeaderBinding
+    private lateinit var localPlaybackSwitch: CompoundButton
 
     private var allPlayers: List<Player>? = null
     private var player: Player? = null
@@ -177,6 +181,15 @@ class MainActivity :
             )
             v.updatePadding(top = insets.top)
             windowInsets
+        }
+
+        localPlaybackSwitch =
+            binding.navigationView.menu.findItem(R.id.local_playback)?.actionView as CompoundButton
+        localPlaybackSwitch.isChecked = prefs.localPlayerEnabled
+        localPlaybackSwitch.setOnCheckedChangeListener { _, checked ->
+            prefs.edit {
+                putLocalPlayerEnabled(checked)
+            }
         }
 
         binding.container.addContentSystemBarAndCutoutInsetsListener()
@@ -473,6 +486,9 @@ class MainActivity :
         binding.navigationView.menu.findItem(R.id.manage_players)?.let {
             val players = allPlayers
             it.isVisible = players != null && players.size > 1 && !isInLoadingOrErrorState
+        }
+        binding.navigationView.menu.findItem(R.id.local_playback)?.let {
+            it.isVisible = !isInLoadingOrErrorState
         }
     }
 

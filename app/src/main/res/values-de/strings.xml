@@ -91,7 +91,8 @@
     <string name="local_player_notification_channel_description">Benachrichtung über den Zustand der lokalen Wiedergabe</string>
     <string name="local_player_notification_content_disconnected">Verbindung zu %1$s wird aufgebaut</string>
     <string name="local_player_notification_content_stopped">Verbunden mit Server</string>
-    <string name="local_player_notification_content_playing">\'%1$s\' wird wiedergegeben</string>
+    <string name="local_player_notification_content_playing">Wiedergabe läuft</string>
+    <string name="local_player_notification_content_playing_title">\'%1$s\' wird wiedergegeben</string>
     <string name="local_player_notification_permission_rationale_message">Die lokale Wiedergabe erfordert die Berechtigung zur Anzeige von Benachrichtigungen, um über den Zustand der Hintergundwiedergabe informieren zu können.</string>
     <string name="local_player_notification_permission_rationale_cancel">Abbrechen</string>
 

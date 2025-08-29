@@ -92,7 +92,8 @@
     <string name="local_player_notification_channel_description">Used for local player state notifications</string>
     <string name="local_player_notification_content_disconnected">Trying to connect to %1$s</string>
     <string name="local_player_notification_content_stopped">Connected to server</string>
-    <string name="local_player_notification_content_playing">Playing \'%1$s\'</string>
+    <string name="local_player_notification_content_playing">Playing</string>
+    <string name="local_player_notification_content_playing_title">Playing \'%1$s\'</string>
     <string name="local_player_notification_permission_rationale_message">Local playback requires notification permission to inform about the state of the background player.</string>
     <string name="local_player_notification_permission_rationale_cancel">Cancel</string>
 

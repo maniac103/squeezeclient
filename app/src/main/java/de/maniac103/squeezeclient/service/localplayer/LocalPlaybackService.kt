@@ -109,7 +109,7 @@ class LocalPlaybackService :
             stateListenerJob = lifecycleScope.launch {
                 repeatOnLifecycle(Lifecycle.State.STARTED) {
                     slimprotoStateFlow
-                        .debounce(200.milliseconds)
+                        .debounce(500.milliseconds)
                         .collectLatest { updateForegroundNotification(it) }
                 }
             }
@@ -202,10 +202,16 @@ class LocalPlaybackService :
                     )
                 )
 
+            state is SlimprotoState.PlayingOrPaused && !state.paused && state.title != null ->
+                Pair(
+                    getString(R.string.local_player_notification_title_playing),
+                    getString(R.string.local_player_notification_content_playing_title, state.title)
+                )
+
             state is SlimprotoState.PlayingOrPaused && !state.paused ->
                 Pair(
                     getString(R.string.local_player_notification_title_playing),
-                    getString(R.string.local_player_notification_content_playing, state.title)
+                    getString(R.string.local_player_notification_content_playing)
                 )
 
             else ->

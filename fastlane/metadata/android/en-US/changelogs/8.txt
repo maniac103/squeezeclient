@@ -1,0 +1,1 @@
+- Implement local playback (device as Squeezebox)

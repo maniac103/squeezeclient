@@ -264,7 +264,7 @@ class SlimprotoSocket(prefs: SharedPreferences) {
     }
 
     private suspend fun sendHello(reconnect: Boolean) {
-        val supportedFormats = listOf("mp3", "aac", "ogg", "flac")
+        val supportedFormats = listOf("mp3", "aac", "ogg", "flc")
         val supportedCapabilities = listOf(
             "Model=squeezeclient",
             "AccuratePlayPoints=1",

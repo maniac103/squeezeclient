@@ -193,6 +193,10 @@ class ConnectionHelper(private val appContext: SqueezeClientApplication) {
         }
     }
 
+    fun disconnect() {
+        disconnectInternal(ConnectionState.Disconnected)
+    }
+
     fun playerState(playerId: PlayerId): Flow<PlayerState> = stateFlow
         .mapNotNull { (it as? ConnectionState.Connected)?.players?.find { p -> p.id == playerId } }
         .mapNotNull { p -> playerStates[p.id] }
@@ -436,7 +440,7 @@ class ConnectionHelper(private val appContext: SqueezeClientApplication) {
         }
     }
 
-    private fun disconnect(newState: ConnectionState = ConnectionState.Disconnected) {
+    private fun disconnectInternal(newState: ConnectionState) {
         client?.disconnect()
         client = null
         connectionScope?.cancel()
@@ -447,7 +451,7 @@ class ConnectionHelper(private val appContext: SqueezeClientApplication) {
     }
 
     private fun handleFailure(cause: CometdClient.CometdException) =
-        disconnect(ConnectionState.ConnectionFailure(cause))
+        disconnectInternal(ConnectionState.ConnectionFailure(cause))
 
     class PlayerState(
         parentContext: CoroutineContext,

@@ -33,10 +33,12 @@ import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.databinding.ActivityServerSetupBinding
 import de.maniac103.squeezeclient.extfuncs.addContentSystemBarAndCutoutInsetsListener
 import de.maniac103.squeezeclient.extfuncs.addSystemBarAndCutoutInsetsListener
+import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.extfuncs.putServerConfig
 import de.maniac103.squeezeclient.extfuncs.serverConfig
 import de.maniac103.squeezeclient.model.ServerConfiguration
+import de.maniac103.squeezeclient.service.localplayer.LocalPlaybackService
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.InetAddress
@@ -99,11 +101,18 @@ class ServerSetupActivity : AppCompatActivity() {
                         binding.password.text?.toString()
                     )
                 )
+
+                connectionHelper.disconnect()
+
+                val playerIntent = Intent(this@ServerSetupActivity, LocalPlaybackService::class.java)
+                stopService(playerIntent)
+
                 val intent = Intent(this@ServerSetupActivity, MainActivity::class.java).apply {
                     addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
                     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 }
                 startActivity(intent)
+
                 finish()
             }
         }

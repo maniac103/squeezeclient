@@ -220,6 +220,7 @@ class SlimprotoSocket(prefs: SharedPreferences) {
             's' -> {
                 val lines = buffer.readString(buffer.remaining())
                     .split("\r\n")
+                    .map { it.trim() }
                     .filter { it.isNotEmpty() }
                 if (lines.isEmpty()) throw IllegalArgumentException()
                 val requestParts = lines[0].split(' ')

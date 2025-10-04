@@ -1,0 +1,3 @@
+- Fix local playback of FLAC files
+- Fix local playback if authentication is enabled server-side
+- Properly connect to new server when moving between different servers

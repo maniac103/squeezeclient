@@ -63,7 +63,7 @@ import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.PlayerStatus
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.service.MediaService
-import de.maniac103.squeezeclient.service.localplayer.LocalPlayerStartupWorker
+import de.maniac103.squeezeclient.service.localplayer.LocalPlaybackService
 import de.maniac103.squeezeclient.ui.nowplaying.NowPlayingFragment
 import de.maniac103.squeezeclient.ui.playermanagement.PlayerManagementActivity
 import de.maniac103.squeezeclient.ui.prefs.SettingsActivity
@@ -218,7 +218,7 @@ class MainActivity :
 
     override fun onStart() {
         super.onStart()
-        LocalPlayerStartupWorker.triggerStartOrStop(this)
+        LocalPlaybackService.triggerStartOrStop(this)
     }
 
     override fun onStop() {

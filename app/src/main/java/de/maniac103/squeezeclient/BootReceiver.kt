@@ -22,13 +22,13 @@ import android.content.Context
 import android.content.Intent
 import de.maniac103.squeezeclient.extfuncs.localPlayerEnabled
 import de.maniac103.squeezeclient.extfuncs.prefs
-import de.maniac103.squeezeclient.service.localplayer.LocalPlayerStartupWorker
+import de.maniac103.squeezeclient.service.localplayer.LocalPlaybackService
 
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context?, intent: Intent?) {
         if (intent?.action == Intent.ACTION_BOOT_COMPLETED) {
             if (context?.prefs?.localPlayerEnabled == true) {
-                LocalPlayerStartupWorker.triggerStartOrStop(context)
+                LocalPlaybackService.triggerStartOrStop(context)
             }
         }
     }

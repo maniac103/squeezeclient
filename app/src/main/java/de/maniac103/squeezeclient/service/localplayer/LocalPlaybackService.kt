@@ -19,6 +19,7 @@ package de.maniac103.squeezeclient.service.localplayer
 
 import android.annotation.SuppressLint
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.net.Uri
@@ -36,11 +37,17 @@ import androidx.lifecycle.ServiceLifecycleDispatcher
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.util.UnstableApi
+import androidx.work.Constraints
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.OutOfQuotaPolicy
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.extfuncs.getOrCreateNotificationChannel
+import de.maniac103.squeezeclient.extfuncs.localPlayerEnabled
 import de.maniac103.squeezeclient.extfuncs.localPlayerName
 import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.extfuncs.putLocalPlayerName
+import de.maniac103.squeezeclient.extfuncs.workManager
 import de.maniac103.squeezeclient.service.NotificationIds
 import de.maniac103.squeezeclient.ui.MainActivity
 import de.maniac103.squeezeclient.ui.prefs.SettingsActivity
@@ -332,5 +339,44 @@ class LocalPlaybackService :
 
     companion object {
         private const val TAG = "LocalPlaybackService"
+
+        fun triggerStartOrStop(context: Context) {
+            val serviceIntent = Intent(context, LocalPlaybackService::class.java)
+            when {
+                !context.prefs.localPlayerEnabled -> {
+                    // Local player disabled -> service not needed
+                    context.stopService(serviceIntent)
+                }
+
+                Build.VERSION.SDK_INT <= Build.VERSION_CODES.R -> {
+                    // Avoid using the startup worker on Android 11 and older:
+                    // - The restrictions mentioned below are not applicable there
+                    // - Android 11 and older require getForegroundInfo() in the worker when
+                    //   calling setExpedited() in the work request (see [1]), but we don't
+                    //   want to show a notification.
+                    //   [1] https://developer.android.com/develop/background-work/background-tasks/persistent/getting-started/define-work#backwards-compat
+                    context.startForegroundService(serviceIntent)
+                }
+
+                else -> {
+                    // On Android 12 and newer, use the startup worker:
+                    // - Since Android 12 apps are not allowed to start foreground services from
+                    //   background, see
+                    //   https://developer.android.com/guide/components/foreground-services#background-start-restrictions
+                    // - While our use case (startup from boot completed) was listed as exempted
+                    //   there, it no longer is since Android 15, see
+                    //   https://developer.android.com/about/versions/15/behavior-changes-15#fgs-boot-completed
+                    val request = OneTimeWorkRequestBuilder<LocalPlayerStartupWorker>()
+                        .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+                        .setConstraints(
+                            Constraints.Builder()
+                                .setRequiredNetworkType(NetworkType.CONNECTED)
+                                .build()
+                        )
+                        .build()
+                    context.workManager.enqueue(request)
+                }
+            }
+        }
     }
 }

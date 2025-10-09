@@ -29,7 +29,7 @@ import de.maniac103.squeezeclient.cometd.ConnectionHelper
 import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.extfuncs.serverConfig
 import de.maniac103.squeezeclient.service.DownloadWorker
-import de.maniac103.squeezeclient.service.localplayer.LocalPlayerStartupWorker
+import de.maniac103.squeezeclient.service.localplayer.LocalPlaybackService
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 
@@ -76,7 +76,7 @@ class SqueezeClientApplication :
     override fun onSharedPreferenceChanged(prefs: SharedPreferences?, key: String?) {
         when (key) {
             "app_theme" -> updateDefaultNightMode()
-            "local_player_enabled" -> LocalPlayerStartupWorker.triggerStartOrStop(this)
+            "local_player_enabled" -> LocalPlaybackService.triggerStartOrStop(this)
         }
     }
 

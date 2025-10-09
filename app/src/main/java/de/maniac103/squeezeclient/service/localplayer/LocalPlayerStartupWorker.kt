@@ -19,15 +19,8 @@ package de.maniac103.squeezeclient.service.localplayer
 
 import android.content.Context
 import android.content.Intent
-import androidx.work.Constraints
 import androidx.work.CoroutineWorker
-import androidx.work.NetworkType
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkerParameters
-import de.maniac103.squeezeclient.extfuncs.localPlayerEnabled
-import de.maniac103.squeezeclient.extfuncs.prefs
-import de.maniac103.squeezeclient.extfuncs.workManager
 
 class LocalPlayerStartupWorker(context: Context, params: WorkerParameters) :
     CoroutineWorker(context, params) {
@@ -35,24 +28,5 @@ class LocalPlayerStartupWorker(context: Context, params: WorkerParameters) :
         val intent = Intent(applicationContext, LocalPlaybackService::class.java)
         applicationContext.startForegroundService(intent)
         return Result.success()
-    }
-
-    companion object {
-        fun triggerStartOrStop(context: Context) {
-            if (context.prefs.localPlayerEnabled) {
-                val request = OneTimeWorkRequestBuilder<LocalPlayerStartupWorker>()
-                    .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
-                    .setConstraints(
-                        Constraints.Builder()
-                            .setRequiredNetworkType(NetworkType.CONNECTED)
-                            .build()
-                    )
-                    .build()
-                context.workManager.enqueue(request)
-            } else {
-                val intent = Intent(context, LocalPlaybackService::class.java)
-                context.stopService(intent)
-            }
-        }
     }
 }

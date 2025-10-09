@@ -104,7 +104,10 @@ class ServerSetupActivity : AppCompatActivity() {
 
                 connectionHelper.disconnect()
 
-                val playerIntent = Intent(this@ServerSetupActivity, LocalPlaybackService::class.java)
+                val playerIntent = Intent(
+                    this@ServerSetupActivity,
+                    LocalPlaybackService::class.java
+                )
                 stopService(playerIntent)
 
                 val intent = Intent(this@ServerSetupActivity, MainActivity::class.java).apply {

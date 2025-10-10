@@ -27,7 +27,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @OptIn(ExperimentalTime::class)
-data class PlayerStatus constructor(
+data class PlayerStatus(
     val playbackState: PlayState,
     val playlist: PlaylistInfo,
     val currentSongDuration: Duration? = null,

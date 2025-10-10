@@ -43,7 +43,6 @@ import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkInfo
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
-import coil.network.HttpException
 import de.maniac103.squeezeclient.BuildConfig
 import de.maniac103.squeezeclient.NotificationActionReceiver
 import de.maniac103.squeezeclient.R
@@ -104,8 +103,9 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
 
             try {
                 withContext(Dispatchers.IO) {
-                    val response = client.newCall(request).execute()
-                    val responseBody = response.body ?: throw HttpException(response)
+                    val responseBody = client.newCall(request)
+                        .execute()
+                        .body
 
                     responseBody.use { body ->
                         val mimeType = body.contentType()?.toString()

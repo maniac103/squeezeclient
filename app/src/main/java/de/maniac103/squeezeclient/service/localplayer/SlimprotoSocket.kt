@@ -331,19 +331,23 @@ class SlimprotoSocket(prefs: SharedPreferences) {
     }
 
     sealed class StatusType(val type: String) {
+        data object AudioUnderrun : StatusType("STMu")
+        data object BufferReady : StatusType("STMl")
+        data object Connecting : StatusType("STMc")
+        data object DecoderUnderrun : StatusType("STMd")
+        data object OutputUnderrun : StatusType("STMo")
+        data object StreamingFailed : StatusType("STMn")
+        data object StreamingPaused : StatusType("STMp")
+        data object StreamingResumed : StatusType("STMr")
+        data object StreamingStopped : StatusType("STMf")
         data class Timer(val timestamp: Int) : StatusType("STMt")
-        data object Start : StatusType("STMs")
-        data object Connect : StatusType("STMc")
-        data object Pause : StatusType("STMp")
-        data object Resume : StatusType("STMr")
-        data object Flushed : StatusType("STMf")
-        data object Ready : StatusType("STMd")
-        data object Underrun : StatusType("STMu")
+        data object TrackStarted : StatusType("STMs")
     }
 
     suspend fun sendStatus(
         type: StatusType,
         uptime: Duration,
+        playbackReady: Boolean,
         playbackPosition: Duration,
         totalBytesTransferred: Long
     ) {
@@ -353,12 +357,12 @@ class SlimprotoSocket(prefs: SharedPreferences) {
             put('m'.code.toByte()) // MAS initialized (m or p)
             put(0.toByte()) // MAS mode
             putInt(1) // buffer size in bytes
-            putInt(0) // fullness in bytes
+            putInt(if (playbackReady) 1 else 0) // fullness in bytes
             putLong(totalBytesTransferred) // bytes received
             putShort(101) // wireless signal strength
             putInt(uptime.inWholeMilliseconds.toInt()) // jiffies (1 kHz timer)
             putInt(1) // output buffer size
-            putInt(0) // output buffer fullness
+            putInt(if (playbackReady) 1 else 0) // output buffer fullness
             putInt(playbackPosition.inWholeSeconds.toInt()) // elapsed seconds
             putShort(0) // voltage
             putInt(playbackPosition.inWholeMilliseconds.toInt()) // elapsed milliseconds
@@ -371,6 +375,11 @@ class SlimprotoSocket(prefs: SharedPreferences) {
 
     private suspend fun sendCommandPacket(command: String, payload: ByteBuffer?) {
         if (command.length != 4) throw IllegalArgumentException()
+        if (payload != null) {
+            Log.d(TAG, "Sending $command packet (${payload.capacity()} bytes payload)")
+        } else {
+            Log.d(TAG, "Sending $command packet (no payload)")
+        }
         val length = payload?.capacity() ?: 0
         val data = ByteBuffer.allocate(length + 8).apply {
             putAsAscii(command)

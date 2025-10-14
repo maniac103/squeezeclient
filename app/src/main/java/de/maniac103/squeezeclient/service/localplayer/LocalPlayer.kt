@@ -44,15 +44,17 @@ import de.maniac103.squeezeclient.extfuncs.localPlayerVolumeMode
 import de.maniac103.squeezeclient.extfuncs.prefs
 import kotlin.math.roundToInt
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 import okhttp3.Response
 
 class LocalPlayer(
     context: Context,
-    private val onPlaybackStarted: () -> Unit = {},
+    private val onPlaybackReady: (buffering: Boolean) -> Unit = {},
     private val onPauseStateChanged: (paused: Boolean) -> Unit = {},
-    private val onPlaybackEnded: () -> Unit = {},
+    private val onPlaybackEnded: (streamEnded: Boolean) -> Unit = {},
+    private val onPlaybackError: () -> Unit = {},
     private val onHeadersReceived: (response: Response) -> Unit = {},
     private val onMetadataReceived: (title: CharSequence, artworkUri: Uri?) -> Unit = { _, _ -> }
 ) : Player.Listener {
@@ -75,10 +77,15 @@ class LocalPlayer(
     val stats
         @OptIn(UnstableApi::class)
         get() = statsListener.combinedPlaybackStats
-    val playbackPosition get() = player.currentPosition.toDuration(DurationUnit.MILLISECONDS)
+    val playbackPosition get() = player.currentPosition
+        .takeIf { readyForPlaybackOrBuffering }
+        ?.toDuration(DurationUnit.MILLISECONDS)
+        ?: 0.seconds
 
-    val readyForPlayback get() =
+    val readyForPlaybackOrBuffering get() =
         player.playbackState == Player.STATE_READY || player.playbackState == Player.STATE_BUFFERING
+    val readyForPlayback get() = player.playbackState == Player.STATE_READY
+    val isPlaying get() = player.playbackState == Player.STATE_READY && player.playWhenReady
 
     var volume: Float
         get() = lastSetVolume ?: 0F
@@ -159,11 +166,15 @@ class LocalPlayer(
         Log.d(TAG, "Playback state change $lastPlaybackState -> $playbackState")
         when (playbackState) {
             Player.STATE_BUFFERING, Player.STATE_READY ->
-                if (lastPlaybackState in arrayOf(Player.STATE_IDLE, Player.STATE_ENDED)) {
-                    onPlaybackStarted()
+                onPlaybackReady(playbackState == Player.STATE_BUFFERING)
+            Player.STATE_ENDED -> onPlaybackEnded(true)
+            Player.STATE_IDLE -> {
+                if (player.playerError != null) {
+                    onPlaybackError()
+                } else if (lastPlaybackState != Player.STATE_ENDED) {
+                    onPlaybackEnded(false)
                 }
-            Player.STATE_ENDED -> onPlaybackEnded()
-            Player.STATE_IDLE -> {}
+            }
         }
         updatePlayerVolume(false)
         lastPlaybackState = playbackState

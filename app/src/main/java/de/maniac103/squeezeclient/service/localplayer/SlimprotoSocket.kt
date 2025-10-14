@@ -112,7 +112,7 @@ class SlimprotoSocket(prefs: SharedPreferences) {
             val mimeType: String?,
             val replayGain: Float
         ) : CommandPacket()
-        data class StreamPause(val pauseInterval: Duration) : CommandPacket()
+        data class StreamPause(val pauseInterval: Duration?) : CommandPacket()
         data class StreamUnpause(val unpauseTimestamp: Int) : CommandPacket()
         data object StreamStop : CommandPacket()
         data class StreamStatus(val timestamp: Int) : CommandPacket()
@@ -251,7 +251,9 @@ class SlimprotoSocket(prefs: SharedPreferences) {
                 )
             }
             'p' -> CommandPacket.StreamPause(
-                replayGainOrValue.toDuration(DurationUnit.MILLISECONDS)
+                replayGainOrValue
+                    .takeIf { it > 0 }
+                    ?.toDuration(DurationUnit.MILLISECONDS)
             )
             'u' -> CommandPacket.StreamUnpause(replayGainOrValue)
             'q' -> CommandPacket.StreamStop
@@ -363,7 +365,7 @@ class SlimprotoSocket(prefs: SharedPreferences) {
             putInt(if (type is StatusType.Timer) type.timestamp else 0) // server timestamp
             putShort(0) // error code for STMn
         }
-        Log.d(TAG, "Sending ${type.type} status")
+        Log.d(TAG, "Sending ${type.type} status (uptime $uptime, position $playbackPosition)")
         sendCommandPacket("STAT", payload)
     }
 

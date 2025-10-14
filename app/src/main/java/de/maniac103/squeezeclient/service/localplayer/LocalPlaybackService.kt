@@ -292,11 +292,26 @@ class LocalPlaybackService :
             is SlimprotoSocket.CommandPacket.StreamPause -> {
                 player.paused = true
                 sendStatus(SlimprotoSocket.StatusType.Pause)
+                if (command.pauseInterval != null) {
+                    delay(command.pauseInterval)
+                    player.paused = false
+                    sendStatus(SlimprotoSocket.StatusType.Resume)
+                }
             }
 
             is SlimprotoSocket.CommandPacket.StreamUnpause -> {
+                val nowJiffies = (Clock.System.now() - startupTimestamp).inWholeMilliseconds
+                val unpauseDelay = command.unpauseTimestamp - nowJiffies
+                if (unpauseDelay > 0) {
+                    Log.d(TAG, "Delaying unpause for $unpauseDelay ms")
+                    delay(unpauseDelay)
+                }
                 player.paused = false
                 sendStatus(SlimprotoSocket.StatusType.Resume)
+            }
+
+            is SlimprotoSocket.CommandPacket.StreamSkipAhead -> {
+                player.skipAhead(command.skipOverInterval)
             }
 
             is SlimprotoSocket.CommandPacket.StreamStop -> {

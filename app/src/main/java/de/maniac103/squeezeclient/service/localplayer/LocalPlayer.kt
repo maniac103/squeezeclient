@@ -23,13 +23,17 @@ import android.util.Log
 import androidx.annotation.OptIn
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
+import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
+import androidx.media3.common.audio.AudioProcessorChain
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.HttpDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
+import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.analytics.PlaybackStatsListener
+import androidx.media3.exoplayer.audio.DefaultAudioSink
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.exoplayer.util.EventLogger
@@ -39,6 +43,7 @@ import de.maniac103.squeezeclient.extfuncs.httpClient
 import de.maniac103.squeezeclient.extfuncs.localPlayerVolumeMode
 import de.maniac103.squeezeclient.extfuncs.prefs
 import kotlin.math.roundToInt
+import kotlin.time.Duration
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 import okhttp3.Response
@@ -85,6 +90,9 @@ class LocalPlayer(
     private var lastSetVolume: Float? = null
     private var lastSavedDeviceVolume: Int? = null
 
+    @UnstableApi
+    private val audioProcessor = SkippingAudioProcessor()
+
     init {
         val client = context.httpClient.newBuilder()
             .addInterceptor { chain ->
@@ -107,6 +115,7 @@ class LocalPlayer(
     private fun initPlayer(context: Context): ExoPlayer {
         val player = ExoPlayer.Builder(context)
             .setMediaSourceFactory(DefaultMediaSourceFactory(dataSourceFactory))
+            .setRenderersFactory(AudioSinkOverridingFactory(context))
             .setDeviceVolumeControlEnabled(true)
             .build()
         player.addListener(this)
@@ -138,6 +147,11 @@ class LocalPlayer(
 
     fun stop() {
         player.stop()
+    }
+
+    @OptIn(UnstableApi::class)
+    fun skipAhead(duration: Duration) {
+        audioProcessor.skipAhead(duration)
     }
 
     override fun onPlaybackStateChanged(playbackState: Int) {
@@ -195,6 +209,36 @@ class LocalPlayer(
         val maxVolume = player.deviceInfo.maxVolume
         val volumeAsInt = (volume * maxVolume).roundToInt()
         player.setDeviceVolume(volumeAsInt, 0)
+    }
+
+    @OptIn(UnstableApi::class)
+    inner class AudioSinkOverridingFactory(context: Context) : DefaultRenderersFactory(context) {
+        override fun buildAudioSink(
+            context: Context,
+            enableFloatOutput: Boolean,
+            enableAudioTrackPlaybackParams: Boolean
+        ) = DefaultAudioSink.Builder(context)
+            .setEnableFloatOutput(enableFloatOutput)
+            .setEnableAudioTrackPlaybackParams(enableAudioTrackPlaybackParams)
+            .setAudioProcessorChain(SkippingProcessorChain(audioProcessor))
+            .build()
+    }
+
+    @UnstableApi
+    class SkippingProcessorChain(private val processor: SkippingAudioProcessor) :
+        AudioProcessorChain {
+        private val processors = arrayOf(processor)
+
+        override fun getAudioProcessors() = processors
+
+        override fun applyPlaybackParameters(playbackParameters: PlaybackParameters) =
+            playbackParameters
+
+        override fun applySkipSilenceEnabled(skipSilenceEnabled: Boolean) = skipSilenceEnabled
+
+        override fun getMediaDuration(playoutDuration: Long) = playoutDuration
+
+        override fun getSkippedOutputFrameCount() = processor.skippedFrames
     }
 
     companion object {

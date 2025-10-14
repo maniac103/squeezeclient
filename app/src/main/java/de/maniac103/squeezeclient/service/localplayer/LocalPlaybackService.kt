@@ -80,7 +80,11 @@ class LocalPlaybackService :
 
     private var slimprotoJob: Job? = null
     private var stateListenerJob: Job? = null
+    private var statusUpdateJob: Job? = null
     private val slimprotoStateFlow = MutableStateFlow<SlimprotoState>(SlimprotoState.Disconnected)
+
+    private var sentTrackStartStatus = false
+    private var sentBufferReady = false
 
     override fun onCreate() {
         dispatcher.onServicePreSuperOnCreate()
@@ -88,8 +92,9 @@ class LocalPlaybackService :
         slimproto = SlimprotoSocket(prefs)
         player = LocalPlayer(
             this,
-            onPlaybackStarted = { onPlaybackStarted() },
-            onPlaybackEnded = { onPlaybackEnded() },
+            onPlaybackReady = { buffering -> onPlaybackReady(buffering) },
+            onPlaybackEnded = { streamEnded -> onPlaybackEnded(streamEnded) },
+            onPlaybackError = { onPlaybackError() },
             onPauseStateChanged = { paused -> onPauseStateChanged(paused) },
             onHeadersReceived = { resp -> onHeadersReceived(resp) },
             onMetadataReceived = { title, artworkUri -> onMetadataReceived(title, artworkUri) }
@@ -141,29 +146,62 @@ class LocalPlaybackService :
 
     private fun onMetadataReceived(title: CharSequence, artworkUri: Uri?) = lifecycleScope.launch {
         slimproto.sendMediaMetaData(title, artworkUri)
-        if (player.readyForPlayback) {
+        if (player.readyForPlaybackOrBuffering) {
             slimprotoStateFlow.emit(SlimprotoState.PlayingOrPaused(title, player.paused))
         }
     }
 
-    private fun onPlaybackStarted() = lifecycleScope.launch {
+    private fun onPlaybackReady(buffering: Boolean) = lifecycleScope.launch {
         slimprotoStateFlow.emit(
             SlimprotoState.PlayingOrPaused(player.playingTitle, player.paused)
         )
-        sendStatus(SlimprotoSocket.StatusType.Start)
+        if (buffering && sentTrackStartStatus) {
+            sendStatus(SlimprotoSocket.StatusType.OutputUnderrun)
+        } else if (!buffering) {
+            if (!sentBufferReady) {
+                sendStatus(SlimprotoSocket.StatusType.BufferReady)
+                sentBufferReady = true
+            }
+            if (!player.paused) {
+                handlePlaybackStart()
+            }
+        }
     }
 
     private fun onPauseStateChanged(paused: Boolean) = lifecycleScope.launch {
         slimprotoStateFlow.emit(
             SlimprotoState.PlayingOrPaused(player.playingTitle, paused)
         )
+        if (!paused) {
+            handlePlaybackStart()
+        }
     }
 
-    private fun onPlaybackEnded() = lifecycleScope.launch {
+    private fun onPlaybackEnded(streamEnded: Boolean) = lifecycleScope.launch {
         slimprotoStateFlow.emit(SlimprotoState.Stopped)
-        slimproto.sendDisconnect()
-        sendStatus(SlimprotoSocket.StatusType.Ready)
-        sendStatus(SlimprotoSocket.StatusType.Underrun)
+        sentTrackStartStatus = false
+        sentBufferReady = false
+        if (streamEnded) {
+            slimproto.sendDisconnect()
+            sendStatus(SlimprotoSocket.StatusType.DecoderUnderrun)
+        }
+    }
+
+    private fun onPlaybackError() = lifecycleScope.launch {
+        sentTrackStartStatus = false
+        sendStatus(SlimprotoSocket.StatusType.StreamingFailed)
+    }
+
+    private suspend fun handlePlaybackStart() {
+        if (!sentTrackStartStatus) {
+            sendStatus(SlimprotoSocket.StatusType.TrackStarted)
+            sentTrackStartStatus = true
+        }
+    }
+
+    private suspend fun handleUnpause() {
+        player.paused = false
+        sendStatus(SlimprotoSocket.StatusType.StreamingResumed)
     }
 
     private fun connectAndRunSlimproto() = lifecycleScope.launch {
@@ -264,9 +302,19 @@ class LocalPlaybackService :
         slimproto.sendStatus(
             type,
             elapsed,
+            player.readyForPlayback,
             player.playbackPosition,
             player.stats.totalBandwidthBytes
         )
+
+        // Make sure we send an update at least once per second while playing
+        statusUpdateJob?.cancel()
+        if (player.isPlaying) {
+            statusUpdateJob = lifecycleScope.launch {
+                delay(1.seconds)
+                sendStatus(SlimprotoSocket.StatusType.Timer(0))
+            }
+        }
     }
 
     private suspend fun handleCommand(command: SlimprotoSocket.CommandPacket) {
@@ -279,23 +327,26 @@ class LocalPlaybackService :
             }
 
             is SlimprotoSocket.CommandPacket.Continue -> {
-                if (player.readyForPlayback) {
+                if (player.readyForPlaybackOrBuffering) {
                     player.paused = false
                 }
             }
 
             is SlimprotoSocket.CommandPacket.StreamStart -> {
-                sendStatus(SlimprotoSocket.StatusType.Connect)
-                player.start(command.uri, command.mimeType, command.headers, command.autoStart)
+                sendStatus(SlimprotoSocket.StatusType.Connecting)
+                sentBufferReady = command.autoStart
+                // In direct streaming case we need to wait for the
+                // continue packet before starting playback
+                val autoStart = command.autoStart && !command.directStreaming
+                player.start(command.uri, command.mimeType, command.headers, autoStart)
             }
 
             is SlimprotoSocket.CommandPacket.StreamPause -> {
                 player.paused = true
-                sendStatus(SlimprotoSocket.StatusType.Pause)
+                sendStatus(SlimprotoSocket.StatusType.StreamingPaused)
                 if (command.pauseInterval != null) {
                     delay(command.pauseInterval)
-                    player.paused = false
-                    sendStatus(SlimprotoSocket.StatusType.Resume)
+                    handleUnpause();
                 }
             }
 
@@ -306,8 +357,8 @@ class LocalPlaybackService :
                     Log.d(TAG, "Delaying unpause for $unpauseDelay ms")
                     delay(unpauseDelay)
                 }
-                player.paused = false
-                sendStatus(SlimprotoSocket.StatusType.Resume)
+                sentBufferReady = true
+                handleUnpause()
             }
 
             is SlimprotoSocket.CommandPacket.StreamSkipAhead -> {
@@ -316,7 +367,7 @@ class LocalPlaybackService :
 
             is SlimprotoSocket.CommandPacket.StreamStop -> {
                 player.stop()
-                sendStatus(SlimprotoSocket.StatusType.Flushed)
+                sendStatus(SlimprotoSocket.StatusType.StreamingStopped)
             }
 
             is SlimprotoSocket.CommandPacket.StreamStatus -> {

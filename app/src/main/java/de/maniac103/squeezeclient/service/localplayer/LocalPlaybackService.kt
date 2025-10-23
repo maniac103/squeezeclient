@@ -346,7 +346,7 @@ class LocalPlaybackService :
                 sendStatus(SlimprotoSocket.StatusType.StreamingPaused)
                 if (command.pauseInterval != null) {
                     delay(command.pauseInterval)
-                    handleUnpause();
+                    handleUnpause()
                 }
             }
 

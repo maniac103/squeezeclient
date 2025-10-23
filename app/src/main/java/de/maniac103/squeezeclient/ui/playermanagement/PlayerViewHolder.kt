@@ -79,6 +79,11 @@ sealed class PlayerViewHolder(
             }
             callback.onPlayStateChanged(data.playerId, newState)
         }
+        playStateButton?.setOnLongClickListener {
+            val data = lastBoundData ?: return@setOnLongClickListener false
+            callback.onPlayStateChanged(data.playerId, PlayerStatus.PlayState.Stopped)
+            true
+        }
         powerButton.setOnClickListener {
             lastBoundData?.playerId?.let { callback.onPowerToggled(it) }
         }

@@ -490,6 +490,12 @@ class NowPlayingFragment :
                 connectionHelper.changePlaybackState(playerId, targetState)
             }
         }
+        binding.playPauseWrapper.setOnLongClickListener {
+            lifecycleScope.launch {
+                connectionHelper.changePlaybackState(playerId, PlayerStatus.PlayState.Stopped)
+            }
+            true
+        }
     }
 
     private fun updateBackPressedCallbackState() {

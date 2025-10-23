@@ -385,7 +385,9 @@ class MediaService :
                 add(COMMAND_GET_METADATA)
                 add(COMMAND_GET_TIMELINE)
                 add(COMMAND_PLAY_PAUSE)
-                if (status.currentSongDuration != null) {
+                if (status.currentSongDuration != null &&
+                    status.playbackState != PlayerStatus.PlayState.Stopped
+                ) {
                     add(COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM)
                 }
                 add(COMMAND_SEEK_TO_MEDIA_ITEM)

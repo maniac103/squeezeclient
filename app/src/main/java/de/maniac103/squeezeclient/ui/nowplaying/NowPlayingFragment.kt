@@ -414,7 +414,7 @@ class NowPlayingFragment :
                     0.1F
                 )
                 value = status.currentPlayPosition?.toDouble(DurationUnit.SECONDS)?.toFloat() ?: 0F
-                isEnabled = true
+                isEnabled = status.playbackState != PlayerStatus.PlayState.Stopped
             }
             binding.progressMinimized.apply {
                 max = status.currentSongDuration.toInt(DurationUnit.SECONDS)

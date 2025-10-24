@@ -35,7 +35,7 @@ android {
     defaultConfig {
         applicationId = "de.maniac103.squeezeclient"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 9
         versionName = "2.1"
 

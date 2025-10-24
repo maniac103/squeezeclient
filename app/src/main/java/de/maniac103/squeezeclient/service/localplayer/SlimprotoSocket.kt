@@ -270,7 +270,6 @@ class SlimprotoSocket(prefs: SharedPreferences) {
         val supportedFormats = listOf("mp3", "aac", "ogg", "flc")
         val supportedCapabilities = listOf(
             "Model=squeezeclient",
-            "AccuratePlayPoints=1",
             "CanHTTPS=1"
         )
         val macBytes = ByteArray(6) { i ->

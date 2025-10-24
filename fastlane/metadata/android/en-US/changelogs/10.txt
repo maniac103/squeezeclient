@@ -1,0 +1,4 @@
+- Improve local player synchronization handling (#23)
+- Fix local player radio station streaming sometimes stopping after intro/ad
+- Fix local player startup on Android 11 and older (#22)
+- Revert to using AGP 8.11.1 for now for F-Droid compatibility (#21)

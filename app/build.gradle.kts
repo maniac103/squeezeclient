@@ -65,6 +65,10 @@ android {
         buildConfig = true
     }
 
+    packaging {
+        resources.excludes.add("META-INF/versions/9/OSGI-INF/MANIFEST.MF")
+    }
+
     signingConfigs {
         create("release") {
             val props = Properties().apply {

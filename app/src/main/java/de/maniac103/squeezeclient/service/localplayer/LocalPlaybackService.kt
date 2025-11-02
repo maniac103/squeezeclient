@@ -51,11 +51,11 @@ import de.maniac103.squeezeclient.extfuncs.workManager
 import de.maniac103.squeezeclient.service.NotificationIds
 import de.maniac103.squeezeclient.ui.MainActivity
 import de.maniac103.squeezeclient.ui.prefs.SettingsActivity
-import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.DurationUnit
 import kotlin.time.ExperimentalTime
-import kotlin.time.Instant
+import kotlin.time.toDuration
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.GlobalScope
@@ -75,7 +75,9 @@ class LocalPlaybackService :
     private val dispatcher = ServiceLifecycleDispatcher(this)
     private lateinit var slimproto: SlimprotoSocket
     private lateinit var player: LocalPlayer
-    private lateinit var startupTimestamp: Instant
+
+    private var startupTimestampNanos = 0L
+
     override val lifecycle get() = dispatcher.lifecycle
 
     private var slimprotoJob: Job? = null
@@ -99,7 +101,7 @@ class LocalPlaybackService :
             onHeadersReceived = { resp -> onHeadersReceived(resp) },
             onMetadataReceived = { title, artworkUri -> onMetadataReceived(title, artworkUri) }
         )
-        startupTimestamp = Clock.System.now()
+        startupTimestampNanos = System.nanoTime()
     }
 
     override fun onBind(intent: Intent?): IBinder? {
@@ -298,12 +300,13 @@ class LocalPlaybackService :
 
     @androidx.annotation.OptIn(UnstableApi::class)
     private suspend fun sendStatus(type: SlimprotoSocket.StatusType) {
-        val elapsed = Clock.System.now() - startupTimestamp
+        val nowNanos = System.nanoTime()
+        val elapsed = (nowNanos - startupTimestampNanos).toDuration(DurationUnit.NANOSECONDS)
         slimproto.sendStatus(
             type,
             elapsed,
             player.readyForPlayback,
-            player.playbackPosition,
+            player.determinePlaybackPosition(nowNanos),
             player.stats.totalBandwidthBytes
         )
 
@@ -351,7 +354,9 @@ class LocalPlaybackService :
             }
 
             is SlimprotoSocket.CommandPacket.StreamUnpause -> {
-                val nowJiffies = (Clock.System.now() - startupTimestamp).inWholeMilliseconds
+                val nowJiffies = (System.nanoTime() - startupTimestampNanos)
+                    .toDuration(DurationUnit.NANOSECONDS)
+                    .inWholeMilliseconds
                 val unpauseDelay = command.unpauseTimestamp - nowJiffies
                 if (unpauseDelay > 0) {
                     Log.d(TAG, "Delaying unpause for $unpauseDelay ms")

@@ -26,7 +26,9 @@ import kotlin.math.min
 import kotlin.time.Duration
 
 @UnstableApi
-class SkippingAudioProcessor : BaseAudioProcessor() {
+class LocalPlayerAudioProcessor : BaseAudioProcessor() {
+    var hasProcessedData = false
+        private set
     var skippedFrames = 0L
         private set
     private var remainingFramesToSkip = 0L
@@ -49,7 +51,15 @@ class SkippingAudioProcessor : BaseAudioProcessor() {
         super.onFlush()
     }
 
+    override fun onReset() {
+        hasProcessedData = false
+        super.onReset()
+    }
+
     override fun queueInput(inputBuffer: ByteBuffer) {
+        if (inputBuffer.hasRemaining()) {
+            hasProcessedData = true
+        }
         if (remainingFramesToSkip > 0 && bytesPerFrame > 0) {
             val framesInBuffer = (inputBuffer.remaining() / bytesPerFrame).toLong()
             val skipFrames = min(framesInBuffer, remainingFramesToSkip)

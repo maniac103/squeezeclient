@@ -18,6 +18,7 @@
 package de.maniac103.squeezeclient.service.localplayer
 
 import android.content.Context
+import android.media.AudioTimestamp
 import android.net.Uri
 import android.util.Log
 import androidx.annotation.OptIn
@@ -77,10 +78,6 @@ class LocalPlayer(
     val stats
         @OptIn(UnstableApi::class)
         get() = statsListener.combinedPlaybackStats
-    val playbackPosition get() = player.currentPosition
-        .takeIf { readyForPlaybackOrBuffering }
-        ?.toDuration(DurationUnit.MILLISECONDS)
-        ?: 0.seconds
 
     val readyForPlaybackOrBuffering get() =
         player.playbackState == Player.STATE_READY || player.playbackState == Player.STATE_BUFFERING
@@ -98,7 +95,9 @@ class LocalPlayer(
     private var lastSavedDeviceVolume: Int? = null
 
     @UnstableApi
-    private val audioProcessor = SkippingAudioProcessor()
+    private val audioProcessor = LocalPlayerAudioProcessor()
+    private val audioTrackProvider = LocalPlayerAudioTrackProvider()
+    private val playbackPositionTimestamp = AudioTimestamp()
 
     init {
         val client = context.httpClient.newBuilder()
@@ -159,6 +158,21 @@ class LocalPlayer(
     @OptIn(UnstableApi::class)
     fun skipAhead(duration: Duration) {
         audioProcessor.skipAhead(duration)
+    }
+
+    @OptIn(UnstableApi::class)
+    fun determinePlaybackPosition(nowNanos: Long): Duration {
+        val track = audioTrackProvider
+            .latestAudioTrack
+            ?.takeIf { readyForPlaybackOrBuffering && audioProcessor.hasProcessedData }
+        if (track?.getTimestamp(playbackPositionTimestamp) != true) {
+            return 0.seconds
+        }
+        val timestampAge = (nowNanos - playbackPositionTimestamp.nanoTime)
+            .toDuration(DurationUnit.NANOSECONDS)
+        val framesElapsed = playbackPositionTimestamp.framePosition + audioProcessor.skippedFrames
+        val position = framesElapsed / track.sampleRate.toDouble()
+        return position.toDuration(DurationUnit.SECONDS) + timestampAge
     }
 
     override fun onPlaybackStateChanged(playbackState: Int) {
@@ -230,13 +244,14 @@ class LocalPlayer(
             enableAudioTrackPlaybackParams: Boolean
         ) = DefaultAudioSink.Builder(context)
             .setEnableFloatOutput(enableFloatOutput)
+            .setAudioTrackProvider(audioTrackProvider)
             .setEnableAudioTrackPlaybackParams(enableAudioTrackPlaybackParams)
             .setAudioProcessorChain(SkippingProcessorChain(audioProcessor))
             .build()
     }
 
     @UnstableApi
-    class SkippingProcessorChain(private val processor: SkippingAudioProcessor) :
+    class SkippingProcessorChain(private val processor: LocalPlayerAudioProcessor) :
         AudioProcessorChain {
         private val processors = arrayOf(processor)
 

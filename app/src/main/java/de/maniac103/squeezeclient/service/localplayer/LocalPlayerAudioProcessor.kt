@@ -26,7 +26,7 @@ import kotlin.math.min
 import kotlin.time.Duration
 
 @UnstableApi
-class LocalPlayerAudioProcessor : BaseAudioProcessor() {
+class LocalPlayerAudioProcessor(private val resetCallback: () -> Unit = {}) : BaseAudioProcessor() {
     var hasProcessedData = false
         private set
     var skippedFrames = 0L
@@ -54,6 +54,7 @@ class LocalPlayerAudioProcessor : BaseAudioProcessor() {
     override fun onReset() {
         hasProcessedData = false
         super.onReset()
+        resetCallback()
     }
 
     override fun queueInput(inputBuffer: ByteBuffer) {

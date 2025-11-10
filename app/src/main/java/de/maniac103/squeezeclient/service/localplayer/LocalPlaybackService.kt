@@ -98,6 +98,7 @@ class LocalPlaybackService :
             onPlaybackEnded = { streamEnded -> onPlaybackEnded(streamEnded) },
             onPlaybackError = { onPlaybackError() },
             onPauseStateChanged = { paused -> onPauseStateChanged(paused) },
+            onAudioStreamFlushed = { onAudioStreamFlushed() },
             onHeadersReceived = { resp -> onHeadersReceived(resp) },
             onMetadataReceived = { title, artworkUri -> onMetadataReceived(title, artworkUri) }
         )
@@ -192,6 +193,10 @@ class LocalPlaybackService :
     private fun onPlaybackError() = lifecycleScope.launch {
         sentTrackStartStatus = false
         sendStatus(SlimprotoSocket.StatusType.StreamingFailed)
+    }
+
+    private fun onAudioStreamFlushed() = lifecycleScope.launch {
+        sendStatus(SlimprotoSocket.StatusType.StreamingStopped)
     }
 
     private suspend fun handlePlaybackStart() {
@@ -372,7 +377,6 @@ class LocalPlaybackService :
 
             is SlimprotoSocket.CommandPacket.StreamStop -> {
                 player.stop()
-                sendStatus(SlimprotoSocket.StatusType.StreamingStopped)
             }
 
             is SlimprotoSocket.CommandPacket.StreamStatus -> {

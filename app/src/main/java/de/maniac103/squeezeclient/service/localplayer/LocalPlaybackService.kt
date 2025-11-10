@@ -233,6 +233,7 @@ class LocalPlaybackService :
                         connected = slimproto.reconnect()
                     }
             }
+            statusUpdateJob?.cancel()
             slimprotoStateFlow.emit(SlimprotoState.Disconnected)
         }
     }

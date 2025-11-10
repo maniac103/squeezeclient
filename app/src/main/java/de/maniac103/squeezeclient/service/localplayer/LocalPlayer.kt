@@ -56,6 +56,7 @@ class LocalPlayer(
     private val onPauseStateChanged: (paused: Boolean) -> Unit = {},
     private val onPlaybackEnded: (streamEnded: Boolean) -> Unit = {},
     private val onPlaybackError: () -> Unit = {},
+    private val onAudioStreamFlushed: () -> Unit = {},
     private val onHeadersReceived: (response: Response) -> Unit = {},
     private val onMetadataReceived: (title: CharSequence, artworkUri: Uri?) -> Unit = { _, _ -> }
 ) : Player.Listener {
@@ -95,7 +96,9 @@ class LocalPlayer(
     private var lastSavedDeviceVolume: Int? = null
 
     @UnstableApi
-    private val audioProcessor = LocalPlayerAudioProcessor()
+    private val audioProcessor = LocalPlayerAudioProcessor {
+        onAudioStreamFlushed()
+    }
     private val audioTrackProvider = LocalPlayerAudioTrackProvider()
     private val playbackPositionTimestamp = AudioTimestamp()
 

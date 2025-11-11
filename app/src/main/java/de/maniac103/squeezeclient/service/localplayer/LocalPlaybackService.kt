@@ -99,6 +99,7 @@ class LocalPlaybackService :
             onPlaybackError = { onPlaybackError() },
             onPauseStateChanged = { paused -> onPauseStateChanged(paused) },
             onAudioStreamFlushed = { onAudioStreamFlushed() },
+            onDecoderLoadFinished = { onDecoderLoadFinished() },
             onHeadersReceived = { resp -> onHeadersReceived(resp) },
             onMetadataReceived = { title, artworkUri -> onMetadataReceived(title, artworkUri) }
         )
@@ -185,7 +186,6 @@ class LocalPlaybackService :
         sentTrackStartStatus = false
         sentBufferReady = false
         if (streamEnded) {
-            slimproto.sendDisconnect()
             sendStatus(SlimprotoSocket.StatusType.DecoderUnderrun)
         }
     }
@@ -197,6 +197,10 @@ class LocalPlaybackService :
 
     private fun onAudioStreamFlushed() = lifecycleScope.launch {
         sendStatus(SlimprotoSocket.StatusType.StreamingStopped)
+    }
+
+    private fun onDecoderLoadFinished() = lifecycleScope.launch {
+        slimproto.sendDisconnect()
     }
 
     private suspend fun handlePlaybackStart() {

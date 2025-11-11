@@ -33,9 +33,12 @@ import androidx.media3.datasource.HttpDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.analytics.AnalyticsListener
 import androidx.media3.exoplayer.analytics.PlaybackStatsListener
 import androidx.media3.exoplayer.audio.DefaultAudioSink
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.exoplayer.source.LoadEventInfo
+import androidx.media3.exoplayer.source.MediaLoadData
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.exoplayer.util.EventLogger
 import de.maniac103.squeezeclient.BuildConfig
@@ -56,6 +59,7 @@ class LocalPlayer(
     private val onPauseStateChanged: (paused: Boolean) -> Unit = {},
     private val onPlaybackEnded: (streamEnded: Boolean) -> Unit = {},
     private val onPlaybackError: () -> Unit = {},
+    private val onDecoderLoadFinished: () -> Unit = {},
     private val onAudioStreamFlushed: () -> Unit = {},
     private val onHeadersReceived: (response: Response) -> Unit = {},
     private val onMetadataReceived: (title: CharSequence, artworkUri: Uri?) -> Unit = { _, _ -> }
@@ -96,9 +100,7 @@ class LocalPlayer(
     private var lastSavedDeviceVolume: Int? = null
 
     @UnstableApi
-    private val audioProcessor = LocalPlayerAudioProcessor {
-        onAudioStreamFlushed()
-    }
+    private val audioProcessor = LocalPlayerAudioProcessor(onAudioStreamFlushed)
     private val audioTrackProvider = LocalPlayerAudioTrackProvider()
     private val playbackPositionTimestamp = AudioTimestamp()
 
@@ -132,6 +134,15 @@ class LocalPlayer(
             player.addAnalyticsListener(EventLogger())
         }
         player.addAnalyticsListener(statsListener)
+        player.addAnalyticsListener(object : AnalyticsListener {
+            override fun onLoadCompleted(
+                eventTime: AnalyticsListener.EventTime,
+                loadEventInfo: LoadEventInfo,
+                mediaLoadData: MediaLoadData
+            ) {
+                onDecoderLoadFinished()
+            }
+        })
         return player
     }
 

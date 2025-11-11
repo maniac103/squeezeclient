@@ -113,7 +113,7 @@ class SlimprotoSocket(prefs: SharedPreferences) {
             val replayGain: Float
         ) : CommandPacket()
         data class StreamPause(val pauseInterval: Duration?) : CommandPacket()
-        data class StreamUnpause(val unpauseTimestamp: Int) : CommandPacket()
+        data class StreamUnpause(val unpauseTimestamp: Duration) : CommandPacket()
         data object StreamStop : CommandPacket()
         data class StreamStatus(val timestamp: Int) : CommandPacket()
         data object StreamFlush : CommandPacket()
@@ -255,7 +255,9 @@ class SlimprotoSocket(prefs: SharedPreferences) {
                     .takeIf { it > 0 }
                     ?.toDuration(DurationUnit.MILLISECONDS)
             )
-            'u' -> CommandPacket.StreamUnpause(replayGainOrValue)
+            'u' -> CommandPacket.StreamUnpause(
+                replayGainOrValue.toDuration(DurationUnit.MILLISECONDS)
+            )
             'q' -> CommandPacket.StreamStop
             't' -> CommandPacket.StreamStatus(replayGainOrValue)
             'f' -> CommandPacket.StreamFlush

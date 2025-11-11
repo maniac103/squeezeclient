@@ -360,11 +360,10 @@ class LocalPlaybackService :
             }
 
             is SlimprotoSocket.CommandPacket.StreamUnpause -> {
-                val nowJiffies = (System.nanoTime() - startupTimestampNanos)
+                val uptime = (System.nanoTime() - startupTimestampNanos)
                     .toDuration(DurationUnit.NANOSECONDS)
-                    .inWholeMilliseconds
-                val unpauseDelay = command.unpauseTimestamp - nowJiffies
-                if (unpauseDelay > 0) {
+                val unpauseDelay = command.unpauseTimestamp - uptime
+                if (unpauseDelay.isPositive()) {
                     Log.d(TAG, "Delaying unpause for $unpauseDelay ms")
                     delay(unpauseDelay)
                 }

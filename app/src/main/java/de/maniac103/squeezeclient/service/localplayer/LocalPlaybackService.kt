@@ -210,11 +210,6 @@ class LocalPlaybackService :
         }
     }
 
-    private suspend fun handleUnpause() {
-        player.paused = false
-        sendStatus(SlimprotoSocket.StatusType.StreamingResumed)
-    }
-
     private fun connectAndRunSlimproto() = lifecycleScope.launch {
         slimprotoStateFlow.emit(SlimprotoState.Disconnected)
         while (isActive) {
@@ -356,10 +351,11 @@ class LocalPlaybackService :
 
             is SlimprotoSocket.CommandPacket.StreamPause -> {
                 player.paused = true
-                sendStatus(SlimprotoSocket.StatusType.StreamingPaused)
                 if (command.pauseInterval != null) {
                     delay(command.pauseInterval)
-                    handleUnpause()
+                    player.paused = false
+                } else {
+                    sendStatus(SlimprotoSocket.StatusType.StreamingPaused)
                 }
             }
 
@@ -372,7 +368,8 @@ class LocalPlaybackService :
                     delay(unpauseDelay)
                 }
                 sentBufferReady = true
-                handleUnpause()
+                player.paused = false
+                sendStatus(SlimprotoSocket.StatusType.StreamingResumed)
             }
 
             is SlimprotoSocket.CommandPacket.StreamSkipAhead -> {

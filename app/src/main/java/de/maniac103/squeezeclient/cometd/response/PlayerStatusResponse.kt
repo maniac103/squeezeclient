@@ -66,7 +66,7 @@ data class PlayerStatusResponse(
     @SerialName("playlist repeat")
     val repeatState: PlayerStatus.RepeatState,
     @SerialName("mixer volume")
-    val currentVolume: Int,
+    val currentVolume: Double,
     @SerialName("digital_volume_control")
     @Serializable(with = BooleanAsIntSerializer::class)
     val digitalVolumeControl: Boolean,
@@ -116,8 +116,8 @@ data class PlayerStatusResponse(
             playerName,
             connected,
             powered,
-            abs(currentVolume),
-            currentVolume < 0,
+            abs(currentVolume.toInt()),
+            currentVolume < 0f,
             syncMaster,
             syncSlaves,
             eventTimestamp

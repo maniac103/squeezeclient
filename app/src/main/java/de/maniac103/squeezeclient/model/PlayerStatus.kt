@@ -37,8 +37,8 @@ data class PlayerStatus(
     val playerName: String,
     val connected: Boolean,
     val powered: Boolean,
-    val currentVolume: Int,
-    val muted: Boolean,
+    val currentVolume: Int?,
+    val muted: Boolean?,
     val syncMaster: PlayerId?,
     val syncSlaves: List<PlayerId>?,
     private val timestamp: Instant

@@ -41,8 +41,8 @@ import kotlinx.coroutines.launch
 class VolumeFragment : ViewBindingFragment<FragmentVolumeBinding>(FragmentVolumeBinding::inflate) {
     private val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)
 
-    private var currentPlayerVolume = 0
-    private var isMuted = false
+    private var currentPlayerVolume: Int? = null
+    private var isMuted: Boolean? = null
     private var hideJob: Job? = null
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -70,10 +70,12 @@ class VolumeFragment : ViewBindingFragment<FragmentVolumeBinding>(FragmentVolume
 
         binding.volumeMute.apply {
             setOnClickListener {
-                isMuted = !isMuted
-                lifecycleScope.launch {
-                    connectionHelper.setMuteState(playerId, isMuted)
-                    updateUiFromState()
+                isMuted?.not()?.let { newMuted ->
+                    isMuted = newMuted
+                    lifecycleScope.launch {
+                        connectionHelper.setMuteState(playerId, newMuted)
+                        updateUiFromState()
+                    }
                 }
             }
         }
@@ -92,16 +94,16 @@ class VolumeFragment : ViewBindingFragment<FragmentVolumeBinding>(FragmentVolume
     }
 
     fun handleKeyDown(keyCode: Int): Boolean {
-        val volumeDelta = when (keyCode) {
-            KeyEvent.KEYCODE_VOLUME_UP -> 5
-            KeyEvent.KEYCODE_VOLUME_DOWN -> -5
+        val newVolume = when (keyCode) {
+            KeyEvent.KEYCODE_VOLUME_UP -> currentPlayerVolume?.plus(5)
+            KeyEvent.KEYCODE_VOLUME_DOWN -> currentPlayerVolume?.minus(5)
             else -> null
         } ?: return false
 
         showIfNeeded()
         lifecycleScope.launch {
-            currentPlayerVolume += volumeDelta
-            connectionHelper.setVolume(playerId, currentPlayerVolume)
+            currentPlayerVolume = newVolume
+            connectionHelper.setVolume(playerId, newVolume)
             updateUiFromState()
         }
         return true
@@ -111,7 +113,7 @@ class VolumeFragment : ViewBindingFragment<FragmentVolumeBinding>(FragmentVolume
         keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN
 
     fun showIfNeeded(duration: Duration = 2.seconds) {
-        if (!isVisible) {
+        if (!isVisible && currentPlayerVolume != null) {
             parentFragmentManager.beginTransaction()
                 .setCustomAnimations(R.animator.volume_slide_in, R.animator.volume_slide_out)
                 .show(this)
@@ -136,8 +138,8 @@ class VolumeFragment : ViewBindingFragment<FragmentVolumeBinding>(FragmentVolume
     }
 
     private fun updateUiFromState() {
-        binding.volumeSlider.progress = currentPlayerVolume
-        binding.volumeMute.isActivated = isMuted
+        binding.volumeSlider.progress = currentPlayerVolume ?: 0
+        binding.volumeMute.isActivated = isMuted ?: false
     }
 
     companion object {

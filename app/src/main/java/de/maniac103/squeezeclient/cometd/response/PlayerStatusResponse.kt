@@ -24,7 +24,6 @@ import de.maniac103.squeezeclient.cometd.TimestampAsInstantSerializer
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.PlayerStatus
 import de.maniac103.squeezeclient.model.Playlist
-import kotlin.math.abs
 import kotlin.math.roundToLong
 import kotlin.time.Clock
 import kotlin.time.DurationUnit
@@ -36,6 +35,8 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
+import kotlin.math.absoluteValue
+import kotlin.math.roundToInt
 
 // offset and item_loop are not returned when fetching non-existing pages
 @Serializable
@@ -66,10 +67,10 @@ data class PlayerStatusResponse(
     @SerialName("playlist repeat")
     val repeatState: PlayerStatus.RepeatState,
     @SerialName("mixer volume")
-    val currentVolume: Int,
+    val currentVolume: Float? = null,
     @SerialName("digital_volume_control")
     @Serializable(with = BooleanAsIntSerializer::class)
-    val digitalVolumeControl: Boolean,
+    val digitalVolumeControl: Boolean? = null,
     @SerialName("player_name")
     val playerName: String,
     @SerialName("player_connected")
@@ -116,8 +117,8 @@ data class PlayerStatusResponse(
             playerName,
             connected,
             powered,
-            abs(currentVolume),
-            currentVolume < 0,
+            currentVolume?.absoluteValue?.roundToInt(),
+            currentVolume?.let { it < 0 },
             syncMaster,
             syncSlaves,
             eventTimestamp

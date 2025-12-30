@@ -410,7 +410,7 @@ class MediaService :
                 }
             }
 
-            return State.Builder()
+            val builder = State.Builder()
                 .setPlaybackState(playbackState)
                 .setAvailableCommands(commandsBuilder.build())
                 .setContentPositionMs(
@@ -425,9 +425,11 @@ class MediaService :
                 .setPlayWhenReady(playWhenReady, PLAY_WHEN_READY_CHANGE_REASON_REMOTE)
                 .setPlaylist(playlist)
                 .setCurrentMediaItemIndex(currentIndex)
-                .setDeviceVolume(status.currentVolume)
-                .setIsDeviceMuted(status.muted)
-                .build()
+
+            status.currentVolume?.let { builder.setDeviceVolume(it) }
+            status.muted?.let { builder.setIsDeviceMuted(it) }
+
+            return builder.build()
         }
 
         @kotlin.OptIn(ExperimentalCoroutinesApi::class)

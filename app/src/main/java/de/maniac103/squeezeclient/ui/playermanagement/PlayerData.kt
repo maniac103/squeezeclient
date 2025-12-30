@@ -28,7 +28,7 @@ data class PlayerData(
     val canPowerOff: Boolean,
     val nowPlayingInfo: Playlist.PlaylistItem?,
     val playbackState: PlayerStatus.PlayState?,
-    val volume: Int,
+    val volume: Int?,
     val powered: Boolean,
     val master: PlayerId?
 )

@@ -107,7 +107,8 @@ sealed class PlayerViewHolder(
         )
         powerButton.isInvisible = !data.canPowerOff
         powerButton.alpha = if (data.powered) 1F else 0.5F
-        volumeSlider.value = data.volume.toFloat()
+        volumeSlider.isInvisible = data.volume == null
+        data.volume?.let { volumeSlider.value = it.toFloat() }
     }
 
     class MasterPlayerViewHolder(val binding: ListItemMasterPlayerBinding, callback: Callback) :

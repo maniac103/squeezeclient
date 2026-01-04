@@ -78,18 +78,22 @@ class WearListenerService :
                 val response = handleListPlayersRequest()
                 response.toByteArray()
             }
+
             AllPlayerActionRequest.PATH -> lifecycleScope.async {
                 val success = handleAllPlayerActionRequest(data.asAllPlayerActionRequest())
                 ByteArray(1) { if (success) 1 else 0 }
             }
+
             StartMediaServiceRequest.PATH -> lifecycleScope.async {
                 val success = handleStartMediaService(data.asStartMediaServiceRequest())
                 ByteArray(1) { if (success) 1 else 0 }
             }
+
             StopMediaServiceRequest.PATH -> lifecycleScope.async {
                 handleStopMediaService()
                 ByteArray(0)
             }
+
             else -> null
         }
         return deferred?.asTask() ?: super.onRequest(nodeId, path, data)
@@ -147,6 +151,7 @@ class WearListenerService :
                 when (request.action) {
                     AllPlayerActionRequest.Action.TurnOff ->
                         connectionHelper.setPowerState(p.id, false)
+
                     AllPlayerActionRequest.Action.StopPlayback ->
                         connectionHelper.changePlaybackState(p.id, PlayerStatus.PlayState.Stopped)
                 }

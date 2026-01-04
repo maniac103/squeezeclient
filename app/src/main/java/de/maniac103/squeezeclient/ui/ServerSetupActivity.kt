@@ -205,13 +205,16 @@ class ServerSetupActivity : AppCompatActivity() {
 
         val (addressEnabled, addressError) = when {
             addressValue.isNullOrEmpty() -> Pair(false, null)
+
             addressValue.let { "http://$it" }.toHttpUrlOrNull() != null ->
                 Pair(true, null)
+
             else -> Pair(false, getString(R.string.server_address_error, addressValue))
         }
         val (credsEnabled, credsError) = when {
             !userValue.isNullOrEmpty() && passwordValue.isNullOrEmpty() ->
                 Pair(false, getString(R.string.server_creds_error))
+
             else -> Pair(true, null)
         }
 

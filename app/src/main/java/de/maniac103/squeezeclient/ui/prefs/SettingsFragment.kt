@@ -74,12 +74,15 @@ class SettingsFragment : PreferenceFragmentCompat() {
             when {
                 !enabled ->
                     true
+
                 Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ->
                     // Don't need runtime permission in that case
                     true
+
                 requester.isAnyGranted(android.Manifest.permission.POST_NOTIFICATIONS) ->
                     // Permission already granted
                     true
+
                 else -> {
                     lifecycleScope.launch {
                         if (requestNotificationPermissionForLocalPlayer()) {

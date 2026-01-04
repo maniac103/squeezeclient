@@ -85,13 +85,16 @@ class InputBottomSheetFragment :
                 val action = input.action.withInputValue(inputText)
                 parent.onInputSubmitted(requireNotNull(parentItem), action, input.actionHasTarget)
             }
+
             is InputSubmitListener -> {
                 val action = input.action.withInputValue(inputText)
                 parent.onInputSubmitted(title, action, input.actionHasTarget)
             }
+
             is PlainSubmitListener -> {
                 parent.onInputSubmitted(inputText)
             }
+
             else -> null
         }
         handleAction(job, true)
@@ -104,8 +107,10 @@ class InputBottomSheetFragment :
                 input.minLength,
                 input.minLength
             )
+
         !input.allowedChars.isNullOrEmpty() && text.any { c -> !input.allowedChars.contains(c) } ->
             getString(R.string.input_character_error_message, input.allowedChars)
+
         else -> null
     }
 

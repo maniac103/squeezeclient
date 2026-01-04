@@ -195,7 +195,9 @@ class LocalPlayer(
         when (playbackState) {
             Player.STATE_BUFFERING, Player.STATE_READY ->
                 onPlaybackReady(playbackState == Player.STATE_BUFFERING)
+
             Player.STATE_ENDED -> onPlaybackEnded(true)
+
             Player.STATE_IDLE -> {
                 if (player.playerError != null) {
                     onPlaybackError()
@@ -228,15 +230,18 @@ class LocalPlayer(
         when {
             isSetVolume && mode == LocalPlayerVolumeMode.PlayerOnly ->
                 player.volume = volume
+
             isSetVolume && mode == LocalPlayerVolumeMode.Device -> {
                 applyVolumeAsDeviceVolume(volume)
             }
+
             isPlaying && mode == LocalPlayerVolumeMode.DeviceWhilePlaying -> {
                 if (lastSavedDeviceVolume == null) {
                     lastSavedDeviceVolume = player.deviceVolume
                 }
                 applyVolumeAsDeviceVolume(volume)
             }
+
             !isPlaying && lastSavedDeviceVolume != null -> {
                 player.setDeviceVolume(lastSavedDeviceVolume!!, 0)
                 lastSavedDeviceVolume = null

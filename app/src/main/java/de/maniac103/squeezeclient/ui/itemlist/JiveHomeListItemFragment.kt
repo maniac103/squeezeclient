@@ -109,16 +109,20 @@ class JiveHomeListItemFragment :
             showInput(item)
             null
         }
+
         item.choices != null -> {
             showChoices(item)
             null
         }
+
         item.doAction != null -> lifecycleScope.launch {
             connectionHelper.executeAction(playerId, item.doAction)
         }
+
         item.goAction != null -> {
             listener.onGoAction(item.title, item.goAction)
         }
+
         else -> {
             listener.onNodeSelected(item.id)
             null

@@ -83,10 +83,13 @@ class SqueezeClientApplication :
     private fun updateDefaultNightMode() {
         val mode = when (prefs.getString("app_theme", null)) {
             "light" -> AppCompatDelegate.MODE_NIGHT_NO
+
             "dark" -> AppCompatDelegate.MODE_NIGHT_YES
+
             else -> when {
                 Build.VERSION.SDK_INT < Build.VERSION_CODES.Q ->
                     AppCompatDelegate.MODE_NIGHT_AUTO_BATTERY
+
                 else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
             }
         }

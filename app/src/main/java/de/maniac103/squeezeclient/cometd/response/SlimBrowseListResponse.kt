@@ -262,6 +262,7 @@ fun Json.combineItemAndBaseActions(item: JsonObject, base: JsonObject?): JiveAct
                 )
             }
         }
+
         playAction?.cmd == listOf("playlistcontrol") && playAction.params["cmd"] == "load" -> when {
             playAction.params.containsKey("folder_id") -> {
                 DownloadRequestData(
@@ -270,6 +271,7 @@ fun Json.combineItemAndBaseActions(item: JsonObject, base: JsonObject?): JiveAct
                     "cu"
                 )
             }
+
             playAction.params.containsKey("playlist_id") -> {
                 DownloadRequestData(
                     listOf("playlists", "tracks"),
@@ -277,6 +279,7 @@ fun Json.combineItemAndBaseActions(item: JsonObject, base: JsonObject?): JiveAct
                     DownloadSongInfoListResponse.SERVER_TAGS
                 )
             }
+
             else -> {
                 // Depending on server settings, for a single track playAction might point to either
                 // the track or the album it belongs to, so prefer the parameters of the moreAction
@@ -291,6 +294,7 @@ fun Json.combineItemAndBaseActions(item: JsonObject, base: JsonObject?): JiveAct
                 )
             }
         }
+
         else -> null
     }
 

@@ -39,6 +39,7 @@ fun <T> Flow<ValueOrCompletion<T>>.dematerializeCompletion(): Flow<T> = transfor
             emit(vc.value)
             true
         }
+
         is ValueOrCompletion.Completion -> {
             vc.exception?.let { throw it }
             false

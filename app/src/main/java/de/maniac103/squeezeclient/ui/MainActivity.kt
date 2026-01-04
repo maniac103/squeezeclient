@@ -149,10 +149,12 @@ class MainActivity :
                         }
                     }
                 }
+
                 R.id.manage_players -> {
                     startActivity(Intent(this, PlayerManagementActivity::class.java))
                     binding.drawerLayout.closeDrawer(GravityCompat.START, false)
                 }
+
                 R.id.menu_settings -> {
                     startActivity(Intent(this, SettingsActivity::class.java))
                     binding.drawerLayout.closeDrawer(GravityCompat.START, false)
@@ -232,6 +234,7 @@ class MainActivity :
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
+        @Suppress("ktlint:standard:blank-line-between-when-conditions")
         val volumeFragment = when {
             nowPlayingFragment?.isVisible != true -> null // don't forward key in disconnected state
             prefs.useVolumeButtonsForPlayerVolume -> volumeFragment
@@ -244,6 +247,7 @@ class MainActivity :
     }
 
     override fun onKeyUp(keyCode: Int, event: KeyEvent?): Boolean {
+        @Suppress("ktlint:standard:blank-line-between-when-conditions")
         val volumeFragment = when {
             nowPlayingFragment?.isVisible != true -> null // don't forward key in disconnected state
             prefs.useVolumeButtonsForPlayerVolume -> volumeFragment
@@ -435,9 +439,11 @@ class MainActivity :
                 showConnectionErrorHint(f)
             }
         }
+
         is ConnectionState.Connecting -> {
             hideContentAndShowLoadingIndicator()
         }
+
         is ConnectionState.Connected -> {
             consecutiveUnsuccessfulConnectAttempts = 0
             val presentPlayers = state.players.filter { it.connected }
@@ -462,6 +468,7 @@ class MainActivity :
                 showConnectionErrorHint(f)
             }
         }
+
         is ConnectionState.ConnectionFailure -> {
             Log.w(TAG, "Connection failed", state.cause)
             hideContentAndShowLoadingIndicator()

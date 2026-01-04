@@ -181,26 +181,34 @@ class MainContentContainerFragment :
         val actualNextWindow = when {
             nextWindow == SlimBrowseItemList.NextWindow.Parent && parentItem != null ->
                 null
+
             nextWindow == SlimBrowseItemList.NextWindow.GrandParent && parentItem != null ->
                 SlimBrowseItemList.NextWindow.Parent
+
             nextWindow == SlimBrowseItemList.NextWindow.ParentWithRefresh ->
                 if (parentItem != null) null else SlimBrowseItemList.NextWindow.Parent
+
             else -> nextWindow
         }
         val refreshLevelsFromNextWindow = when {
             nextWindow == SlimBrowseItemList.NextWindow.RefreshSelf && parentItem == null ->
                 1
+
             nextWindow == SlimBrowseItemList.NextWindow.ParentWithRefresh ->
                 if (parentItem != null) 1 else 2
+
             else -> 0
         }
         val refreshLevelsFromRefresh = when (item.actions?.onClickRefresh) {
             JiveActions.RefreshBehavior.RefreshSelf ->
                 if (parentItem != null) 0 else 1
+
             JiveActions.RefreshBehavior.RefreshParent ->
                 if (parentItem != null) 1 else 2
+
             JiveActions.RefreshBehavior.RefreshGrandParent ->
                 if (parentItem != null) 2 else 3
+
             null ->
                 // fall back to refreshing the page for do actions without next window, since
                 // choices and checkboxes usually do not have that
@@ -215,13 +223,17 @@ class MainContentContainerFragment :
                 connectionHelper.executeAction(playerId, action)
                 when (actualNextWindow) {
                     SlimBrowseItemList.NextWindow.Parent -> popLevels(1)
+
                     SlimBrowseItemList.NextWindow.GrandParent -> popLevels(2)
+
                     SlimBrowseItemList.NextWindow.Home,
                     SlimBrowseItemList.NextWindow.MyMusic -> goToHome()
+
                     SlimBrowseItemList.NextWindow.NowPlaying -> {
                         goToHome()
                         listener.openNowPlayingIfNeeded()
                     }
+
                     else -> {}
                 }
                 handleMultiLevelRefresh(refreshLevels)
@@ -372,6 +384,7 @@ class MainContentContainerFragment :
                     val f = SliderBottomSheetFragment.create(title, firstItem.actions.slider)
                     f.show(childFragmentManager, "slider")
                 }
+
                 result.totalCount == 0 && result.window?.textArea != null -> {
                     val f = InfoBottomSheet.create(
                         result.title ?: title,
@@ -379,6 +392,7 @@ class MainContentContainerFragment :
                     )
                     f.show(childFragmentManager, "info")
                 }
+
                 else -> {
                     val f = SlimBrowseItemListFragment.create(
                         playerId,

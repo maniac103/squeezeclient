@@ -174,10 +174,12 @@ class SlimprotoSocket(prefs: SharedPreferences) {
                 Log.d(TAG, "Got setd for unknown setting $id")
                 CommandPacket.Other("setd", buffer.remaining())
             }
+
             buffer.hasRemaining() -> {
                 val settingData = buffer.readRemainderAsArray()
                 CommandPacket.SetSetting(setting, settingData)
             }
+
             else -> CommandPacket.TriggerGetSetting(setting)
         }
     }
@@ -193,6 +195,7 @@ class SlimprotoSocket(prefs: SharedPreferences) {
             '3' -> Pair(true, true)
             else -> throw IllegalArgumentException("Unexpected STRM auto-start value $t")
         }
+        @Suppress("ktlint:standard:blank-line-between-when-conditions")
         val mimeType = when (val t = buffer.get().toInt().toChar()) {
             'm' -> "audio/mpeg" // MP3
             'f' -> "audio/flac" // FLAC
@@ -250,20 +253,27 @@ class SlimprotoSocket(prefs: SharedPreferences) {
                     replayGainOrValue.toFloat() / 65536F
                 )
             }
+
             'p' -> CommandPacket.StreamPause(
                 replayGainOrValue
                     .takeIf { it > 0 }
                     ?.toDuration(DurationUnit.MILLISECONDS)
             )
+
             'u' -> CommandPacket.StreamUnpause(
                 replayGainOrValue.toDuration(DurationUnit.MILLISECONDS)
             )
+
             'q' -> CommandPacket.StreamStop
+
             't' -> CommandPacket.StreamStatus(replayGainOrValue)
+
             'f' -> CommandPacket.StreamFlush
+
             'a' -> CommandPacket.StreamSkipAhead(
                 replayGainOrValue.toDuration(DurationUnit.MILLISECONDS)
             )
+
             else -> throw IllegalArgumentException("Unexpected STRM command $commandByte")
         }
     }

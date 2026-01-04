@@ -223,6 +223,7 @@ class ConnectionHelper(private val appContext: SqueezeClientApplication) {
                         ?.toString()
                 }
             }
+
             fetchExtraInfoIfPossible && action.fetchesAlbumTrackList() -> {
                 val durationsById = doRequestWithResult<TrackInfoListResponse>(
                     FetchTrackInfoRequest(playerId, action)
@@ -237,6 +238,7 @@ class ConnectionHelper(private val appContext: SqueezeClientApplication) {
                         }
                 }
             }
+
             else -> response.asModelItems(json)
         }
     }
@@ -284,11 +286,13 @@ class ConnectionHelper(private val appContext: SqueezeClientApplication) {
             ?.playbackState ?: PlayerStatus.PlayState.Stopped
         val request = when (state) {
             PlayerStatus.PlayState.Stopped -> ChangePlaybackStateRequest.Stop(playerId)
+
             PlayerStatus.PlayState.Paused -> if (currentState == PlayerStatus.PlayState.Playing) {
                 ChangePlaybackStateRequest.Pause(playerId)
             } else {
                 null
             }
+
             PlayerStatus.PlayState.Playing -> if (currentState == PlayerStatus.PlayState.Paused) {
                 ChangePlaybackStateRequest.Unpause(playerId, appContext.prefs.fadeInDuration)
             } else {

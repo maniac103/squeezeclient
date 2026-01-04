@@ -113,10 +113,12 @@ abstract class BaseSlimBrowseItemListFragment :
                 showInput(item)
                 null
             }
+
             actions.choices != null -> {
                 showChoices(item)
                 null
             }
+
             actions.checkbox != null -> {
                 val action = if (actions.checkbox.state) {
                     actions.checkbox.offAction
@@ -125,20 +127,25 @@ abstract class BaseSlimBrowseItemListFragment :
                 }
                 listener.onHandleDoOrGoAction(action, false, item, null)
             }
+
             actions.radio != null -> {
                 listener.onHandleDoOrGoAction(actions.radio.action, false, item, null)
             }
+
             item.webLink != null -> {
                 listener.onOpenWebLink(item.title, item.webLink.toUri())
                 null
             }
+
             item.subItems != null -> {
                 fetchAction?.let { listener.onOpenSubItemList(item, it) }
                 null
             }
+
             actions.goAction != null -> {
                 listener.onHandleDoOrGoAction(actions.goAction, true, item, null)
             }
+
             else -> null
         }
     }
@@ -151,11 +158,13 @@ abstract class BaseSlimBrowseItemListFragment :
                 val f = ContextMenuBottomSheetFragment.create(playerId, item, itemList)
                 f.show(childFragmentManager, "contextmenu")
             }
+
             actions.hasContextMenu -> {
                 val f = ItemActionsMenuSheet.create(item)
                 f.show(childFragmentManager, "itemactions")
                 null
             }
+
             else -> null
         }
     }
@@ -190,10 +199,13 @@ abstract class BaseSlimBrowseItemListFragment :
             actions.downloadData != null &&
                 selectedItem.title == getString(R.string.action_download) ->
                 triggerDownload(actions.downloadData)
+
             actions.doAction != null ->
                 listener.onHandleDoOrGoAction(actions.doAction, false, selectedItem, parentItem)
+
             actions.goAction != null ->
                 listener.onHandleDoOrGoAction(actions.goAction, true, selectedItem, parentItem)
+
             else -> null
         }
     }

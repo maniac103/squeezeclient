@@ -240,6 +240,7 @@ class CometdClient(
                             // empty message array
                             builder.clear()
                         }
+
                         "}]" -> {
                             // content looks like valid JSON, try to parse it
                             try {
@@ -295,8 +296,10 @@ class CometdClient(
             when (HTTP_LOGGING_LEVEL) {
                 HttpLoggingInterceptor.Level.BODY ->
                     Log.d(TAG, "Received event message ($jsonLength bytes): $this")
+
                 HttpLoggingInterceptor.Level.BASIC, HttpLoggingInterceptor.Level.HEADERS ->
                     Log.d(TAG, "Received event message ($jsonLength bytes) for $channelId")
+
                 else -> {}
             }
         }

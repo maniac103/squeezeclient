@@ -91,6 +91,7 @@ class PlayerDragMoveCallback(
                 }
                 draggedItem?.state = DragDropAwareViewHolder.State.Dragged
             }
+
             ItemTouchHelper.ACTION_STATE_IDLE -> {
                 val draggedPlayerId = draggedItem?.playerId
                 val target = lastDropTarget
@@ -99,6 +100,7 @@ class PlayerDragMoveCallback(
                 when {
                     draggedPlayerId != null && targetPlayerId != null ->
                         syncAction(targetPlayerId, draggedPlayerId)
+
                     draggedPlayerId != null && target != null && target !is PlayerViewHolder ->
                         unsyncAction(draggedPlayerId)
                 }

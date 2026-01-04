@@ -73,6 +73,7 @@ class ImageViewActivity : AppCompatActivity() {
                         share()
                         true
                     }
+
                     else -> false
                 }
             }

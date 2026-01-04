@@ -112,6 +112,7 @@ class NowPlayingFragment :
         override fun handleOnBackPressed() {
             when {
                 canCollapsePlaylist() -> playlistBottomSheetBehavior.handleBackInvoked()
+
                 sheetIsExpanded() || startedCollapse -> {
                     binding.container.transitionToState(R.id.collapsed)
                     startedCollapse = false
@@ -122,6 +123,7 @@ class NowPlayingFragment :
         override fun handleOnBackStarted(backEvent: BackEventCompat) {
             when {
                 canCollapsePlaylist() -> playlistBottomSheetBehavior.startBackProgress(backEvent)
+
                 sheetIsExpanded() -> {
                     binding.container.setTransition(R.id.expanded, R.id.collapsed)
                     binding.container.progress = 0F
@@ -134,6 +136,7 @@ class NowPlayingFragment :
             when {
                 canCollapsePlaylist() ->
                     playlistBottomSheetBehavior.updateBackProgress(backEvent)
+
                 startedCollapse -> {
                     val progress = backProgressInterpolator.getInterpolation(backEvent.progress)
                     binding.container.progress = 0.2F * progress
@@ -144,6 +147,7 @@ class NowPlayingFragment :
         override fun handleOnBackCancelled() {
             when {
                 canCollapsePlaylist() -> playlistBottomSheetBehavior.cancelBackProgress()
+
                 startedCollapse -> {
                     binding.container.setTransition(R.id.collapsed, R.id.expanded)
                     binding.container.progress = 1F
@@ -313,6 +317,7 @@ class NowPlayingFragment :
             listener.showVolumePopup()
             true
         }
+
         R.id.info -> {
             val currentSong = currentSong
             currentSong?.actions?.moreAction?.let { action ->
@@ -333,6 +338,7 @@ class NowPlayingFragment :
             }
             true
         }
+
         R.id.save_playlist -> {
             val f = InputBottomSheetFragment.createPlain(
                 getString(R.string.playlist_save_title),
@@ -341,12 +347,14 @@ class NowPlayingFragment :
             f.show(childFragmentManager, "playlist_name")
             true
         }
+
         R.id.clear_playlist -> {
             lifecycleScope.launch {
                 connectionHelper.clearCurrentPlaylist(playerId)
             }
             true
         }
+
         else -> false
     }
 
@@ -367,9 +375,11 @@ class NowPlayingFragment :
             actions.doAction != null -> lifecycleScope.launch {
                 connectionHelper.executeAction(playerId, actions.doAction)
             }
+
             actions.goAction != null -> {
                 listener.onContextMenuAction(actions.goAction, parentItem, selectedItem)
             }
+
             else -> null
         }
         job?.invokeOnCompletion {
@@ -535,7 +545,9 @@ class NowPlayingFragment :
     private fun collapseIfExpanded() = when {
         canCollapsePlaylist() ->
             playlistBottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+
         sheetIsExpanded() -> binding.container.transitionToState(R.id.collapsed)
+
         else -> {}
     }
 
@@ -555,8 +567,10 @@ class NowPlayingFragment :
         val originalBackgroundColor = when {
             bg is ColorDrawable ->
                 ColorStateList.valueOf(bg.color)
+
             Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && bg is ColorStateListDrawable ->
                 bg.colorStateList
+
             else -> null
         }
 

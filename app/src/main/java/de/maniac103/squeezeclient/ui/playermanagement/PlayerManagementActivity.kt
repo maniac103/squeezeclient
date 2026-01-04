@@ -122,7 +122,9 @@ class PlayerManagementActivity : AppCompatActivity() {
                     binding.loadingIndicator.isVisible = !binding.recycler.isVisible
                     when (state) {
                         is ConnectionState.Connected -> {}
+
                         is ConnectionState.Connecting -> {}
+
                         is ConnectionState.ConnectionFailure,
                         is ConnectionState.Disconnected -> {
                             disconnectFinishJob = launch {
@@ -177,20 +179,26 @@ class PlayerManagementActivity : AppCompatActivity() {
                 when {
                     // Both are masters -> compare by their name
                     a.master == null && b.master == null -> a.name.compareTo(b.name)
+
                     // Both are slaves to the same master -> compare by their name
                     a.master == b.master -> a.name.compareTo(b.name)
+
                     // A is slave of B
                     a.master == b.playerId -> 1
+
                     // B is slave of A
                     b.master == a.playerId -> -1
+
                     // Both are slaves to different masters -> compare master names
                     a.master != null && b.master != null -> {
                         val aMasterName = requireNotNull(masterNames[a.master])
                         val bMasterName = requireNotNull(masterNames[b.master])
                         aMasterName.compareTo(bMasterName)
                     }
+
                     // A is master, but B isn't -> compare name of A to master name of B
                     a.master == null -> a.name.compareTo(requireNotNull(masterNames[b.master]))
+
                     // B is master, but A isn't -> compare name of B to master name of A
                     else -> requireNotNull(masterNames[a.master]).compareTo(b.name)
                 }

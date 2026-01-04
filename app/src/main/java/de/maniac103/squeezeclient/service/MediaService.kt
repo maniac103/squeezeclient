@@ -212,10 +212,12 @@ class MediaService :
                 stopSelf()
                 SessionResult.RESULT_SUCCESS
             }
+
             SESSION_ACTION_POWER -> {
                 player.currentPlayer?.let { connectionHelper.togglePower(it) }
                 SessionResult.RESULT_SUCCESS
             }
+
             else -> SessionResult.RESULT_ERROR_NOT_SUPPORTED
         }
         SessionResult(result)
@@ -326,14 +328,17 @@ class MediaService :
             when (seekCommand) {
                 COMMAND_SEEK_TO_NEXT_MEDIA_ITEM, COMMAND_SEEK_TO_NEXT ->
                     connectionHelper.sendButtonRequest(PlaybackButtonRequest.NextTrack(playerId))
+
                 COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM, COMMAND_SEEK_TO_PREVIOUS ->
                     connectionHelper.sendButtonRequest(
                         PlaybackButtonRequest.PreviousTrack(playerId)
                     )
+
                 COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM -> {
                     val positionSeconds = ((positionMs + 500) / 1000).toInt()
                     connectionHelper.updatePlaybackPosition(playerId, positionSeconds)
                 }
+
                 COMMAND_SEEK_TO_MEDIA_ITEM -> {
                     val positionSeconds = ((positionMs + 500) / 1000).toInt()
                     connectionHelper.advanceToPlaylistPosition(playerId, mediaItemIndex)
@@ -341,6 +346,7 @@ class MediaService :
                         connectionHelper.updatePlaybackPosition(playerId, positionSeconds)
                     }
                 }
+
                 else -> {}
             }
         }
@@ -402,7 +408,9 @@ class MediaService :
             val playWhenReady = status.playbackState == PlayerStatus.PlayState.Playing
             val playbackState = when {
                 !isConnectedToServer -> STATE_BUFFERING
+
                 !status.powered -> STATE_IDLE
+
                 else -> when (status.playbackState) {
                     PlayerStatus.PlayState.Playing -> STATE_READY
                     PlayerStatus.PlayState.Paused -> STATE_READY

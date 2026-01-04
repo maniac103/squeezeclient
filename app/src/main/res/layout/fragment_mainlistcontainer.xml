@@ -21,4 +21,5 @@
     android:id="@+id/list_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:paddingBottom="@dimen/main_content_container_bottom_placeholder"
     android:background="?colorSurfaceContainer" />

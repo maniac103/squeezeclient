@@ -27,13 +27,11 @@
     app:layout_collapseMode="parallax"
     app:layoutDescription="@xml/nowplaying_motion_scene">
 
-    <androidx.cardview.widget.CardView
+    <View
         android:id="@+id/player_background"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:cardBackgroundColor="?colorSurfaceContainerHigh"
-        app:cardCornerRadius="0dp"
-        app:cardElevation="0dp" />
+        android:background="?colorSurfaceContainerHigh" />
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/toolbar_container"
@@ -268,7 +266,6 @@
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/playlist_handle_wrapper"
-            style="?bottomSheetStyle"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="?colorSurfaceContainerHighest"

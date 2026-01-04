@@ -39,6 +39,7 @@
         android:id="@+id/recycler"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:paddingBottom="@dimen/main_content_list_bottom_padding"
         android:clipToPadding="false" />
 
 </de.maniac103.squeezeclient.ui.common.MainContentContainerView>

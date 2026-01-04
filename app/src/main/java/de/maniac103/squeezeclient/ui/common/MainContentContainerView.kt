@@ -27,9 +27,17 @@ class MainContentContainerView(context: Context, attrs: AttributeSet) :
 
     private val backgroundDrawable = MaterialShapeDrawable.createWithElevationOverlay(context)
     private var pendingXOffset: Float? = null
+    private var bottomPlaceholderCompensation = 0F
+    private var originalScaleY = 1F
 
     fun enableMainContentBackground() {
         background = backgroundDrawable
+    }
+
+    @Suppress("unused") // used via animator
+    fun setBottomPlaceholderCompensation(value: Float) {
+        bottomPlaceholderCompensation = value
+        applyScaleY()
     }
 
     @Suppress("unused") // used via animator
@@ -43,11 +51,24 @@ class MainContentContainerView(context: Context, attrs: AttributeSet) :
         applyPendingXOffsetIfPossible()
     }
 
+    override fun setScaleY(scaleY: Float) {
+        originalScaleY = scaleY
+        applyScaleY()
+    }
+
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
         super.onLayout(changed, l, t, r, b)
         if (changed) {
             applyPendingXOffsetIfPossible()
+            applyScaleY()
         }
+    }
+
+    private fun applyScaleY() {
+        val height = height.takeIf { it > 0 } ?: return
+        val scaleForCompensation = (height - bottomPlaceholderCompensation) / height.toFloat()
+        super.setScaleY(originalScaleY * scaleForCompensation)
+        translationY = -(0.5F * bottomPlaceholderCompensation * originalScaleY)
     }
 
     private fun applyPendingXOffsetIfPossible() {

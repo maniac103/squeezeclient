@@ -17,7 +17,11 @@
   -->
 
 <resources>
-    <dimen name="collapsed_now_playing_height">64dp</dimen> <!-- 48dp icon + 4dp top padding + 12dp progress indicator -->
+    <!-- Collapsed now playing = 64dp (48dp icon + 4dp top padding + 12dp progress indicator),
+         main content is 16dp under it to cover rounded corners -->
+    <dimen name="main_content_container_bottom_placeholder">48dp</dimen>
+    <dimen name="main_content_list_bottom_padding">16dp</dimen>
+    <dimen name="nowplaying_top_corner_radius">16dp</dimen>
     <dimen name="playlist_sheet_peek_height">48dp</dimen>
     <dimen name="volume_popup_panel_width">56dp</dimen>
     <dimen name="volume_popup_panel_corner_radius">28dp</dimen>

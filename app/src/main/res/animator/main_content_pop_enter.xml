@@ -57,6 +57,14 @@
     <objectAnimator
         android:duration="100"
         android:startOffset="300"
+        android:interpolator="@android:interpolator/decelerate_quint"
+        android:propertyName="bottomPlaceholderCompensation"
+        android:valueFrom="@dimen/main_content_list_bottom_padding"
+        android:valueTo="0dp"
+        android:valueType="floatType" />
+    <objectAnimator
+        android:duration="100"
+        android:startOffset="300"
         android:propertyName="translationZ"
         android:valueFrom="4dp"
         android:valueTo="0dp"

@@ -339,6 +339,7 @@
             android:id="@id/artwork"
             android:layout_width="48dp"
             android:layout_height="48dp"
+            android:layout_marginStart="8dp"
             app:layout_constraintBottom_toTopOf="@id/progress_minimized"
             app:layout_constraintStart_toEndOf="@id/left_inset_spacer" />
 

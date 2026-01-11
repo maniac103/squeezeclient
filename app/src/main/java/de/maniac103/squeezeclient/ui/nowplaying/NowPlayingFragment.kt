@@ -27,6 +27,8 @@ import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
+import android.view.animation.AnimationUtils
+import android.view.animation.Interpolator
 import androidx.activity.BackEventCompat
 import androidx.activity.OnBackPressedCallback
 import androidx.constraintlayout.motion.widget.MotionLayout
@@ -105,6 +107,7 @@ class NowPlayingFragment :
     private lateinit var background: MaterialShapeDrawable
     private lateinit var playlistBackground: MaterialShapeDrawable
     private var backgroundTopCornerRadius: Float = 0F
+    private lateinit var backgroundTopCornerSizeInterpolator: Interpolator
 
     private val onBackPressedCallback = object : OnBackPressedCallback(false) {
         private var startedCollapse = false
@@ -171,6 +174,10 @@ class NowPlayingFragment :
         )
 
         backgroundTopCornerRadius = resources.getDimension(R.dimen.nowplaying_top_corner_radius)
+        backgroundTopCornerSizeInterpolator = AnimationUtils.loadInterpolator(
+            requireContext(),
+            android.R.interpolator.accelerate_quint
+        )
         background = applyBackgroundShape(binding.playerBackground)
         playlistBackground = applyBackgroundShape(binding.playlistHandleWrapper)
 
@@ -193,7 +200,9 @@ class NowPlayingFragment :
 
                 override fun onSlide(bottomSheet: View, slideOffset: Float) {
                     binding.playlistFragment.alpha = slideOffset
-                    applyTopCornerSize(playlistBackground, 1F - slideOffset)
+                    val cornerProgress = backgroundTopCornerSizeInterpolator
+                        .getInterpolation(slideOffset)
+                    applyTopCornerSize(playlistBackground, 1F - cornerProgress)
                 }
             })
 
@@ -230,7 +239,8 @@ class NowPlayingFragment :
                 endId: Int,
                 progress: Float
             ) {
-                val amount = if (endId == R.id.expanded) 1F - progress else progress
+                val cornerProgress = backgroundTopCornerSizeInterpolator.getInterpolation(progress)
+                val amount = if (endId == R.id.expanded) 1F - cornerProgress else cornerProgress
                 applyTopCornerSize(background, amount)
             }
 

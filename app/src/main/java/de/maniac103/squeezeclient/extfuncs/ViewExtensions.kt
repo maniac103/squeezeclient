@@ -18,6 +18,7 @@
 package de.maniac103.squeezeclient.extfuncs
 
 import android.content.DialogInterface
+import android.content.res.Configuration
 import android.view.View
 import android.widget.ImageView
 import androidx.appcompat.app.AlertDialog
@@ -77,33 +78,38 @@ enum class ViewEdge {
     TopEnd,
     Bottom,
     BottomStart,
-    BottomEnd
+    BottomEnd,
+    Center
 }
 
-fun View.addSystemBarAndCutoutInsetsListener(edge: ViewEdge) {
+fun View.addSystemBarAndCutoutInsetsListener(edge: ViewEdge, landscapeEdge: ViewEdge = edge) {
     ViewCompat.setOnApplyWindowInsetsListener(this) { v, windowInsets ->
+        val isLandscape =
+            v.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+        val actualEdge = if (isLandscape) landscapeEdge else edge
+
         val barInsets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
         val cutoutInsets = windowInsets.getInsets(WindowInsetsCompat.Type.displayCutout())
 
         val startIsLeft = !v.context.isRtl
-        val viewIsLeft = when (edge) {
+        val viewIsLeft = when (actualEdge) {
             ViewEdge.Top, ViewEdge.Bottom -> true
-            ViewEdge.Start, ViewEdge.TopStart, ViewEdge.BottomStart -> startIsLeft
+            ViewEdge.Start, ViewEdge.TopStart, ViewEdge.BottomStart, ViewEdge.Center -> startIsLeft
             else -> !startIsLeft
         }
-        val viewIsRight = when (edge) {
+        val viewIsRight = when (actualEdge) {
             ViewEdge.Top, ViewEdge.Bottom -> true
-            ViewEdge.End, ViewEdge.TopEnd, ViewEdge.BottomEnd -> !startIsLeft
+            ViewEdge.End, ViewEdge.TopEnd, ViewEdge.BottomEnd, ViewEdge.Center -> !startIsLeft
             else -> startIsLeft
         }
-        val viewIsTop = when (edge) {
+        val viewIsTop = when (actualEdge) {
             ViewEdge.Top, ViewEdge.TopStart, ViewEdge.TopEnd -> true
-            ViewEdge.Start, ViewEdge.Start -> true
+            ViewEdge.Start, ViewEdge.End -> true
             else -> false
         }
-        val viewIsBottom = when (edge) {
+        val viewIsBottom = when (actualEdge) {
             ViewEdge.Bottom, ViewEdge.BottomStart, ViewEdge.BottomEnd -> true
-            ViewEdge.Start, ViewEdge.Start -> true
+            ViewEdge.Start, ViewEdge.End -> true
             else -> false
         }
 

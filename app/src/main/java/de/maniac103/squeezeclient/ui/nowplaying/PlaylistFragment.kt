@@ -17,7 +17,6 @@
 
 package de.maniac103.squeezeclient.ui.nowplaying
 
-import android.content.res.Configuration
 import androidx.core.os.bundleOf
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -106,11 +105,7 @@ class PlaylistFragment :
     override fun onBindingCreated(binding: FragmentGenericListBinding) {
         super.onBindingCreated(binding)
 
-        val isLandscape =
-            resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-        binding.recycler.addSystemBarAndCutoutInsetsListener(
-            if (isLandscape) ViewEdge.End else ViewEdge.Bottom
-        )
+        binding.recycler.addSystemBarAndCutoutInsetsListener(ViewEdge.Bottom, ViewEdge.End)
 
         lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {

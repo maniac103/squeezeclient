@@ -18,7 +18,6 @@
 package de.maniac103.squeezeclient.ui
 
 import android.content.Intent
-import android.content.res.Configuration
 import android.os.Bundle
 import android.text.SpannableStringBuilder
 import android.text.style.ImageSpan
@@ -196,13 +195,9 @@ class MainActivity :
             }
         }
 
-        val isLandscape =
-            resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-        binding.container.addSystemBarAndCutoutInsetsListener(
-            if (isLandscape) ViewEdge.BottomStart else ViewEdge.Bottom
-        )
         binding.appbarContainer.addSystemBarAndCutoutInsetsListener(
-            if (isLandscape) ViewEdge.TopStart else ViewEdge.Top
+            ViewEdge.Top,
+            ViewEdge.TopStart
         )
 
         lifecycleScope.launch {

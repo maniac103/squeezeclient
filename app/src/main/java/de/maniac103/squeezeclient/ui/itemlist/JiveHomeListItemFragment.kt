@@ -25,6 +25,8 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import de.maniac103.squeezeclient.databinding.FragmentGenericListBinding
+import de.maniac103.squeezeclient.extfuncs.ViewEdge
+import de.maniac103.squeezeclient.extfuncs.addSystemBarAndCutoutInsetsListener
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.extfuncs.requireParentAs
@@ -89,6 +91,7 @@ class JiveHomeListItemFragment :
     }
 
     override fun onBindingCreated(binding: FragmentGenericListBinding) {
+        binding.recycler.addSystemBarAndCutoutInsetsListener(ViewEdge.Center, ViewEdge.BottomStart)
         binding.root.enableMainContentBackground()
         binding.recycler.layoutManager = LinearLayoutManager(
             requireContext(),

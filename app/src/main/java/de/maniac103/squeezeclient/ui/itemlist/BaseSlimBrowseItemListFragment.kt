@@ -30,6 +30,8 @@ import com.markodevcic.peko.PermissionRequester
 import com.markodevcic.peko.PermissionResult
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.databinding.FragmentGenericListBinding
+import de.maniac103.squeezeclient.extfuncs.ViewEdge
+import de.maniac103.squeezeclient.extfuncs.addSystemBarAndCutoutInsetsListener
 import de.maniac103.squeezeclient.extfuncs.await
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.getParcelable
@@ -83,6 +85,7 @@ abstract class BaseSlimBrowseItemListFragment :
 
     override fun onBindingCreated(binding: FragmentGenericListBinding) {
         super.onBindingCreated(binding)
+        binding.recycler.addSystemBarAndCutoutInsetsListener(ViewEdge.Center, ViewEdge.BottomStart)
         binding.root.enableMainContentBackground()
     }
 

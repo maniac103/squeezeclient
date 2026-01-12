@@ -40,7 +40,7 @@
             android:layout_height="match_parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/nowplaying_placeholder">
+            app:layout_constraintEnd_toEndOf="parent">
 
             <com.google.android.material.appbar.AppBarLayout
                 android:id="@+id/appbar_container"
@@ -51,6 +51,7 @@
                     android:id="@+id/toolbar"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginEnd="@dimen/landscape_nowplaying_pane_width"
                     android:minHeight="?attr/actionBarSize"
                     app:navigationIcon="@drawable/ic_drawer_menu_24dp"
                     app:navigationIconTint="?colorControlNormal"
@@ -63,6 +64,7 @@
                     android:id="@+id/breadcrumbs_container"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginEnd="@dimen/landscape_nowplaying_pane_width"
                     android:padding="8dp"
                     android:orientation="horizontal"
                     android:visibility="gone"
@@ -95,6 +97,7 @@
                 android:id="@+id/container"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:layout_marginEnd="@dimen/landscape_nowplaying_pane_width"
                 app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
             <com.google.android.material.progressindicator.CircularProgressIndicator
@@ -111,6 +114,7 @@
                 android:id="@+id/status_container"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:layout_marginEnd="@dimen/landscape_nowplaying_pane_width"
                 android:layout_marginBottom="8dp" />
 
         </androidx.coordinatorlayout.widget.CoordinatorLayout>

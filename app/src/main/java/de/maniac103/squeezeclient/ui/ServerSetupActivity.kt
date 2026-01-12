@@ -31,7 +31,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.databinding.ActivityServerSetupBinding
-import de.maniac103.squeezeclient.extfuncs.addContentSystemBarAndCutoutInsetsListener
+import de.maniac103.squeezeclient.extfuncs.ViewEdge
 import de.maniac103.squeezeclient.extfuncs.addSystemBarAndCutoutInsetsListener
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.prefs
@@ -77,8 +77,8 @@ class ServerSetupActivity : AppCompatActivity() {
         // larger than any possible text
         binding.discoveredServers.threshold = 10000
         binding.discoveredServersWrapper.setStartIconOnClickListener { startDiscovery() }
-        binding.appbarContainer.addSystemBarAndCutoutInsetsListener()
-        binding.content.addContentSystemBarAndCutoutInsetsListener()
+        binding.appbarContainer.addSystemBarAndCutoutInsetsListener(ViewEdge.Top)
+        binding.content.addSystemBarAndCutoutInsetsListener(ViewEdge.Bottom)
         binding.serverAddress.doAfterTextChanged { validateInput() }
         binding.username.doAfterTextChanged { validateInput() }
         binding.password.doAfterTextChanged { validateInput() }

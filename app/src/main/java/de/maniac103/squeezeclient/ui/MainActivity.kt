@@ -18,6 +18,7 @@
 package de.maniac103.squeezeclient.ui
 
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.Bundle
 import android.text.SpannableStringBuilder
 import android.text.style.ImageSpan
@@ -45,11 +46,12 @@ import de.maniac103.squeezeclient.cometd.ConnectionState
 import de.maniac103.squeezeclient.cometd.request.LibrarySearchRequest
 import de.maniac103.squeezeclient.databinding.ActivityMainBinding
 import de.maniac103.squeezeclient.databinding.NavDrawerHeaderBinding
-import de.maniac103.squeezeclient.extfuncs.addContentSystemBarAndCutoutInsetsListener
+import de.maniac103.squeezeclient.extfuncs.ViewEdge
 import de.maniac103.squeezeclient.extfuncs.addSystemBarAndCutoutInsetsListener
 import de.maniac103.squeezeclient.extfuncs.backProgressInterpolator
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.getParcelableOrNull
+import de.maniac103.squeezeclient.extfuncs.isRtl
 import de.maniac103.squeezeclient.extfuncs.lastSelectedPlayer
 import de.maniac103.squeezeclient.extfuncs.localPlayerEnabled
 import de.maniac103.squeezeclient.extfuncs.prefs
@@ -170,7 +172,7 @@ class MainActivity :
             val insets = windowInsets.getInsets(
                 WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
             )
-            val startIsLeft = v.layoutDirection == View.LAYOUT_DIRECTION_LTR
+            val startIsLeft = !isRtl
             v.updatePadding(
                 left = if (startIsLeft) insets.left else 0,
                 right = if (startIsLeft) 0 else insets.right
@@ -194,8 +196,14 @@ class MainActivity :
             }
         }
 
-        binding.container.addContentSystemBarAndCutoutInsetsListener()
-        binding.appbarContainer.addSystemBarAndCutoutInsetsListener()
+        val isLandscape =
+            resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+        binding.container.addSystemBarAndCutoutInsetsListener(
+            if (isLandscape) ViewEdge.BottomStart else ViewEdge.Bottom
+        )
+        binding.appbarContainer.addSystemBarAndCutoutInsetsListener(
+            if (isLandscape) ViewEdge.TopStart else ViewEdge.Top
+        )
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {

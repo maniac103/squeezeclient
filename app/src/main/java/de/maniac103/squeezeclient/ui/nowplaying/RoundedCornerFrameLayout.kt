@@ -30,6 +30,7 @@ import androidx.core.content.res.use
 import com.google.android.material.shape.MaterialShapeDrawable
 import com.google.android.material.shape.ShapeAppearanceModel
 import de.maniac103.squeezeclient.R
+import de.maniac103.squeezeclient.extfuncs.isRtl
 
 class RoundedCornerFrameLayout(context: Context, attrs: AttributeSet?) :
     FrameLayout(context, attrs) {
@@ -73,7 +74,7 @@ class RoundedCornerFrameLayout(context: Context, attrs: AttributeSet?) :
     }
 
     private fun applyRadius() {
-        val startIsRight = layoutDirection == LAYOUT_DIRECTION_RTL
+        val startIsRight = context.isRtl
         val isLeftEdge = if (startIsRight) corneredEdge == END_EDGE else corneredEdge == START_EDGE
         val isRightEdge = if (startIsRight) corneredEdge == START_EDGE else corneredEdge == END_EDGE
         val topLeft = corneredEdge == TOP_EDGE || isLeftEdge

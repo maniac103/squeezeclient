@@ -48,6 +48,7 @@ import de.maniac103.squeezeclient.extfuncs.backProgressInterpolator
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.doOnTransitionCompleted
 import de.maniac103.squeezeclient.extfuncs.getParcelable
+import de.maniac103.squeezeclient.extfuncs.isRtl
 import de.maniac103.squeezeclient.extfuncs.loadArtwork
 import de.maniac103.squeezeclient.extfuncs.requireParentAs
 import de.maniac103.squeezeclient.model.JiveAction
@@ -206,8 +207,12 @@ class NowPlayingFragment :
 
         binding.topInsetSpacer.applyInsetsAsMargin(ConstraintSet.TOP) { it.top }
         binding.bottomInsetSpacer.applyInsetsAsMargin(ConstraintSet.BOTTOM) { it.bottom }
-        binding.leftInsetSpacer.applyInsetsAsMargin(ConstraintSet.START) { it.left }
-        binding.rightInsetSpacer.applyInsetsAsMargin(ConstraintSet.END) { it.right }
+        binding.leftInsetSpacer.applyInsetsAsMargin(ConstraintSet.START) {
+            if (context.isRtl) it.right else it.left
+        }
+        binding.rightInsetSpacer.applyInsetsAsMargin(ConstraintSet.END) {
+            if (context.isRtl) it.left else it.right
+        }
 
         binding.toolbar.apply {
             setNavigationOnClickListener {

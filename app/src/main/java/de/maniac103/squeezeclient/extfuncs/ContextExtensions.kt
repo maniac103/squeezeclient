@@ -20,6 +20,8 @@ package de.maniac103.squeezeclient.extfuncs
 import android.content.Context
 import android.content.SharedPreferences
 import android.graphics.drawable.Drawable
+import android.text.TextUtils
+import android.view.View
 import android.view.animation.Interpolator
 import androidx.preference.PreferenceManager
 import androidx.work.WorkManager
@@ -40,6 +42,9 @@ val Context.prefs: SharedPreferences get() =
     PreferenceManager.getDefaultSharedPreferences(this)
 val Context.backProgressInterpolator: Interpolator get() =
     (applicationContext as SqueezeClientApplication).backProgressInterpolator
+val Context.isRtl get() = TextUtils.getLayoutDirectionFromLocale(
+    resources.configuration.locales[0]
+) == View.LAYOUT_DIRECTION_RTL
 
 fun Context.imageCacheContains(item: ArtworkItem?) = item?.extractIconUrl(this)
     ?.let { MemoryCache.Key(it) }

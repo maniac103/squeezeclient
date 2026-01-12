@@ -18,11 +18,7 @@
 package de.maniac103.squeezeclient.ui.nowplaying
 
 import android.content.res.Configuration
-import android.view.View
 import androidx.core.os.bundleOf
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.updatePadding
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -31,6 +27,8 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import de.maniac103.squeezeclient.databinding.FragmentGenericListBinding
+import de.maniac103.squeezeclient.extfuncs.ViewEdge
+import de.maniac103.squeezeclient.extfuncs.addSystemBarAndCutoutInsetsListener
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.model.PagingParams
@@ -107,22 +105,12 @@ class PlaylistFragment :
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun onBindingCreated(binding: FragmentGenericListBinding) {
         super.onBindingCreated(binding)
-        ViewCompat.setOnApplyWindowInsetsListener(binding.recycler) { v, windowInsets ->
-            val insets = windowInsets.getInsets(
-                WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
-            )
-            if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                // in landscape we're placed at the end edge -> only apply respective inset
-                val startIsLeft = v.layoutDirection == View.LAYOUT_DIRECTION_LTR
-                val leftPadding = if (startIsLeft) 0 else insets.left
-                val rightPadding = if (startIsLeft) insets.right else 0
-                v.updatePadding(left = leftPadding, right = rightPadding, bottom = insets.bottom)
-            } else {
-                // in portrait, we fill the whole width -> apply both inset sides
-                v.updatePadding(left = insets.left, right = insets.right, bottom = insets.bottom)
-            }
-            windowInsets
-        }
+
+        val isLandscape =
+            resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+        binding.recycler.addSystemBarAndCutoutInsetsListener(
+            if (isLandscape) ViewEdge.End else ViewEdge.Bottom
+        )
 
         lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {

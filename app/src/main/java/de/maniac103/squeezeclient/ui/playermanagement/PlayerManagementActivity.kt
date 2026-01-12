@@ -30,7 +30,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.cometd.ConnectionState
 import de.maniac103.squeezeclient.databinding.ActivityPlayerManagementBinding
-import de.maniac103.squeezeclient.extfuncs.addContentSystemBarAndCutoutInsetsListener
+import de.maniac103.squeezeclient.extfuncs.ViewEdge
 import de.maniac103.squeezeclient.extfuncs.addSystemBarAndCutoutInsetsListener
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.model.PlayerId
@@ -62,8 +62,8 @@ class PlayerManagementActivity : AppCompatActivity() {
         binding = ActivityPlayerManagementBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.appbarContainer.addSystemBarAndCutoutInsetsListener()
-        binding.recycler.addContentSystemBarAndCutoutInsetsListener()
+        binding.appbarContainer.addSystemBarAndCutoutInsetsListener(ViewEdge.Top)
+        binding.recycler.addSystemBarAndCutoutInsetsListener(ViewEdge.Bottom)
         binding.toolbar.setNavigationIcon(R.drawable.ic_arrow_left_24dp)
         binding.toolbar.setNavigationOnClickListener { finish() }
 

@@ -27,7 +27,6 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import coil.load
 import coil.request.ImageRequest
-import com.google.android.material.appbar.AppBarLayout
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.model.ArtworkItem
 import de.maniac103.squeezeclient.model.SlideshowImage
@@ -70,33 +69,52 @@ fun ImageView.loadSlideshowImage(
     }
 }
 
-fun View.addSystemBarAndCutoutInsetsListener(applyTop: Boolean, applyBottom: Boolean) {
+enum class ViewEdge {
+    Start,
+    End,
+    Top,
+    TopStart,
+    TopEnd,
+    Bottom,
+    BottomStart,
+    BottomEnd
+}
+
+fun View.addSystemBarAndCutoutInsetsListener(edge: ViewEdge) {
     ViewCompat.setOnApplyWindowInsetsListener(this) { v, windowInsets ->
         val barInsets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
         val cutoutInsets = windowInsets.getInsets(WindowInsetsCompat.Type.displayCutout())
-        val startIsLeft = layoutDirection == View.LAYOUT_DIRECTION_LTR
-        val leftBarInset = if (startIsLeft) barInsets.left else 0
-        val rightBarInset = if (startIsLeft) 0 else barInsets.right
+
+        val startIsLeft = !v.context.isRtl
+        val viewIsLeft = when (edge) {
+            ViewEdge.Top, ViewEdge.Bottom -> true
+            ViewEdge.Start, ViewEdge.TopStart, ViewEdge.BottomStart -> startIsLeft
+            else -> !startIsLeft
+        }
+        val viewIsRight = when (edge) {
+            ViewEdge.Top, ViewEdge.Bottom -> true
+            ViewEdge.End, ViewEdge.TopEnd, ViewEdge.BottomEnd -> !startIsLeft
+            else -> startIsLeft
+        }
+        val viewIsTop = when (edge) {
+            ViewEdge.Top, ViewEdge.TopStart, ViewEdge.TopEnd -> true
+            ViewEdge.Start, ViewEdge.Start -> true
+            else -> false
+        }
+        val viewIsBottom = when (edge) {
+            ViewEdge.Bottom, ViewEdge.BottomStart, ViewEdge.BottomEnd -> true
+            ViewEdge.Start, ViewEdge.Start -> true
+            else -> false
+        }
+
         v.updatePadding(
-            left = cutoutInsets.left + leftBarInset,
-            right = cutoutInsets.right + rightBarInset
+            left = if (viewIsLeft) barInsets.left + cutoutInsets.left else 0,
+            right = if (viewIsRight) barInsets.right + cutoutInsets.right else 0,
+            top = if (viewIsTop) barInsets.top else 0,
+            bottom = if (viewIsBottom) barInsets.bottom else 0
         )
-        if (applyTop) {
-            v.updatePadding(top = barInsets.top)
-        }
-        if (applyBottom) {
-            v.updatePadding(bottom = barInsets.bottom)
-        }
         windowInsets
     }
-}
-
-fun AppBarLayout.addSystemBarAndCutoutInsetsListener() {
-    addSystemBarAndCutoutInsetsListener(applyTop = true, applyBottom = false)
-}
-
-fun View.addContentSystemBarAndCutoutInsetsListener() {
-    addSystemBarAndCutoutInsetsListener(applyTop = false, applyBottom = true)
 }
 
 inline fun MotionLayout.doOnTransitionCompleted(crossinline action: (id: Int) -> Unit) {

@@ -113,12 +113,18 @@ fun View.addSystemBarAndCutoutInsetsListener(edge: ViewEdge, landscapeEdge: View
             else -> false
         }
 
-        v.updatePadding(
-            left = if (viewIsLeft) barInsets.left + cutoutInsets.left else 0,
-            right = if (viewIsRight) barInsets.right + cutoutInsets.right else 0,
-            top = if (viewIsTop) barInsets.top else 0,
-            bottom = if (viewIsBottom) barInsets.bottom else 0
-        )
+        if (viewIsLeft) {
+            v.updatePadding(left = barInsets.left + cutoutInsets.left)
+        }
+        if (viewIsRight) {
+            v.updatePadding(right = barInsets.right + cutoutInsets.right)
+        }
+        if (viewIsTop) {
+            v.updatePadding(top = barInsets.top)
+        }
+        if (viewIsBottom) {
+            v.updatePadding(bottom = barInsets.bottom)
+        }
         windowInsets
     }
 }

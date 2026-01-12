@@ -17,6 +17,7 @@
 
 package de.maniac103.squeezeclient.ui
 
+import android.content.res.Configuration
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
@@ -24,6 +25,9 @@ import android.view.View
 import androidx.activity.BackEventCompat
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.os.bundleOf
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentManager.FragmentLifecycleCallbacks
@@ -309,6 +313,18 @@ class MainContentContainerFragment :
         // background is only meant to be visible during child fragment transitions,
         // so suppress it until a child fragment is loaded
         binding.root.background.alpha = 0
+
+        if (resources.configuration.orientation != Configuration.ORIENTATION_LANDSCAPE) {
+            ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, windowInsets ->
+                val defaultPadding = v.resources.getDimensionPixelSize(
+                    R.dimen.main_content_container_bottom_placeholder
+                )
+                val barInsets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+                v.updatePadding(bottom = barInsets.bottom + defaultPadding)
+
+                windowInsets
+            }
+        }
     }
 
     // FragmentManager.OnBackStackChangedListener implementation

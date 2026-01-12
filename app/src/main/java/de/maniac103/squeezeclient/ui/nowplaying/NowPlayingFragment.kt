@@ -17,22 +17,15 @@
 
 package de.maniac103.squeezeclient.ui.nowplaying
 
-import android.content.res.ColorStateList
-import android.graphics.drawable.ColorDrawable
-import android.graphics.drawable.ColorStateListDrawable
-import android.os.Build
+import android.content.res.Configuration
 import android.os.Bundle
 import android.text.format.DateUtils
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
-import android.view.animation.AnimationUtils
-import android.view.animation.Interpolator
 import androidx.activity.BackEventCompat
 import androidx.activity.OnBackPressedCallback
-import androidx.constraintlayout.motion.widget.MotionLayout
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.graphics.Insets
 import androidx.core.os.bundleOf
@@ -47,14 +40,13 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import coil.size.Size
 import com.google.android.material.bottomsheet.BottomSheetBehavior
-import com.google.android.material.shape.MaterialShapeDrawable
-import com.google.android.material.shape.ShapeAppearanceModel
 import com.google.android.material.slider.LabelFormatter
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.cometd.request.PlaybackButtonRequest
 import de.maniac103.squeezeclient.databinding.FragmentNowplayingBinding
 import de.maniac103.squeezeclient.extfuncs.backProgressInterpolator
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
+import de.maniac103.squeezeclient.extfuncs.doOnTransitionCompleted
 import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.extfuncs.loadArtwork
 import de.maniac103.squeezeclient.extfuncs.requireParentAs
@@ -67,7 +59,6 @@ import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.ui.bottomsheets.InputBottomSheetFragment
 import de.maniac103.squeezeclient.ui.common.ViewBindingFragment
 import de.maniac103.squeezeclient.ui.contextmenu.ContextMenuBottomSheetFragment
-import de.maniac103.squeezeclient.ui.widget.AbstractMotionLayoutTransitionListener
 import kotlin.math.max
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -99,15 +90,10 @@ class NowPlayingFragment :
         childFragmentManager.findFragmentById(binding.playlistFragment.id) as? PlaylistFragment
     private val listener get() = requireParentAs<Listener>()
 
-    private lateinit var playlistBottomSheetBehavior: BottomSheetBehavior<ConstraintLayout>
+    private lateinit var playlistBottomSheetBehavior: BottomSheetBehavior<RoundedCornerFrameLayout>
     private var timeUpdateJob: Job? = null
     private var sliderDragUpdateJob: Job? = null
     private var currentSong: Playlist.PlaylistItem? = null
-
-    private lateinit var background: MaterialShapeDrawable
-    private lateinit var playlistBackground: MaterialShapeDrawable
-    private var backgroundTopCornerRadius: Float = 0F
-    private lateinit var backgroundTopCornerSizeInterpolator: Interpolator
 
     private val onBackPressedCallback = object : OnBackPressedCallback(false) {
         private var startedCollapse = false
@@ -143,11 +129,6 @@ class NowPlayingFragment :
                 startedCollapse -> {
                     val progress = backProgressInterpolator.getInterpolation(backEvent.progress)
                     binding.container.progress = 0.2F * progress
-
-                    val cornerProgress = backgroundTopCornerSizeInterpolator.getInterpolation(
-                        1F - binding.container.progress
-                    )
-                    applyTopCornerSize(background, 1F - cornerProgress)
                 }
             }
         }
@@ -178,13 +159,15 @@ class NowPlayingFragment :
             onBackPressedCallback
         )
 
-        backgroundTopCornerRadius = resources.getDimension(R.dimen.nowplaying_top_corner_radius)
-        backgroundTopCornerSizeInterpolator = AnimationUtils.loadInterpolator(
-            requireContext(),
-            android.R.interpolator.accelerate_quint
-        )
-        background = applyBackgroundShape(binding.playerBackground)
-        playlistBackground = applyBackgroundShape(binding.playlistHandleWrapper)
+        val orientation = requireContext().resources.configuration.orientation
+        val corneredEdge = if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            RoundedCornerFrameLayout.START_EDGE
+        } else {
+            RoundedCornerFrameLayout.TOP_EDGE
+        }
+
+        binding.playerBackground.setCorneredEdge(corneredEdge)
+        binding.playlistHandleWrapper.setCorneredEdge(corneredEdge)
 
         if (playlistFragment == null) {
             childFragmentManager.commit {
@@ -205,9 +188,8 @@ class NowPlayingFragment :
 
                 override fun onSlide(bottomSheet: View, slideOffset: Float) {
                     binding.playlistFragment.alpha = slideOffset
-                    val cornerProgress = backgroundTopCornerSizeInterpolator
-                        .getInterpolation(slideOffset)
-                    applyTopCornerSize(playlistBackground, 1F - cornerProgress)
+                    val cornerProgress = backProgressInterpolator.getInterpolation(1F - slideOffset)
+                    binding.playlistHandleWrapper.setRadiusAmount(cornerProgress)
                 }
             })
 
@@ -237,25 +219,10 @@ class NowPlayingFragment :
             addMenuProvider(this@NowPlayingFragment)
         }
 
-        binding.container.addTransitionListener(object : AbstractMotionLayoutTransitionListener() {
-            override fun onTransitionChange(
-                layout: MotionLayout?,
-                startId: Int,
-                endId: Int,
-                progress: Float
-            ) {
-                val cornerProgress = backgroundTopCornerSizeInterpolator.getInterpolation(progress)
-                val amount = if (endId == R.id.expanded) 1F - cornerProgress else cornerProgress
-                applyTopCornerSize(background, amount)
-            }
-
-            override fun onTransitionCompleted(layout: MotionLayout?, currentId: Int) {
-                val amount = if (currentId == R.id.expanded) 0F else 1F
-                applyTopCornerSize(background, amount)
-                updateBackPressedCallbackState()
-                binding.toolbar.invalidateMenu()
-            }
-        })
+        binding.container.doOnTransitionCompleted {
+            updateBackPressedCallbackState()
+            binding.toolbar.invalidateMenu()
+        }
 
         binding.progressSlider.apply {
             labelBehavior = LabelFormatter.LABEL_GONE
@@ -570,36 +537,6 @@ class NowPlayingFragment :
         playlistBottomSheetBehavior.state == BottomSheetBehavior.STATE_EXPANDED
 
     private fun sheetIsExpanded() = binding.container.currentState == R.id.expanded
-
-    private fun applyBackgroundShape(view: View): MaterialShapeDrawable {
-        val bg = view.background
-        if (bg is MaterialShapeDrawable) {
-            return bg
-        }
-        val materialShapeDrawable = MaterialShapeDrawable()
-        applyTopCornerSize(materialShapeDrawable, 1F)
-
-        val originalBackgroundColor = when {
-            bg is ColorDrawable ->
-                ColorStateList.valueOf(bg.color)
-
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && bg is ColorStateListDrawable ->
-                bg.colorStateList
-
-            else -> null
-        }
-
-        originalBackgroundColor?.let { materialShapeDrawable.fillColor = it }
-        view.background = materialShapeDrawable
-        return materialShapeDrawable
-    }
-
-    private fun applyTopCornerSize(shape: MaterialShapeDrawable, amount: Float) {
-        shape.shapeAppearanceModel = ShapeAppearanceModel.Builder()
-            .setTopLeftCornerSize(backgroundTopCornerRadius * amount)
-            .setTopRightCornerSize(backgroundTopCornerRadius * amount)
-            .build()
-    }
 
     companion object {
         fun create(playerId: PlayerId) = NowPlayingFragment().apply {

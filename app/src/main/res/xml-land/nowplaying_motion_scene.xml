@@ -84,7 +84,13 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <CustomAttribute
+                app:attributeName="radiusAmount"
+                app:customFloatValue="0" />
+
+        </Constraint>
 
         <Constraint
             android:id="@id/toolbar_container"
@@ -300,7 +306,13 @@
             app:layout_constraintWidth="@dimen/landscape_nowplaying_pane_width"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent" />
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <CustomAttribute
+                app:attributeName="radiusAmount"
+                app:customFloatValue="1" />
+
+        </Constraint>
 
         <Constraint
             android:id="@id/toolbar_container"

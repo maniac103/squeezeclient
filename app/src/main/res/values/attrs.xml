@@ -19,4 +19,14 @@
 <resources>
     <attr name="colorDraggedItemBackground" format="reference|color" />
     <drawable name="media3_notification_small_icon">@drawable/ic_logo_notification_24dp</drawable>
+
+    <declare-styleable name="RoundedCornerFrameLayout">
+        <attr name="cornerRadius" format="dimension" />
+        <attr name="corneredEdge" format="enum">
+            <enum name="top" value="0" />
+            <enum name="bottom" value="1" />
+            <enum name="start" value="2" />
+            <enum name="end" value="3" />
+        </attr>
+    </declare-styleable>
 </resources>

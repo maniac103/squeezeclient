@@ -143,6 +143,11 @@ class NowPlayingFragment :
                 startedCollapse -> {
                     val progress = backProgressInterpolator.getInterpolation(backEvent.progress)
                     binding.container.progress = 0.2F * progress
+
+                    val cornerProgress = backgroundTopCornerSizeInterpolator.getInterpolation(
+                        1F - binding.container.progress
+                    )
+                    applyTopCornerSize(background, 1F - cornerProgress)
                 }
             }
         }

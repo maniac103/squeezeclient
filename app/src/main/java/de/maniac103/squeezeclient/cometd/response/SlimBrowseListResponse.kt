@@ -169,10 +169,27 @@ fun Json.combineItemAndBaseActions(item: JsonObject, base: JsonObject?): JiveAct
         cmd?.let { JiveAction(cmd, mergedParams, nextWindow, window?.isContextMenu) }
     }
 
+    // The protocol is somewhat convoluted when it comes to lists and the contained actions. It
+    // can contain the following:
+    // - items (within item_loop), with can have both
+    //   - params
+    //   - actions (which also hold params)
+    // - a base object, which holds
+    //   - actions (which hold params)
+    //   - an 'itemsParams' value (which holds another set of parameters)
+    //
+    // The rules we follow for merging all of this is
+    // - merged actions are the super set of the item and base actions
+    // - for each action type/key, the logic is:
+    //   - get action object: either from item, if key is present there, else from base object
+    //     (exclude choices though, we handle them separately below)
+    //   - add params from the object itself
+    //   - if action came from base object, resolve 'itemsParams' and merge it into action params
     val actionMap = availableKeys.mapNotNull { key ->
         val itemActionObj = itemActionsObj?.get(key) as? JsonObject
         val baseActionObj = baseActionsObj?.get(key) as? JsonObject
         val redirectedItemParamsObj = baseActionObj
+            ?.takeIf { itemActionObj == null }
             ?.get("itemsParams")?.jsonPrimitive?.content
             ?.let { item[it]?.jsonObject }
         val takenActionObj = itemActionObj?.takeIf { !it.containsKey("choices") }

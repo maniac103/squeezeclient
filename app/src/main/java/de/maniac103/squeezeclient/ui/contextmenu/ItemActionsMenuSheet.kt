@@ -118,7 +118,14 @@ class ItemActionsMenuSheet : BottomSheetDialogFragment() {
         }
 
         override fun onBindViewHolder(holder: ItemViewHolder, item: ActionItem) {
-            holder.binding.root.text = holder.itemView.context.getString(item.labelResId)
+            holder.binding.text.text = holder.itemView.context.getString(item.labelResId)
+        }
+
+        override fun onHolderBusyStateChanged(
+            holder: ItemViewHolder,
+            busy: Boolean
+        ) {
+            holder.binding.loadingIndicator.isVisible = busy
         }
     }
 

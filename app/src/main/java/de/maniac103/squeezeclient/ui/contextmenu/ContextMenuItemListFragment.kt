@@ -20,6 +20,7 @@ package de.maniac103.squeezeclient.ui.contextmenu
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.core.os.bundleOf
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import de.maniac103.squeezeclient.databinding.FragmentContextMenuListBinding
@@ -74,9 +75,18 @@ class ContextMenuItemListFragment :
             holder: ItemViewHolder,
             item: SlimBrowseItemList.SlimBrowseItem
         ) {
-            holder.binding.root.text = item.title
-            // FIXME: have isSelectable property?
-            holder.binding.root.isEnabled = item.actions?.goAction != null
+            holder.binding.text.apply {
+                text = item.title
+                // FIXME: have isSelectable property?
+                isEnabled = item.actions?.goAction != null
+            }
+        }
+
+        override fun onHolderBusyStateChanged(
+            holder: ItemViewHolder,
+            busy: Boolean
+        ) {
+            holder.binding.loadingIndicator.isVisible = busy
         }
     }
 

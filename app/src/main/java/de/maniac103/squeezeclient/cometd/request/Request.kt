@@ -36,12 +36,13 @@ open class Request protected constructor(
         add(
             buildJsonArray {
                 cmd.forEach { add(it) }
-                params.filterValues { v -> v == null }.keys.forEach { add(it) }
                 page?.let {
                     add(it.start)
                     add(it.page)
                 }
-                params.filterValues { v -> v != null }.map { (k, v) -> add("$k:$v") }
+                params
+                    .filterValues { v -> v != null }
+                    .forEach { (k, v) -> add("$k:$v") }
             }
         )
     }

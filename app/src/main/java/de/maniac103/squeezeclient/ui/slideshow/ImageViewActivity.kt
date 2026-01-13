@@ -28,9 +28,11 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.FileProvider
 import androidx.core.content.IntentCompat
 import androidx.core.view.isVisible
-import coil.annotation.ExperimentalCoilApi
-import coil.imageLoader
-import coil.size.Precision
+import coil3.annotation.ExperimentalCoilApi
+import coil3.imageLoader
+import coil3.request.crossfade
+import coil3.request.lifecycle
+import coil3.size.Precision
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.databinding.ActivityImageBinding
 import de.maniac103.squeezeclient.extfuncs.loadSlideshowImage

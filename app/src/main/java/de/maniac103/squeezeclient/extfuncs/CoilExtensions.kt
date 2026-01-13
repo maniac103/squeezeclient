@@ -20,12 +20,17 @@ package de.maniac103.squeezeclient.extfuncs
 import android.content.Context
 import android.graphics.drawable.Drawable
 import android.widget.ImageView
-import coil.request.ImageRequest
-import coil.target.ImageViewTarget
+import coil3.network.NetworkHeaders
+import coil3.network.httpHeaders
+import coil3.request.ImageRequest
+import coil3.target.ImageViewTarget
 
 fun ImageRequest.Builder.addServerCredentialsIfNeeded(context: Context) = apply {
     context.prefs.serverConfig?.credentialsAsAuthorizationHeader?.let {
-        addHeader("Authorization", it)
+        val headers = NetworkHeaders.Builder()
+            .set("Authorization", it)
+            .build()
+        httpHeaders(headers)
     }
 }
 

@@ -26,7 +26,7 @@ import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.fragment.app.commit
 import androidx.lifecycle.lifecycleScope
-import coil.load
+import coil3.load
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import de.maniac103.squeezeclient.databinding.BottomSheetContextMenuBinding
 import de.maniac103.squeezeclient.extfuncs.connectionHelper

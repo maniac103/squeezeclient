@@ -25,7 +25,7 @@ import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import coil.load
+import coil3.load
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.databinding.BottomSheetItemActionsBinding

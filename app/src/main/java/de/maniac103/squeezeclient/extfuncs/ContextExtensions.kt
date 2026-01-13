@@ -25,9 +25,10 @@ import android.view.View
 import android.view.animation.Interpolator
 import androidx.preference.PreferenceManager
 import androidx.work.WorkManager
-import coil.imageLoader
-import coil.memory.MemoryCache
-import coil.request.ImageRequest
+import coil3.asDrawable
+import coil3.imageLoader
+import coil3.memory.MemoryCache
+import coil3.request.ImageRequest
 import de.maniac103.squeezeclient.SqueezeClientApplication
 import de.maniac103.squeezeclient.model.ArtworkItem
 
@@ -57,6 +58,7 @@ suspend fun Context.loadArtwork(item: ArtworkItem?, size: Int): Drawable? {
         .addServerCredentialsIfNeeded(this)
         .build()
     return imageLoader.execute(request)
-        .drawable
+        .image
+        ?.asDrawable(resources)
         ?.withRoundedCorners(this)
 }

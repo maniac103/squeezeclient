@@ -38,7 +38,8 @@ import androidx.fragment.app.commit
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import coil.size.Size
+import coil3.request.fallback
+import coil3.size.Size
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.slider.LabelFormatter
 import de.maniac103.squeezeclient.R

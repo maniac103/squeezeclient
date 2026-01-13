@@ -26,8 +26,9 @@ import androidx.constraintlayout.motion.widget.MotionLayout
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
-import coil.load
-import coil.request.ImageRequest
+import coil3.load
+import coil3.request.ImageRequest
+import coil3.request.placeholder
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.model.ArtworkItem
 import de.maniac103.squeezeclient.model.SlideshowImage

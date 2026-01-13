@@ -35,6 +35,7 @@ import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.analytics.AnalyticsListener
 import androidx.media3.exoplayer.analytics.PlaybackStatsListener
+import androidx.media3.exoplayer.audio.AudioTrackAudioOutputProvider
 import androidx.media3.exoplayer.audio.DefaultAudioSink
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.LoadEventInfo
@@ -60,7 +61,7 @@ class LocalPlayer(
     private val onPlaybackEnded: (streamEnded: Boolean) -> Unit = {},
     private val onPlaybackError: () -> Unit = {},
     private val onDecoderLoadFinished: () -> Unit = {},
-    private val onAudioStreamFlushed: () -> Unit = {},
+    onAudioStreamFlushed: () -> Unit = {},
     private val onHeadersReceived: (response: Response) -> Unit = {},
     private val onMetadataReceived: (title: CharSequence, artworkUri: Uri?) -> Unit = { _, _ -> }
 ) : Player.Listener {
@@ -101,7 +102,9 @@ class LocalPlayer(
 
     @UnstableApi
     private val audioProcessor = LocalPlayerAudioProcessor(onAudioStreamFlushed)
-    private val audioTrackProvider = LocalPlayerAudioTrackProvider()
+    private val audioOutputProvider = LocalPlayerAudioOutputProvider(
+        AudioTrackAudioOutputProvider.Builder(context).build()
+    )
     private val playbackPositionTimestamp = AudioTimestamp()
 
     init {
@@ -176,7 +179,7 @@ class LocalPlayer(
 
     @OptIn(UnstableApi::class)
     fun determinePlaybackPosition(nowNanos: Long): Duration {
-        val track = audioTrackProvider
+        val track = audioOutputProvider
             .latestAudioTrack
             ?.takeIf { readyForPlaybackOrBuffering && audioProcessor.hasProcessedData }
         if (track?.getTimestamp(playbackPositionTimestamp) != true) {
@@ -260,11 +263,11 @@ class LocalPlayer(
         override fun buildAudioSink(
             context: Context,
             enableFloatOutput: Boolean,
-            enableAudioTrackPlaybackParams: Boolean
+            enableAudioOutputPlaybackParams: Boolean
         ) = DefaultAudioSink.Builder(context)
             .setEnableFloatOutput(enableFloatOutput)
-            .setAudioTrackProvider(audioTrackProvider)
-            .setEnableAudioTrackPlaybackParams(enableAudioTrackPlaybackParams)
+            .setAudioOutputProvider(audioOutputProvider)
+            .setEnableAudioOutputPlaybackParameters(enableAudioOutputPlaybackParams)
             .setAudioProcessorChain(SkippingProcessorChain(audioProcessor))
             .build()
     }

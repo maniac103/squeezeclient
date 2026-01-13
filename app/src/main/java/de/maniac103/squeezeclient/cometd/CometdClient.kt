@@ -212,7 +212,7 @@ class CometdClient(
             throw CometdException("Could not execute HTTP request", e)
         }
         if (!response.isSuccessful) throw CometdException("HTTP error ${response.code}")
-        response.body ?: throw CometdException("Empty response body")
+        response.body
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)

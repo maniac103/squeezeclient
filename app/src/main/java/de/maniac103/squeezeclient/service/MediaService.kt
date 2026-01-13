@@ -140,10 +140,9 @@ class MediaService :
             this,
             OkHttpDataSource.Factory(httpClient)
         )
-        val bitmapLoader = DataSourceBitmapLoader(
-            DataSourceBitmapLoader.DEFAULT_EXECUTOR_SERVICE.get(),
-            dataSourceFactory
-        )
+        val bitmapLoader = DataSourceBitmapLoader.Builder(this)
+            .setDataSourceFactory(dataSourceFactory)
+            .build()
         mediaSession = MediaSession.Builder(this, player)
             .setCallback(this)
             .setCustomLayout(listOf(powerButton, disconnectButton))

@@ -44,11 +44,11 @@ class LocalPlayerAudioProcessor(private val resetCallback: () -> Unit = {}) : Ba
         else -> audioFormat
     }
 
-    override fun onFlush() {
+    override fun onFlush(streamMetadata: AudioProcessor.StreamMetadata) {
+        super.onFlush(streamMetadata)
         skippedFrames = 0L
         remainingFramesToSkip = 0L
         bytesPerFrame = inputAudioFormat.bytesPerFrame
-        super.onFlush()
     }
 
     override fun onReset() {

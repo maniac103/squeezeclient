@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 /*
  * This file is part of Squeeze Client, an Android client for the LMS music server.
  * Copyright (c) 2024 Danny Baumann
@@ -37,11 +39,13 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
-        freeCompilerArgs = listOf(
-            "-Xstring-concat=inline"
-        )
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(JvmTarget.JVM_11)
+            freeCompilerArgs = listOf(
+                "-Xstring-concat=inline"
+            )
+        }
     }
 }
 
@@ -52,7 +56,7 @@ dependencies {
 }
 
 configurations.all {
-    // Pulled in in outdated version via
+    // Pulled in outdated version via
     // com.google.android.gms:play-services-wearable
     // -> com.google.android.gms:play-services-base:18.0.1
     // -> com.google.android.gms:play-services-basement:18.0.0

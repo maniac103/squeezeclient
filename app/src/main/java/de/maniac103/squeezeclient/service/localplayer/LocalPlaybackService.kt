@@ -244,33 +244,31 @@ class LocalPlaybackService :
         val channel = NotificationManagerCompat.from(this)
             .getOrCreateNotificationChannel(resources, NotificationIds.CHANNEL_LOCAL_PLAYBACK)
 
-        val (title, content) = when {
-            state is SlimprotoState.Disconnected ->
-                Pair(
-                    getString(R.string.local_player_notification_title_disconnected),
-                    getString(
-                        R.string.local_player_notification_content_disconnected,
-                        slimproto.host
-                    )
+        val (title, content) = when (state) {
+            is SlimprotoState.Disconnected -> Pair(
+                getString(R.string.local_player_notification_title_disconnected),
+                getString(
+                    R.string.local_player_notification_content_disconnected,
+                    slimproto.host
                 )
+            )
 
-            state is SlimprotoState.PlayingOrPaused && !state.paused && state.title != null ->
+            is SlimprotoState.PlayingOrPaused if !state.paused && state.title != null ->
                 Pair(
                     getString(R.string.local_player_notification_title_playing),
                     getString(R.string.local_player_notification_content_playing_title, state.title)
                 )
 
-            state is SlimprotoState.PlayingOrPaused && !state.paused ->
+            is SlimprotoState.PlayingOrPaused if !state.paused ->
                 Pair(
                     getString(R.string.local_player_notification_title_playing),
                     getString(R.string.local_player_notification_content_playing)
                 )
 
-            else ->
-                Pair(
-                    getString(R.string.local_player_notification_title_stopped),
-                    getString(R.string.local_player_notification_content_stopped)
-                )
+            else -> Pair(
+                getString(R.string.local_player_notification_title_stopped),
+                getString(R.string.local_player_notification_content_stopped)
+            )
         }
 
         val contentIntentStack = arrayOf(

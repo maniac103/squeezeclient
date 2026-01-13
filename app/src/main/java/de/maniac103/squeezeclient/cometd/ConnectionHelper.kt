@@ -74,7 +74,6 @@ import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.PlayerStatus
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -85,6 +84,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.produce
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -394,7 +394,9 @@ class ConnectionHelper(private val appContext: SqueezeClientApplication) {
             } ?: throw CometdClient.CometdException("Response timeout")
         } catch (e: CometdClient.CometdException) {
             handleFailure(e)
-            coroutineContext.cancel(CancellationException("Fetching publish response failed", e))
+            currentCoroutineContext().cancel(
+                CancellationException("Fetching publish response failed", e)
+            )
             awaitCancellation()
         }
     }
@@ -419,7 +421,7 @@ class ConnectionHelper(private val appContext: SqueezeClientApplication) {
         var subscriptionFailure: CometdClient.CometdException? = null
         // Create player states for newly reported players
         response.players.filter { !playerStates.containsKey(it.id) }.forEach { p ->
-            playerStates[p.id] = PlayerState(coroutineContext, this, clientId, p.id)
+            playerStates[p.id] = PlayerState(currentCoroutineContext(), this, clientId, p.id)
             try {
                 publishRequest(
                     PlayerStatusRequest(p.id),

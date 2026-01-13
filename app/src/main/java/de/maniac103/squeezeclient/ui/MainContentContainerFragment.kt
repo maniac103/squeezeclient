@@ -182,23 +182,23 @@ class MainContentContainerFragment :
         // RefreshParent        2 levels                    1 level
         // RefreshGrandParent   3 levels                    2 levels
         val nextWindow = action.nextWindow ?: item.nextWindow
-        val actualNextWindow = when {
-            nextWindow == SlimBrowseItemList.NextWindow.Parent && parentItem != null ->
+        val actualNextWindow = when (nextWindow) {
+            SlimBrowseItemList.NextWindow.Parent if parentItem != null ->
                 null
 
-            nextWindow == SlimBrowseItemList.NextWindow.GrandParent && parentItem != null ->
+            SlimBrowseItemList.NextWindow.GrandParent if parentItem != null ->
                 SlimBrowseItemList.NextWindow.Parent
 
-            nextWindow == SlimBrowseItemList.NextWindow.ParentWithRefresh ->
+            SlimBrowseItemList.NextWindow.ParentWithRefresh ->
                 if (parentItem != null) null else SlimBrowseItemList.NextWindow.Parent
 
             else -> nextWindow
         }
-        val refreshLevelsFromNextWindow = when {
-            nextWindow == SlimBrowseItemList.NextWindow.RefreshSelf && parentItem == null ->
+        val refreshLevelsFromNextWindow = when (nextWindow) {
+            SlimBrowseItemList.NextWindow.RefreshSelf if parentItem == null ->
                 1
 
-            nextWindow == SlimBrowseItemList.NextWindow.ParentWithRefresh ->
+            SlimBrowseItemList.NextWindow.ParentWithRefresh ->
                 if (parentItem != null) 1 else 2
 
             else -> 0

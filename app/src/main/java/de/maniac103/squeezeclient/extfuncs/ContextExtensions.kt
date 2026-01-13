@@ -20,7 +20,6 @@ package de.maniac103.squeezeclient.extfuncs
 import android.content.Context
 import android.content.SharedPreferences
 import android.graphics.drawable.Drawable
-import android.text.TextUtils
 import android.view.View
 import android.view.animation.Interpolator
 import androidx.preference.PreferenceManager
@@ -31,6 +30,7 @@ import coil3.memory.MemoryCache
 import coil3.request.ImageRequest
 import de.maniac103.squeezeclient.SqueezeClientApplication
 import de.maniac103.squeezeclient.model.ArtworkItem
+import androidx.core.text.layoutDirection
 
 val Context.connectionHelper get() =
     (applicationContext as SqueezeClientApplication).connectionHelper
@@ -43,9 +43,8 @@ val Context.prefs: SharedPreferences get() =
     PreferenceManager.getDefaultSharedPreferences(this)
 val Context.backProgressInterpolator: Interpolator get() =
     (applicationContext as SqueezeClientApplication).backProgressInterpolator
-val Context.isRtl get() = TextUtils.getLayoutDirectionFromLocale(
-    resources.configuration.locales[0]
-) == View.LAYOUT_DIRECTION_RTL
+val Context.isRtl get() =
+    resources.configuration.locales[0].layoutDirection == View.LAYOUT_DIRECTION_RTL
 
 fun Context.imageCacheContains(item: ArtworkItem?) = item?.extractIconUrl(this)
     ?.let { MemoryCache.Key(it) }

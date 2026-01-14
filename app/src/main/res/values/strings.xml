@@ -131,6 +131,9 @@
     <string name="settings_theme_dark">Dark</string>
     <string name="settings_theme_follow_battery_saver">Follow battery saver</string>
     <string name="settings_theme_follow_system">Follow system</string>
+    <string name="settings_force_grid_title">Always show list items as grid</string>
+    <string name="settings_force_grid_summary_off">Show lists of images (albums, titles etc.) arranged in list or grid form, depending on device size and orientation.</string>
+    <string name="settings_force_grid_summary_on">Always show lists of images (albums, titles etc.) arranged in grid form.</string>
     <string name="settings_download_path_structure_title">Folder hierarchy</string>
     <string name="settings_download_path_structure_entry_as_server">As stored on server</string>
     <string name="settings_download_path_structure_entry_album">Album</string>

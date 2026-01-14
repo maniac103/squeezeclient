@@ -30,6 +30,13 @@
             android:defaultValue="system"
             android:summary="%s"/>
 
+        <SwitchPreferenceCompat
+            android:key="force_list_grid"
+            android:title="@string/settings_force_grid_title"
+            android:summaryOn="@string/settings_force_grid_summary_on"
+            android:summaryOff="@string/settings_force_grid_summary_off"
+            android:defaultValue="false" />
+
     </PreferenceCategory>
 
     <PreferenceCategory

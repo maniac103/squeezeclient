@@ -26,6 +26,9 @@ import kotlin.time.Duration
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
+val SharedPreferences.forceGridLayout get() =
+    getBoolean("force_list_grid", false)
+
 val SharedPreferences.serverConfig: ServerConfiguration? get() {
     val name = getString("server_name", null)
     val hostnameAndPort = getString("server_url", null)

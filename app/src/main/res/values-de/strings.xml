@@ -130,6 +130,9 @@
     <string name="settings_theme_dark">Dunkel</string>
     <string name="settings_theme_follow_battery_saver">Dunkel im Energiesparmodus</string>
     <string name="settings_theme_follow_system">Systemeinstellung verwenden</string>
+    <string name="settings_force_grid_title">Listen immer in Gitterform</string>
+    <string name="settings_force_grid_summary_off">Bebilderte Listen mit Alben, Titeln usw. in Listen- oder Gitter-Anordnung darstellen, abhängig von Gerätegröße und Ausrichtung.</string>
+    <string name="settings_force_grid_summary_on">Bebilderte Listen mit Alben, Titeln usw. immer in Gitter-Anordnung darstellen.</string>
     <string name="settings_download_path_structure_title">Ordner-Hierarchie</string>
     <string name="settings_download_path_structure_entry_as_server">Wie auf Server</string>
     <string name="settings_download_path_structure_entry_album">Album</string>

@@ -18,5 +18,5 @@
 
 <resources>
     <bool name="nowplaying_playlist_always_open">false</bool>
-    <bool name="use_grid_items_for_lists">false</bool>
+    <bool name="force_grid_items_for_lists">false</bool>
 </resources>

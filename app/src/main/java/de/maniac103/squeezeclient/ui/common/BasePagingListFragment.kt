@@ -32,6 +32,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.databinding.FragmentGenericListBinding
+import de.maniac103.squeezeclient.extfuncs.forceGridLayout
+import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.model.ListResponse
 import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.ui.widget.AutoFitGridLayoutManager
@@ -47,7 +49,8 @@ abstract class BasePagingListFragment<T : Any, VH : RecyclerView.ViewHolder> :
     private lateinit var adapter: PagingDataAdapter<T, VH>
 
     protected abstract val fastScrollEnabled: Boolean
-    protected open val useGrid get() = resources.getBoolean(R.bool.use_grid_items_for_lists)
+    protected open val useGrid get() =
+        resources.getBoolean(R.bool.force_grid_items_for_lists) || prefs.forceGridLayout
 
     protected abstract fun onCreateAdapter(
         diffCallback: DiffUtil.ItemCallback<T>

@@ -20,4 +20,5 @@
     <dimen name="main_content_container_bottom_placeholder">0dp</dimen>
     <dimen name="main_content_list_bottom_padding">0dp</dimen>
     <dimen name="volume_popup_slider_height">192dp</dimen>
+    <dimen name="item_grid_column_width">160dp</dimen>
 </resources>

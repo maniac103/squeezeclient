@@ -35,7 +35,7 @@
     <dimen name="volume_slider_icon_inset">11dp</dimen>
     <dimen name="volume_popup_mute_button_size">42dp</dimen>
     <dimen name="search_sheet_corner_radius">24dp</dimen>
-    <dimen name="item_grid_column_width">160dp</dimen>
+    <dimen name="item_grid_column_width">120dp</dimen>
     <dimen name="landscape_nowplaying_pane_width">320dp</dimen>
     <dimen name="breadcrumbs_icon_size">16dp</dimen>
 </resources>

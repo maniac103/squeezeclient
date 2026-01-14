@@ -78,7 +78,7 @@ data class PlayerStatusResponse(
     val connected: Boolean,
     @SerialName("power")
     @Serializable(with = BooleanAsIntSerializer::class)
-    val powered: Boolean,
+    val powered: Boolean = true,
     @SerialName("sync_master")
     @Serializable(with = PlayerIdSerializer::class)
     val syncMaster: PlayerId? = null,

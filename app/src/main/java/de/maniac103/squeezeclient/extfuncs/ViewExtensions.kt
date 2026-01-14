@@ -100,8 +100,8 @@ fun View.addSystemBarAndCutoutInsetsListener(edge: ViewEdge, landscapeEdge: View
         }
         val viewIsRight = when (actualEdge) {
             ViewEdge.Top, ViewEdge.Bottom -> true
-            ViewEdge.End, ViewEdge.TopEnd, ViewEdge.BottomEnd, ViewEdge.Center -> !startIsLeft
-            else -> startIsLeft
+            ViewEdge.End, ViewEdge.TopEnd, ViewEdge.BottomEnd, ViewEdge.Center -> startIsLeft
+            else -> !startIsLeft
         }
         val viewIsTop = when (actualEdge) {
             ViewEdge.Top, ViewEdge.TopStart, ViewEdge.TopEnd -> true

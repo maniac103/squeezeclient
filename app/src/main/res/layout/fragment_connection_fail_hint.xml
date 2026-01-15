@@ -29,23 +29,35 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/hint_text"
+        app:layout_constraintBottom_toTopOf="@id/text"
         app:layout_constraintVertical_chainStyle="packed"
         tools:src="@drawable/ic_home_24dp"
         app:tint="?colorControlActivated" />
 
     <TextView
-        android:id="@+id/hint_text"
+        android:id="@+id/text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_constraintTop_toBottomOf="@id/image"
+        app:layout_constraintBottom_toTopOf="@id/subtext"
+        android:layout_marginTop="16dp"
+        android:paddingHorizontal="16dp"
+        android:gravity="center"
+        android:textAppearance="?textAppearanceTitleLarge"
+        tools:text="Something has happened" />
+
+    <TextView
+        android:id="@+id/subtext"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/text"
         app:layout_constraintBottom_toTopOf="@id/action_button_1"
         android:layout_marginTop="16dp"
         android:layout_marginBottom="32dp"
         android:paddingHorizontal="16dp"
         android:gravity="center"
-        android:textAppearance="?textAppearanceTitleLarge"
-        tools:text="Something has happened" />
+        android:textAppearance="?textAppearanceBodyLarge"
+        tools:text="Additional information" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/action_button_1"
@@ -53,7 +65,7 @@
         android:layout_height="wrap_content"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/hint_text"
+        app:layout_constraintTop_toBottomOf="@id/subtext"
         app:layout_constraintBottom_toBottomOf="@id/action_button_2"
         tools:text="Action 1" />
 

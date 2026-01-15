@@ -23,6 +23,8 @@ import androidx.annotation.StringRes
 import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import de.maniac103.squeezeclient.databinding.FragmentConnectionFailHintBinding
+import de.maniac103.squeezeclient.extfuncs.ViewEdge
+import de.maniac103.squeezeclient.extfuncs.addSystemBarAndCutoutInsetsListener
 import de.maniac103.squeezeclient.extfuncs.requireParentAs
 import de.maniac103.squeezeclient.ui.common.ViewBindingFragment
 
@@ -36,8 +38,13 @@ class ConnectionErrorHintFragment :
 
     override fun onBindingCreated(binding: FragmentConnectionFailHintBinding) {
         val args = requireArguments()
+        binding.root.addSystemBarAndCutoutInsetsListener(ViewEdge.Bottom)
         binding.image.setImageResource(args.getInt("icon"))
-        binding.hintText.text = getString(args.getInt("text"), args.getString("textArgument"))
+        binding.text.text = getString(args.getInt("text"))
+        binding.subtext.apply {
+            text = args.getString("subtext")
+            isVisible = text.isNotEmpty()
+        }
         binding.actionButton1.bindToAction(0, args.getInt("action1"), args.getString("action1tag"))
         binding.actionButton2.bindToAction(1, args.getInt("action2"), args.getString("action2tag"))
     }
@@ -56,7 +63,7 @@ class ConnectionErrorHintFragment :
         fun create(
             @DrawableRes iconResId: Int,
             @StringRes textResId: Int,
-            textArgument: String? = null,
+            subtext: String? = null,
             @StringRes action1LabelResId: Int? = null,
             @StringRes action2LabelResId: Int? = null,
             action1Tag: String? = null,
@@ -65,7 +72,7 @@ class ConnectionErrorHintFragment :
             arguments = bundleOf(
                 "icon" to iconResId,
                 "text" to textResId,
-                "textArgument" to textArgument,
+                "subtext" to subtext,
                 "action1" to (action1LabelResId ?: 0),
                 "action1tag" to action1Tag,
                 "action2" to (action2LabelResId ?: 0),

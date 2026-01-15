@@ -107,7 +107,7 @@ class MainActivity :
         ) as? MainContentContainerFragment
     private val errorFragment get() =
         supportFragmentManager.findFragmentById(
-            binding.container.id
+            binding.failHintContainer.id
         ) as? ConnectionErrorHintFragment
     private val nowPlayingFragment get() =
         supportFragmentManager.findFragmentById(binding.playerContainer.id) as? NowPlayingFragment
@@ -479,7 +479,7 @@ class MainActivity :
             val f = ConnectionErrorHintFragment.create(
                 R.drawable.ic_cloud_question_24dp,
                 R.string.connection_error_text_connection_failure,
-                textArgument = state.cause.message,
+                subtext = state.cause.message,
                 action1LabelResId = R.string.connection_error_action_retry,
                 action1Tag = ACTION_TAG_RECONNECT
             )
@@ -508,6 +508,7 @@ class MainActivity :
                 show(it)
                 setPrimaryNavigationFragment(it)
             }
+            errorFragment?.let { remove(it) }
             nowPlayingFragment?.let { show(it) }
             searchFragment?.let { show(it) }
         }
@@ -535,7 +536,8 @@ class MainActivity :
 
     private fun showConnectionErrorHint(f: ConnectionErrorHintFragment) {
         supportFragmentManager.commit {
-            replace(binding.container.id, f)
+            replace(binding.failHintContainer.id, f)
+            mainListContainer?.let { hide(it) }
             nowPlayingFragment?.let { hide(it) }
             searchFragment?.let { hide(it) }
         }

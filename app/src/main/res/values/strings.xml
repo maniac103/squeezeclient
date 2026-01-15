@@ -36,7 +36,7 @@
 
     <string name="connection_error_text_no_connection">Connection to server could not be established</string>
     <string name="connection_error_text_no_player">No player is connected to this server</string>
-    <string name="connection_error_text_connection_failure">Connection to server failed\n(%1$s)</string>
+    <string name="connection_error_text_connection_failure">Connection to server failed</string>
     <string name="connection_error_action_retry">Retry</string>
     <string name="connection_error_action_setup_server">Configure server</string>
 

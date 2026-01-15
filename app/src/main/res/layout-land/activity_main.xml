@@ -100,6 +100,13 @@
                 android:layout_marginEnd="@dimen/landscape_nowplaying_pane_width"
                 app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
+            <androidx.fragment.app.FragmentContainerView
+                android:id="@+id/fail_hint_container"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:fitsSystemWindows="true"
+                app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+
             <com.google.android.material.progressindicator.CircularProgressIndicator
                 android:id="@+id/loading_indicator"
                 android:layout_width="wrap_content"

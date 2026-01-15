@@ -25,24 +25,48 @@
 
     <ImageView
         android:id="@+id/image"
-        android:layout_width="128dp"
-        android:layout_height="128dp"
+        android:layout_width="192dp"
+        android:layout_height="192dp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/text_start_barrier"
         app:layout_constraintTop_toTopOf="parent"
-        tools:src="@drawable/ic_home_24dp"
+        app:layout_constraintBottom_toTopOf="@id/button_top_barrier"
+        app:layout_constraintHorizontal_chainStyle="spread"
         app:tint="?colorControlActivated" />
 
+    <androidx.constraintlayout.widget.Barrier
+        android:id="@+id/text_start_barrier"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        app:barrierDirection="start"
+        app:constraint_referenced_ids="text,subtext" />
+
     <TextView
-        android:id="@+id/hint_text"
-        android:layout_width="match_parent"
+        android:id="@+id/text"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@id/image"
-        app:layout_constraintBottom_toTopOf="@id/button_top_barrier"
+        app:layout_constraintStart_toEndOf="@id/image"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/subtext"
+        app:layout_constraintVertical_chainStyle="packed"
         android:padding="16dp"
         android:gravity="center"
-        android:textAppearance="?textAppearanceTitleMedium"
+        android:textAppearance="?textAppearanceTitleLarge"
         tools:text="Something has happened" />
+
+    <TextView
+        android:id="@+id/subtext"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toEndOf="@id/image"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/text"
+        app:layout_constraintBottom_toTopOf="@id/button_top_barrier"
+        android:paddingHorizontal="16dp"
+        android:gravity="center"
+        android:textAppearance="?textAppearanceBodyLarge"
+        tools:text="Additional information" />
 
     <androidx.constraintlayout.widget.Barrier
         android:id="@+id/button_top_barrier"

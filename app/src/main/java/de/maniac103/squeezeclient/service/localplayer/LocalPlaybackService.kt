@@ -329,7 +329,7 @@ class LocalPlaybackService :
 
             is SlimprotoSocket.CommandPacket.AudioGain -> {
                 // TODO: digital volume control?
-                player.volume = (command.newLeft + command.newRight) / 2
+                player.volume = (command.left + command.right) / 2
             }
 
             is SlimprotoSocket.CommandPacket.Continue -> {

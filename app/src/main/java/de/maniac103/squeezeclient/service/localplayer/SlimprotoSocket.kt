@@ -98,8 +98,8 @@ class SlimprotoSocket(prefs: SharedPreferences) {
         data class AudioGain(
             val digitalVolume: Boolean,
             val preamp: UByte,
-            val newLeft: Float,
-            val newRight: Float
+            val left: Float,
+            val right: Float
         ) : CommandPacket()
         data object Continue : CommandPacket()
 

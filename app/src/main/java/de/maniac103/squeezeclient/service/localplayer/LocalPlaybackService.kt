@@ -341,10 +341,15 @@ class LocalPlaybackService :
             is SlimprotoSocket.CommandPacket.StreamStart -> {
                 sendStatus(SlimprotoSocket.StatusType.Connecting)
                 sentBufferReady = command.autoStart
-                // In direct streaming case we need to wait for the
-                // continue packet before starting playback
-                val autoStart = command.autoStart && !command.directStreaming
-                player.start(command.uri, command.mimeType, command.headers, autoStart)
+                player.start(
+                    command.uri,
+                    command.mimeType,
+                    command.headers,
+                    command.replayGain,
+                    // In direct streaming case we need to wait for the
+                    // continue packet before starting playback
+                    command.autoStart && !command.directStreaming
+                )
             }
 
             is SlimprotoSocket.CommandPacket.StreamPause -> {

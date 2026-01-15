@@ -243,6 +243,11 @@ class SlimprotoSocket(prefs: SharedPreferences) {
                 } else {
                     requestParts[1]
                 }
+                val replayGain = replayGainOrValue
+                    .takeIf { it != 0 }
+                    ?.let { it.toFloat() / 65536F }
+                    ?: 1F
+
                 CommandPacket.StreamStart(
                     uriString.toUri(),
                     requestParts[0],
@@ -250,7 +255,7 @@ class SlimprotoSocket(prefs: SharedPreferences) {
                     autostart,
                     directStreaming,
                     mimeType,
-                    replayGainOrValue.toFloat() / 65536F
+                    replayGain
                 )
             }
 

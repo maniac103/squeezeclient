@@ -98,6 +98,8 @@ class LocalPlayer(
         }
 
     private var lastSetVolume: Float? = null
+    private var playerInternalVolume = 1F
+    private var currentReplayGain = 1F
     private var lastSavedDeviceVolume: Int? = null
 
     @UnstableApi
@@ -150,7 +152,13 @@ class LocalPlayer(
     }
 
     @OptIn(UnstableApi::class)
-    fun start(uri: Uri, mimeType: String?, headers: Map<String, String>, autoStart: Boolean) {
+    fun start(
+        uri: Uri,
+        mimeType: String?,
+        headers: Map<String, String>,
+        replayGain: Float,
+        autoStart: Boolean
+    ) {
         val mediaItem = MediaItem.Builder()
             .setUri(uri)
             .setMimeType(mimeType)
@@ -162,8 +170,12 @@ class LocalPlayer(
         }
         val mediaSource = ProgressiveMediaSource.Factory(dataSourceFactoryForHeaders)
             .createMediaSource(mediaItem)
+
+        currentReplayGain = replayGain
+
         player.stop()
         player.setMediaSource(mediaSource)
+        player.volume = playerInternalVolume * replayGain
         player.prepare()
         player.playWhenReady = autoStart
     }
@@ -231,8 +243,10 @@ class LocalPlayer(
         val isPlaying = readyForPlayback && !paused
         val mode = prefs.localPlayerVolumeMode
         when {
-            isSetVolume && mode == LocalPlayerVolumeMode.PlayerOnly ->
-                player.volume = volume
+            isSetVolume && mode == LocalPlayerVolumeMode.PlayerOnly -> {
+                playerInternalVolume = volume
+                player.volume = volume * currentReplayGain
+            }
 
             isSetVolume && mode == LocalPlayerVolumeMode.Device -> {
                 applyVolumeAsDeviceVolume(volume)

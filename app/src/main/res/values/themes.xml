@@ -19,6 +19,7 @@
 <resources>
     <style name="Theme.SqueezeClient" parent="Theme.Material3.Light.NoActionBar">
         <item name="android:activatedBackgroundIndicator">@drawable/activatable_background</item>
+        <item name="bottomSheetDialogTheme">@style/ThemeOverlay.BottomSheetDialog</item>
         <item name="colorPrimary">@color/md_theme_primary</item>
         <item name="colorOnPrimary">@color/md_theme_onPrimary</item>
         <item name="colorPrimaryContainer">@color/md_theme_primaryContainer</item>
@@ -70,6 +71,8 @@
     </style>
 
     <style name="ThemeOverlay.SqueezeClient.MediumContrast" parent="Theme.Material3.Light.NoActionBar">
+        <item name="android:activatedBackgroundIndicator">@drawable/activatable_background</item>
+        <item name="bottomSheetDialogTheme">@style/ThemeOverlay.BottomSheetDialog</item>
         <item name="colorPrimary">@color/md_theme_primary_mediumContrast</item>
         <item name="colorOnPrimary">@color/md_theme_onPrimary_mediumContrast</item>
         <item name="colorPrimaryContainer">@color/md_theme_primaryContainer_mediumContrast</item>
@@ -119,6 +122,8 @@
     </style>
 
     <style name="ThemeOverlay.SqueezeClient.HighContrast" parent="Theme.Material3.Light.NoActionBar">
+        <item name="android:activatedBackgroundIndicator">@drawable/activatable_background</item>
+        <item name="bottomSheetDialogTheme">@style/ThemeOverlay.BottomSheetDialog</item>
         <item name="colorPrimary">@color/md_theme_primary_highContrast</item>
         <item name="colorOnPrimary">@color/md_theme_onPrimary_highContrast</item>
         <item name="colorPrimaryContainer">@color/md_theme_primaryContainer_highContrast</item>
@@ -167,4 +172,8 @@
         <item name="colorSurfaceContainerHighest">@color/md_theme_surfaceContainerHighest_highContrast</item>
     </style>
 
+    <style name="ThemeOverlay.BottomSheetDialog" parent="ThemeOverlay.Material3.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/ModalBottomSheetDialog</item>
+        <item name="bottomSheetDragHandleStyle">@style/BottomSheetDragHandle</item>
+    </style>
 </resources>

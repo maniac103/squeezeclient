@@ -22,8 +22,16 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingTop="8dp"
     android:orientation="vertical">
+
+    <com.google.android.material.bottomsheet.BottomSheetDragHandleView
+        android:id="@+id/drag_handle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="-8dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -36,7 +44,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:gravity="center"
-            android:textAppearance="?textAppearanceHeadline6"
+            android:padding="16dp"
+            android:textAppearance="?textAppearanceTitleMedium"
             tools:text="Title" />
 
         <com.google.android.material.progressindicator.CircularProgressIndicator
@@ -52,18 +61,11 @@
 
     </LinearLayout>
 
-    <View
-        android:id="@+id/divider"
-        android:background="?dividerHorizontal"
-        android:layout_height="1dp"
-        android:layout_width="match_parent"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="8dp" />
-
-    <FrameLayout
+    <androidx.core.widget.NestedScrollView
         android:id="@+id/container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp" />
+        android:layout_marginBottom="16dp"
+        android:paddingHorizontal="16dp" />
 
 </LinearLayout>

@@ -25,10 +25,15 @@
     android:paddingTop="8dp"
     android:orientation="vertical">
 
+    <com.google.android.material.bottomsheet.BottomSheetDragHandleView
+        android:id="@+id/drag_handle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingHorizontal="8dp"
+        android:paddingHorizontal="16dp"
         android:minHeight="48dp">
 
         <com.google.android.material.imageview.ShapeableImageView
@@ -46,12 +51,13 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
+            app:layout_goneMarginStart="0dp"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toTopOf="@id/subtext"
             app:layout_constraintStart_toEndOf="@id/icon"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintVertical_chainStyle="packed"
-            android:textAppearance="?textAppearanceListItem"
+            android:textAppearance="?textAppearanceTitleMediumEmphasized"
             tools:text="Item title" />
 
         <TextView
@@ -62,19 +68,12 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="@id/title"
             app:layout_constraintEnd_toEndOf="parent"
-            android:textAppearance="?textAppearanceListItemSecondary"
+            android:textAppearance="?textAppearanceTitleSmall"
             android:maxLines="2"
             android:ellipsize="end"
             tools:text="Item subtext" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
-
-    <View
-        android:id="@+id/divider"
-        android:background="?dividerHorizontal"
-        android:layout_height="1dp"
-        android:layout_width="match_parent"
-        android:layout_marginTop="8dp" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/items"

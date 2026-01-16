@@ -17,15 +17,8 @@
   ~
   -->
 
-<androidx.core.widget.NestedScrollView
+<RadioGroup
     xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/radio_group"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
-
-    <RadioGroup
-        android:id="@+id/radio_group"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingHorizontal="8dp" />
-
-</androidx.core.widget.NestedScrollView>
+    android:layout_height="wrap_content" />

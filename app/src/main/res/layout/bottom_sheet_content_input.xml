@@ -26,8 +26,7 @@
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/editor_wrapper"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingHorizontal="8dp">
+        android:layout_height="wrap_content">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/editor"
@@ -39,16 +38,13 @@
 
     </com.google.android.material.textfield.TextInputLayout>
 
-    <TextView
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/send_button"
+        style="?materialButtonTonalStyle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="8dp"
-        style="?buttonBarButtonStyle"
-        android:gravity="start|center_vertical"
-        android:drawablePadding="8dp"
+        android:layout_marginTop="8dp"
         android:text="@string/input_submit"
-        app:drawableStartCompat="@drawable/ic_send_24dp"
-        app:drawableTint="?colorAccent" />
+        app:icon="@drawable/ic_send_24dp" />
 
 </LinearLayout>

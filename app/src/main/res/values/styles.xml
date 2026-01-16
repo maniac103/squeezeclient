@@ -35,4 +35,14 @@
     <style name="Preference.MaterialSwitchPreference" parent="Preference.SwitchPreferenceCompat.Material">
         <item name="android:widgetLayout">@layout/preference_switch</item>
     </style>
+
+    <style name="ModalBottomSheetDialog" parent="Widget.Material3.BottomSheet.Modal">
+        <item name="behavior_peekHeight">300dp</item>
+    </style>
+
+    <style name="BottomSheetDragHandle" parent="Widget.Material3.BottomSheet.DragHandle">
+        <item name="tint">?colorSurfaceContainerHighest</item>
+        <item name="android:minHeight">24dp</item>
+        <item name="android:paddingBottom">0dp</item>
+    </style>
 </resources>

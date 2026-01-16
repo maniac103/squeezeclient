@@ -21,30 +21,33 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingHorizontal="8dp"
     android:background="?android:activatedBackgroundIndicator"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp"
     android:minHeight="?listPreferredItemHeight">
 
     <com.google.android.material.imageview.ShapeableImageView
         android:id="@+id/icon"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
         app:shapeAppearanceOverlay="@style/ShapeAppearance.Artwork"
+        android:layout_marginStart="16dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        android:padding="4dp" />
+        app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
         android:id="@+id/title"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
+        android:layout_marginStart="16dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toTopOf="@id/subtext"
         app:layout_constraintStart_toEndOf="@id/icon"
         app:layout_constraintEnd_toStartOf="@id/context_container"
         app:layout_constraintVertical_chainStyle="packed"
+        android:maxLines="1"
+        android:ellipsize="end"
         android:textAppearance="?textAppearanceListItem"
         tools:text="Item title" />
 
@@ -52,7 +55,6 @@
         android:id="@+id/subtext"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="4dp"
         app:layout_constraintTop_toBottomOf="@id/title"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="@id/title"
@@ -75,9 +77,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
-            android:layout_marginEnd="8dp"
             android:visibility="gone"
             android:indeterminate="true"
+            android:paddingHorizontal="16dp"
             app:indicatorSize="24dp"
             app:trackThickness="3dp"
             tools:visibility="visible" />

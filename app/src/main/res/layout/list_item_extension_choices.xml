@@ -23,7 +23,7 @@
     android:layout_width="wrap_content"
     android:layout_height="match_parent"
     android:layout_gravity="center_vertical"
-    android:paddingHorizontal="8dp"
+    android:paddingHorizontal="16dp"
     android:textAppearance="?textAppearanceListItem"
     tools:text="Off" />
 <!-- TODO: dropdown drawable -->

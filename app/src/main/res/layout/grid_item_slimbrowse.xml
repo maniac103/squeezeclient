@@ -21,7 +21,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="8dp"
     android:background="?android:activatedBackgroundIndicator">
 
     <com.google.android.material.imageview.ShapeableImageView
@@ -33,13 +32,13 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:padding="4dp" />
+        android:padding="8dp" />
 
     <TextView
         android:id="@+id/title"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginStart="8dp"
         app:layout_constraintTop_toBottomOf="@id/icon"
         app:layout_constraintBottom_toTopOf="@id/subtext"
         app:layout_constraintStart_toStartOf="parent"
@@ -48,6 +47,7 @@
         android:textAppearance="?textAppearanceListItem"
         android:ellipsize="end"
         android:maxLines="2"
+        android:gravity="center_horizontal"
         tools:text="Item title" />
 
     <TextView
@@ -55,17 +55,27 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         app:layout_constraintTop_toBottomOf="@id/title"
+        app:layout_constraintBottom_toTopOf="@id/bottom_spacer"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toStartOf="@id/context_container"
         android:textAppearance="?textAppearanceListItemSecondary"
         android:maxLines="2"
         android:ellipsize="end"
+        android:gravity="center_horizontal"
         tools:text="Item subtext" />
+
+    <Space
+        android:id="@+id/bottom_spacer"
+        android:layout_width="match_parent"
+        android:layout_height="8dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/subtext"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
     <FrameLayout
         android:id="@+id/context_container"
         android:layout_width="wrap_content"
-        android:layout_height="0dp"
+        android:layout_height="wrap_content"
         app:layout_constraintTop_toBottomOf="@id/icon"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent">

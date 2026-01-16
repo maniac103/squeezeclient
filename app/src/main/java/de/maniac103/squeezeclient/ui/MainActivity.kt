@@ -37,6 +37,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.core.view.updatePadding
 import androidx.fragment.app.commit
+import androidx.fragment.app.commitNow
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -378,7 +379,7 @@ class MainActivity :
             currentPlayerScope?.cancel()
             currentPlayerScope = null
             this.player = player
-            supportFragmentManager.commit {
+            supportFragmentManager.commitNow {
                 val mainListHolder = MainContentContainerFragment.create(player.id)
                 replace(binding.container.id, mainListHolder)
                 setPrimaryNavigationFragment(mainListHolder)
@@ -503,7 +504,7 @@ class MainActivity :
     }
 
     private fun showContentAndHideLoadingIndicator() {
-        supportFragmentManager.commit {
+        supportFragmentManager.commitNow {
             mainListContainer?.let {
                 show(it)
                 setPrimaryNavigationFragment(it)
@@ -519,7 +520,7 @@ class MainActivity :
     }
 
     private fun hideContentAndShowLoadingIndicator() {
-        supportFragmentManager.commit {
+        supportFragmentManager.commitNow {
             mainListContainer?.let { hide(it) }
             errorFragment?.let { hide(it) }
             nowPlayingFragment?.let { hide(it) }
@@ -535,7 +536,7 @@ class MainActivity :
     }
 
     private fun showConnectionErrorHint(f: ConnectionErrorHintFragment) {
-        supportFragmentManager.commit {
+        supportFragmentManager.commitNow {
             replace(binding.failHintContainer.id, f)
             mainListContainer?.let { hide(it) }
             nowPlayingFragment?.let { hide(it) }

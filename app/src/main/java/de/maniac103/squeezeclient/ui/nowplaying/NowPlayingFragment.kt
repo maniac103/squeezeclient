@@ -248,6 +248,9 @@ class NowPlayingFragment :
         binding.progressMinimized.apply {
             min = 0
         }
+        binding.elapsedTime.apply {
+            text = DateUtils.formatElapsedTime(0)
+        }
 
         binding.repeat.bindToRequest(PlaybackButtonRequest.ToggleRepeat(playerId))
         binding.shuffle.bindToRequest(PlaybackButtonRequest.ToggleShuffle(playerId))

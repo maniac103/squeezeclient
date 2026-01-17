@@ -230,14 +230,16 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
         folderStructure: DownloadFolderStructure
     ): Uri? {
         val pathSegments = relativeStoragePath.toUri().pathSegments
+        val artistForFolder = albumArtist ?: artist
+
         val relativePath = when (folderStructure) {
-            DownloadFolderStructure.Artist -> artist
+            DownloadFolderStructure.Artist -> artistForFolder
 
             DownloadFolderStructure.Album -> album
 
-            DownloadFolderStructure.ArtistAlbum -> "$artist - $album"
+            DownloadFolderStructure.ArtistAlbum -> "$artistForFolder - $album"
 
-            DownloadFolderStructure.AlbumUnderArtist -> "$artist/$album"
+            DownloadFolderStructure.AlbumUnderArtist -> "$artistForFolder/$album"
 
             DownloadFolderStructure.AsOnServer -> {
                 pathSegments.dropLast(1).joinToString(separator = "/")

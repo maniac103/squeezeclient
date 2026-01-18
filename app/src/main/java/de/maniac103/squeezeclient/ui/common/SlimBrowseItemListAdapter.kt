@@ -51,6 +51,7 @@ class SlimBrowseItemListAdapter(
             val original = GridItemSlimbrowseBinding.inflate(inflater, parent, false)
             SlimBrowseItemListViewHolder.ItemBinding(
                 original.root,
+                original.iconWrapper,
                 original.icon,
                 original.title,
                 original.subtext,
@@ -61,6 +62,7 @@ class SlimBrowseItemListAdapter(
             val original = ListItemSlimbrowseBinding.inflate(inflater, parent, false)
             SlimBrowseItemListViewHolder.ItemBinding(
                 original.root,
+                original.iconWrapper,
                 original.icon,
                 original.title,
                 original.subtext,

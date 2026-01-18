@@ -47,7 +47,7 @@ class SlimBrowseItemListViewHolder(
         binding.title.text = item.title
         binding.subText.text = subText
         binding.subText.isVisible = !subText.isNullOrEmpty()
-        binding.icon.isVisible = showIcon
+        binding.iconWrapper.isVisible = showIcon
         if (showIcon) {
             binding.icon.loadArtworkOrPlaceholder(item)
         }
@@ -69,6 +69,7 @@ class SlimBrowseItemListViewHolder(
 
     data class ItemBinding(
         val root: View,
+        val iconWrapper: View,
         val icon: ShapeableImageView,
         val title: TextView,
         val subText: TextView,

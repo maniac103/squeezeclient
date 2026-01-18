@@ -22,6 +22,11 @@
         <item name="cornerSize">20%</item>
     </style>
 
+    <style name="ShapeAppearance.GalleryImage" parent="ShapeAppearance.Material3.Corner.Full">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">10%</item>
+    </style>
+
     <style name="TextAppearance.AppCompat.Volume" parent="TextAppearance.AppCompat.Body1">
         <item name="android:textStyle">normal</item>
         <item name="android:textColor">?android:attr/textColorPrimary</item>

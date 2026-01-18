@@ -44,6 +44,7 @@ import de.maniac103.squeezeclient.extfuncs.imageCacheContains
 import de.maniac103.squeezeclient.extfuncs.loadArtwork
 import de.maniac103.squeezeclient.extfuncs.requireParentAs
 import de.maniac103.squeezeclient.extfuncs.serverMightCacheResults
+import de.maniac103.squeezeclient.extfuncs.withRoundedCorners
 import de.maniac103.squeezeclient.model.ArtworkItem
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.JiveActions
@@ -487,7 +488,7 @@ class MainContentContainerFragment :
                             if (context.imageCacheContains(icon) != true) {
                                 emit(null)
                             }
-                            emit(context.loadArtwork(icon, iconSize))
+                            emit(context.loadArtwork(icon, iconSize)?.withRoundedCorners(context))
                         }
                     }
                     f.titleFlow.combine(iconFlow) { t, i -> tag to PageTitleInfo(t, i) }

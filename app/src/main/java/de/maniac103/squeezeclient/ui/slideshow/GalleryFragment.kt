@@ -22,6 +22,7 @@ import android.app.ActivityOptions
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.core.os.bundleOf
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import de.maniac103.squeezeclient.databinding.FragmentGenericListBinding
@@ -74,7 +75,15 @@ class GalleryFragment :
                 }
                 context.startActivity(intent, options?.toBundle())
             }
-            holder.binding.image.loadSlideshowImage(item, true)
+
+            holder.binding.loadingIndicator.isVisible = true
+            holder.binding.image.loadSlideshowImage(item) {
+                listener(
+                    onSuccess = { request, result ->
+                        holder.binding.loadingIndicator.isVisible = false
+                    }
+                )
+            }
             holder.binding.text.text = item.caption
         }
     }

@@ -15,8 +15,8 @@
   ~
   -->
 
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
@@ -25,12 +25,13 @@
     android:padding="8dp"
     android:background="@drawable/display_status_background">
 
-    <ImageView
+    <com.google.android.material.imageview.ShapeableImageView
         android:id="@+id/icon"
         android:layout_width="32dp"
         android:layout_height="32dp"
         android:layout_gravity="center_vertical"
         android:scaleType="fitCenter"
+        app:shapeAppearanceOverlay="@style/ShapeAppearance.Artwork"
         tools:visibility="gone" />
 
     <TextView

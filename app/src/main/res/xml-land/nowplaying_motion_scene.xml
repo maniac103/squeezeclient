@@ -112,7 +112,13 @@
             app:layout_constraintDimensionRatio="1:1"
             app:layout_constraintStart_toEndOf="@id/left_inset_spacer"
             app:layout_constraintTop_toBottomOf="@id/toolbar_container"
-            app:layout_constraintBottom_toTopOf="@id/progress_top_space" />
+            app:layout_constraintBottom_toTopOf="@id/progress_top_space">
+
+            <CustomAttribute
+                app:attributeName="relativeCornerRadius"
+                app:customFloatValue="0.1" />
+
+        </Constraint>
 
         <Constraint
             android:id="@id/title"
@@ -326,7 +332,7 @@
 
         <Constraint
             android:id="@id/artwork"
-            android:layout_width="0dp"
+            android:layout_width="wrap_content"
             android:layout_height="0dp"
             android:layout_marginTop="16dp"
             android:layout_marginBottom="16dp"
@@ -335,7 +341,13 @@
             app:layout_constraintBottom_toTopOf="@id/title"
             app:layout_constraintStart_toStartOf="@id/player_background"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintVertical_chainStyle="spread" />
+            app:layout_constraintVertical_chainStyle="spread">
+
+            <CustomAttribute
+                app:attributeName="relativeCornerRadius"
+                app:customFloatValue="0.1" />
+
+        </Constraint>
 
         <Constraint
             android:id="@id/title"

@@ -59,5 +59,4 @@ suspend fun Context.loadArtwork(item: ArtworkItem?, size: Int): Drawable? {
     return imageLoader.execute(request)
         .image
         ?.asDrawable(resources)
-        ?.withRoundedCorners(this)
 }

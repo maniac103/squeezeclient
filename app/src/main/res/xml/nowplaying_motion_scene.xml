@@ -145,7 +145,13 @@
             app:layout_constraintDimensionRatio="1:1"
             app:layout_constraintEnd_toStartOf="@id/right_inset_spacer"
             app:layout_constraintStart_toEndOf="@id/left_inset_spacer"
-            app:layout_constraintTop_toBottomOf="@id/toolbar_container" />
+            app:layout_constraintTop_toBottomOf="@id/toolbar_container">
+
+            <CustomAttribute
+                app:attributeName="relativeCornerRadius"
+                app:customFloatValue="0.1" />
+
+        </Constraint>
 
         <Constraint
             android:id="@id/title"
@@ -353,7 +359,13 @@
             android:layout_height="48dp"
             android:layout_marginStart="8dp"
             app:layout_constraintBottom_toTopOf="@id/progress_minimized"
-            app:layout_constraintStart_toEndOf="@id/left_inset_spacer" />
+            app:layout_constraintStart_toEndOf="@id/left_inset_spacer">
+
+            <CustomAttribute
+                app:attributeName="relativeCornerRadius"
+                app:customFloatValue="0.2" />
+
+        </Constraint>
 
         <Constraint
             android:id="@id/title"

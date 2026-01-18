@@ -53,7 +53,7 @@ class ImageViewActivity : AppCompatActivity() {
         binding = ActivityImageBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.image.loadSlideshowImage(item, false) {
+        binding.image.loadSlideshowImage(item) {
             lifecycle(lifecycle)
             precision(Precision.INEXACT)
             crossfade(true)

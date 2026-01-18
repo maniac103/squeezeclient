@@ -29,6 +29,8 @@ import androidx.core.view.updatePadding
 import coil3.load
 import coil3.request.ImageRequest
 import coil3.request.placeholder
+import coil3.target.ImageViewTarget
+import com.google.android.material.imageview.ShapeableImageView
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.model.ArtworkItem
 import de.maniac103.squeezeclient.model.SlideshowImage
@@ -40,14 +42,16 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 fun View.animateScale(scale: Float, duration: Duration) =
     animate().scaleX(scale).scaleY(scale).setDuration(duration.inWholeMilliseconds)
 
-fun ImageView.loadArtwork(item: ArtworkItem?, builder: ImageRequest.Builder.() -> Unit = {}) =
-    load(item?.extractIconUrl(context)) {
-        addServerCredentialsIfNeeded(context)
-        target(RoundedCornerImageViewTarget(this@loadArtwork))
-        builder()
-    }
+fun ShapeableImageView.loadArtwork(
+    item: ArtworkItem?,
+    builder: ImageRequest.Builder.() -> Unit = {}
+) = load(item?.extractIconUrl(context)) {
+    addServerCredentialsIfNeeded(context)
+    target(ImageViewTarget(this@loadArtwork))
+    builder()
+}
 
-fun ImageView.loadArtworkOrPlaceholder(
+fun ShapeableImageView.loadArtworkOrPlaceholder(
     item: ArtworkItem?,
     builder: ImageRequest.Builder.() -> Unit = {}
 ) = loadArtwork(item) {
@@ -57,16 +61,13 @@ fun ImageView.loadArtworkOrPlaceholder(
 
 fun ImageView.loadSlideshowImage(
     item: SlideshowImage,
-    roundCorners: Boolean,
     builder: ImageRequest.Builder.() -> Unit = {}
 ) = item.imageUrl.let { url ->
     val baseUrl = context.prefs.serverConfig?.url
     val absoluteUrl = baseUrl?.resolve(url)?.toString() ?: url
     load(absoluteUrl) {
         addServerCredentialsIfNeeded(context)
-        if (roundCorners) {
-            target(RoundedCornerImageViewTarget(this@loadSlideshowImage))
-        }
+        target(ImageViewTarget(this@loadSlideshowImage))
         builder()
     }
 }

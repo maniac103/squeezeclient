@@ -26,6 +26,7 @@ import android.widget.TextView
 import androidx.core.view.forEach
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.imageview.ShapeableImageView
 import com.google.android.material.progressindicator.CircularProgressIndicator
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.extfuncs.loadArtworkOrPlaceholder
@@ -68,7 +69,7 @@ class SlimBrowseItemListViewHolder(
 
     data class ItemBinding(
         val root: View,
-        val icon: ImageView,
+        val icon: ShapeableImageView,
         val title: TextView,
         val subText: TextView,
         val contextContainer: ViewGroup,

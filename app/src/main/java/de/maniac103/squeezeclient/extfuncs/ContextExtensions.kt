@@ -22,6 +22,7 @@ import android.content.SharedPreferences
 import android.graphics.drawable.Drawable
 import android.view.View
 import android.view.animation.Interpolator
+import androidx.core.text.layoutDirection
 import androidx.preference.PreferenceManager
 import androidx.work.WorkManager
 import coil3.asDrawable
@@ -30,7 +31,6 @@ import coil3.memory.MemoryCache
 import coil3.request.ImageRequest
 import de.maniac103.squeezeclient.SqueezeClientApplication
 import de.maniac103.squeezeclient.model.ArtworkItem
-import androidx.core.text.layoutDirection
 
 val Context.connectionHelper get() =
     (applicationContext as SqueezeClientApplication).connectionHelper

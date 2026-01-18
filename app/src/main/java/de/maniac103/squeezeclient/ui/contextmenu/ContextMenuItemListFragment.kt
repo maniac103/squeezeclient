@@ -82,10 +82,7 @@ class ContextMenuItemListFragment :
             }
         }
 
-        override fun onHolderBusyStateChanged(
-            holder: ItemViewHolder,
-            busy: Boolean
-        ) {
+        override fun onHolderBusyStateChanged(holder: ItemViewHolder, busy: Boolean) {
             holder.binding.loadingIndicator.isVisible = busy
         }
     }

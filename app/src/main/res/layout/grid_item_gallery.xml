@@ -41,8 +41,8 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:indeterminate="true"
-        app:indicatorSize="128dp"
-        app:trackThickness="6dp" />
+        app:indicatorSize="64dp"
+        app:trackThickness="4dp" />
 
     <androidx.constraintlayout.widget.Barrier
         android:id="@+id/image_barrier"

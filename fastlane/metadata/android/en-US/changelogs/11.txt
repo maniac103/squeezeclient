@@ -1,0 +1,6 @@
+- Furtherly Improve local player synchronization handling (#26)
+- Fix some crashes on unexpected server data (#31, #33, #37)
+- Fix some context menus being incomplete (#32)
+- Add option for always showing lists with images (e.g. albums) as grid instead of list (#35)
+- Some UI improvements (e.g. landscape layout)
+- Use album artist instead of track artist (if available) in downloaded file path

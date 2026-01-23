@@ -29,12 +29,13 @@ import androidx.media3.common.Player
 import androidx.media3.common.audio.AudioProcessorChain
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSource
+import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.HttpDataSource
+import androidx.media3.datasource.TransferListener
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.analytics.AnalyticsListener
-import androidx.media3.exoplayer.analytics.PlaybackStatsListener
 import androidx.media3.exoplayer.audio.AudioTrackAudioOutputProvider
 import androidx.media3.exoplayer.audio.DefaultAudioSink
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
@@ -71,7 +72,7 @@ class LocalPlayer(
     private var lastPlaybackState = Player.STATE_IDLE
 
     @UnstableApi
-    private lateinit var statsListener: PlaybackStatsListener
+    private lateinit var transferListener: NetworkTransferListener
 
     var paused: Boolean
         get() = !player.playWhenReady
@@ -81,9 +82,9 @@ class LocalPlayer(
 
     val playingTitle get() = player.mediaMetadata.title
 
-    val stats
+    val totalTransferredBytes
         @OptIn(UnstableApi::class)
-        get() = statsListener.combinedPlaybackStats
+        get() = transferListener.totalBytesTransferred
 
     val readyForPlaybackOrBuffering get() =
         player.playbackState == Player.STATE_READY || player.playbackState == Player.STATE_BUFFERING
@@ -110,6 +111,12 @@ class LocalPlayer(
     private val playbackPositionTimestamp = AudioTimestamp()
 
     init {
+        dataSourceFactory = initDataSourceFactory(context)
+        player = initPlayer(context)
+    }
+
+    @OptIn(UnstableApi::class)
+    private fun initDataSourceFactory(context: Context): HttpDataSource.Factory {
         val client = context.httpClient.newBuilder()
             .addInterceptor { chain ->
                 val response = chain.proceed(chain.request())
@@ -117,14 +124,10 @@ class LocalPlayer(
                 response
             }
             .build()
-        dataSourceFactory = OkHttpDataSource.Factory(client)
-        initStatsListener()
-        player = initPlayer(context)
-    }
 
-    @OptIn(UnstableApi::class)
-    private fun initStatsListener() {
-        statsListener = PlaybackStatsListener(false) { _, _ -> }
+        transferListener = NetworkTransferListener()
+        return OkHttpDataSource.Factory(client)
+            .setTransferListener(transferListener)
     }
 
     @OptIn(UnstableApi::class)
@@ -138,7 +141,6 @@ class LocalPlayer(
         if (BuildConfig.DEBUG) {
             player.addAnalyticsListener(EventLogger())
         }
-        player.addAnalyticsListener(statsListener)
         player.addAnalyticsListener(object : AnalyticsListener {
             override fun onLoadCompleted(
                 eventTime: AnalyticsListener.EventTime,
@@ -301,6 +303,43 @@ class LocalPlayer(
         override fun getMediaDuration(playoutDuration: Long) = playoutDuration
 
         override fun getSkippedOutputFrameCount() = processor.skippedFrames
+    }
+
+    @UnstableApi
+    class NetworkTransferListener : TransferListener {
+        var totalBytesTransferred = 0L
+
+        override fun onTransferInitializing(
+            source: DataSource,
+            dataSpec: DataSpec,
+            isNetwork: Boolean
+        ) {
+        }
+
+        override fun onTransferStart(
+            source: DataSource,
+            dataSpec: DataSpec,
+            isNetwork: Boolean
+        ) {
+        }
+
+        override fun onBytesTransferred(
+            source: DataSource,
+            dataSpec: DataSpec,
+            isNetwork: Boolean,
+            bytesTransferred: Int
+        ) {
+            if (isNetwork) {
+                totalBytesTransferred += bytesTransferred
+            }
+        }
+
+        override fun onTransferEnd(
+            source: DataSource,
+            dataSpec: DataSpec,
+            isNetwork: Boolean
+        ) {
+        }
     }
 
     companion object {

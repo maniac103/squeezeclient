@@ -311,7 +311,7 @@ class LocalPlaybackService :
             elapsed,
             player.readyForPlayback,
             player.determinePlaybackPosition(nowNanos),
-            player.stats.totalBandwidthBytes
+            player.totalTransferredBytes
         )
 
         // Make sure we send an update at least once per second while playing

@@ -33,6 +33,7 @@ import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.HttpDataSource
 import androidx.media3.datasource.TransferListener
 import androidx.media3.datasource.okhttp.OkHttpDataSource
+import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.analytics.AnalyticsListener
@@ -204,6 +205,20 @@ class LocalPlayer(
         val framesElapsed = playbackPositionTimestamp.framePosition + audioProcessor.skippedFrames
         val position = framesElapsed / track.sampleRate.toDouble()
         return position.toDuration(DurationUnit.SECONDS) + timestampAge
+    }
+
+    @OptIn(UnstableApi::class)
+    fun estimateBufferFullnessAndSize(): Pair<Int, Int> {
+        val bufferedDurationMs = (player.bufferedPosition - player.currentPosition)
+            .toInt()
+            .takeIf { it >= 0 }
+            ?: 0
+        // At a maximum, the player will rebuffer its max buffer duration when it reaches its
+        // min buffer duration, so the maximum buffered duration is the sum of both
+        val maxBufferDurationMs =
+            DefaultLoadControl.DEFAULT_MAX_BUFFER_MS +
+            DefaultLoadControl.DEFAULT_MIN_BUFFER_MS
+        return bufferedDurationMs to maxBufferDurationMs
     }
 
     override fun onPlaybackStateChanged(playbackState: Int) {

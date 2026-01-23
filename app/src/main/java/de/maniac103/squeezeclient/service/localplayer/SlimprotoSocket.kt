@@ -366,15 +366,17 @@ class SlimprotoSocket(prefs: SharedPreferences) {
         uptime: Duration,
         playbackReady: Boolean,
         playbackPosition: Duration,
-        totalBytesTransferred: Long
+        totalBytesTransferred: Long,
+        bufferFullness: Int,
+        bufferSize: Int
     ) {
         val payload = ByteBuffer.allocate(53).apply {
             putAsAscii(type.type)
             put(0.toByte()) // # of CR/LF received
             put('m'.code.toByte()) // MAS initialized (m or p)
             put(0.toByte()) // MAS mode
-            putInt(1) // buffer size in bytes
-            putInt(if (playbackReady) 1 else 0) // fullness in bytes
+            putInt(bufferSize) // buffer size in bytes
+            putInt(bufferFullness) // fullness in bytes
             putLong(totalBytesTransferred) // bytes received
             putShort(101) // wireless signal strength
             putInt(uptime.inWholeMilliseconds.toInt()) // jiffies (1 kHz timer)

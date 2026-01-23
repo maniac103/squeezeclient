@@ -306,12 +306,16 @@ class LocalPlaybackService :
     private suspend fun sendStatus(type: SlimprotoSocket.StatusType) {
         val nowNanos = System.nanoTime()
         val elapsed = (nowNanos - startupTimestampNanos).toDuration(DurationUnit.NANOSECONDS)
+        val (bufferFullness, bufferSize) = player.estimateBufferFullnessAndSize()
+
         slimproto.sendStatus(
             type,
             elapsed,
             player.readyForPlayback,
             player.determinePlaybackPosition(nowNanos),
-            player.totalTransferredBytes
+            player.totalTransferredBytes,
+            bufferFullness,
+            bufferSize
         )
 
         // Make sure we send an update at least once per second while playing

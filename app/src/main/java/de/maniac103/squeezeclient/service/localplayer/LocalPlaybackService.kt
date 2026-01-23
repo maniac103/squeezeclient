@@ -161,6 +161,7 @@ class LocalPlaybackService :
         )
         if (buffering && sentTrackStartStatus) {
             sendStatus(SlimprotoSocket.StatusType.OutputUnderrun)
+            sentBufferReady = false
         } else if (!buffering) {
             if (!sentBufferReady) {
                 sendStatus(SlimprotoSocket.StatusType.BufferReady)

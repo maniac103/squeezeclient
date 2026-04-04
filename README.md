@@ -6,7 +6,11 @@ An Android client/controller application for the [LMS music server](https://lms-
      alt="Get it on F-Droid"
      height="80">](https://f-droid.org/packages/de.maniac103.squeezeclient/)
 
-Or download the latest APK from the [Releases Section](https://github.com/maniac103/squeezeclient/releases/latest).
+Or download the latest APK from the [Releases Section](https://github.com/maniac103/squeezeclient/releases/latest):
+
+ * foss - FOSS is Free Open Source Software, without the need for proprietary third-party libs - suitable for most users
+ * gms - Includes additional features for Wear support
+ * wear - this is for installing onto a Google Wear smartwatch and offers more controls than the typical media play/pause/skip (for example, stop all players)
 
 ### Features:
 - Music library browser

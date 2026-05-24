@@ -17,7 +17,6 @@
 
 package de.maniac103.squeezeclient.model
 
-import android.os.Parcelable
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import kotlinx.parcelize.Parcelize

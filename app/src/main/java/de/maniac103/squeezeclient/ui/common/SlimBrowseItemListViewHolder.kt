@@ -20,7 +20,6 @@ package de.maniac103.squeezeclient.ui.common
 import android.view.View
 import android.view.ViewGroup
 import android.widget.CheckBox
-import android.widget.ImageView
 import android.widget.RadioButton
 import android.widget.TextView
 import androidx.core.view.forEach

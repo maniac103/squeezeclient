@@ -18,7 +18,6 @@
 package de.maniac103.squeezeclient.ui.bottomsheets
 
 import android.os.Bundle
-import androidx.core.os.bundleOf
 import androidx.core.view.forEach
 import de.maniac103.squeezeclient.databinding.BottomSheetContentChoicesBinding
 import de.maniac103.squeezeclient.databinding.ListItemChoiceRadioBinding
@@ -66,11 +65,11 @@ class ChoicesBottomSheetFragment :
     companion object {
         fun create(parentTitle: String, choices: JiveActions.Choices, extraData: Bundle? = null) =
             ChoicesBottomSheetFragment().apply {
-                arguments = bundleOf(
-                    "parentTitle" to parentTitle,
-                    "choices" to choices,
-                    "extra" to extraData
-                )
+                arguments = Bundle().apply {
+                    putString("parentTitle", parentTitle)
+                    putParcelable("choices", choices)
+                    putBundle("extra", extraData)
+                }
             }
     }
 }

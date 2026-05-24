@@ -18,6 +18,7 @@
 package de.maniac103.squeezeclient.ui.search
 
 import android.annotation.SuppressLint
+import android.os.Bundle
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -25,7 +26,6 @@ import android.view.inputmethod.InputMethodManager
 import androidx.activity.BackEventCompat
 import androidx.activity.OnBackPressedCallback
 import androidx.core.content.getSystemService
-import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.lifecycleScope
@@ -244,7 +244,9 @@ class SearchFragment : ViewBindingFragment<FragmentSearchBinding>(FragmentSearch
 
     companion object {
         fun create(playerId: PlayerId) = SearchFragment().apply {
-            arguments = bundleOf("playerId" to playerId)
+            arguments = Bundle().apply {
+                putParcelable("playerId", playerId)
+            }
         }
     }
 }

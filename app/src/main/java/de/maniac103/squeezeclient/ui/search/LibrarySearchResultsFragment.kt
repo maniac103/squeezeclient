@@ -17,7 +17,7 @@
 
 package de.maniac103.squeezeclient.ui.search
 
-import androidx.core.os.bundleOf
+import android.os.Bundle
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.cometd.request.LibrarySearchRequest
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
@@ -44,7 +44,11 @@ class LibrarySearchResultsFragment : BaseSlimBrowseItemListFragment() {
     companion object {
         fun create(playerId: PlayerId, type: LibrarySearchRequest.Mode, searchTerm: String) =
             LibrarySearchResultsFragment().apply {
-                arguments = bundleOf("playerId" to playerId, "type" to type, "query" to searchTerm)
+                arguments = Bundle().apply {
+                    putParcelable("playerId", playerId)
+                    putParcelable("type", type)
+                    putString("query", searchTerm)
+                }
             }
     }
 }

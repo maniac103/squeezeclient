@@ -19,9 +19,9 @@ package de.maniac103.squeezeclient.ui.slideshow
 
 import android.app.Activity
 import android.app.ActivityOptions
+import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -95,7 +95,10 @@ class GalleryFragment :
         fun create(items: List<SlideshowImage>, title: String, parentTitle: String?) =
             GalleryFragment().apply {
                 val titleList = listOfNotNull(parentTitle, title)
-                arguments = bundleOf("items" to ArrayList(items), "title" to ArrayList(titleList))
+                arguments = Bundle().apply {
+                    putParcelableArrayList("items", ArrayList(items))
+                    putStringArrayList("title", ArrayList(titleList))
+                }
             }
     }
 }

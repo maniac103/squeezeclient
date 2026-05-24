@@ -17,7 +17,7 @@
 
 package de.maniac103.squeezeclient.ui.nowplaying
 
-import androidx.core.os.bundleOf
+import android.os.Bundle
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -129,7 +129,9 @@ class PlaylistFragment :
 
     companion object {
         fun create(playerId: PlayerId) = PlaylistFragment().apply {
-            arguments = bundleOf("playerId" to playerId)
+            arguments = Bundle().apply {
+                putParcelable("playerId", playerId)
+            }
         }
     }
 }

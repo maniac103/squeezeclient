@@ -19,7 +19,6 @@ package de.maniac103.squeezeclient.ui.prefs
 
 import android.app.Dialog
 import android.os.Bundle
-import androidx.core.os.bundleOf
 import androidx.preference.ListPreference
 import androidx.preference.ListPreferenceDialogFragmentCompat
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -46,7 +45,9 @@ class MaterialListPreferenceDialog : ListPreferenceDialogFragmentCompat() {
 
     companion object {
         fun create(pref: ListPreference) = MaterialListPreferenceDialog().apply {
-            arguments = bundleOf(ARG_KEY to pref.key)
+            arguments = Bundle().apply {
+                putString(ARG_KEY, pref.key)
+            }
         }
     }
 }

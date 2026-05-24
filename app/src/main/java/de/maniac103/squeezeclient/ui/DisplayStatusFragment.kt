@@ -17,8 +17,8 @@
 
 package de.maniac103.squeezeclient.ui
 
+import android.os.Bundle
 import android.view.ViewGroup.MarginLayoutParams
-import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isGone
@@ -92,7 +92,9 @@ class DisplayStatusFragment :
 
     companion object {
         fun create(playerId: PlayerId) = DisplayStatusFragment().apply {
-            arguments = bundleOf("playerId" to playerId)
+            arguments = Bundle().apply {
+                putParcelable("playerId", playerId)
+            }
         }
     }
 }

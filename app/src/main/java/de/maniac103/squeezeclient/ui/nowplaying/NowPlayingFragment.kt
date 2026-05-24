@@ -28,7 +28,6 @@ import androidx.activity.BackEventCompat
 import androidx.activity.OnBackPressedCallback
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.graphics.Insets
-import androidx.core.os.bundleOf
 import androidx.core.view.MenuProvider
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -549,7 +548,9 @@ class NowPlayingFragment :
 
     companion object {
         fun create(playerId: PlayerId) = NowPlayingFragment().apply {
-            arguments = bundleOf("playerId" to playerId)
+            arguments = Bundle().apply {
+                putParcelable("playerId", playerId)
+            }
         }
     }
 }

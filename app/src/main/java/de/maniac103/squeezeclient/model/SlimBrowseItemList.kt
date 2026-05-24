@@ -48,8 +48,7 @@ data class SlimBrowseItemList(
         val nextWindow: NextWindow?,
         val subItems: List<SlimBrowseItem>?,
         val webLink: String?
-    ) : Parcelable,
-        ArtworkItem
+    ) : ParcelableArtworkItem
 
     @Serializable
     @OptIn(ExperimentalSerializationApi::class)

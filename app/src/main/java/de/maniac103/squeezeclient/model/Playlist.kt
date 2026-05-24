@@ -38,8 +38,7 @@ data class Playlist(
         val actions: JiveActions,
         override val iconId: String? = null,
         override val icon: String? = null
-    ) : Parcelable,
-        ArtworkItem {
+    ) : ParcelableArtworkItem {
         fun asSlimbrowseItem() = SlimBrowseItemList.SlimBrowseItem(
             listPosition = 0,
             title = title,

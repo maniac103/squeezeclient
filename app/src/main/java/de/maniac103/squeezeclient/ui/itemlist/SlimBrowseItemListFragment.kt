@@ -17,13 +17,14 @@
 
 package de.maniac103.squeezeclient.ui.itemlist
 
-import androidx.core.os.bundleOf
+import android.os.Bundle
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.extfuncs.getParcelableOrNull
 import de.maniac103.squeezeclient.model.ArtworkItem
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.PagingParams
+import de.maniac103.squeezeclient.model.ParcelableArtworkItem
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.WindowStyle
 import kotlinx.coroutines.flow.flowOf
@@ -50,22 +51,22 @@ class SlimBrowseItemListFragment : BaseSlimBrowseItemListFragment() {
             playerId: PlayerId,
             title: String,
             parentTitle: String?,
-            icon: ArtworkItem?,
+            icon: ParcelableArtworkItem?,
             fetchAction: JiveAction,
             windowStyle: WindowStyle?
         ) = SlimBrowseItemListFragment().apply {
             val showIcons = windowStyle != null && windowStyle != WindowStyle.TextOnlyList
             val canUseGrid =
                 windowStyle == WindowStyle.IconList || windowStyle == WindowStyle.HomeMenu
-            arguments = bundleOf(
-                "playerId" to playerId,
-                "title" to title,
-                "parentTitle" to parentTitle,
-                "icon" to icon,
-                "fetchAction" to fetchAction,
-                "canUseGrid" to canUseGrid,
-                "showIcons" to showIcons
-            )
+            arguments = Bundle().apply {
+                putParcelable("playerId", playerId)
+                putString("title", title)
+                putString("parentTitle", parentTitle)
+                putParcelable("icon", icon)
+                putParcelable("fetchAction", fetchAction)
+                putBoolean("canUseGrid", canUseGrid)
+                putBoolean("showIcons", showIcons)
+            }
         }
     }
 }

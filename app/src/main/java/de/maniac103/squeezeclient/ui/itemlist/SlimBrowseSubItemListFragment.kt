@@ -17,7 +17,7 @@
 
 package de.maniac103.squeezeclient.ui.itemlist
 
-import androidx.core.os.bundleOf
+import android.os.Bundle
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.model.JiveAction
@@ -63,12 +63,12 @@ class SlimBrowseSubItemListFragment : BaseSlimBrowseItemListFragment() {
     companion object {
         fun create(playerId: PlayerId, title: String, fetchAction: JiveAction, listPosition: Int) =
             SlimBrowseSubItemListFragment().apply {
-                arguments = bundleOf(
-                    "playerId" to playerId,
-                    "title" to title,
-                    "fetchAction" to fetchAction,
-                    "listPosition" to listPosition
-                )
+                arguments = Bundle().apply {
+                    putParcelable("playerId", playerId)
+                    putString("title", title)
+                    putParcelable("fetchAction", fetchAction)
+                    putInt("listPosition", listPosition)
+                }
             }
     }
 }

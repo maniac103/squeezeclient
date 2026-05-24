@@ -17,8 +17,8 @@
 
 package de.maniac103.squeezeclient.ui.bottomsheets
 
+import android.os.Bundle
 import android.view.inputmethod.EditorInfo
-import androidx.core.os.bundleOf
 import androidx.core.widget.doAfterTextChanged
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.databinding.BottomSheetContentInputBinding
@@ -117,7 +117,10 @@ class InputBottomSheetFragment :
     companion object {
         fun createForItem(item: SlimBrowseItemList.SlimBrowseItem, input: JiveActions.Input) =
             InputBottomSheetFragment().apply {
-                arguments = bundleOf("item" to item, "input" to input)
+                arguments = Bundle().apply {
+                    putParcelable("item", item)
+                    putParcelable("input", input)
+                }
             }
 
         fun createPlain(
@@ -141,7 +144,10 @@ class InputBottomSheetFragment :
 
         fun createForInput(parentTitle: String, input: JiveActions.Input) =
             InputBottomSheetFragment().apply {
-                arguments = bundleOf("parentTitle" to parentTitle, "input" to input)
+                arguments = Bundle().apply {
+                    putString("parentTitle", parentTitle)
+                    putParcelable("input", input)
+                }
             }
     }
 }

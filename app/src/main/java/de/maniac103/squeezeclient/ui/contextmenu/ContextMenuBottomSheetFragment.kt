@@ -22,7 +22,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.fragment.app.commit
 import androidx.lifecycle.lifecycleScope
@@ -142,11 +141,11 @@ class ContextMenuBottomSheetFragment :
             parent: SlimBrowseItemList.SlimBrowseItem,
             initialItems: List<SlimBrowseItemList.SlimBrowseItem>
         ) = ContextMenuBottomSheetFragment().apply {
-            arguments = bundleOf(
-                "playerId" to playerId,
-                "parent" to parent,
-                "initialItems" to ArrayList(initialItems)
-            )
+            arguments = Bundle().apply {
+                putParcelable("playerId", playerId)
+                putParcelable("parent", parent)
+                putParcelableArrayList("initialItems", ArrayList(initialItems))
+            }
         }
     }
 }

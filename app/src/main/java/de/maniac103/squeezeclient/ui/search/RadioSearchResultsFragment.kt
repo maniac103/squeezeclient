@@ -17,7 +17,7 @@
 
 package de.maniac103.squeezeclient.ui.search
 
-import androidx.core.os.bundleOf
+import android.os.Bundle
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.getParcelable
@@ -40,7 +40,10 @@ class RadioSearchResultsFragment : BaseSlimBrowseItemListFragment() {
 
     companion object {
         fun create(playerId: PlayerId, searchTerm: String) = RadioSearchResultsFragment().apply {
-            arguments = bundleOf("playerId" to playerId, "query" to searchTerm)
+            arguments = Bundle().apply {
+                putParcelable("playerId", playerId)
+                putString("query", searchTerm)
+            }
         }
     }
 }

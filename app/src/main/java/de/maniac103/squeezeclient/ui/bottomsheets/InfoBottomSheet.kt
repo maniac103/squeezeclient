@@ -17,7 +17,7 @@
 
 package de.maniac103.squeezeclient.ui.bottomsheets
 
-import androidx.core.os.bundleOf
+import android.os.Bundle
 import de.maniac103.squeezeclient.databinding.BottomSheetContentInfoBinding
 
 class InfoBottomSheet :
@@ -31,7 +31,10 @@ class InfoBottomSheet :
 
     companion object {
         fun create(title: String, text: String) = InfoBottomSheet().apply {
-            arguments = bundleOf("title" to title, "text" to text)
+            arguments = Bundle().apply {
+                putString("title", title)
+                putString("text", text)
+            }
         }
     }
 }

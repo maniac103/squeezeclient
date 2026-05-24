@@ -17,10 +17,10 @@
 
 package de.maniac103.squeezeclient.ui
 
+import android.os.Bundle
 import android.widget.Button
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import de.maniac103.squeezeclient.databinding.FragmentConnectionFailHintBinding
 import de.maniac103.squeezeclient.extfuncs.ViewEdge
@@ -69,15 +69,15 @@ class ConnectionErrorHintFragment :
             action1Tag: String? = null,
             action2Tag: String? = null
         ) = ConnectionErrorHintFragment().apply {
-            arguments = bundleOf(
-                "icon" to iconResId,
-                "text" to textResId,
-                "subtext" to subtext,
-                "action1" to (action1LabelResId ?: 0),
-                "action1tag" to action1Tag,
-                "action2" to (action2LabelResId ?: 0),
-                "action2tag" to action2Tag
-            )
+            arguments = Bundle().apply {
+                putInt("icon", iconResId)
+                putInt("text", textResId)
+                putString("subtext", subtext)
+                putInt("action1", action1LabelResId ?: 0)
+                putString("action1tag", action1Tag)
+                putInt("action2", action2LabelResId ?: 0)
+                putString("action2tag", action2Tag)
+            }
         }
     }
 }

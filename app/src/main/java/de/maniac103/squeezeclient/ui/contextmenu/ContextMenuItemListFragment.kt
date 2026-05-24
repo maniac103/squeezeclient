@@ -17,9 +17,9 @@
 
 package de.maniac103.squeezeclient.ui.contextmenu
 
+import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -95,7 +95,10 @@ class ContextMenuItemListFragment :
             parent: SlimBrowseItemList.SlimBrowseItem,
             items: List<SlimBrowseItemList.SlimBrowseItem>
         ) = ContextMenuItemListFragment().apply {
-            arguments = bundleOf("parent" to parent, "items" to ArrayList(items))
+            arguments = Bundle().apply {
+                putParcelable("parent", parent)
+                putParcelableArrayList("items", ArrayList(items))
+            }
         }
     }
 }

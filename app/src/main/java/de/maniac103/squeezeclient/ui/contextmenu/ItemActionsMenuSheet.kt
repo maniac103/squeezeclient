@@ -21,7 +21,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -136,7 +135,9 @@ class ItemActionsMenuSheet : BottomSheetDialogFragment() {
 
     companion object {
         fun create(item: SlimBrowseItemList.SlimBrowseItem) = ItemActionsMenuSheet().apply {
-            arguments = bundleOf("item" to item)
+            arguments = Bundle().apply {
+                putParcelable("item", item)
+            }
         }
     }
 }

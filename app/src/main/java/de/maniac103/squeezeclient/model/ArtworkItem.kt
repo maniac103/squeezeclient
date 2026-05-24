@@ -18,6 +18,7 @@
 package de.maniac103.squeezeclient.model
 
 import android.content.Context
+import android.os.Parcelable
 import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.extfuncs.serverConfig
 
@@ -35,3 +36,5 @@ interface ArtworkItem {
         return maybeRelativeUrl?.let { baseUrl.resolve(it).toString() }
     }
 }
+
+interface ParcelableArtworkItem : ArtworkItem, Parcelable

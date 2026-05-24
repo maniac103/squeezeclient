@@ -17,7 +17,7 @@
 
 package de.maniac103.squeezeclient.ui.bottomsheets
 
-import androidx.core.os.bundleOf
+import android.os.Bundle
 import com.google.android.material.slider.Slider
 import de.maniac103.squeezeclient.databinding.BottomSheetContentSliderBinding
 import de.maniac103.squeezeclient.extfuncs.getParcelable
@@ -67,7 +67,10 @@ class SliderBottomSheetFragment :
 
     companion object {
         fun create(title: String, slider: JiveActions.Slider) = SliderBottomSheetFragment().apply {
-            arguments = bundleOf("title" to title, "slider" to slider)
+            arguments = Bundle().apply {
+                putString("title", title)
+                putParcelable("slider", slider)
+            }
         }
     }
 }

@@ -24,7 +24,6 @@ import android.os.Bundle
 import android.view.View
 import androidx.activity.BackEventCompat
 import androidx.browser.customtabs.CustomTabsIntent
-import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
@@ -528,7 +527,9 @@ class MainContentContainerFragment :
 
     companion object {
         fun create(playerId: PlayerId) = MainContentContainerFragment().apply {
-            arguments = bundleOf("playerId" to playerId)
+            arguments = Bundle().apply {
+                putParcelable("playerId", playerId)
+            }
         }
     }
 }

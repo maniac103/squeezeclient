@@ -18,7 +18,6 @@
 package de.maniac103.squeezeclient.ui.itemlist
 
 import android.os.Bundle
-import androidx.core.os.bundleOf
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -176,7 +175,10 @@ class JiveHomeListItemFragment :
 
     companion object {
         fun create(playerId: PlayerId, nodeId: String) = JiveHomeListItemFragment().apply {
-            arguments = bundleOf("playerId" to playerId, "nodeId" to nodeId)
+            arguments = Bundle().apply {
+                putParcelable("playerId", playerId)
+                putString("nodeId", nodeId)
+            }
         }
     }
 }

@@ -21,7 +21,6 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import androidx.core.net.toUri
-import androidx.core.os.bundleOf
 import androidx.lifecycle.lifecycleScope
 import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
@@ -235,7 +234,9 @@ abstract class BaseSlimBrowseItemListFragment :
 
     private fun showChoices(item: SlimBrowseItemList.SlimBrowseItem) {
         val choices = item.actions?.choices ?: return
-        val extraData = bundleOf("item" to item)
+        val extraData = Bundle().apply {
+            putParcelable("item", item)
+        }
         val f = ChoicesBottomSheetFragment.create(item.title, choices, extraData)
         f.show(childFragmentManager, "choices")
     }

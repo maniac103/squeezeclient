@@ -17,9 +17,9 @@
 
 package de.maniac103.squeezeclient.ui.volume
 
+import android.os.Bundle
 import android.view.KeyEvent
 import android.widget.SeekBar
-import androidx.core.os.bundleOf
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -144,7 +144,9 @@ class VolumeFragment : ViewBindingFragment<FragmentVolumeBinding>(FragmentVolume
 
     companion object {
         fun create(playerId: PlayerId) = VolumeFragment().apply {
-            arguments = bundleOf("playerId" to playerId)
+            arguments = Bundle().apply {
+                putParcelable("playerId", playerId)
+            }
         }
     }
 }

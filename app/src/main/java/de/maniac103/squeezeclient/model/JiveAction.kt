@@ -37,15 +37,17 @@ data class JiveAction(
     }
 
     fun withInputValue(input: String): JiveAction {
-        val newParams = params.entries.associate { (k, v) ->
+        val newCmd = cmd.toMutableList()
+        val newParams = mutableMapOf<String, String?>()
+        params.entries.forEach { (k, v) ->
             when {
-                v == "__INPUT__" -> input to null
-                v == "__TAGGEDINPUT__" -> k to input
-                k == "valtag" && v != null -> v to input
-                else -> k to v
+                v == "__INPUT__" -> newCmd += input
+                v == "__TAGGEDINPUT__" -> newParams[k] = input
+                k == "valtag" && v != null -> newParams[v] = input
+                else -> newParams[k] = v
             }
         }
-        return JiveAction(cmd, newParams, nextWindow, windowIsContextMenu)
+        return JiveAction(newCmd, newParams, nextWindow, windowIsContextMenu)
     }
 
     companion object {

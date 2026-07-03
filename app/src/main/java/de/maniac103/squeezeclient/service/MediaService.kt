@@ -60,6 +60,7 @@ import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.httpClient
 import de.maniac103.squeezeclient.extfuncs.lastSelectedPlayer
 import de.maniac103.squeezeclient.extfuncs.prefs
+import de.maniac103.squeezeclient.extfuncs.volumeStepSize
 import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.PlayerStatus
@@ -299,13 +300,15 @@ class MediaService :
         override fun handleIncreaseDeviceVolume(flags: Int) = future {
             val playerId = currentPlayer ?: return@future
             val currentVolume = latestStatus?.currentVolume ?: return@future
-            connectionHelper.setVolume(playerId, currentVolume + 5)
+            val stepSize = appContext.prefs.volumeStepSize
+            connectionHelper.setVolume(playerId, currentVolume + stepSize)
         }
 
         override fun handleDecreaseDeviceVolume(flags: Int) = future {
             val playerId = currentPlayer ?: return@future
             val currentVolume = latestStatus?.currentVolume ?: return@future
-            connectionHelper.setVolume(playerId, currentVolume - 5)
+            val stepSize = appContext.prefs.volumeStepSize
+            connectionHelper.setVolume(playerId, currentVolume - stepSize)
         }
 
         override fun handleSetDeviceMuted(muted: Boolean, flags: Int) = future {

@@ -120,6 +120,8 @@
     <string name="settings_local_player_volume_mode_title">Volume control mode</string>
     <string name="settings_volume_buttons_title">Volume control</string>
     <string name="settings_volume_buttons_summary">Use device volume buttons to control player volume</string>
+    <string name="settings_volume_step_size_title">Volume step size</string>
+    <string name="settings_volume_step_size_summary">One volume button press changes device volume by %d%%.</string>
     <string name="settings_fade_in_seconds_title">Fade in duration</string>
     <string name="settings_fade_in_seconds_summary_disabled">Disabled</string>
     <plurals name="settings_fade_in_seconds_summary">

@@ -49,6 +49,14 @@
             android:defaultValue="true" />
 
         <SeekBarPreference
+            android:key="volume_step_size"
+            android:title="@string/settings_volume_step_size_title"
+            android:defaultValue="5"
+            app:min="1"
+            android:max="10"
+            app:updatesContinuously="true" />
+
+        <SeekBarPreference
             android:key="fade_in_duration"
             android:title="@string/settings_fade_in_seconds_title"
             android:defaultValue="0"

@@ -70,6 +70,8 @@ val SharedPreferences.downloadFolderStructure: DownloadFolderStructure get() {
 val SharedPreferences.useVolumeButtonsForPlayerVolume: Boolean get() =
     getBoolean("use_volume_buttons", true)
 
+val SharedPreferences.volumeStepSize: Int get() = getInt("volume_step_size", 5)
+
 val SharedPreferences.localPlayerEnabled get() = getBoolean("local_player_enabled", false)
 
 fun SharedPreferences.Editor.putLocalPlayerEnabled(enabled: Boolean) {

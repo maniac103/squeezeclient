@@ -40,11 +40,13 @@ import de.maniac103.squeezeclient.extfuncs.downloadFolderStructure
 import de.maniac103.squeezeclient.extfuncs.fadeInDuration
 import de.maniac103.squeezeclient.extfuncs.localPlayerVolumeMode
 import de.maniac103.squeezeclient.extfuncs.prefs
+import de.maniac103.squeezeclient.extfuncs.volumeStepSize
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class SettingsFragment : PreferenceFragmentCompat() {
     private lateinit var prefs: SharedPreferences
+    private lateinit var volumeStepSizePreference: SeekBarPreference
     private lateinit var fadeInPreference: SeekBarPreference
     private lateinit var downloadFolderStructure: ListPreference
     private lateinit var localPlayerEnabled: SwitchPreferenceCompat
@@ -61,6 +63,13 @@ class SettingsFragment : PreferenceFragmentCompat() {
             true
         }
         updateFadeInPrefSummary(prefs.fadeInDuration.inWholeSeconds.toInt())
+
+        volumeStepSizePreference = findPreference("volume_step_size")!!
+        volumeStepSizePreference.setOnPreferenceChangeListener { _, newValue ->
+            updateVolumeStepSizePrefSummary(newValue as Int)
+            true
+        }
+        updateVolumeStepSizePrefSummary(prefs.volumeStepSize)
 
         downloadFolderStructure = findPreference("download_path_structure")!!
         downloadFolderStructure.entryValues =
@@ -120,6 +129,10 @@ class SettingsFragment : PreferenceFragmentCompat() {
         } else {
             resources.getQuantityString(R.plurals.settings_fade_in_seconds_summary, value, value)
         }
+    }
+
+    private fun updateVolumeStepSizePrefSummary(value: Int) {
+        volumeStepSizePreference.summary = getString(R.string.settings_volume_step_size_summary, value)
     }
 
     private fun updateLocalPlayerVolumeModeSummary(value: String) {

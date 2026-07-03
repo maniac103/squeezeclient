@@ -119,6 +119,8 @@
     <string name="settings_local_player_volume_mode_title">Lautstärke-Modus</string>
     <string name="settings_volume_buttons_title">Lautstärkesteuerung</string>
     <string name="settings_volume_buttons_summary">Lautstärketasten des Gerätes nutzen, um die Lautstärke des Wiedergabegerätes zu steuern</string>
+    <string name="settings_volume_step_size_title">Lautstärke-Abstufung</string>
+    <string name="settings_volume_step_size_summary">Eine Betätigung der Lautstärketasten verändert die Gerätelautstärke um %d%%.</string>
     <string name="settings_fade_in_seconds_title">Einblendezeit</string>
     <string name="settings_fade_in_seconds_summary_disabled">Deaktiviert</string>
     <plurals name="settings_fade_in_seconds_summary">

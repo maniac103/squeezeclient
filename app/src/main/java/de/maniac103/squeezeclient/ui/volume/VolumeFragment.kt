@@ -27,6 +27,8 @@ import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.databinding.FragmentVolumeBinding
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.getParcelable
+import de.maniac103.squeezeclient.extfuncs.prefs
+import de.maniac103.squeezeclient.extfuncs.volumeStepSize
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.ui.common.ViewBindingFragment
 import kotlin.time.Duration
@@ -95,8 +97,8 @@ class VolumeFragment : ViewBindingFragment<FragmentVolumeBinding>(FragmentVolume
 
     fun handleKeyDown(keyCode: Int): Boolean {
         val newVolume = when (keyCode) {
-            KeyEvent.KEYCODE_VOLUME_UP -> currentPlayerVolume?.plus(5)
-            KeyEvent.KEYCODE_VOLUME_DOWN -> currentPlayerVolume?.minus(5)
+            KeyEvent.KEYCODE_VOLUME_UP -> currentPlayerVolume?.plus(prefs.volumeStepSize)
+            KeyEvent.KEYCODE_VOLUME_DOWN -> currentPlayerVolume?.minus(prefs.volumeStepSize)
             else -> null
         } ?: return false
 

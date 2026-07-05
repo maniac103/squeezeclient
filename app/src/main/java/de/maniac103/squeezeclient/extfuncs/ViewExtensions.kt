@@ -19,10 +19,13 @@ package de.maniac103.squeezeclient.extfuncs
 
 import android.content.DialogInterface
 import android.content.res.Configuration
+import android.os.Build
 import android.view.View
+import android.view.inputmethod.InputMethodManager
 import android.widget.ImageView
 import androidx.appcompat.app.AlertDialog
 import androidx.constraintlayout.motion.widget.MotionLayout
+import androidx.core.content.getSystemService
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
@@ -41,6 +44,17 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 
 fun View.animateScale(scale: Float, duration: Duration) =
     animate().scaleX(scale).scaleY(scale).setDuration(duration.inWholeMilliseconds)
+
+fun View.showIme() {
+    val imm = context.getSystemService<InputMethodManager>()
+    val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
+        0
+    } else {
+        @Suppress("DEPRECATION")
+        InputMethodManager.SHOW_IMPLICIT
+    }
+    imm?.showSoftInput(this, flags)
+}
 
 fun ShapeableImageView.loadArtwork(
     item: ArtworkItem?,

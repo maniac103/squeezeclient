@@ -22,10 +22,8 @@ import android.os.Bundle
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import android.view.inputmethod.InputMethodManager
 import androidx.activity.BackEventCompat
 import androidx.activity.OnBackPressedCallback
-import androidx.core.content.getSystemService
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.lifecycleScope
@@ -40,6 +38,7 @@ import de.maniac103.squeezeclient.extfuncs.backProgressInterpolator
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.extfuncs.requireParentAs
+import de.maniac103.squeezeclient.extfuncs.showIme
 import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.ui.common.BasePrepopulatedListAdapter
@@ -162,8 +161,7 @@ class SearchFragment : ViewBindingFragment<FragmentSearchBinding>(FragmentSearch
             setOnFocusChangeListener { _, hasFocus ->
                 if (hasFocus) {
                     post {
-                        val imm = requireContext().getSystemService<InputMethodManager>()
-                        imm?.showSoftInput(this, InputMethodManager.SHOW_IMPLICIT)
+                        showIme()
                     }
                 }
             }

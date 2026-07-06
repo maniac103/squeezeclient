@@ -12,13 +12,7 @@
 #   public *;
 #}
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
-
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+-dontobfuscate
 
 # see https://github.com/androidx/constraintlayout/issues/428
 -keepclassmembers class * extends androidx.constraintlayout.motion.widget.Key {

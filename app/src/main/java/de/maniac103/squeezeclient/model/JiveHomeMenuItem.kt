@@ -24,7 +24,7 @@ import kotlinx.parcelize.Parcelize
 data class JiveHomeMenuItem(
     val id: String,
     val node: String,
-    val sortWeight: Int,
+    val sortWeight: Float,
     val title: String,
     val subText: String?,
     val window: JiveWindow?,

@@ -45,7 +45,7 @@ data class JiveHomeItemListResponse(
         val node: String,
         // Omitted in case of 'remove' messages
         val text: String = "",
-        val weight: Int = 0,
+        val weight: Float = 0F,
         val window: Window? = null
         // All action related attributes are handled manually. This includes:
         // actions, choiceStrings, selectedIndex, input
@@ -84,7 +84,7 @@ data class JiveHomeItemListResponse(
         fun asModelItem(context: Context) = JiveHomeMenuItem(
             id,
             node,
-            weight,
+            weight.toFloat(),
             context.getString(titleResId),
             null,
             null,

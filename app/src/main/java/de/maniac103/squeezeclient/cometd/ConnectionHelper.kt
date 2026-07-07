@@ -94,6 +94,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
@@ -173,7 +174,7 @@ class ConnectionHelper(private val appContext: SqueezeClientApplication) {
             // Wait for connection being established, which happens once the first
             // server status message arrives
             withTimeoutOrNull(CONNECTION_TIMEOUT) {
-                stateFlow.filter { it is ConnectionState.Connected }.first()
+                stateFlow.filterIsInstance<ConnectionState.Connected>().first()
             } ?: handleFailure(CometdClient.CometdException("Initial server status timeout"))
 
             // Schedule disconnection once all subscribers vanish
@@ -380,7 +381,7 @@ class ConnectionHelper(private val appContext: SqueezeClientApplication) {
         val subscriptionChannel = scope.produce {
             try {
                 val subscriptionFlow = client.subscribe(responseChannel)
-                val r = subscriptionFlow.map { it.data }.filterNotNull().first()
+                val r = subscriptionFlow.mapNotNull { it.data }.first()
                 send(r)
             } catch (e: CometdClient.CometdException) {
                 cancel("Subscribing to publish request failed", e)

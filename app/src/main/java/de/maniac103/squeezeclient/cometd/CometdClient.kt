@@ -148,7 +148,8 @@ class CometdClient(
                 body.string().parseToMessageArrayOrThrow()
             }
         }
-        return messages[0].clientId ?: throw CometdException("No client ID in $messages")
+        return messages[0].clientId
+            ?: throw CometdException("No client ID in ${messages.contentToString()}")
     }
 
     @Throws(CometdException::class)

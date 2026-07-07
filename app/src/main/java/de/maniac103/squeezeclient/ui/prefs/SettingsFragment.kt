@@ -132,7 +132,10 @@ class SettingsFragment : PreferenceFragmentCompat() {
     }
 
     private fun updateVolumeStepSizePrefSummary(value: Int) {
-        volumeStepSizePreference.summary = getString(R.string.settings_volume_step_size_summary, value)
+        volumeStepSizePreference.summary = getString(
+            R.string.settings_volume_step_size_summary,
+            value
+        )
     }
 
     private fun updateLocalPlayerVolumeModeSummary(value: String) {

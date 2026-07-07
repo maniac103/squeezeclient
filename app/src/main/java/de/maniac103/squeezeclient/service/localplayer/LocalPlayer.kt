@@ -216,8 +216,7 @@ class LocalPlayer(
         // At a maximum, the player will rebuffer its max buffer duration when it reaches its
         // min buffer duration, so the maximum buffered duration is the sum of both
         val maxBufferDurationMs =
-            DefaultLoadControl.DEFAULT_MAX_BUFFER_MS +
-            DefaultLoadControl.DEFAULT_MIN_BUFFER_MS
+            DefaultLoadControl.DEFAULT_MAX_BUFFER_MS + DefaultLoadControl.DEFAULT_MIN_BUFFER_MS
         return bufferedDurationMs to maxBufferDurationMs
     }
 
@@ -331,11 +330,7 @@ class LocalPlayer(
         ) {
         }
 
-        override fun onTransferStart(
-            source: DataSource,
-            dataSpec: DataSpec,
-            isNetwork: Boolean
-        ) {
+        override fun onTransferStart(source: DataSource, dataSpec: DataSpec, isNetwork: Boolean) {
         }
 
         override fun onBytesTransferred(
@@ -349,11 +344,7 @@ class LocalPlayer(
             }
         }
 
-        override fun onTransferEnd(
-            source: DataSource,
-            dataSpec: DataSpec,
-            isNetwork: Boolean
-        ) {
+        override fun onTransferEnd(source: DataSource, dataSpec: DataSpec, isNetwork: Boolean) {
         }
     }
 

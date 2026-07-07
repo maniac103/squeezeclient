@@ -37,4 +37,6 @@ interface ArtworkItem {
     }
 }
 
-interface ParcelableArtworkItem : ArtworkItem, Parcelable
+interface ParcelableArtworkItem :
+    ArtworkItem,
+    Parcelable

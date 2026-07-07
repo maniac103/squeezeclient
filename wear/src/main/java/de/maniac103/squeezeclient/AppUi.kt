@@ -195,7 +195,9 @@ fun PlayerRow(playerInfo: PlayerInfo, isActive: Boolean, onClick: (PlayerInfo) -
                 R.string.player_state_playing,
                 Icons.Filled.PlayArrow
             )
+
             PlayerInfo.PlayState.Paused -> Pair(R.string.player_state_paused, Icons.Filled.Pause)
+
             PlayerInfo.PlayState.Stopped -> Pair(R.string.player_state_stopped, Icons.Filled.Stop)
         }
     }

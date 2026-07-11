@@ -71,6 +71,7 @@ class LocalPlayer(
     private val dataSourceFactory: HttpDataSource.Factory
     private val player: ExoPlayer
     private var lastPlaybackState = Player.STATE_IDLE
+    private val flacMetadataCache = FlacMetadataCache()
 
     @UnstableApi
     private lateinit var transferListener: NetworkTransferListener
@@ -169,7 +170,14 @@ class LocalPlayer(
         val dataSourceFactoryForHeaders = DataSource.Factory {
             val dataSource = dataSourceFactory.createDataSource()
             headers.forEach { (k, v) -> dataSource.setRequestProperty(k, v) }
-            dataSource
+            if (mimeType == "audio/flac" && uri.path == "/stream.mp3") {
+                // LMS omits FLAC metadata when resuming after seek. Since the media3 FLAC
+                // extractor always expects a full stream including header, we cache the metadata
+                // by ourselves in a data source wrapper.
+                FlacMetadataCachingDataSource(dataSource, flacMetadataCache)
+            } else {
+                dataSource
+            }
         }
         val mediaSource = ProgressiveMediaSource.Factory(dataSourceFactoryForHeaders)
             .createMediaSource(mediaItem)
@@ -222,7 +230,8 @@ class LocalPlayer(
 
     override fun onPlaybackStateChanged(playbackState: Int) {
         super.onPlaybackStateChanged(playbackState)
-        Log.d(TAG, "Playback state change $lastPlaybackState -> $playbackState")
+        Log.d(TAG, "Playback state change $lastPlaybackState -> $playbackState",
+            player.playerError?.takeIf { playbackState == Player.STATE_IDLE })
         when (playbackState) {
             Player.STATE_BUFFERING, Player.STATE_READY ->
                 onPlaybackReady(playbackState == Player.STATE_BUFFERING)

@@ -39,11 +39,14 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.analytics.AnalyticsListener
 import androidx.media3.exoplayer.audio.AudioTrackAudioOutputProvider
 import androidx.media3.exoplayer.audio.DefaultAudioSink
+import androidx.media3.exoplayer.source.BundledExtractorsAdapter
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.LoadEventInfo
 import androidx.media3.exoplayer.source.MediaLoadData
+import androidx.media3.exoplayer.source.ProgressiveMediaExtractor
 import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.exoplayer.util.EventLogger
+import androidx.media3.extractor.DefaultExtractorsFactory
 import de.maniac103.squeezeclient.BuildConfig
 import de.maniac103.squeezeclient.extfuncs.LocalPlayerVolumeMode
 import de.maniac103.squeezeclient.extfuncs.httpClient
@@ -170,17 +173,22 @@ class LocalPlayer(
         val dataSourceFactoryForHeaders = DataSource.Factory {
             val dataSource = dataSourceFactory.createDataSource()
             headers.forEach { (k, v) -> dataSource.setRequestProperty(k, v) }
-            if (mimeType == "audio/flac" && uri.path == "/stream.mp3") {
-                // LMS omits FLAC metadata when resuming after seek. Since the media3 FLAC
-                // extractor always expects a full stream including header, we cache the metadata
-                // by ourselves in a data source wrapper.
-                FlacMetadataCachingDataSource(dataSource, flacMetadataCache)
+            dataSource
+        }
+
+        val extractorFactory: ProgressiveMediaExtractor.Factory = { _ ->
+            if (mimeType == null) {
+                BundledExtractorsAdapter(DefaultExtractorsFactory())
             } else {
-                dataSource
+                LocalPlayerMediaExtractor(mimeType, flacMetadataCache)
             }
         }
-        val mediaSource = ProgressiveMediaSource.Factory(dataSourceFactoryForHeaders)
-            .createMediaSource(mediaItem)
+
+        val mediaSourceFactory = ProgressiveMediaSource.Factory(
+            dataSourceFactoryForHeaders,
+            extractorFactory
+        )
+        val mediaSource = mediaSourceFactory.createMediaSource(mediaItem)
 
         currentReplayGain = replayGain
 

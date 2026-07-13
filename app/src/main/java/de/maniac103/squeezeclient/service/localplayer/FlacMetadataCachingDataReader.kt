@@ -20,96 +20,65 @@ package de.maniac103.squeezeclient.service.localplayer
 import androidx.media3.common.C
 import androidx.media3.common.DataReader
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.datasource.DataSource
-import androidx.media3.datasource.DataSourceUtil
-import androidx.media3.datasource.DataSpec
-import androidx.media3.datasource.TransferListener
-import androidx.media3.extractor.metadata.icy.IcyHeaders
 import java.io.IOException
 import kotlin.math.min
 
 @UnstableApi
-class FlacMetadataCachingDataSource(
-    private val upstream: DataSource,
+class FlacMetadataCachingDataReader(
+    private val upstream: DataReader,
     private val metadataCache: FlacMetadataCache
-) : DataSource {
-    private val dataReaders = mutableListOf<BytesReader>()
-
-    @Throws(IOException::class)
-    override fun open(dataSpec: DataSpec): Long {
-        // Make sure we don't receive ICY headers, because they mess both with our metadata parsing
-        // and our cached metadata replay. Since we're dealing with local files here, they are
-        // meaningless anyway.
-        val newHeaders = dataSpec.httpRequestHeaders
-            .toMutableMap()
-            .apply { remove(IcyHeaders.REQUEST_HEADER_ENABLE_METADATA_NAME) }
-
-        val newDataSpec = dataSpec.buildUpon()
-            .setHttpRequestHeaders(newHeaders)
-            .build()
-
-        val length = upstream.open(newDataSpec)
-        val probe = DataSourceUtil.readExactly(upstream, 4)
-
-        return if (
-            probe[0] == 'f'.code.toByte() &&
-            probe[1] == 'L'.code.toByte() &&
-            probe[2] == 'a'.code.toByte() &&
-            probe[3] == 'C'.code.toByte()
-        ) {
-            // Full stream: cache probe + following metadata in holder for later injection
-            val metadataBytes = readMetadata(upstream, probe)
-            dataReaders.add(BytesReader(metadataBytes))
-            metadataCache.metadataBytes = metadataBytes
-            length
-        } else {
-            // After seek: cache only probe locally, inject probe + cached headers
-            val cachedBytes = metadataCache.metadataBytes
-                ?: throw IOException("Trying to seek without metadata")
-            dataReaders.add(BytesReader(cachedBytes))
-            dataReaders.add(BytesReader(probe))
-            if (length != C.LENGTH_UNSET.toLong()) {
-                length + cachedBytes.size
-            } else {
-                length
-            }
-        }
-    }
-
-    override fun addTransferListener(transferListener: TransferListener) {
-        upstream.addTransferListener(transferListener)
-    }
-
-    override fun getUri() = upstream.uri
-
-    override fun close() {
-        upstream.close()
-        dataReaders.clear()
-    }
-
-    override fun getResponseHeaders() = upstream.responseHeaders
+) : DataReader {
+    private var firstRead = true
+    private val byteReaders = mutableListOf<BytesReader>()
 
     override fun read(
         buffer: ByteArray,
         offset: Int,
         length: Int
     ): Int {
-        val r = dataReaders
+        if (firstRead) {
+            initializeMetadata()
+            firstRead = false
+        }
+
+        val r = byteReaders
             .firstOrNull { !it.isExhausted }
             ?.read(buffer, offset, length)
 
         return r ?: upstream.read(buffer, offset, length)
     }
 
-    private fun readMetadata(source: DataSource, magic: ByteArray): ByteArray {
+    private fun initializeMetadata() {
+        val probe = readExactly(4)
+
+        if (
+            probe[0] == 'f'.code.toByte() &&
+            probe[1] == 'L'.code.toByte() &&
+            probe[2] == 'a'.code.toByte() &&
+            probe[3] == 'C'.code.toByte()
+        ) {
+            // Full stream: cache probe + following metadata in holder for later injection
+            val metadataBytes = readMetadata(probe)
+            byteReaders.add(BytesReader(metadataBytes))
+            metadataCache.metadataBytes = metadataBytes
+        } else {
+            // After seek: cache only probe locally, inject probe + cached headers
+            val cachedBytes = metadataCache.metadataBytes
+                ?: throw IOException("Trying to seek without metadata")
+            byteReaders.add(BytesReader(cachedBytes))
+            byteReaders.add(BytesReader(probe))
+        }
+    }
+
+    private fun readMetadata(magic: ByteArray): ByteArray {
         val metadataBlocks = mutableListOf<ByteArray>()
         do {
-            val blockHeader = DataSourceUtil.readExactly(source, 4)
+            val blockHeader = readExactly(4)
             val isLast = (blockHeader[0].toInt() and 0x80) != 0
             val blockLength = (blockHeader[1].toUByte().toInt() shl 16) or
                     (blockHeader[2].toUByte().toInt() shl 8) or
                     (blockHeader[3].toUByte().toInt())
-            val blockData = DataSourceUtil.readExactly(source, blockLength)
+            val blockData = readExactly(blockLength)
             metadataBlocks += (blockHeader + blockData)
         } while (!isLast)
 
@@ -124,6 +93,19 @@ class FlacMetadataCachingDataSource(
         }
 
         return result
+    }
+
+    private fun readExactly(length: Int): ByteArray {
+        val data = ByteArray(length)
+        var position = 0
+        while (position < length) {
+            val bytesRead = upstream.read(data, position, data.size - position)
+            check(bytesRead != C.RESULT_END_OF_INPUT) {
+                "Not enough data could be read: $position < $length"
+            }
+            position += bytesRead
+        }
+        return data
     }
 
     companion object {

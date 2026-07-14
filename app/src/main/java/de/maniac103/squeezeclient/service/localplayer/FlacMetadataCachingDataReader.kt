@@ -32,11 +32,7 @@ class FlacMetadataCachingDataReader(
         fillMetadataCache() // will be initialized on first read
     }
 
-    override fun read(
-        buffer: ByteArray,
-        offset: Int,
-        length: Int
-    ): Int {
+    override fun read(buffer: ByteArray, offset: Int, length: Int): Int {
         val r = byteReaders
             .firstOrNull { !it.isExhausted }
             ?.read(buffer, offset, length)
@@ -71,8 +67,8 @@ class FlacMetadataCachingDataReader(
             val blockHeader = readExactly(4)
             val isLast = (blockHeader[0].toInt() and 0x80) != 0
             val blockLength = (blockHeader[1].toUByte().toInt() shl 16) or
-                    (blockHeader[2].toUByte().toInt() shl 8) or
-                    (blockHeader[3].toUByte().toInt())
+                (blockHeader[2].toUByte().toInt() shl 8) or
+                (blockHeader[3].toUByte().toInt())
             val blockData = readExactly(blockLength)
             metadataBlocks += (blockHeader + blockData)
         } while (!isLast)
@@ -104,7 +100,7 @@ class FlacMetadataCachingDataReader(
     }
 
     companion object {
-        private class BytesReader(private val data: ByteArray): DataReader {
+        private class BytesReader(private val data: ByteArray) : DataReader {
             private var position = 0
             val isExhausted get() = position == data.size
 

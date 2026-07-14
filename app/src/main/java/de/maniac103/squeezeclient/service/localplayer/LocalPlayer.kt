@@ -243,10 +243,7 @@ class LocalPlayer(
         return bufferedDurationMs to maxBufferDurationMs
     }
 
-    override fun onMediaItemTransition(
-        mediaItem: MediaItem?,
-        reason: Int
-    ) {
+    override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
         Log.d(TAG, "onMediaItemTransition(${mediaItem?.mediaId}, $reason)")
         super.onMediaItemTransition(mediaItem, reason)
         if (
@@ -262,8 +259,11 @@ class LocalPlayer(
 
     override fun onPlaybackStateChanged(playbackState: Int) {
         super.onPlaybackStateChanged(playbackState)
-        Log.d(TAG, "Playback state change $lastPlaybackState -> $playbackState",
-            player.playerError?.takeIf { playbackState == Player.STATE_IDLE })
+        Log.d(
+            TAG,
+            "Playback state change $lastPlaybackState -> $playbackState",
+            player.playerError?.takeIf { playbackState == Player.STATE_IDLE }
+        )
         when (playbackState) {
             Player.STATE_BUFFERING, Player.STATE_READY ->
                 onPlaybackReady(playbackState == Player.STATE_BUFFERING)

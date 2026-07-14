@@ -15,7 +15,7 @@
  *
  */
 
-package de.maniac103.squeezeclient.service.localplayer;
+package de.maniac103.squeezeclient.service.localplayer
 
 import android.net.Uri
 import androidx.media3.common.C
@@ -52,9 +52,13 @@ class LocalPlayerMediaExtractor(
     ) {
         val extractor = when (mimeType) {
             "audio/mpeg" -> Mp3Extractor()
+
             "audio/flac" -> FlacExtractor()
+
             "audio/ogg" -> OggExtractor()
+
             "audio/mp4a-latm" -> AdtsExtractor()
+
             else -> throw UnrecognizedInputFormatException(
                 "Unknown audio mime type $mimeType",
                 uri,
@@ -82,8 +86,7 @@ class LocalPlayerMediaExtractor(
         (underlying as? Mp3Extractor)?.disableSeeking()
     }
 
-    override fun getCurrentInputPosition() =
-        extractorInput?.position ?: C.INDEX_UNSET.toLong()
+    override fun getCurrentInputPosition() = extractorInput?.position ?: C.INDEX_UNSET.toLong()
 
     override fun seek(position: Long, seekTimeUs: Long) {
         extractor?.seek(position, seekTimeUs)

@@ -348,6 +348,7 @@ class SlimprotoSocket(prefs: SharedPreferences) {
     }
 
     sealed class StatusType(val type: String) {
+        data object AudioFlushed : StatusType("STMf")
         data object AudioUnderrun : StatusType("STMu")
         data object BufferReady : StatusType("STMl")
         data object Connecting : StatusType("STMc")
@@ -356,7 +357,6 @@ class SlimprotoSocket(prefs: SharedPreferences) {
         data object StreamingFailed : StatusType("STMn")
         data object StreamingPaused : StatusType("STMp")
         data object StreamingResumed : StatusType("STMr")
-        data object StreamingStopped : StatusType("STMf")
         data class Timer(val timestamp: Int) : StatusType("STMt")
         data object TrackStarted : StatusType("STMs")
     }

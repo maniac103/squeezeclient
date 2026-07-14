@@ -62,10 +62,12 @@ import okhttp3.Response
 class LocalPlayer(
     context: Context,
     private val onPlaybackReady: (buffering: Boolean) -> Unit = {},
+    private val onPlaybackAdvancedToNextTrack: () -> Unit = {},
     private val onPauseStateChanged: (paused: Boolean) -> Unit = {},
     private val onPlaybackEnded: (streamEnded: Boolean) -> Unit = {},
     private val onPlaybackError: () -> Unit = {},
     private val onDecoderLoadFinished: () -> Unit = {},
+    onDecodingFinished: () -> Unit = {},
     onAudioStreamFlushed: () -> Unit = {},
     private val onHeadersReceived: (response: Response) -> Unit = {},
     private val onMetadataReceived: (title: CharSequence, artworkUri: Uri?) -> Unit = { _, _ -> }
@@ -109,7 +111,10 @@ class LocalPlayer(
     private var lastSavedDeviceVolume: Int? = null
 
     @UnstableApi
-    private val audioProcessor = LocalPlayerAudioProcessor(onAudioStreamFlushed)
+    private val audioProcessor = LocalPlayerAudioProcessor(
+        resetCallback = onAudioStreamFlushed,
+        endOfStreamCallback = onDecodingFinished
+    )
     private val audioOutputProvider = LocalPlayerAudioOutputProvider(
         AudioTrackAudioOutputProvider.Builder(context).build()
     )
@@ -159,7 +164,7 @@ class LocalPlayer(
     }
 
     @OptIn(UnstableApi::class)
-    fun start(
+    fun play(
         uri: Uri,
         mimeType: String?,
         headers: Map<String, String>,
@@ -192,11 +197,13 @@ class LocalPlayer(
 
         currentReplayGain = replayGain
 
-        player.stop()
-        player.setMediaSource(mediaSource)
-        player.volume = playerInternalVolume * replayGain
-        player.prepare()
-        player.playWhenReady = autoStart
+        if (player.playbackState == Player.STATE_IDLE) {
+            player.setMediaSource(mediaSource)
+            player.prepare()
+            player.playWhenReady = autoStart
+        } else {
+            player.addMediaSource(mediaSource)
+        }
     }
 
     fun stop() {
@@ -234,6 +241,23 @@ class LocalPlayer(
         val maxBufferDurationMs =
             DefaultLoadControl.DEFAULT_MAX_BUFFER_MS + DefaultLoadControl.DEFAULT_MIN_BUFFER_MS
         return bufferedDurationMs to maxBufferDurationMs
+    }
+
+    override fun onMediaItemTransition(
+        mediaItem: MediaItem?,
+        reason: Int
+    ) {
+        Log.d(TAG, "onMediaItemTransition(${mediaItem?.mediaId}, $reason)")
+        super.onMediaItemTransition(mediaItem, reason)
+        if (
+            reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO ||
+            reason == Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED
+        ) {
+            player.volume = playerInternalVolume * currentReplayGain
+        }
+        if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO && readyForPlayback && !paused) {
+            onPlaybackAdvancedToNextTrack()
+        }
     }
 
     override fun onPlaybackStateChanged(playbackState: Int) {

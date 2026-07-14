@@ -95,11 +95,13 @@ class LocalPlaybackService :
         player = LocalPlayer(
             this,
             onPlaybackReady = { buffering -> onPlaybackReady(buffering) },
+            onPlaybackAdvancedToNextTrack = { onPlaybackAdvancedToNextTrack() },
             onPlaybackEnded = { streamEnded -> onPlaybackEnded(streamEnded) },
             onPlaybackError = { onPlaybackError() },
             onPauseStateChanged = { paused -> onPauseStateChanged(paused) },
             onAudioStreamFlushed = { onAudioStreamFlushed() },
             onDecoderLoadFinished = { onDecoderLoadFinished() },
+            onDecodingFinished = { onDecodingFinished() },
             onHeadersReceived = { resp -> onHeadersReceived(resp) },
             onMetadataReceived = { title, artworkUri -> onMetadataReceived(title, artworkUri) }
         )
@@ -173,6 +175,11 @@ class LocalPlaybackService :
         }
     }
 
+    private fun onPlaybackAdvancedToNextTrack() = lifecycleScope.launch {
+        sendStatus(SlimprotoSocket.StatusType.TrackStarted)
+        sentTrackStartStatus = true
+    }
+
     private fun onPauseStateChanged(paused: Boolean) = lifecycleScope.launch {
         slimprotoStateFlow.emit(
             SlimprotoState.PlayingOrPaused(player.playingTitle, paused)
@@ -197,11 +204,15 @@ class LocalPlaybackService :
     }
 
     private fun onAudioStreamFlushed() = lifecycleScope.launch {
-        sendStatus(SlimprotoSocket.StatusType.StreamingStopped)
+        sendStatus(SlimprotoSocket.StatusType.AudioFlushed)
     }
 
     private fun onDecoderLoadFinished() = lifecycleScope.launch {
         slimproto.sendDisconnect()
+    }
+
+    private fun onDecodingFinished() = lifecycleScope.launch {
+        sendStatus(SlimprotoSocket.StatusType.DecoderUnderrun)
     }
 
     private suspend fun handlePlaybackStart() {
@@ -346,7 +357,7 @@ class LocalPlaybackService :
             is SlimprotoSocket.CommandPacket.StreamStart -> {
                 sendStatus(SlimprotoSocket.StatusType.Connecting)
                 sentBufferReady = command.autoStart
-                player.start(
+                player.play(
                     command.uri,
                     command.mimeType,
                     command.headers,

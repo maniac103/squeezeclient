@@ -28,19 +28,15 @@ class FlacMetadataCachingDataReader(
     private val upstream: DataReader,
     private val metadataCache: FlacMetadataCache
 ) : DataReader {
-    private var firstRead = true
-    private val byteReaders = mutableListOf<BytesReader>()
+    private val byteReaders by lazy {
+        fillMetadataCache() // will be initialized on first read
+    }
 
     override fun read(
         buffer: ByteArray,
         offset: Int,
         length: Int
     ): Int {
-        if (firstRead) {
-            initializeMetadata()
-            firstRead = false
-        }
-
         val r = byteReaders
             .firstOrNull { !it.isExhausted }
             ?.read(buffer, offset, length)
@@ -48,10 +44,10 @@ class FlacMetadataCachingDataReader(
         return r ?: upstream.read(buffer, offset, length)
     }
 
-    private fun initializeMetadata() {
+    private fun fillMetadataCache(): List<BytesReader> {
         val probe = readExactly(4)
 
-        if (
+        return if (
             probe[0] == 'f'.code.toByte() &&
             probe[1] == 'L'.code.toByte() &&
             probe[2] == 'a'.code.toByte() &&
@@ -59,14 +55,13 @@ class FlacMetadataCachingDataReader(
         ) {
             // Full stream: cache probe + following metadata in holder for later injection
             val metadataBytes = readMetadata(probe)
-            byteReaders.add(BytesReader(metadataBytes))
             metadataCache.metadataBytes = metadataBytes
+            listOf(BytesReader(metadataBytes))
         } else {
             // After seek: cache only probe locally, inject probe + cached headers
             val cachedBytes = metadataCache.metadataBytes
                 ?: throw IOException("Trying to seek without metadata")
-            byteReaders.add(BytesReader(cachedBytes))
-            byteReaders.add(BytesReader(probe))
+            listOf(BytesReader(cachedBytes), BytesReader(probe))
         }
     }
 

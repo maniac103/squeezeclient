@@ -318,7 +318,11 @@ class LocalPlayer(
 
     private fun updatePlayerVolume(isSetVolume: Boolean) {
         val volume = lastSetVolume ?: return
-        val isPlaying = readyForPlayback && !paused
+        // Playback is considered ongoing while playing or buffering to continue playing
+        // (e.g. right after a seek). In that case keep the app-set device volume applied
+        // instead of restoring the saved system volume; the saved volume is only restored
+        // once playback actually stops or pauses.
+        val playbackOngoing = readyForPlaybackOrBuffering && !paused
         val mode = prefs.localPlayerVolumeMode
         when {
             isSetVolume && mode == LocalPlayerVolumeMode.PlayerOnly -> {
@@ -330,14 +334,16 @@ class LocalPlayer(
                 applyVolumeAsDeviceVolume(volume)
             }
 
-            isPlaying && mode == LocalPlayerVolumeMode.DeviceWhilePlaying -> {
-                if (lastSavedDeviceVolume == null) {
-                    lastSavedDeviceVolume = player.deviceVolume
+            playbackOngoing && mode == LocalPlayerVolumeMode.DeviceWhilePlaying -> {
+                if (player.deviceInfo.maxVolume > 0) {
+                    if (lastSavedDeviceVolume == null) {
+                        lastSavedDeviceVolume = player.deviceVolume
+                    }
+                    applyVolumeAsDeviceVolume(volume)
                 }
-                applyVolumeAsDeviceVolume(volume)
             }
 
-            !isPlaying && lastSavedDeviceVolume != null -> {
+            !playbackOngoing && lastSavedDeviceVolume != null -> {
                 player.setDeviceVolume(lastSavedDeviceVolume!!, 0)
                 lastSavedDeviceVolume = null
             }
@@ -345,7 +351,7 @@ class LocalPlayer(
     }
 
     private fun applyVolumeAsDeviceVolume(volume: Float) {
-        val maxVolume = player.deviceInfo.maxVolume
+        val maxVolume = player.deviceInfo.maxVolume.takeIf { it > 0 } ?: return
         val volumeAsInt = (volume * maxVolume).roundToInt()
         player.setDeviceVolume(volumeAsInt, 0)
     }

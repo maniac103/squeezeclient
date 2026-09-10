@@ -30,6 +30,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import de.maniac103.squeezeclient.R
+import de.maniac103.squeezeclient.cometd.ConnectionState
 import de.maniac103.squeezeclient.cometd.request.LibrarySearchRequest
 import de.maniac103.squeezeclient.databinding.FragmentSearchBinding
 import de.maniac103.squeezeclient.databinding.ListItemSearchCategoryBinding
@@ -60,6 +61,7 @@ class SearchFragment : ViewBindingFragment<FragmentSearchBinding>(FragmentSearch
     private val listener get() = requireParentAs<Listener>()
 
     private var submitJob: Job? = null
+    private var searchJob: Job? = null
 
     private val artistCategory = Category(
         R.string.search_category_artists,
@@ -175,31 +177,72 @@ class SearchFragment : ViewBindingFragment<FragmentSearchBinding>(FragmentSearch
         binding.root.setOnClickListener {
             listener.onCloseSearch()
         }
+
+    }
+
+    override fun onHiddenChanged(hidden: Boolean) {
+        super.onHiddenChanged(hidden)
+        // MainActivity hides this screen while there is no connection; cancel pending
+        // searches in that case, so that no requests are published without a connection.
+        if (hidden) {
+            cancelSearchRequests()
+        }
     }
 
     private fun submitSearch(query: String) {
+        // MainActivity hides this screen while there is no connection, but that doesn't stop
+        // work which is already scheduled in here (e.g. by the typing debounce above), so
+        // don't publish anything without a connection.
+        if (connectionHelper.state.value !is ConnectionState.Connected) {
+            cancelSearchRequests()
+            return
+        }
         listOf(artistCategory, albumCategory, trackCategory, radioCategory)
             .forEach { it.busy = true }
         binding.divider.isVisible = true
         binding.categories.isVisible = true
         updateAdapter()
-        lifecycleScope.launch {
-            val results = connectionHelper.getLocalLibrarySearchResultCounts(query)
-            artistCategory.count = results.artists
-            albumCategory.count = results.albums
-            genreCategory.count = results.genres
-            trackCategory.count = results.tracks
-            updateAdapter()
+        searchJob?.cancel()
+        searchJob = lifecycleScope.launch {
+            launch { submitLocalLibrarySearch(query) }
+            launch { submitRadioSearch(query) }
         }
-        lifecycleScope.launch {
-            val results = connectionHelper.getRadioSearchResults(
-                playerId,
-                query,
-                PagingParams.CountOnly
-            )
-            radioCategory.count = results.totalCount
-            updateAdapter()
-        }
+    }
+
+    private suspend fun submitLocalLibrarySearch(query: String) {
+        if (connectionHelper.state.value !is ConnectionState.Connected) return
+        val results = connectionHelper.getLocalLibrarySearchResultCounts(query)
+        artistCategory.count = results.artists
+        albumCategory.count = results.albums
+        genreCategory.count = results.genres
+        trackCategory.count = results.tracks
+        updateAdapter()
+    }
+
+    private suspend fun submitRadioSearch(query: String) {
+        if (connectionHelper.state.value !is ConnectionState.Connected) return
+        val results = connectionHelper.getRadioSearchResults(
+            playerId,
+            query,
+            PagingParams.CountOnly
+        )
+        radioCategory.count = results.totalCount
+        updateAdapter()
+    }
+
+    /**
+     * Cancels pending and in-flight searches and resets the busy state of the categories.
+     * Hiding the fragment (which MainActivity does while there is no connection) does not
+     * stop its jobs, so they need to be stopped explicitly.
+     */
+    private fun cancelSearchRequests() {
+        submitJob?.cancel()
+        submitJob = null
+        searchJob?.cancel()
+        searchJob = null
+        listOf(artistCategory, albumCategory, trackCategory, genreCategory, radioCategory)
+            .forEach { it.busy = false }
+        updateAdapter()
     }
 
     @SuppressLint("NotifyDataSetChanged")

@@ -21,5 +21,7 @@ interface ListResponse<T> {
     val items: List<T>
     val offset: Int
     val totalCount: Int
-    val serverHasMoreData get() = items.size + offset < totalCount
+    // A command acknowledgement can report a count without returning any list items.
+    // Treat an empty page as terminal so paging cannot keep replaying that command.
+    val serverHasMoreData get() = items.isNotEmpty() && items.size + offset < totalCount
 }

@@ -17,6 +17,7 @@
 
 package de.maniac103.squeezeclient.cometd
 
+import android.util.Log
 import de.maniac103.squeezeclient.SqueezeClientApplication
 import de.maniac103.squeezeclient.cometd.request.ChangePlaybackStateRequest
 import de.maniac103.squeezeclient.cometd.request.ClearPlaylistRequest
@@ -376,6 +377,41 @@ class ConnectionHelper(private val appContext: SqueezeClientApplication) {
         val client = client
         val clientId = client?.clientId ?: throw IllegalStateException()
         val scope = connectionScope ?: throw IllegalStateException()
+        return try {
+            doOneShotRequest(client, clientId, scope, request)
+        } catch (e: CometdClient.InvalidClientIdException) {
+            // The server lost our session (e.g. the streaming connection was dropped while
+            // the app was inactive) and asked for a re-handshake. Reconnect and retry the
+            // request once instead of failing with a connection error.
+            Log.w(TAG, "Server reported invalid client ID, reconnecting")
+            disconnectInternal(ConnectionState.Connecting)
+            connect()
+            val reconnected = withTimeoutOrNull(CONNECTION_TIMEOUT) {
+                stateFlow.filterIsInstance<ConnectionState.Connected>().first()
+            } != null
+            val newClient = client
+            val newClientId = newClient?.clientId
+            val newScope = connectionScope
+            if (!reconnected || newClient == null || newClientId == null || newScope == null) {
+                throw e
+            }
+            doOneShotRequest(newClient, newClientId, newScope, request)
+        } catch (e: CometdClient.CometdException) {
+            handleFailure(e)
+            currentCoroutineContext().cancel(
+                CancellationException("Fetching publish response failed", e)
+            )
+            awaitCancellation()
+        }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private suspend fun doOneShotRequest(
+        client: CometdClient,
+        clientId: String,
+        scope: CoroutineScope,
+        request: Request
+    ): JsonElement {
         val id = nextRequestId++
         val responseChannel = CometdClient.Channels.oneShotRequestResponse(clientId, id.toString())
         val subscriptionChannel = scope.produce {
@@ -388,18 +424,10 @@ class ConnectionHelper(private val appContext: SqueezeClientApplication) {
             }
         }
         yield() // make sure subscription coroutine is started
-        return try {
-            publishRequest(request, responseChannel = responseChannel)
-            withTimeoutOrNull(CONNECTION_TIMEOUT) {
-                subscriptionChannel.receive()
-            } ?: throw CometdClient.CometdException("Response timeout")
-        } catch (e: CometdClient.CometdException) {
-            handleFailure(e)
-            currentCoroutineContext().cancel(
-                CancellationException("Fetching publish response failed", e)
-            )
-            awaitCancellation()
-        }
+        publishRequest(request, responseChannel = responseChannel)
+        return withTimeoutOrNull(CONNECTION_TIMEOUT) {
+            subscriptionChannel.receive()
+        } ?: throw CometdClient.CometdException("Response timeout")
     }
 
     @Throws(CometdClient.CometdException::class)
@@ -599,6 +627,7 @@ class ConnectionHelper(private val appContext: SqueezeClientApplication) {
     }
 
     companion object {
+        private const val TAG = "ConnectionHelper"
         private val SUBSCRIPTION_INTERVAL = 60.seconds
         private val CONNECTION_TIMEOUT = 5.seconds
         private val IDLE_DISCONNECT_TIMEOUT = 10.seconds

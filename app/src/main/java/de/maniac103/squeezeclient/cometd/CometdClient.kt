@@ -127,7 +127,16 @@ class CometdClient(
                 body.string()
             }
             val messages = content.parseToMessageArrayOrThrow()
-            if (!messages[0].successful) {
+            val responseMessage = messages.firstOrNull()
+                ?: throw CometdException("Unexpected response for request $messageData: $content")
+            if (!responseMessage.successful) {
+                if (responseMessage.error == "invalid clientId") {
+                    // The server lost our session (e.g. the streaming connection was dropped
+                    // while the app was inactive) and wants us to re-handshake
+                    throw InvalidClientIdException(
+                        "Unexpected response for request $messageData: $content"
+                    )
+                }
                 throw CometdException("Unexpected response for request $messageData: $content")
             }
         }
@@ -291,6 +300,7 @@ class CometdClient(
         val clientId: String? = null,
         val id: Int,
         val successful: Boolean = true,
+        val error: String? = null,
         val data: JsonElement? = null
     ) {
         fun logIfNeeded(jsonLength: Int) {
@@ -328,6 +338,9 @@ class CometdClient(
     }
 
     class CometdException(message: String, cause: Throwable? = null) : Exception(message, cause)
+
+    /** Thrown when the server no longer knows the current client session and asks for a re-handshake. */
+    class InvalidClientIdException(message: String) : CometdException(message)
 
     object Channels {
         fun oneShotRequest() = "/slim/request"

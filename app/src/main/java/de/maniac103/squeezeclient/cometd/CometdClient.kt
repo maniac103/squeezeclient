@@ -337,7 +337,7 @@ class CometdClient(
         }
     }
 
-    class CometdException(message: String, cause: Throwable? = null) : Exception(message, cause)
+    open class CometdException(message: String, cause: Throwable? = null) : Exception(message, cause)
 
     /** Thrown when the server no longer knows the current client session and asks for a re-handshake. */
     class InvalidClientIdException(message: String) : CometdException(message)

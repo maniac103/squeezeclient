@@ -439,11 +439,16 @@ class NowPlayingFragment :
         timeUpdateJob?.cancel()
         if (status.currentSongDuration != null) {
             binding.progressSlider.apply {
-                valueTo = max(
+                val duration = max(
                     status.currentSongDuration.toDouble(DurationUnit.SECONDS).toFloat(),
                     0.1F
                 )
-                value = status.currentPlayPosition?.toDouble(DurationUnit.SECONDS)?.toFloat() ?: 0F
+                val position =
+                    status.currentPlayPosition?.toDouble(DurationUnit.SECONDS)?.toFloat() ?: 0F
+                valueTo = duration
+                // The server-reported position can exceed the song duration (e.g. when the
+                // track end is reached) or be negative; Slider doesn't accept such values.
+                value = position.coerceIn(0F, duration)
                 isEnabled = status.playbackState != PlayerStatus.PlayState.Stopped
             }
             binding.progressMinimized.apply {
@@ -462,7 +467,7 @@ class NowPlayingFragment :
                         // the calculated position becomes larger than the end position, which Slider
                         // does not like.
                         binding.progressSlider.value =
-                            positionSeconds.toFloat().coerceAtMost(binding.progressSlider.valueTo)
+                            positionSeconds.toFloat().coerceIn(0F, binding.progressSlider.valueTo)
                         binding.progressMinimized.progress = positionSeconds.toInt()
                     }
                 }

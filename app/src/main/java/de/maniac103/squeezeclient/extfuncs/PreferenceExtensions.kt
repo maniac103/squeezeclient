@@ -120,8 +120,11 @@ fun SharedPreferences.getOrCreateDeviceIdentifier(): UUID {
     return uuid
 }
 
-val SharedPreferences.localPlayerName: String? get() = getString("local_player_name", null)
+// The server terminates the player name with a NUL byte, which the app must not store: the
+// stored name is sent back to the server when it asks for the player name.
+val SharedPreferences.localPlayerName: String?
+    get() = getString("local_player_name", null)?.trimEnd('\u0000')
 
 fun SharedPreferences.Editor.putLocalPlayerName(name: String) {
-    putString("local_player_name", name)
+    putString("local_player_name", name.trimEnd('\u0000'))
 }

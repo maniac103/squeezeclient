@@ -23,6 +23,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.IBinder
 import android.os.Looper
+import android.os.SystemClock
 import androidx.annotation.OptIn
 import androidx.core.content.IntentCompat
 import androidx.core.net.toUri
@@ -88,6 +89,8 @@ class MediaService :
     private lateinit var player: SqueezeboxPlayer
     private lateinit var mediaSession: MediaSession
     private var lastDisconnectionTime = Clock.System.now()
+    // Time at which the followed player was noticed to be missing from the server's player list.
+    private var playerMissingSince = 0L
 
     @OptIn(UnstableApi::class)
     override fun onCreate() {
@@ -160,12 +163,14 @@ class MediaService :
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         dispatcher.onServicePreSuperOnStart()
-        if (intent?.action == ACTION_START_WITH_PLAYER) {
-            val playerId = requireNotNull(
-                IntentCompat.getParcelableExtra(intent, "playerId", PlayerId::class.java)
-            )
-            player.currentPlayer = playerId
-            return START_STICKY
+        when (intent?.action) {
+            ACTION_START_WITH_PLAYER -> {
+                val playerId = requireNotNull(
+                    IntentCompat.getParcelableExtra(intent, "playerId", PlayerId::class.java)
+                )
+                player.currentPlayer = playerId
+                return START_STICKY
+            }
         }
         return super.onStartCommand(intent, flags, startId)
     }
@@ -227,9 +232,21 @@ class MediaService :
         // Update connection status first, because currentPlayer checked below
         // is updated on status changes
         player.isConnectedToServer = true
-        player.currentPlayer?.let { playerId ->
-            if (status.players.none { it.id == playerId }) {
-                // current player is gone
+        val currentPlayerId = player.currentPlayer
+        val currentPlayerInfo = status.players.firstOrNull { it.id == currentPlayerId }
+        if (currentPlayerInfo != null) {
+            playerMissingSince = 0
+            return
+        }
+        if (currentPlayerId != null) {
+            // The player disappeared from the server's player list. That happens briefly when a
+            // player (e.g. this device's local player on a mobile connection) reconnects, so
+            // keep the media session - and with it the metadata announced to the system - for a
+            // while before giving it up.
+            val now = SystemClock.elapsedRealtime()
+            if (playerMissingSince == 0L) {
+                playerMissingSince = now
+            } else if (now - playerMissingSince > PLAYER_MISSING_GRACE_TIME) {
                 stopSelf()
             }
         }
@@ -253,6 +270,12 @@ class MediaService :
 
     companion object {
         private val ACTION_START_WITH_PLAYER = MediaService::class.java.name + ".startWithPlayer"
+
+        private const val WAITING_MEDIA_ID = "waitingForPlayer"
+
+        // Time to keep the media session alive while the followed player is missing from the
+        // server's player list.
+        private const val PLAYER_MISSING_GRACE_TIME = 30_000L
 
         private const val SESSION_ACTION_POWER = "power"
         private const val SESSION_ACTION_DISCONNECT = "disconnect"
@@ -361,7 +384,13 @@ class MediaService :
         override fun getState(): State {
             val status = latestStatus
             val currentSong = status?.playlist?.nowPlaying
-                ?: return State.Builder().setPlaybackState(STATE_IDLE).build()
+            if (currentSong == null) {
+                return when (status) {
+                    null -> waitingForPlayerState()
+
+                    else -> State.Builder().setPlaybackState(STATE_IDLE).build()
+                }
+            }
 
             val currentSongDurationUs =
                 status.currentSongDuration?.toLong(DurationUnit.MICROSECONDS)
@@ -444,6 +473,25 @@ class MediaService :
             status.muted?.let { builder.setIsDeviceMuted(it) }
 
             return builder.build()
+        }
+
+        /**
+         * State to report while nothing is known about the controlled player yet (e.g. right
+         * after the service has been started). A buffering state with a placeholder item is
+         * reported instead of an empty state, because the media session only becomes visible
+         * to the system (and the service only gets into the foreground) if it has a timeline
+         * with a playing/buffering item.
+         */
+        private fun waitingForPlayerState(): State {
+            val placeholder = MediaItemData.Builder(0)
+                .setMediaItem(MediaItem.Builder().setMediaId(WAITING_MEDIA_ID).build())
+                .build()
+            return State.Builder()
+                .setPlaybackState(STATE_BUFFERING)
+                .setPlayWhenReady(true, PLAY_WHEN_READY_CHANGE_REASON_REMOTE)
+                .setPlaylist(listOf(placeholder))
+                .setCurrentMediaItemIndex(0)
+                .build()
         }
 
         @kotlin.OptIn(ExperimentalCoroutinesApi::class)

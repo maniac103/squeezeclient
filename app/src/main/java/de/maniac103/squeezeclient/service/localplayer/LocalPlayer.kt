@@ -20,6 +20,7 @@ package de.maniac103.squeezeclient.service.localplayer
 import android.content.Context
 import android.media.AudioTimestamp
 import android.net.Uri
+import android.os.SystemClock
 import android.util.Log
 import androidx.annotation.OptIn
 import androidx.media3.common.MediaItem
@@ -120,6 +121,7 @@ class LocalPlayer(
     private var currentReplayGain = 1F
     private var lastSavedDeviceVolume: Int? = null
     private var lastAppliedDeviceVolume: Int? = null
+    private var lastDeviceVolumeChange = 0L
 
     @UnstableApi
     private val audioProcessor = LocalPlayerAudioProcessor(
@@ -334,6 +336,14 @@ class LocalPlayer(
             // Change was caused by ourselves, don't adopt it.
             return
         }
+        if (SystemClock.elapsedRealtime() - lastDeviceVolumeChange < DEVICE_VOLUME_SETTLE_TIME) {
+            // The change was reported right after we applied a volume ourselves. Either it is
+            // our own change being reported back, or it is one step of a volume ramp the server
+            // performs (e.g. when pausing or resuming playback). Neither is a user initiated
+            // change, so don't adopt it - adopting would make the next playback state change
+            // apply a volume the user never chose.
+            return
+        }
         // The volume was changed externally, e.g. by a car head unit using Bluetooth absolute
         // volume. Adopt it as the desired volume, so it is not overwritten on the next
         // playback state change (e.g. the next track).
@@ -380,8 +390,7 @@ class LocalPlayer(
 
             !playbackOngoing && lastSavedDeviceVolume != null -> {
                 val savedVolume = lastSavedDeviceVolume ?: return
-                lastAppliedDeviceVolume = savedVolume
-                player.setDeviceVolume(savedVolume, 0)
+                setDeviceVolume(savedVolume)
                 lastSavedDeviceVolume = null
             }
         }
@@ -390,8 +399,13 @@ class LocalPlayer(
     private fun applyVolumeAsDeviceVolume(volume: Float) {
         val maxVolume = player.deviceInfo.maxVolume.takeIf { it > 0 } ?: return
         val volumeAsInt = (volume * maxVolume).roundToInt()
-        lastAppliedDeviceVolume = volumeAsInt
-        player.setDeviceVolume(volumeAsInt, 0)
+        setDeviceVolume(volumeAsInt)
+    }
+
+    private fun setDeviceVolume(volume: Int) {
+        lastAppliedDeviceVolume = volume
+        lastDeviceVolumeChange = SystemClock.elapsedRealtime()
+        player.setDeviceVolume(volume, 0)
     }
 
     @OptIn(UnstableApi::class)
@@ -456,5 +470,10 @@ class LocalPlayer(
 
     companion object {
         private const val TAG = "LocalPlayer"
+
+        // Time after setting the device volume ourselves during which device volume changes are
+        // still attributed to that change (or to a server-side volume ramp) and not adopted as
+        // user-set volume.
+        private const val DEVICE_VOLUME_SETTLE_TIME = 1500L
     }
 }

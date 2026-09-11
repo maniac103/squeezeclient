@@ -23,6 +23,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.IBinder
 import android.os.Looper
+import android.os.SystemClock
 import androidx.annotation.OptIn
 import androidx.core.content.IntentCompat
 import androidx.core.net.toUri
@@ -71,6 +72,7 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -299,13 +301,25 @@ class MediaService :
             set(value) {
                 if (field != value) {
                     field = value
+                    if (!value) {
+                        disconnectedTime = SystemClock.elapsedRealtime()
+                    }
                     updatePlayer(currentPlayer)
-                    invalidateState()
+                    invalidateStateCoalesced()
                 }
             }
         private var latestStatus: PlayerStatus? = null
         private var latestPlaylist: Playlist? = null
+        private var latestPlaylistChange: Instant? = null
+        private var pendingPlaylistChange: Instant? = null
+        private var lastKnownSong: Playlist.PlaylistItem? = null
+        private var lastState: State? = null
+        // The song the last reported state refers to, to tell whether a cached state still matches
+        // the song a newer player status reports.
+        private var lastStateSong: Playlist.PlaylistItem? = null
         private var statusSubscription: Job? = null
+        private var stateInvalidationJob: Job? = null
+        private var disconnectedTime = 0L
 
         override fun handleSetDeviceVolume(deviceVolume: Int, flags: Int) = future {
             val playerId = currentPlayer ?: return@future
@@ -376,15 +390,38 @@ class MediaService :
         override fun getState(): State {
             val status = latestStatus
                 ?: return waitingForPlayerState()
-            val currentSong = status.playlist.nowPlaying
-                ?: return State.Builder().setPlaybackState(STATE_IDLE).build()
+            status.playlist.nowPlaying?.let { lastKnownSong = it }
+            // The server reports a sequence of intermediate states when changing tracks (track
+            // stopped, stream restarted, ...). Keep reporting the song we last heard about
+            // while the server's state is transient - reporting a state without a current item
+            // would make connected devices (e.g. car head units) blank or revert their display.
+            val currentSong = status.playlist.nowPlaying ?: lastKnownSong
+            if (currentSong == null) {
+                return State.Builder().setPlaybackState(STATE_IDLE).build()
+            }
 
             val currentSongDurationUs =
                 status.currentSongDuration?.toLong(DurationUnit.MICROSECONDS)
-            val (playlist, currentIndex) = latestPlaylist?.let { list ->
-                val currentPosition = status.playlist.currentPosition - 1
-                val mediaList: List<MediaItemData> = list.items.mapIndexed { index, item ->
-                    val builder = if (index + list.offset == currentPosition) {
+
+            val window = latestPlaylist
+            val windowCurrent = latestPlaylistChange == status.playlist.lastChange
+            if (!windowCurrent && pendingPlaylistChange != null && currentSong == lastStateSong) {
+                // The playlist changed and its new contents are still being fetched. Keep the
+                // last known state while the status still reports the same song; if the status is
+                // newer than our playlist, its song wins - caching would show the previous track
+                // again to connected devices (e.g. car head units) after the new one appeared.
+                lastState?.let { return it }
+            }
+
+            // Only use the playlist contents if they belong to the revision the status refers
+            // to; mixing both would make us report the wrong item.
+            val currentPosition = status.playlist.currentPosition - 1
+            val windowPosition = if (window != null) currentPosition - window.offset else -1
+            val (playlist, currentIndex) = if (windowCurrent && window != null &&
+                windowPosition in window.items.indices
+            ) {
+                val mediaList: List<MediaItemData> = window.items.mapIndexed { index, item ->
+                    val builder = if (index == windowPosition) {
                         // Prefer current song from status over playlist item, because the former
                         // may be more up to date (e.g. in case of radio streams)
                         currentSong.toMediaItemDataBuilder(index).apply {
@@ -395,9 +432,9 @@ class MediaService :
                     }
                     builder.build()
                 }
-                Pair(mediaList, currentPosition - list.offset)
-            } ?: currentSong.let { song ->
-                val builder = song.toMediaItemDataBuilder(0)
+                Pair(mediaList, windowPosition)
+            } else {
+                val builder = currentSong.toMediaItemDataBuilder(0)
                 currentSongDurationUs?.let { builder.setDurationUs(it) }
                 Pair(listOf(builder.build()), 0)
             }
@@ -427,7 +464,13 @@ class MediaService :
 
             val playWhenReady = status.playbackState == PlayerStatus.PlayState.Playing
             val playbackState = when {
-                !isConnectedToServer -> STATE_BUFFERING
+                // Only report a disconnection as buffering after it lasted a moment; a short
+                // connection loss (e.g. while the cometd connection is re-established) must not
+                // flap the state reported to connected devices.
+                !isConnectedToServer &&
+                    (SystemClock.elapsedRealtime() - disconnectedTime) >
+                    CONNECTION_LOSS_GRACE_TIME ->
+                    STATE_BUFFERING
 
                 !status.powered -> STATE_IDLE
 
@@ -459,7 +502,10 @@ class MediaService :
             }
             status.muted?.let { builder.setIsDeviceMuted(it) }
 
-            return builder.build()
+            return builder.build().also {
+                lastState = it
+                lastStateSong = currentSong
+            }
         }
 
         /**
@@ -491,17 +537,64 @@ class MediaService :
                 lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
                     connectionHelper.playerState(playerId)
                         .flatMapLatest { it.playStatus }
-                        .collect { status ->
-                            if (status.playlist.lastChange != latestStatus?.playlist?.lastChange) {
-                                latestPlaylist = connectionHelper.fetchPlaylist(
-                                    playerId,
-                                    PagingParams.All
-                                )
-                            }
-                            latestStatus = status
-                            invalidateState()
-                        }
+                        .collect { status -> handlePlayerStatus(playerId, status) }
                 }
+            }
+        }
+
+        private fun handlePlayerStatus(playerId: PlayerId, status: PlayerStatus) {
+            val previous = latestStatus
+            // Status updates can arrive out of order, e.g. when a response to a request sent
+            // before a track change is delivered after the server pushed the new state. Applying
+            // such an outdated status makes connected devices (e.g. car head units) show the
+            // previous track again for a moment, so ignore statuses referring to an older
+            // playlist revision than the one we already know about.
+            if (previous != null && status.playlist.lastChange < previous.playlist.lastChange) {
+                return
+            }
+            val newChange = status.playlist.lastChange
+            if (newChange != latestPlaylistChange && newChange != pendingPlaylistChange) {
+                pendingPlaylistChange = newChange
+                launch {
+                    val playlist = runCatching {
+                        connectionHelper.fetchPlaylist(playerId, PagingParams.All)
+                    }.getOrNull()
+                    // Requests may complete out of order, e.g. when the playlist changes while
+                    // a previous fetch is still in flight. Ignore such outdated results.
+                    if (pendingPlaylistChange == newChange) {
+                        if (playlist != null) {
+                            latestPlaylist = playlist
+                            latestPlaylistChange = newChange
+                        }
+                        pendingPlaylistChange = null
+                        invalidateStateCoalesced()
+                    }
+                }
+            }
+            latestStatus = status
+            val playbackStateChanged = previous?.let {
+                it.playbackState != status.playbackState || it.muted != status.muted ||
+                    it.powered != status.powered || it.currentVolume != status.currentVolume
+            } == true
+            if (playbackStateChanged) {
+                stateInvalidationJob?.cancel()
+                invalidateState()
+            } else {
+                invalidateStateCoalesced()
+            }
+        }
+
+        /**
+         * Coalesces state updates. The server reports a series of intermediate states while
+         * changing tracks, and reporting each of them makes connected devices (e.g. car head
+         * units) receive contradicting metadata in rapid succession. Only report the state once
+         * the server's reporting has settled.
+         */
+        private fun invalidateStateCoalesced() {
+            stateInvalidationJob?.cancel()
+            stateInvalidationJob = launch {
+                delay(STATE_UPDATE_COALESCE_TIME)
+                invalidateState()
             }
         }
 
@@ -522,6 +615,18 @@ class MediaService :
                         .build()
                 )
                 .setMediaMetadata(metadata)
+        }
+
+        companion object {
+            // Time to wait for the server's state reporting to settle before reporting a state
+            // change to the system (and with it to connected devices such as car head units).
+            // The server reports a series of intermediate states while changing tracks, e.g.
+            // because it rewrites the playlist on the fly; reporting each of them would make
+            // those devices receive contradicting metadata in rapid succession.
+            private const val STATE_UPDATE_COALESCE_TIME = 1500L
+
+            // Time a server connection loss is ignored before reporting the player as buffering.
+            private const val CONNECTION_LOSS_GRACE_TIME = 3000L
         }
     }
 }

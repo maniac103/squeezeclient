@@ -20,6 +20,8 @@ package de.maniac103.squeezeclient.service.localplayer
 import android.content.Context
 import android.media.AudioTimestamp
 import android.net.Uri
+import android.os.Handler
+import android.os.Looper
 import android.os.SystemClock
 import android.util.Log
 import androidx.annotation.OptIn
@@ -87,6 +89,14 @@ class LocalPlayer(
         get() = !player.playWhenReady
         set(value) {
             player.playWhenReady = !value
+            // Remember the toggle: the volume changes the server sends around it are the
+            // pause/resume fade and must not be applied to the device volume.
+            lastPauseToggle = SystemClock.uptimeMillis()
+            if (!value) {
+                // Playback resumes at the volume the server last set, even if a pause fade moved
+                // the player volume to zero.
+                player.volume = playerInternalVolume * currentReplayGain
+            }
         }
 
     val playingTitle get() = player.mediaMetadata.title
@@ -111,8 +121,11 @@ class LocalPlayer(
                 return
             }
             lastServerVolume = value
-            lastSetVolume = value
-            updatePlayerVolume(true)
+            // Don't apply the volume immediately: the server ramps the volume when pausing or
+            // resuming playback, and each of those steps must not reach the device volume.
+            pendingServerVolume = value
+            volumeChangeHandler.removeCallbacks(volumeChangeRunnable)
+            volumeChangeHandler.postDelayed(volumeChangeRunnable, SERVER_VOLUME_CHANGE_DELAY)
         }
 
     private var lastSetVolume: Float? = null
@@ -122,6 +135,26 @@ class LocalPlayer(
     private var lastSavedDeviceVolume: Int? = null
     private var lastAppliedDeviceVolume: Int? = null
     private var lastDeviceVolumeChange = 0L
+    private var lastPauseToggle = 0L
+    private var pendingServerVolume: Float? = null
+    private val volumeChangeHandler = Handler(Looper.getMainLooper())
+    private val restoreDeviceVolumeRunnable = Runnable { restoreSavedDeviceVolume() }
+    private val volumeChangeRunnable = Runnable {
+        val value = pendingServerVolume ?: return@Runnable
+        pendingServerVolume = null
+        // The server ramps the volume when pausing and resuming playback. Such a ramp has to be
+        // applied to the player volume only: changing the device volume would make connected
+        // devices (e.g. car head units following the Bluetooth volume) show each step of the
+        // ramp and pop up their volume slider on every pause toggle.
+        val isPauseFade =
+            SystemClock.uptimeMillis() - lastPauseToggle <= PAUSE_FADE_WINDOW_TIME
+        if (isPauseFade) {
+            applyVolumeRamp(value)
+        } else {
+            lastSetVolume = value
+            updatePlayerVolume(true)
+        }
+    }
 
     @UnstableApi
     private val audioProcessor = LocalPlayerAudioProcessor(
@@ -226,6 +259,9 @@ class LocalPlayer(
         )
         val mediaSource = mediaSourceFactory.createMediaSource(mediaItem)
 
+        // A new stream cancels a pending restore of the device volume (see stop()).
+        volumeChangeHandler.removeCallbacks(restoreDeviceVolumeRunnable)
+
         currentReplayGain = replayGain
 
         if (player.playbackState == Player.STATE_IDLE) {
@@ -239,6 +275,11 @@ class LocalPlayer(
 
     fun stop() {
         player.stop()
+        // Playback stopped: give the system volume the user had before playback back, but not
+        // immediately - the server also stops the stream on track changes, where a new stream
+        // follows right away and the device volume must stay untouched.
+        volumeChangeHandler.removeCallbacks(restoreDeviceVolumeRunnable)
+        volumeChangeHandler.postDelayed(restoreDeviceVolumeRunnable, DEVICE_VOLUME_RESTORE_DELAY)
     }
 
     @OptIn(UnstableApi::class)
@@ -327,6 +368,9 @@ class LocalPlayer(
 
     override fun onDeviceVolumeChanged(volume: Int, muted: Boolean) {
         super.onDeviceVolumeChanged(volume, muted)
+        // Track the device volume in all modes, so writes that wouldn't change anything can be
+        // skipped (see setDeviceVolume()).
+        lastAppliedDeviceVolume = volume
         if (prefs.localPlayerVolumeMode != LocalPlayerVolumeMode.DeviceWhilePlaying) {
             // In this mode the player volume isn't translated to the device volume, so there
             // is nothing to adopt.
@@ -363,10 +407,15 @@ class LocalPlayer(
 
     private fun updatePlayerVolume(isSetVolume: Boolean) {
         val volume = lastSetVolume ?: return
+        if (paused) {
+            // While playback is paused (which includes the fade the server applies when pausing),
+            // only the player volume may follow the server volume. The device volume has to stay
+            // untouched, as e.g. a car head unit would show it as a volume change.
+            player.volume = volume * currentReplayGain
+            return
+        }
         // Playback is considered ongoing while playing or buffering to continue playing
-        // (e.g. right after a seek). In that case keep the app-set device volume applied
-        // instead of restoring the saved system volume; the saved volume is only restored
-        // once playback actually stops or pauses.
+        // (e.g. right after a seek).
         val playbackOngoing = readyForPlaybackOrBuffering && !paused
         val mode = prefs.localPlayerVolumeMode
         when {
@@ -376,10 +425,12 @@ class LocalPlayer(
             }
 
             isSetVolume && mode == LocalPlayerVolumeMode.Device -> {
+                player.volume = playerInternalVolume * currentReplayGain
                 applyVolumeAsDeviceVolume(volume)
             }
 
             playbackOngoing && mode == LocalPlayerVolumeMode.DeviceWhilePlaying -> {
+                player.volume = playerInternalVolume * currentReplayGain
                 if (player.deviceInfo.maxVolume > 0) {
                     if (lastSavedDeviceVolume == null) {
                         lastSavedDeviceVolume = player.deviceVolume
@@ -387,13 +438,30 @@ class LocalPlayer(
                     applyVolumeAsDeviceVolume(volume)
                 }
             }
-
-            !playbackOngoing && lastSavedDeviceVolume != null -> {
-                val savedVolume = lastSavedDeviceVolume ?: return
-                setDeviceVolume(savedVolume)
-                lastSavedDeviceVolume = null
-            }
         }
+    }
+
+    /**
+     * Applies a server-side volume ramp (as used when pausing and resuming playback) as a factor
+     * of the volume the ramp started at, so that the ramp doesn't change the device volume.
+     */
+    private fun applyVolumeRamp(volume: Float) {
+        val target = lastSetVolume ?: return
+        val factor = if (target > 0.001f) (volume / target).coerceIn(0F, 1F) else 0F
+        player.volume = factor * currentReplayGain
+        Log.d(TAG, "onServerVolumeRamp: ramped to $volume (factor $factor)")
+    }
+
+    /**
+     * Restores the device volume that was active before playback started. Called when playback
+     * stopped for good - not when it merely pauses, as the device volume should stay untouched
+     * while the pause toggle is in progress.
+     */
+    private fun restoreSavedDeviceVolume() {
+        val savedVolume = lastSavedDeviceVolume ?: return
+        Log.d(TAG, "restoreSavedDeviceVolume: restoring device volume $savedVolume")
+        setDeviceVolume(savedVolume)
+        lastSavedDeviceVolume = null
     }
 
     private fun applyVolumeAsDeviceVolume(volume: Float) {
@@ -403,6 +471,11 @@ class LocalPlayer(
     }
 
     private fun setDeviceVolume(volume: Int) {
+        if (volume == lastAppliedDeviceVolume) {
+            // The volume doesn't change, so don't write it back: devices connected via Bluetooth
+            // still report such a write as a volume change (and e.g. show their volume slider).
+            return
+        }
         lastAppliedDeviceVolume = volume
         lastDeviceVolumeChange = SystemClock.elapsedRealtime()
         player.setDeviceVolume(volume, 0)
@@ -475,5 +548,19 @@ class LocalPlayer(
         // still attributed to that change (or to a server-side volume ramp) and not adopted as
         // user-set volume.
         private const val DEVICE_VOLUME_SETTLE_TIME = 1500L
+
+        // Time after a stop before the device volume the user had before playback is restored.
+        // Track changes stop and restart the stream right away, so this delay keeps their
+        // interrupt short.
+        private const val DEVICE_VOLUME_RESTORE_DELAY = 3000L
+
+        // Time to wait for further server-side volume changes before applying them, so that the
+        // pause/resume ramp of the server can be recognised as such.
+        private const val SERVER_VOLUME_CHANGE_DELAY = 350L
+
+        // Time after a pause toggle in which server-side volume changes are considered part of
+        // the pause/resume fade, i.e. are applied to the player volume instead of the device
+        // volume.
+        private const val PAUSE_FADE_WINDOW_TIME = 1500L
     }
 }

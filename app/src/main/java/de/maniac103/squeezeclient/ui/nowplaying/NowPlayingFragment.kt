@@ -435,19 +435,21 @@ class NowPlayingFragment :
     }
 
     private fun updateFavoriteIcon() {
-        val isFavorite = currentSongIsFavorite
+        // While the server state is still unknown, show the button in "not favorite" state in
+        // order to avoid it flickering when the state is fetched.
+        val isFavorite = currentSongIsFavorite == true
         // The button belongs to the toolbar, which is hidden in the collapsed state
         val expanded = binding.container.currentState == R.id.expanded
-        binding.favorite.isVisible = expanded && currentSongUrl != null && isFavorite != null
+        binding.favorite.isVisible = expanded && currentSong != null
         binding.favorite.setImageResource(
-            if (isFavorite == true) {
+            if (isFavorite) {
                 R.drawable.ic_favorite_24dp
             } else {
                 R.drawable.ic_favorite_border_24dp
             }
         )
         binding.favorite.contentDescription = getString(
-            if (isFavorite == true) {
+            if (isFavorite) {
                 R.string.menu_favorite_remove
             } else {
                 R.string.menu_favorite_add

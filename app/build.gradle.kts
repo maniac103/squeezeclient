@@ -134,6 +134,7 @@ kotlin {
 }
 
 dependencies {
+    testImplementation(libs.junit)
     coreLibraryDesugaring(libs.android.desugar.jdk.libs)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.activity.ktx)

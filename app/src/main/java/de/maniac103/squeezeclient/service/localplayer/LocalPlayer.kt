@@ -52,6 +52,7 @@ import de.maniac103.squeezeclient.extfuncs.LocalPlayerVolumeMode
 import de.maniac103.squeezeclient.extfuncs.httpClient
 import de.maniac103.squeezeclient.extfuncs.localPlayerVolumeMode
 import de.maniac103.squeezeclient.extfuncs.prefs
+import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -101,14 +102,24 @@ class LocalPlayer(
     var volume: Float
         get() = lastSetVolume ?: 0F
         set(value) {
+            if (lastServerVolume?.let { abs(it - value) < 0.001f } == true) {
+                // The server sends its volume again on each stream start. Don't apply it in that
+                // case: the device volume might have been changed in the meantime (e.g. by a car
+                // head unit) and adopted as current volume, and re-applying the server volume
+                // would overwrite that change.
+                return
+            }
+            lastServerVolume = value
             lastSetVolume = value
             updatePlayerVolume(true)
         }
 
     private var lastSetVolume: Float? = null
+    private var lastServerVolume: Float? = null
     private var playerInternalVolume = 1F
     private var currentReplayGain = 1F
     private var lastSavedDeviceVolume: Int? = null
+    private var lastAppliedDeviceVolume: Int? = null
 
     @UnstableApi
     private val audioProcessor = LocalPlayerAudioProcessor(
@@ -312,6 +323,29 @@ class LocalPlayer(
         updatePlayerVolume(false)
     }
 
+    override fun onDeviceVolumeChanged(volume: Int, muted: Boolean) {
+        super.onDeviceVolumeChanged(volume, muted)
+        if (prefs.localPlayerVolumeMode != LocalPlayerVolumeMode.DeviceWhilePlaying) {
+            // In this mode the player volume isn't translated to the device volume, so there
+            // is nothing to adopt.
+            return
+        }
+        if (volume == lastAppliedDeviceVolume) {
+            // Change was caused by ourselves, don't adopt it.
+            return
+        }
+        // The volume was changed externally, e.g. by a car head unit using Bluetooth absolute
+        // volume. Adopt it as the desired volume, so it is not overwritten on the next
+        // playback state change (e.g. the next track).
+        val maxVolume = player.deviceInfo.maxVolume.takeIf { it > 0 } ?: return
+        lastSetVolume = volume.toFloat() / maxVolume
+        lastAppliedDeviceVolume = volume
+        if (lastSavedDeviceVolume != null) {
+            lastSavedDeviceVolume = volume
+        }
+        Log.d(TAG, "onDeviceVolumeChanged: adopted device volume $volume")
+    }
+
     override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
         super.onMediaMetadataChanged(mediaMetadata)
         mediaMetadata.title?.let { onMetadataReceived(it, mediaMetadata.artworkUri) }
@@ -345,7 +379,9 @@ class LocalPlayer(
             }
 
             !playbackOngoing && lastSavedDeviceVolume != null -> {
-                player.setDeviceVolume(lastSavedDeviceVolume!!, 0)
+                val savedVolume = lastSavedDeviceVolume ?: return
+                lastAppliedDeviceVolume = savedVolume
+                player.setDeviceVolume(savedVolume, 0)
                 lastSavedDeviceVolume = null
             }
         }
@@ -354,6 +390,7 @@ class LocalPlayer(
     private fun applyVolumeAsDeviceVolume(volume: Float) {
         val maxVolume = player.deviceInfo.maxVolume.takeIf { it > 0 } ?: return
         val volumeAsInt = (volume * maxVolume).roundToInt()
+        lastAppliedDeviceVolume = volumeAsInt
         player.setDeviceVolume(volumeAsInt, 0)
     }
 

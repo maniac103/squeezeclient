@@ -230,7 +230,7 @@ class MainActivity :
     override fun onStop() {
         val activePlayerId = if (playerIsActive) player?.id else null
         if (activePlayerId != null && !isChangingConfigurations) {
-            MediaService.start(this, activePlayerId)
+            MediaService.start(this, activePlayerId, true)
         }
         currentPlayerScope?.cancel()
         currentPlayerScope = null

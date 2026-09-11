@@ -48,6 +48,7 @@ import de.maniac103.squeezeclient.extfuncs.localPlayerName
 import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.extfuncs.putLocalPlayerName
 import de.maniac103.squeezeclient.extfuncs.workManager
+import de.maniac103.squeezeclient.service.MediaService
 import de.maniac103.squeezeclient.service.NotificationIds
 import de.maniac103.squeezeclient.ui.MainActivity
 import de.maniac103.squeezeclient.ui.prefs.SettingsActivity
@@ -128,7 +129,16 @@ class LocalPlaybackService :
                 repeatOnLifecycle(Lifecycle.State.STARTED) {
                     slimprotoStateFlow
                         .debounce(500.milliseconds)
-                        .collectLatest { updateForegroundNotification(it) }
+                        .collectLatest { state ->
+                            updateForegroundNotification(state)
+                            if (state is SlimprotoState.PlayingOrPaused && !state.paused) {
+                                MediaService.start(
+                                    this@LocalPlaybackService,
+                                    slimproto.playerId,
+                                    false
+                                )
+                            }
+                        }
                 }
             }
         }

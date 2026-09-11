@@ -163,7 +163,7 @@ class WearListenerService :
 
     private suspend fun handleStartMediaService(request: StartMediaServiceRequest): Boolean {
         val playerId = PlayerId(request.playerId)
-        MediaService.start(this, playerId)
+        MediaService.start(this, playerId, true)
         // Make sure the selected player is playing, as otherwise
         // the media notification doesn't appear on Wear
         connectionHelper.connect()

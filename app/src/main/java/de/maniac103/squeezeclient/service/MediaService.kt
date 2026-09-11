@@ -68,11 +68,13 @@ import de.maniac103.squeezeclient.model.Playlist
 import de.maniac103.squeezeclient.ui.MainActivity
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.guava.future
@@ -88,6 +90,7 @@ class MediaService :
     private lateinit var player: SqueezeboxPlayer
     private lateinit var mediaSession: MediaSession
     private var lastDisconnectionTime = Clock.System.now()
+    private var delayedShutdownJob: Job? = null
 
     @OptIn(UnstableApi::class)
     override fun onCreate() {
@@ -164,7 +167,10 @@ class MediaService :
             val playerId = requireNotNull(
                 IntentCompat.getParcelableExtra(intent, "playerId", PlayerId::class.java)
             )
-            player.currentPlayer = playerId
+            val forcePlayerChange = intent.getBooleanExtra("forcePlayerChange", true)
+            if (player.currentPlayer == null || forcePlayerChange) {
+                player.currentPlayer = playerId
+            }
             return START_STICKY
         }
         return super.onStartCommand(intent, flags, startId)
@@ -228,9 +234,17 @@ class MediaService :
         // is updated on status changes
         player.isConnectedToServer = true
         player.currentPlayer?.let { playerId ->
-            if (status.players.none { it.id == playerId }) {
-                // current player is gone
-                stopSelf()
+            if (status.players.any { it.id == playerId }) {
+                delayedShutdownJob?.cancel()
+                delayedShutdownJob = null
+            } else if (delayedShutdownJob == null) {
+                // The player disappeared from the server's player list. That happens briefly
+                // when a player (e.g. this device's local player on a mobile connection)
+                // reconnects, so keep the media session for a while before giving it up.
+                delayedShutdownJob = lifecycleScope.launch {
+                    delay(30.seconds)
+                    stopSelf()
+                }
             }
         }
     }
@@ -257,10 +271,11 @@ class MediaService :
         private const val SESSION_ACTION_POWER = "power"
         private const val SESSION_ACTION_DISCONNECT = "disconnect"
 
-        fun start(context: Context, playerId: PlayerId) {
+        fun start(context: Context, playerId: PlayerId, forcePlayerChange: Boolean) {
             val intent = Intent(context, MediaService::class.java).apply {
                 action = ACTION_START_WITH_PLAYER
                 putExtra("playerId", playerId)
+                putExtra("forcePlayerChange", forcePlayerChange)
             }
             context.startForegroundService(intent)
         }
@@ -360,7 +375,8 @@ class MediaService :
 
         override fun getState(): State {
             val status = latestStatus
-            val currentSong = status?.playlist?.nowPlaying
+                ?: return waitingForPlayerState()
+            val currentSong = status.playlist.nowPlaying
                 ?: return State.Builder().setPlaybackState(STATE_IDLE).build()
 
             val currentSongDurationUs =
@@ -444,6 +460,25 @@ class MediaService :
             status.muted?.let { builder.setIsDeviceMuted(it) }
 
             return builder.build()
+        }
+
+        /**
+         * State to report while nothing is known about the controlled player yet (e.g. right
+         * after the service has been started). A buffering state with a placeholder item is
+         * reported instead of an empty state, because the media session only becomes visible
+         * to the system (and the service only gets into the foreground) if it has a timeline
+         * with a playing/buffering item.
+         */
+        private fun waitingForPlayerState(): State {
+            val placeholder = MediaItemData.Builder(0)
+                .setMediaItem(MediaItem.Builder().setMediaId("waitingForPlayer").build())
+                .build()
+            return State.Builder()
+                .setPlaybackState(STATE_BUFFERING)
+                .setPlayWhenReady(true, PLAY_WHEN_READY_CHANGE_REASON_REMOTE)
+                .setPlaylist(listOf(placeholder))
+                .setCurrentMediaItemIndex(0)
+                .build()
         }
 
         @kotlin.OptIn(ExperimentalCoroutinesApi::class)

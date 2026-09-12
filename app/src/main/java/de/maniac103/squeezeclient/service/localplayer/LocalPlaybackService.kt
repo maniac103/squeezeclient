@@ -356,11 +356,7 @@ class LocalPlaybackService :
 
             is SlimprotoSocket.CommandPacket.StreamStart -> {
                 sendStatus(SlimprotoSocket.StatusType.Connecting)
-                // A new stream reports its own track start and buffer readiness, so reset the
-                // state reported for the previous stream here: the server flushes the player on
-                // track changes, i.e. the new stream doesn't go through
-                // onPlaybackAdvancedToNextTrack() and thus would never be reported as started.
-                sentTrackStartStatus = false
+                sentTrackStartStatus = false // new strm-s requires new STMs to be sent
                 sentBufferReady = command.autoStart
                 player.play(
                     command.uri,

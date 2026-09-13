@@ -78,11 +78,11 @@ class FlacMetadataCachingDataReaderTest {
     /** Builds a minimal FLAC stream: magic, one STREAMINFO block and four frames. */
     private fun flacStream(): ByteArray {
         val streamInfo = byteArrayOf(0x80.toByte(), 0x00, 0x00, 0x22) +
-                ByteArray(STREAMINFO_BLOCK_SIZE) { 0x42 }
+            ByteArray(STREAMINFO_BLOCK_SIZE) { 0x42 }
         val frames = frame(0x36, 0x11) +
-                frame(0x36, 0x22) +
-                frame(0x36, 0x33) +
-                frame(0x36, 0x44)
+            frame(0x36, 0x22) +
+            frame(0x36, 0x33) +
+            frame(0x36, 0x44)
         return MAGIC + streamInfo + frames
     }
 

@@ -241,7 +241,8 @@ class LocalPlayer(
         if (track?.getTimestamp(playbackPositionTimestamp) == true) {
             val timestampAge = (nowNanos - playbackPositionTimestamp.nanoTime)
                 .toDuration(DurationUnit.NANOSECONDS)
-            val framesElapsed = playbackPositionTimestamp.framePosition + audioProcessor.skippedFrames
+            val framesElapsed =
+                playbackPositionTimestamp.framePosition + audioProcessor.skippedFrames
             val position = framesElapsed / track.sampleRate.toDouble()
             return position.toDuration(DurationUnit.SECONDS) + timestampAge
         }

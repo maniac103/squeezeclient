@@ -19,7 +19,6 @@ package de.maniac103.squeezeclient.service.localplayer
 
 import androidx.media3.common.C
 import androidx.media3.common.DataReader
-import androidx.media3.common.util.UnstableApi
 import java.io.ByteArrayOutputStream
 import kotlin.math.min
 import org.junit.Assert.assertArrayEquals
@@ -29,17 +28,10 @@ import org.junit.Test
 /**
  * Tests resuming a FLAC stream at an arbitrary byte offset, as it happens when the buffered part
  * of a stream ran dry and the loader re-requests the stream (e.g. after resuming a paused sync
- * group). The resumed data starts mid-frame, so the reader has to skip ahead to the next frame
- * sync before replaying the cached metadata - otherwise the extractor sees frame data after the
- * metadata and fails with 'First frame does not start with sync code'.
+ * group).
  */
-@OptIn(UnstableApi::class)
 class FlacMetadataCachingDataReaderTest {
-
-    private class ByteArrayDataReader(
-        private val data: ByteArray,
-        position: Int = 0
-    ) : DataReader {
+    private class ByteArrayDataReader(private val data: ByteArray, position: Int = 0) : DataReader {
         private var readPosition = position
 
         override fun read(buffer: ByteArray, offset: Int, length: Int): Int {
@@ -67,7 +59,7 @@ class FlacMetadataCachingDataReaderTest {
 
     private fun frame(sampleRateAndBlockSize: Int, payloadByte: Int): ByteArray =
         byteArrayOf(0xFF.toByte(), 0xF8.toByte(), sampleRateAndBlockSize.toByte()) +
-            ByteArray(10) { payloadByte.toByte() }
+            ByteArray(TEST_FRAME_SIZE - 3) { payloadByte.toByte() }
 
     private fun isFrameSync(data: ByteArray, index: Int): Boolean {
         if (index + 3 > data.size) {
@@ -85,10 +77,13 @@ class FlacMetadataCachingDataReaderTest {
 
     /** Builds a minimal FLAC stream: magic, one STREAMINFO block and four frames. */
     private fun flacStream(): ByteArray {
-        val streamInfo = byteArrayOf(0x80.toByte(), 0x00, 0x00, 0x22) + ByteArray(34) { 0x42 }
-        val frames = frame(0x36, 0x11) + frame(0x36, 0x22) + frame(0x36, 0x33) +
-            frame(0x36, 0x44)
-        return "fLaC".toByteArray() + streamInfo + frames
+        val streamInfo = byteArrayOf(0x80.toByte(), 0x00, 0x00, 0x22) +
+                ByteArray(STREAMINFO_BLOCK_SIZE) { 0x42 }
+        val frames = frame(0x36, 0x11) +
+                frame(0x36, 0x22) +
+                frame(0x36, 0x33) +
+                frame(0x36, 0x44)
+        return MAGIC + streamInfo + frames
     }
 
     @Test
@@ -108,7 +103,7 @@ class FlacMetadataCachingDataReaderTest {
 
         // Resume in the middle of the payload of the second frame (magic + block header +
         // STREAMINFO + one frame + 5 bytes of the second frame's payload).
-        val resumeOffset = 4 + 4 + 34 + 13 + 5
+        val resumeOffset = MAGIC.size + 4 + STREAMINFO_BLOCK_SIZE + TEST_FRAME_SIZE + 5
         val resumeReader = FlacMetadataCachingDataReader(
             ByteArrayDataReader(stream, resumeOffset),
             cache
@@ -135,5 +130,11 @@ class FlacMetadataCachingDataReaderTest {
             stream.copyOfRange(resumeOffset + 8, stream.size),
             resumed.copyOfRange(metadataSize, resumed.size)
         )
+    }
+
+    companion object {
+        private val MAGIC = "fLaC".toByteArray()
+        private const val STREAMINFO_BLOCK_SIZE = 34
+        private const val TEST_FRAME_SIZE = 13
     }
 }

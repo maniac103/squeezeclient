@@ -97,6 +97,9 @@ class LocalPlayer(
                 // the player volume to zero.
                 player.volume = playerInternalVolume * currentReplayGain
             }
+            // Whatever the server sent around the toggle was a fade; the volume the user set on
+            // the device is the one playback must continue with.
+            adoptDeviceVolume()
         }
 
     val playingTitle get() = player.mediaMetadata.title
@@ -148,8 +151,11 @@ class LocalPlayer(
     private val volumeChangeRunnable = Runnable {
         val value = pendingServerVolume ?: return@Runnable
         pendingServerVolume = null
-        if (pendingServerVolumeIsFade) {
-            pendingServerVolumeIsFade = false
+        // Re-check the fade condition: a ramp started while playback was still running may only
+        // settle after a pause toggle or stream stop has happened.
+        val isFade = pendingServerVolumeIsFade || isServerVolumeFade()
+        pendingServerVolumeIsFade = false
+        if (isFade) {
             // Fades must not be applied to the device volume: changing it would make connected
             // devices (e.g. car head units following the Bluetooth volume) show each step of the
             // ramp and pop up their volume slider. They must not become the volume the app
@@ -164,13 +170,17 @@ class LocalPlayer(
     }
 
     /**
-     * Whether a volume the server sent is a fade rather than a volume the user set: the server
-     * fades the volume when pausing and resuming playback, and it also changes the volume while
-     * no stream is playing (e.g. when stopping the stream). Neither must reach the device volume.
+     * Whether a volume the server sent is a fade rather than a volume the user set. The server
+     * ramps the volume when pausing and resuming playback, and it announces its volume while a
+     * stream is started or stopped. In the modes driving the device volume, none of those must
+     * become the volume applied to the device.
      */
-    private fun isServerVolumeFade(): Boolean =
-        SystemClock.uptimeMillis() - lastPauseToggle <= PAUSE_FADE_WINDOW_TIME ||
-            !readyForPlaybackOrBuffering
+    private fun isServerVolumeFade(): Boolean {
+        if (SystemClock.uptimeMillis() - lastPauseToggle <= PAUSE_FADE_WINDOW_TIME) {
+            return true
+        }
+        return prefs.localPlayerVolumeMode != LocalPlayerVolumeMode.PlayerOnly && !isPlaying
+    }
 
     @UnstableApi
     private val audioProcessor = LocalPlayerAudioProcessor(
@@ -277,6 +287,9 @@ class LocalPlayer(
 
         // A new stream cancels a pending restore of the device volume (see stop()).
         volumeChangeHandler.removeCallbacks(restoreDeviceVolumeRunnable)
+        // The server announces its volume when a stream is set up; that's not a volume change
+        // the user asked for, so playback continues at the volume the device is set to.
+        adoptDeviceVolume()
 
         currentReplayGain = replayGain
 
@@ -296,6 +309,8 @@ class LocalPlayer(
         // follows right away and the device volume must stay untouched.
         volumeChangeHandler.removeCallbacks(restoreDeviceVolumeRunnable)
         volumeChangeHandler.postDelayed(restoreDeviceVolumeRunnable, DEVICE_VOLUME_RESTORE_DELAY)
+        // Volume changes the server sends on stopping are fades as well.
+        adoptDeviceVolume()
     }
 
     @OptIn(UnstableApi::class)
@@ -409,12 +424,28 @@ class LocalPlayer(
         // The volume was changed externally, e.g. by a car head unit using Bluetooth absolute
         // volume. Adopt it as the desired volume, so it is not overwritten on the next
         // playback state change (e.g. the next track).
-        val maxVolume = player.deviceInfo.maxVolume.takeIf { it > 0 } ?: return
-        lastSetVolume = volume.toFloat() / maxVolume
-        if (lastSavedDeviceVolume != null) {
-            lastSavedDeviceVolume = volume
-        }
+        adoptDeviceVolume()
         Log.d(TAG, "onDeviceVolumeChanged: adopted device volume $volume")
+    }
+
+    /**
+     * Adopts the volume the device is currently set to as the volume the app wants on the device.
+     * Called after external volume changes and around playback state changes, where the server
+     * sends fade values: what the device is set to is what the user chose, and the app must not
+     * overwrite it with such a fade value.
+     */
+    private fun adoptDeviceVolume() {
+        if (prefs.localPlayerVolumeMode != LocalPlayerVolumeMode.DeviceWhilePlaying) {
+            // In this mode the player volume isn't translated to the device volume, so there
+            // is nothing to adopt.
+            return
+        }
+        val maxVolume = player.deviceInfo.maxVolume.takeIf { it > 0 } ?: return
+        val deviceVolume = player.deviceVolume
+        lastSetVolume = deviceVolume.toFloat() / maxVolume
+        if (lastSavedDeviceVolume != null) {
+            lastSavedDeviceVolume = deviceVolume
+        }
     }
 
     override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {

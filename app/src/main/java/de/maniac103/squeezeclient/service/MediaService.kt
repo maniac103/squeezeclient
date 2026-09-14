@@ -314,6 +314,7 @@ class MediaService :
         private var pendingPlaylistChange: Instant? = null
         private var lastKnownSong: Playlist.PlaylistItem? = null
         private var lastState: State? = null
+
         // The song the last reported state refers to, to tell whether a cached state still matches
         // the song a newer player status reports.
         private var lastStateSong: Playlist.PlaylistItem? = null

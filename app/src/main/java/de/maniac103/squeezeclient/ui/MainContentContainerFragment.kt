@@ -117,13 +117,6 @@ class MainContentContainerFragment :
 
     // Public methods
 
-    // Now Playing actions also need nextWindow handling before they can become browse pages.
-    fun handleGoAction(
-        item: SlimBrowseItemList.SlimBrowseItem,
-        parentItem: SlimBrowseItemList.SlimBrowseItem?,
-        action: JiveAction
-    ) = onHandleDoOrGoAction(action, true, item, parentItem)
-
     fun goToHome() = childFragmentManager.apply {
         while (backStackEntryCount > 0) {
             popBackStackImmediate()

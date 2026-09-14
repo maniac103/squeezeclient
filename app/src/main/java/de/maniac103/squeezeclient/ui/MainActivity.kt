@@ -323,7 +323,7 @@ class MainActivity :
         contextItem: SlimBrowseItemList.SlimBrowseItem
     ) = mainListContainer?.run {
         goToHome()
-        handleGoAction(contextItem, parentItem, action)
+        onHandleDoOrGoAction(action, true, contextItem, parentItem)
     }
 
     // ConnectionErrorHintFragment.Listener implementation

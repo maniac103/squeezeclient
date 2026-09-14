@@ -26,10 +26,7 @@ data class CurrentTrackInfoResponse(
     val items: List<Item> = emptyList()
 ) {
     @Serializable
-    data class Item(
-        val title: String? = null,
-        val url: String? = null
-    )
+    data class Item(val title: String? = null, val url: String? = null)
 
     val current: Item? get() = items.firstOrNull()
 }

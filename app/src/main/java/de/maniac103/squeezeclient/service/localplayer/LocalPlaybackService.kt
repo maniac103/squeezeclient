@@ -416,14 +416,18 @@ class LocalPlaybackService :
 
             is SlimprotoSocket.CommandPacket.TriggerGetSetting -> {
                 if (command.type == SlimprotoSocket.SettingType.PlayerName) {
-                    val name = prefs.localPlayerName ?: "SqueezeClient - ${Build.MODEL}"
+                    // Trim \0 characters from saved setting that were written before
+                    // the trimming code below was added
+                    val name = prefs.localPlayerName?.trim('\u0000')
+                        ?: "SqueezeClient - ${Build.MODEL}"
                     slimproto.sendSetSetting(command.type, name.toByteArray(Charsets.US_ASCII))
                 }
             }
 
             is SlimprotoSocket.CommandPacket.SetSetting -> {
                 if (command.type == SlimprotoSocket.SettingType.PlayerName) {
-                    val name = String(command.data)
+                    // The server sends the name 0 terminated; remove the termination before saving
+                    val name = String(command.data).trim('\u0000')
                     Log.d(TAG, "Changing local player name to $name")
                     prefs.edit {
                         putLocalPlayerName(name)

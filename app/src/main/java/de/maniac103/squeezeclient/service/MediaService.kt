@@ -89,6 +89,7 @@ class MediaService :
     private lateinit var player: SqueezeboxPlayer
     private lateinit var mediaSession: MediaSession
     private var lastDisconnectionTime = Clock.System.now()
+
     // Time at which the followed player was noticed to be missing from the server's player list.
     private var playerMissingSince = 0L
 
@@ -387,7 +388,6 @@ class MediaService :
             if (currentSong == null) {
                 return when (status) {
                     null -> waitingForPlayerState()
-
                     else -> State.Builder().setPlaybackState(STATE_IDLE).build()
                 }
             }

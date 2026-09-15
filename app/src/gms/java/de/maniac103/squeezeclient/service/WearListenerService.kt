@@ -31,6 +31,7 @@ import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.extfuncs.putLastSelectedPlayer
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.PlayerStatus
+import de.maniac103.squeezeclient.service.mediasession.MediaService
 import de.maniac103.squeezeclient.wearapi.AllPlayerActionRequest
 import de.maniac103.squeezeclient.wearapi.ListPlayersRequest
 import de.maniac103.squeezeclient.wearapi.PlayerInfo

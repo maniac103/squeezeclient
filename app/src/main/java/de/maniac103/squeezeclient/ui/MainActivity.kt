@@ -64,8 +64,8 @@ import de.maniac103.squeezeclient.model.Player
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.PlayerStatus
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
-import de.maniac103.squeezeclient.service.MediaService
 import de.maniac103.squeezeclient.service.localplayer.LocalPlaybackService
+import de.maniac103.squeezeclient.service.mediasession.MediaService
 import de.maniac103.squeezeclient.ui.nowplaying.NowPlayingFragment
 import de.maniac103.squeezeclient.ui.playermanagement.PlayerManagementActivity
 import de.maniac103.squeezeclient.ui.prefs.SettingsActivity

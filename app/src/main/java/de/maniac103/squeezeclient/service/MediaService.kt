@@ -93,6 +93,7 @@ class MediaService :
     private lateinit var mediaSession: MediaSession
     private var lastDisconnectionTime = Clock.System.now()
     private var delayedShutdownJob: Job? = null
+    private var lastSessionAnnouncement = 0L
 
     @OptIn(UnstableApi::class)
     override fun onCreate() {
@@ -195,6 +196,31 @@ class MediaService :
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo) = mediaSession
 
+    /**
+     * Re-announces the session when a device that isn't monitoring us (see the Bluetooth stack
+     * picking a session as media source) sends media buttons, which is what toggling Bluetooth
+     * effectively does.
+     */
+    override fun onMediaButtonEvent(
+        session: MediaSession,
+        controller: MediaSession.ControllerInfo,
+        intent: Intent
+    ): Boolean {
+        val hasExternalController =
+            mediaSession.connectedControllers.any { it.packageName != packageName }
+        // Only while playing: the service is in the foreground then, so the re-announcement
+        // doesn't drop the notification.
+        val nudgePossible = player.isPlaying &&
+            SystemClock.elapsedRealtime() - lastSessionAnnouncement >
+            SESSION_ANNOUNCEMENT_THROTTLE_TIME
+        if (!hasExternalController && controller.packageName != packageName && nudgePossible) {
+            lastSessionAnnouncement = SystemClock.elapsedRealtime()
+            removeSession(mediaSession)
+            addSession(mediaSession)
+        }
+        return false
+    }
+
     @OptIn(UnstableApi::class)
     override fun onConnect(
         session: MediaSession,
@@ -273,6 +299,9 @@ class MediaService :
         private const val SESSION_ACTION_POWER = "power"
         private const val SESSION_ACTION_DISCONNECT = "disconnect"
 
+        // Minimum time between two session re-announcements (see onMediaButtonEvent).
+        private const val SESSION_ANNOUNCEMENT_THROTTLE_TIME = 30000L
+
         fun start(context: Context, playerId: PlayerId, forcePlayerChange: Boolean) {
             val intent = Intent(context, MediaService::class.java).apply {
                 action = ACTION_START_WITH_PLAYER
@@ -322,6 +351,15 @@ class MediaService :
         private var stateInvalidationJob: Job? = null
         private var disconnectedTime = 0L
 
+        // State expected from a media button press, reported until the server confirms it.
+        // Devices acting on the button press immediately would otherwise show the previous
+        // track (or play state) until the server's response arrives.
+        private var expectedPosition: Int? = null
+        private var expectedPositionBase: Int? = null
+        private var expectedPlayWhenReady: Boolean? = null
+        private var expectedPlayStateBase: PlayerStatus.PlayState? = null
+        private var expectationTime = 0L
+
         override fun handleSetDeviceVolume(deviceVolume: Int, flags: Int) = future {
             val playerId = currentPlayer ?: return@future
             connectionHelper.setVolume(playerId, deviceVolume)
@@ -346,57 +384,141 @@ class MediaService :
             connectionHelper.setMuteState(playerId, muted)
         }
 
-        override fun handleSetPlayWhenReady(playWhenReady: Boolean) = future {
-            val playerId = currentPlayer ?: return@future
-            val newState = when {
-                playWhenReady -> PlayerStatus.PlayState.Playing
-                else -> PlayerStatus.PlayState.Paused
+        override fun handleSetPlayWhenReady(playWhenReady: Boolean): ListenableFuture<*> {
+            expectPlayWhenReady(playWhenReady)
+            return future {
+                val playerId = currentPlayer ?: return@future
+                val newState = when {
+                    playWhenReady -> PlayerStatus.PlayState.Playing
+                    else -> PlayerStatus.PlayState.Paused
+                }
+                connectionHelper.changePlaybackState(playerId, newState)
             }
-            connectionHelper.changePlaybackState(playerId, newState)
         }
 
-        override fun handleSeek(mediaItemIndex: Int, positionMs: Long, seekCommand: Int) = future {
-            val playerId = currentPlayer ?: return@future
-            when (seekCommand) {
-                COMMAND_SEEK_TO_NEXT_MEDIA_ITEM, COMMAND_SEEK_TO_NEXT ->
-                    connectionHelper.sendButtonRequest(PlaybackButtonRequest.NextTrack(playerId))
+        override fun handleSeek(
+            mediaItemIndex: Int,
+            positionMs: Long,
+            seekCommand: Int
+        ): ListenableFuture<*> {
+            expectSeekResult(mediaItemIndex, seekCommand)
+            return future {
+                val playerId = currentPlayer ?: return@future
+                when (seekCommand) {
+                    COMMAND_SEEK_TO_NEXT_MEDIA_ITEM, COMMAND_SEEK_TO_NEXT ->
+                        connectionHelper.sendButtonRequest(
+                            PlaybackButtonRequest.NextTrack(playerId)
+                        )
 
-                COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM, COMMAND_SEEK_TO_PREVIOUS ->
-                    connectionHelper.sendButtonRequest(
-                        PlaybackButtonRequest.PreviousTrack(playerId)
-                    )
+                    COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM, COMMAND_SEEK_TO_PREVIOUS ->
+                        connectionHelper.sendButtonRequest(
+                            PlaybackButtonRequest.PreviousTrack(playerId)
+                        )
 
-                COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM -> {
-                    val positionSeconds = ((positionMs + 500) / 1000).toInt()
-                    connectionHelper.updatePlaybackPosition(playerId, positionSeconds)
-                }
-
-                COMMAND_SEEK_TO_MEDIA_ITEM -> {
-                    val positionSeconds = ((positionMs + 500) / 1000).toInt()
-                    connectionHelper.advanceToPlaylistPosition(playerId, mediaItemIndex)
-                    if (positionSeconds > 0) {
+                    COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM -> {
+                        val positionSeconds = ((positionMs + 500) / 1000).toInt()
                         connectionHelper.updatePlaybackPosition(playerId, positionSeconds)
                     }
-                }
 
-                else -> {}
+                    COMMAND_SEEK_TO_MEDIA_ITEM -> {
+                        val positionSeconds = ((positionMs + 500) / 1000).toInt()
+                        connectionHelper.advanceToPlaylistPosition(playerId, mediaItemIndex)
+                        if (positionSeconds > 0) {
+                            connectionHelper.updatePlaybackPosition(playerId, positionSeconds)
+                        }
+                    }
+
+                    else -> {}
+                }
             }
         }
 
-        override fun handleStop(): ListenableFuture<*> = future {
-            val playerId = currentPlayer ?: return@future
-            connectionHelper.changePlaybackState(playerId, PlayerStatus.PlayState.Stopped)
+        override fun handleStop(): ListenableFuture<*> {
+            expectPlayWhenReady(false)
+            return future {
+                val playerId = currentPlayer ?: return@future
+                connectionHelper.changePlaybackState(playerId, PlayerStatus.PlayState.Stopped)
+            }
+        }
+
+        private fun expectSeekResult(mediaItemIndex: Int, seekCommand: Int) {
+            val status = latestStatus ?: return
+            val currentPosition = expectedPosition ?: status.playlist.currentPosition
+            val expected = when (seekCommand) {
+                COMMAND_SEEK_TO_NEXT_MEDIA_ITEM, COMMAND_SEEK_TO_NEXT ->
+                    currentPosition + 1
+
+                COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM, COMMAND_SEEK_TO_PREVIOUS ->
+                    currentPosition - 1
+
+                COMMAND_SEEK_TO_MEDIA_ITEM ->
+                    mediaItemIndex + (latestPlaylist?.offset ?: 0) + 1
+
+                else -> null
+            }
+            if (expected != null && expected in 1..status.playlist.trackCount) {
+                expectPosition(expected, status)
+            }
+        }
+
+        private fun expectPosition(position: Int, status: PlayerStatus) {
+            if (expectedPosition == null) {
+                // Remember the position reported last: a difference to it means the server
+                // acted upon the button press.
+                expectedPositionBase = status.playlist.currentPosition
+            }
+            expectedPosition = position
+            expectationTime = SystemClock.elapsedRealtime()
+            // Outside of the command handling that is still in progress here
+            launch { invalidateState() }
+        }
+
+        private fun expectPlayWhenReady(playWhenReady: Boolean) {
+            val status = latestStatus ?: return
+            if (expectedPlayWhenReady == null) {
+                expectedPlayStateBase = status.playbackState
+            }
+            expectedPlayWhenReady = playWhenReady
+            expectationTime = SystemClock.elapsedRealtime()
+            // Outside of the command handling, which is still in progress here
+            launch { invalidateState() }
+        }
+
+        private fun clearFulfilledExpectations(status: PlayerStatus) {
+            val expired =
+                SystemClock.elapsedRealtime() - expectationTime > EXPECTATION_TIMEOUT
+            if (expectedPosition != null &&
+                (expired || status.playlist.currentPosition != expectedPositionBase)
+            ) {
+                expectedPosition = null
+                expectedPositionBase = null
+            }
+            if (expectedPlayWhenReady != null &&
+                (expired || status.playbackState != expectedPlayStateBase)
+            ) {
+                expectedPlayWhenReady = null
+                expectedPlayStateBase = null
+            }
         }
 
         override fun getState(): State {
             val status = latestStatus
-                ?: return waitingForPlayerState()
+            if (status == null) {
+                return waitingForPlayerState()
+            }
             status.playlist.nowPlaying?.let { lastKnownSong = it }
             // The server reports a sequence of intermediate states when changing tracks (track
             // stopped, stream restarted, ...). Keep reporting the song we last heard about
             // while the server's state is transient - reporting a state without a current item
             // would make connected devices (e.g. car head units) blank or revert their display.
-            val currentSong = status.playlist.nowPlaying ?: lastKnownSong
+            // An expected track change wins over the status, which keeps reporting the
+            // previous track until the server acted upon the press.
+            val expectedSong = expectedPosition?.let { position ->
+                latestPlaylist?.let { playlist ->
+                    playlist.items.getOrNull(position - 1 - playlist.offset)
+                }
+            }
+            val currentSong = expectedSong ?: status.playlist.nowPlaying ?: lastKnownSong
             if (currentSong == null) {
                 return State.Builder().setPlaybackState(STATE_IDLE).build()
             }
@@ -411,12 +533,14 @@ class MediaService :
                 // last known state while the status still reports the same song; if the status is
                 // newer than our playlist, its song wins - caching would show the previous track
                 // again to connected devices (e.g. car head units) after the new one appeared.
-                lastState?.let { return it }
+                lastState?.let {
+                    return it
+                }
             }
 
             // Only use the playlist contents if they belong to the revision the status refers
             // to; mixing both would make us report the wrong item.
-            val currentPosition = status.playlist.currentPosition - 1
+            val currentPosition = (expectedPosition ?: status.playlist.currentPosition) - 1
             val windowPosition = if (window != null) currentPosition - window.offset else -1
             val (playlist, currentIndex) = if (windowCurrent && window != null &&
                 windowPosition in window.items.indices
@@ -463,7 +587,8 @@ class MediaService :
                 }
             }
 
-            val playWhenReady = status.playbackState == PlayerStatus.PlayState.Playing
+            val playWhenReady = expectedPlayWhenReady
+                ?: (status.playbackState == PlayerStatus.PlayState.Playing)
             val playbackState = when {
                 // Only report a disconnection as buffering after it lasted a moment; a short
                 // connection loss (e.g. while the cometd connection is re-established) must not
@@ -475,6 +600,9 @@ class MediaService :
 
                 !status.powered -> STATE_IDLE
 
+                // A pending play command isn't idle, even if the status still says stopped.
+                playWhenReady -> STATE_READY
+
                 else -> when (status.playbackState) {
                     PlayerStatus.PlayState.Playing -> STATE_READY
                     PlayerStatus.PlayState.Paused -> STATE_READY
@@ -482,12 +610,12 @@ class MediaService :
                 }
             }
 
+            val positionMs = status.currentPlayPosition?.toLong(DurationUnit.MILLISECONDS)
+
             val builder = State.Builder()
                 .setPlaybackState(playbackState)
                 .setAvailableCommands(commandsBuilder.build())
-                .setContentPositionMs(
-                    status.currentPlayPosition?.toLong(DurationUnit.MILLISECONDS) ?: C.TIME_UNSET
-                )
+                .setContentPositionMs(positionMs ?: C.TIME_UNSET)
                 .setPlayWhenReady(playWhenReady, PLAY_WHEN_READY_CHANGE_REASON_REMOTE)
                 .setPlaylist(playlist)
                 .setCurrentMediaItemIndex(currentIndex)
@@ -530,6 +658,10 @@ class MediaService :
 
         @kotlin.OptIn(ExperimentalCoroutinesApi::class)
         private fun updatePlayer(playerId: PlayerId?) {
+            expectedPosition = null
+            expectedPositionBase = null
+            expectedPlayWhenReady = null
+            expectedPlayStateBase = null
             statusSubscription?.cancel()
             if (playerId == null || !isConnectedToServer) {
                 return
@@ -553,6 +685,7 @@ class MediaService :
             if (previous != null && status.playlist.lastChange < previous.playlist.lastChange) {
                 return
             }
+            clearFulfilledExpectations(status)
             val newChange = status.playlist.lastChange
             if (newChange != latestPlaylistChange && newChange != pendingPlaylistChange) {
                 pendingPlaylistChange = newChange
@@ -569,6 +702,7 @@ class MediaService :
                         }
                         pendingPlaylistChange = null
                         invalidateStateCoalesced()
+                    } else {
                     }
                 }
             }
@@ -577,7 +711,16 @@ class MediaService :
                 it.playbackState != status.playbackState || it.muted != status.muted ||
                     it.powered != status.powered || it.currentVolume != status.currentVolume
             } == true
-            if (playbackStateChanged) {
+            val stateChanged = previous == null || previous.powered != status.powered ||
+                previous.playlist.lastChange != status.playlist.lastChange ||
+                previous.playlist.currentPosition != status.playlist.currentPosition ||
+                previous.playlist.nowPlaying != status.playlist.nowPlaying
+            // The playlist belonging to this status is known, so report right away: waiting
+            // keeps the previous track on the screen of connected devices, which re-read the
+            // metadata in the meantime.
+            if (playbackStateChanged ||
+                (stateChanged && status.playlist.lastChange == latestPlaylistChange)
+            ) {
                 stateInvalidationJob?.cancel()
                 invalidateState()
             } else {
@@ -586,10 +729,9 @@ class MediaService :
         }
 
         /**
-         * Coalesces state updates. The server reports a series of intermediate states while
-         * changing tracks, and reporting each of them makes connected devices (e.g. car head
-         * units) receive contradicting metadata in rapid succession. Only report the state once
-         * the server's reporting has settled.
+         * Coalesces state updates while the playlist contents belonging to the reported status
+         * are still being fetched, to avoid reporting a series of contradicting states while
+         * changing tracks.
          */
         private fun invalidateStateCoalesced() {
             stateInvalidationJob?.cancel()
@@ -608,10 +750,13 @@ class MediaService :
                 .setAlbumTitle(album)
                 .setArtworkUri(extractIconUrl(appContext)?.toUri())
                 .build()
+            // Unique per song: devices caching metadata per media ID served the metadata of
+            // the song that was at this position before.
+            val mediaId = "$position-${title.hashCode()}"
             return MediaItemData.Builder(position)
                 .setMediaItem(
                     MediaItem.Builder()
-                        .setMediaId(position.toString())
+                        .setMediaId(mediaId)
                         .setMediaMetadata(metadata)
                         .build()
                 )
@@ -619,15 +764,17 @@ class MediaService :
         }
 
         companion object {
-            // Time to wait for the server's state reporting to settle before reporting a state
-            // change to the system (and with it to connected devices such as car head units).
-            // The server reports a series of intermediate states while changing tracks, e.g.
-            // because it rewrites the playlist on the fly; reporting each of them would make
-            // those devices receive contradicting metadata in rapid succession.
-            private const val STATE_UPDATE_COALESCE_TIME = 1500L
+            // Time to wait before reporting a state change while the playlist contents
+            // belonging to the status are still being fetched. Kept short on purpose: devices
+            // asking for the metadata in the meantime get the previous track.
+            private const val STATE_UPDATE_COALESCE_TIME = 400L
 
             // Time a server connection loss is ignored before reporting the player as buffering.
             private const val CONNECTION_LOSS_GRACE_TIME = 3000L
+
+            // Maximum time to report a state expected from a media button press without the
+            // server confirming it (e.g. because the command failed).
+            private const val EXPECTATION_TIMEOUT = 3000L
         }
     }
 }

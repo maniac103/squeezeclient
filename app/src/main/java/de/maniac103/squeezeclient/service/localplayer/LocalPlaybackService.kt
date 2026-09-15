@@ -48,8 +48,8 @@ import de.maniac103.squeezeclient.extfuncs.localPlayerName
 import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.extfuncs.putLocalPlayerName
 import de.maniac103.squeezeclient.extfuncs.workManager
-import de.maniac103.squeezeclient.service.MediaService
 import de.maniac103.squeezeclient.service.NotificationIds
+import de.maniac103.squeezeclient.service.mediasession.MediaService
 import de.maniac103.squeezeclient.ui.MainActivity
 import de.maniac103.squeezeclient.ui.prefs.SettingsActivity
 import kotlin.time.Duration.Companion.milliseconds

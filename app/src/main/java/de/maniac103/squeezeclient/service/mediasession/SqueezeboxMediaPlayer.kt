@@ -38,10 +38,12 @@ import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.PlayerStatus
 import de.maniac103.squeezeclient.model.Playlist
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.DurationUnit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.guava.future
 import kotlinx.coroutines.launch
@@ -68,9 +70,11 @@ class SqueezeboxMediaPlayer(
                 invalidateState()
             }
         }
-    private var latestStatus: PlayerStatus? = null
-    private var latestPlaylist: Playlist? = null
+    private var pendingPlayerState = PendingPlayerState()
+    private var playerState: PlayerState? = null
     private var statusSubscription: Job? = null
+    private var playlistFetchJob: Job? = null
+    private var delayedStateUpdateJob: Job? = null
 
     override fun handleSetDeviceVolume(deviceVolume: Int, flags: Int) = future {
         val playerId = currentPlayer ?: return@future
@@ -79,14 +83,14 @@ class SqueezeboxMediaPlayer(
 
     override fun handleIncreaseDeviceVolume(flags: Int) = future {
         val playerId = currentPlayer ?: return@future
-        val currentVolume = latestStatus?.currentVolume ?: return@future
+        val currentVolume = playerState?.currentVolume ?: return@future
         val stepSize = appContext.prefs.volumeStepSize
         connectionHelper.setVolume(playerId, currentVolume + stepSize)
     }
 
     override fun handleDecreaseDeviceVolume(flags: Int) = future {
         val playerId = currentPlayer ?: return@future
-        val currentVolume = latestStatus?.currentVolume ?: return@future
+        val currentVolume = playerState?.currentVolume ?: return@future
         val stepSize = appContext.prefs.volumeStepSize
         connectionHelper.setVolume(playerId, currentVolume - stepSize)
     }
@@ -139,15 +143,15 @@ class SqueezeboxMediaPlayer(
     }
 
     override fun getState(): State {
-        val status = latestStatus
+        val playerState = playerState
             ?: return waitingForPlayerState()
-        val currentSong = status.playlist.nowPlaying
+        val currentSong = playerState.currentSong
             ?: return State.Builder().setPlaybackState(STATE_IDLE).build()
 
         val currentSongDurationUs =
-            status.currentSongDuration?.toLong(DurationUnit.MICROSECONDS)
-        val (playlist, currentIndex) = latestPlaylist?.let { list ->
-            val currentPosition = status.playlist.currentPosition - 1
+            playerState.currentSongDuration?.toLong(DurationUnit.MICROSECONDS)
+        val (playlist, currentIndex) = playerState.playlist?.let { list ->
+            val currentPosition = playerState.playlistPosition
             val mediaList: List<MediaItemData> = list.items.mapIndexed { index, item ->
                 val builder = if (index + list.offset == currentPosition) {
                     // Prefer current song from status over playlist item, because the former
@@ -172,8 +176,8 @@ class SqueezeboxMediaPlayer(
             add(COMMAND_GET_METADATA)
             add(COMMAND_GET_TIMELINE)
             add(COMMAND_PLAY_PAUSE)
-            if (status.currentSongDuration != null &&
-                status.playbackState != PlayerStatus.PlayState.Stopped
+            if (playerState.currentSongDuration != null &&
+                playerState.playbackState != PlayerStatus.PlayState.Stopped
             ) {
                 add(COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM)
             }
@@ -183,20 +187,20 @@ class SqueezeboxMediaPlayer(
             add(COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)
             add(COMMAND_SEEK_TO_PREVIOUS)
             add(COMMAND_STOP)
-            if (status.currentVolume != null) {
+            if (playerState.currentVolume != null) {
                 add(COMMAND_ADJUST_DEVICE_VOLUME_WITH_FLAGS)
                 add(COMMAND_GET_DEVICE_VOLUME)
                 add(COMMAND_SET_DEVICE_VOLUME_WITH_FLAGS)
             }
         }
 
-        val playWhenReady = status.playbackState == PlayerStatus.PlayState.Playing
+        val playWhenReady = playerState.playbackState == PlayerStatus.PlayState.Playing
         val playbackState = when {
             !isConnectedToServer -> STATE_BUFFERING
 
-            !status.powered -> STATE_IDLE
+            !playerState.powered -> STATE_IDLE
 
-            else -> when (status.playbackState) {
+            else -> when (playerState.playbackState) {
                 PlayerStatus.PlayState.Playing -> STATE_READY
                 PlayerStatus.PlayState.Paused -> STATE_READY
                 PlayerStatus.PlayState.Stopped -> STATE_IDLE
@@ -207,13 +211,13 @@ class SqueezeboxMediaPlayer(
             .setPlaybackState(playbackState)
             .setAvailableCommands(commandsBuilder.build())
             .setContentPositionMs(
-                status.currentPlayPosition?.toLong(DurationUnit.MILLISECONDS) ?: C.TIME_UNSET
+                playerState.currentPlayPosition?.toLong(DurationUnit.MILLISECONDS) ?: C.TIME_UNSET
             )
             .setPlayWhenReady(playWhenReady, PLAY_WHEN_READY_CHANGE_REASON_REMOTE)
             .setPlaylist(playlist)
             .setCurrentMediaItemIndex(currentIndex)
 
-        status.currentVolume?.let {
+        playerState.currentVolume?.let {
             builder.setDeviceVolume(it)
             builder.setDeviceInfo(
                 DeviceInfo.Builder(DeviceInfo.PLAYBACK_TYPE_REMOTE)
@@ -222,7 +226,7 @@ class SqueezeboxMediaPlayer(
                     .build()
             )
         }
-        status.muted?.let { builder.setIsDeviceMuted(it) }
+        playerState.muted?.let { builder.setIsDeviceMuted(it) }
 
         return builder.build()
     }
@@ -256,16 +260,68 @@ class SqueezeboxMediaPlayer(
             lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 connectionHelper.playerState(playerId)
                     .flatMapLatest { it.playStatus }
-                    .collect { status ->
-                        if (status.playlist.lastChange != latestStatus?.playlist?.lastChange) {
-                            latestPlaylist = connectionHelper.fetchPlaylist(
-                                playerId,
-                                PagingParams.All
-                            )
-                        }
-                        latestStatus = status
-                        invalidateState()
+                    .collect { status -> handlePlayerStatusUpdate(playerId, status) }
+            }
+        }
+    }
+
+    private fun handlePlayerStatusUpdate(playerId: PlayerId, status: PlayerStatus) {
+        val latestStatus = pendingPlayerState.status
+        val newPlaylistTimestamp = status.playlist.lastChange
+        if (latestStatus != null && newPlaylistTimestamp < latestStatus.playlist.lastChange) {
+            // The new status is older than what we already know about -> ignore it
+            return
+        }
+
+        if (status.playlist.lastChange != latestStatus?.playlist?.lastChange) {
+            playlistFetchJob?.cancel()
+            playlistFetchJob = lifecycle.coroutineScope.launch {
+                val playlist = connectionHelper.fetchPlaylist(playerId, PagingParams.All)
+                if (playlist.timestamp == status.playlist.lastChange) {
+                    pendingPlayerState.playlist = playlist
+                    // Player state update is scheduled asynchronously so that the update method
+                    // notices the playlist fetch being done
+                    lifecycle.coroutineScope.launch {
+                        schedulePlayerStateUpdate()
                     }
+                }
+            }
+        }
+
+        pendingPlayerState.status = status
+        schedulePlayerStateUpdate()
+    }
+
+    private fun schedulePlayerStateUpdate() {
+        delayedStateUpdateJob?.cancel()
+
+        val status = pendingPlayerState.status ?: return
+        val nowPlaying = playerState?.currentSong
+        val newPlayerState = PlayerState(status, nowPlaying, pendingPlayerState.playlist)
+
+        when {
+            newPlayerState.isCompleteAndConsistent() || playerState == null -> {
+                // Accept immediately if either
+                // - we don't have a state yet (don't wait for playlist)
+                // - or what we have looks consistent
+                playerState = newPlayerState
+                invalidateState()
+            }
+
+            playlistFetchJob?.isActive == true -> {
+                // Playlist is currently being fetched; we'll come here again once that is done
+            }
+
+            else -> {
+                // Give the server a little more time for sending us consistent data:
+                // When we come here we have received a status update, fetched the playlist and
+                // the timestamps don't match. That means we'll likely get another status report
+                // which will trigger another playlist fetch.
+                delayedStateUpdateJob = lifecycle.coroutineScope.launch {
+                    delay(500.milliseconds)
+                    playerState = newPlayerState
+                    invalidateState()
+                }
             }
         }
     }
@@ -285,5 +341,28 @@ class SqueezeboxMediaPlayer(
                     .build()
             )
             .setMediaMetadata(metadata)
+    }
+
+    private class PendingPlayerState {
+        var status: PlayerStatus? = null
+        var playlist: Playlist? = null
+    }
+
+    private data class PlayerState(
+        private val status: PlayerStatus,
+        private val nowPlayingFallback: Playlist.PlaylistItem?,
+        val playlist: Playlist?
+    ) {
+        val currentVolume get() = status.currentVolume
+        val currentSong get() = status.playlist.nowPlaying ?: nowPlayingFallback
+        val currentSongDuration get() = status.currentSongDuration
+        val currentPlayPosition get() = status.currentPlayPosition
+        val playlistPosition get() = status.playlist.currentPosition - 1
+        val playbackState get() = status.playbackState
+        val powered get() = status.powered
+        val muted get() = status.muted
+
+        fun isCompleteAndConsistent() =
+            playlist != null && status.playlist.lastChange == playlist.timestamp
     }
 }

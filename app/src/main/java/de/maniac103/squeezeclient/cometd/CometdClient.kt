@@ -227,22 +227,24 @@ class CometdClient(
     private fun readFromEventStream(body: ResponseBody, scope: CoroutineScope) = scope.produce {
         Log.d(TAG, "Connected to event stream")
         try {
-            val buf = ByteArray(4096)
-            val source = body.source().inputStream()
+            val buf = CharArray(4096)
+            // Decode via a Reader: a multi-byte character split across two reads turned into a
+            // replacement character when each read was decoded on its own.
+            val source = body.source().inputStream().reader(Charsets.UTF_8)
             withContext(Dispatchers.IO) {
                 val builder = StringBuilder()
                 while (isActive) {
-                    val readByteCount = try {
+                    val readCharCount = try {
                         source.read(buf)
                     } catch (e: IOException) {
                         cancel("Listen failure", e)
                         return@withContext
                     }
-                    if (readByteCount < 0) {
+                    if (readCharCount < 0) {
                         cancel("EOF while reading event stream")
                         return@withContext
                     }
-                    builder.append(String(buf, 0, readByteCount, Charsets.UTF_8))
+                    builder.append(buf, 0, readCharCount)
                     when (builder.takeLast(2)) {
                         "[]" -> {
                             // empty message array

@@ -38,6 +38,7 @@ import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.PlayerStatus
 import de.maniac103.squeezeclient.model.Playlist
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
@@ -80,9 +81,11 @@ class SqueezeboxMediaPlayer(
         }
     private var pendingPlayerState = PendingPlayerState()
     private var playerState: PlayerState? = null
+    private var unacknowledgedStateChange: UnacknowledgedPlayerStateChange? = null
     private var statusSubscription: Job? = null
     private var playlistFetchJob: Job? = null
     private var delayedStateUpdateJob: Job? = null
+    private var unacknowledgedStateRevertJob: Job? = null
 
     override fun handleSetDeviceVolume(deviceVolume: Int, flags: Int) = future {
         val playerId = currentPlayer ?: return@future
@@ -114,27 +117,37 @@ class SqueezeboxMediaPlayer(
             playWhenReady -> PlayerStatus.PlayState.Playing
             else -> PlayerStatus.PlayState.Paused
         }
+        updateUnacknowledgedState(playState = newState)
         connectionHelper.changePlaybackState(playerId, newState)
     }
 
     override fun handleSeek(mediaItemIndex: Int, positionMs: Long, seekCommand: Int) = future {
         val playerId = currentPlayer ?: return@future
         when (seekCommand) {
-            COMMAND_SEEK_TO_NEXT_MEDIA_ITEM, COMMAND_SEEK_TO_NEXT ->
+            COMMAND_SEEK_TO_NEXT_MEDIA_ITEM, COMMAND_SEEK_TO_NEXT -> {
+                updateUnacknowledgedState(playlistPositionOffset = 1)
                 connectionHelper.sendButtonRequest(PlaybackButtonRequest.NextTrack(playerId))
+            }
 
-            COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM, COMMAND_SEEK_TO_PREVIOUS ->
+            COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM, COMMAND_SEEK_TO_PREVIOUS -> {
+                updateUnacknowledgedState(playlistPositionOffset = -1)
                 connectionHelper.sendButtonRequest(
                     PlaybackButtonRequest.PreviousTrack(playerId)
                 )
+            }
 
             COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM -> {
                 val positionSeconds = ((positionMs + 500) / 1000).toInt()
+                updateUnacknowledgedState(positionInTrack = positionMs.milliseconds)
                 connectionHelper.updatePlaybackPosition(playerId, positionSeconds)
             }
 
             COMMAND_SEEK_TO_MEDIA_ITEM -> {
                 val positionSeconds = ((positionMs + 500) / 1000).toInt()
+                updateUnacknowledgedState(
+                    absolutePlaylistPosition = mediaItemIndex,
+                    positionInTrack = positionMs.milliseconds
+                )
                 connectionHelper.advanceToPlaylistPosition(playerId, mediaItemIndex)
                 if (positionSeconds > 0) {
                     connectionHelper.updatePlaybackPosition(playerId, positionSeconds)
@@ -147,6 +160,7 @@ class SqueezeboxMediaPlayer(
 
     override fun handleStop() = future {
         val playerId = currentPlayer ?: return@future
+        updateUnacknowledgedState(playState = PlayerStatus.PlayState.Stopped)
         connectionHelper.changePlaybackState(playerId, PlayerStatus.PlayState.Stopped)
     }
 
@@ -155,11 +169,20 @@ class SqueezeboxMediaPlayer(
             ?: return waitingForPlayerState()
         val currentSong = playerState.currentSong
             ?: return State.Builder().setPlaybackState(STATE_IDLE).build()
+        val unacknowledgedChange = unacknowledgedStateChange
 
         val currentSongDurationUs =
             playerState.currentSongDuration?.toLong(DurationUnit.MICROSECONDS)
         val (playlist, currentIndex) = playerState.playlist?.let { list ->
-            val currentPosition = playerState.playlistPosition
+            val currentPosition = when {
+                unacknowledgedChange?.absolutePlaylistPosition != null ->
+                    unacknowledgedChange.absolutePlaylistPosition
+
+                unacknowledgedChange?.playlistPositionOffset != null ->
+                    playerState.playlistPosition + unacknowledgedChange.playlistPositionOffset
+
+                else -> playerState.playlistPosition
+            }
             val mediaList: List<MediaItemData> = list.items.mapIndexed { index, item ->
                 val builder = if (index + list.offset == currentPosition) {
                     // Prefer current song from status over playlist item, because the former
@@ -208,7 +231,7 @@ class SqueezeboxMediaPlayer(
 
             !playerState.powered -> STATE_IDLE
 
-            else -> when (playerState.playbackState) {
+            else -> when (unacknowledgedChange?.playState ?: playerState.playbackState) {
                 PlayerStatus.PlayState.Playing -> STATE_READY
                 PlayerStatus.PlayState.Paused -> STATE_READY
                 PlayerStatus.PlayState.Stopped -> STATE_IDLE
@@ -219,7 +242,9 @@ class SqueezeboxMediaPlayer(
             .setPlaybackState(playbackState)
             .setAvailableCommands(commandsBuilder.build())
             .setContentPositionMs(
-                playerState.currentPlayPosition?.toLong(DurationUnit.MILLISECONDS) ?: C.TIME_UNSET
+                unacknowledgedChange?.positionInTrack?.inWholeMilliseconds
+                    ?: playerState.currentPlayPosition?.toLong(DurationUnit.MILLISECONDS)
+                    ?: C.TIME_UNSET
             )
             .setPlayWhenReady(playWhenReady, PLAY_WHEN_READY_CHANGE_REASON_REMOTE)
             .setPlaylist(playlist)
@@ -237,6 +262,49 @@ class SqueezeboxMediaPlayer(
         playerState.muted?.let { builder.setIsDeviceMuted(it) }
 
         return builder.build()
+    }
+
+    private fun updateUnacknowledgedState(
+        absolutePlaylistPosition: Int? = null,
+        playlistPositionOffset: Int? = null,
+        positionInTrack: Duration? = null,
+        playState: PlayerStatus.PlayState? = null
+    ) {
+        val newPlayState = playState ?: unacknowledgedStateChange?.playState
+        val newPositionInTrack = positionInTrack ?: unacknowledgedStateChange?.positionInTrack
+        val newAbsolutePosition = absolutePlaylistPosition
+            ?: unacknowledgedStateChange?.absolutePlaylistPosition
+        val existingOffset = unacknowledgedStateChange?.playlistPositionOffset
+        val newOffset = when {
+            // absolute position takes precedence
+            newAbsolutePosition != null -> null
+
+            playlistPositionOffset != null && existingOffset != null ->
+                existingOffset + playlistPositionOffset
+
+            playlistPositionOffset != null -> playlistPositionOffset
+
+            else -> existingOffset
+        }
+        val playlistLength = pendingPlayerState.playlist?.totalCount ?: Int.MAX_VALUE
+
+        unacknowledgedStateChange = UnacknowledgedPlayerStateChange(
+            newAbsolutePosition
+                ?.plus(playlistPositionOffset ?: 0)
+                ?.coerceIn(0, playlistLength),
+            newOffset?.coerceIn(0, playlistLength),
+            newPositionInTrack,
+            newPlayState
+        )
+        invalidateState()
+
+        unacknowledgedStateRevertJob?.cancel()
+        unacknowledgedStateRevertJob = launch {
+            // Give the server some reasoanble amount of time to react
+            delay(3.seconds)
+            unacknowledgedStateChange = null
+            invalidateState()
+        }
     }
 
     /**
@@ -312,8 +380,7 @@ class SqueezeboxMediaPlayer(
                 // Accept immediately if either
                 // - we don't have a state yet (don't wait for playlist)
                 // - or what we have looks consistent
-                playerState = newPlayerState
-                invalidateState()
+                applyPlayerState(newPlayerState)
             }
 
             playlistFetchJob?.isActive == true -> {
@@ -327,11 +394,17 @@ class SqueezeboxMediaPlayer(
                 // which will trigger another playlist fetch.
                 delayedStateUpdateJob = lifecycle.coroutineScope.launch {
                     delay(500.milliseconds)
-                    playerState = newPlayerState
-                    invalidateState()
+                    applyPlayerState(newPlayerState)
                 }
             }
         }
+    }
+
+    private fun applyPlayerState(newPlayerState: PlayerState) {
+        playerState = newPlayerState
+        unacknowledgedStateChange = null
+        unacknowledgedStateRevertJob?.cancel()
+        invalidateState()
     }
 
     private fun Playlist.PlaylistItem.toMediaItemDataBuilder(position: Int): MediaItemData.Builder {
@@ -373,4 +446,11 @@ class SqueezeboxMediaPlayer(
         fun isCompleteAndConsistent() =
             playlist != null && status.playlist.lastChange == playlist.timestamp
     }
+
+    private data class UnacknowledgedPlayerStateChange(
+        val absolutePlaylistPosition: Int? = null,
+        val playlistPositionOffset: Int? = null,
+        val positionInTrack: Duration? = null,
+        val playState: PlayerStatus.PlayState? = null
+    )
 }

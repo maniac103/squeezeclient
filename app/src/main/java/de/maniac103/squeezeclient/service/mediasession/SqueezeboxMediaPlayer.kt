@@ -39,6 +39,7 @@ import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.PlayerStatus
 import de.maniac103.squeezeclient.model.Playlist
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -67,7 +68,14 @@ class SqueezeboxMediaPlayer(
             if (field != value) {
                 field = value
                 updatePlayer(currentPlayer)
-                invalidateState()
+                launch {
+                    if (!value) {
+                        // Don't report loss of connection immediately: reconnection may already
+                        // be happening, and we do not want to report intermediate states
+                        delay(2.seconds)
+                    }
+                    invalidateState()
+                }
             }
         }
     private var pendingPlayerState = PendingPlayerState()

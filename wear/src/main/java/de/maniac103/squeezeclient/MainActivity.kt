@@ -40,8 +40,8 @@ import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withTimeoutOrNull
 
 class MainActivity : ComponentActivity() {
-    private val messageClient by lazy { Wearable.getMessageClient(this) }
-    private val capabilityClient by lazy { Wearable.getCapabilityClient(this) }
+    private val messageClient by lazy { Wearable.getMessageClient(applicationContext) }
+    private val capabilityClient by lazy { Wearable.getCapabilityClient(applicationContext) }
     private val viewModel: AppViewModel by viewModels()
     private val connectedNode get() =
         (viewModel.connectionState.value as? AppViewModel.ConnectionState.ConnectedToServer)?.node

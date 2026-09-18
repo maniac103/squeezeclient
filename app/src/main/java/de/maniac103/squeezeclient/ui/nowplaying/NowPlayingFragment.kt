@@ -65,10 +65,12 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 import kotlin.time.ExperimentalTime
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 class NowPlayingFragment :
@@ -84,6 +86,7 @@ class NowPlayingFragment :
             contextItem: SlimBrowseItemList.SlimBrowseItem
         ): Job?
         fun showVolumePopup()
+        fun showTransientMessage(vararg text: String)
     }
 
     private val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)
@@ -94,7 +97,11 @@ class NowPlayingFragment :
     private lateinit var playlistBottomSheetBehavior: BottomSheetBehavior<RoundedCornerFrameLayout>
     private var timeUpdateJob: Job? = null
     private var sliderDragUpdateJob: Job? = null
+    private var favoriteUpdateJob: Job? = null
     private var currentSong: Playlist.PlaylistItem? = null
+    private var currentSongUrl: String? = null
+    private var currentSongTitle: String? = null
+    private var currentSongIsFavorite: Boolean? = null
 
     private val onBackPressedCallback = object : OnBackPressedCallback(false) {
         private var startedCollapse = false
@@ -227,7 +234,11 @@ class NowPlayingFragment :
         binding.container.doOnTransitionCompleted {
             updateBackPressedCallbackState()
             binding.toolbar.invalidateMenu()
+            updateFavoriteIcon()
         }
+
+        binding.favorite.setOnClickListener { toggleFavorite() }
+        updateFavoriteIcon()
 
         binding.progressSlider.apply {
             labelBehavior = LabelFormatter.LABEL_GONE
@@ -266,6 +277,7 @@ class NowPlayingFragment :
                         if (nowPlaying != currentSong) {
                             currentSong = nowPlaying
                             binding.toolbar.invalidateMenu()
+                            updateFavoriteState()
                         }
                     }
             }
@@ -374,11 +386,126 @@ class NowPlayingFragment :
         }
         job?.invokeOnCompletion {
             collapseIfExpanded()
+            // The action may have changed the favorite state
+            updateFavoriteState()
         }
         return job
     }
 
     // Private implementation details
+
+    /**
+     * Runs [block], returning null in case of a request failure. Failures are reported as
+     * CancellationException by the connection helper, which is why actual cancellation of this
+     * coroutine has to be treated differently.
+     */
+    private suspend fun <T> CoroutineScope.requestOrNull(block: suspend () -> T): T? = try {
+        block()
+    } catch (e: Exception) {
+        if (isActive) {
+            null
+        } else {
+            throw e
+        }
+    }
+
+    private fun updateFavoriteState() {
+        favoriteUpdateJob?.cancel()
+        currentSongUrl = null
+        currentSongTitle = null
+        currentSongIsFavorite = null
+        updateFavoriteIcon()
+
+        val song = currentSong ?: return
+        favoriteUpdateJob = lifecycleScope.launch {
+            val info = requestOrNull { connectionHelper.getCurrentTrackInfo(playerId) }
+                ?: return@launch
+            val url = info.url ?: return@launch
+            val isFavorite = requestOrNull { connectionHelper.isFavorite(playerId, url) }
+                ?: return@launch
+
+            // Ignore the result if the user changed tracks in the meantime
+            if (currentSong == song) {
+                currentSongUrl = url
+                currentSongTitle = info.title
+                currentSongIsFavorite = isFavorite
+                updateFavoriteIcon()
+            }
+        }
+    }
+
+    private fun updateFavoriteIcon() {
+        // While the server state is still unknown, show the button in "not favorite" state in
+        // order to avoid it flickering when the state is fetched.
+        val isFavorite = currentSongIsFavorite == true
+        // The button belongs to the toolbar, which is hidden in the collapsed state
+        val expanded = binding.container.currentState == R.id.expanded
+        binding.favorite.isVisible = expanded && currentSong != null
+        binding.favorite.setImageResource(
+            if (isFavorite) {
+                R.drawable.ic_favorite_24dp
+            } else {
+                R.drawable.ic_favorite_border_24dp
+            }
+        )
+        binding.favorite.contentDescription = getString(
+            if (isFavorite) {
+                R.string.menu_favorite_remove
+            } else {
+                R.string.menu_favorite_add
+            }
+        )
+    }
+
+    private fun toggleFavorite() {
+        val url = currentSongUrl ?: return
+        val title = currentSongTitle.orEmpty()
+        val wasFavorite = currentSongIsFavorite ?: return
+        val song = currentSong ?: return
+
+        favoriteUpdateJob?.cancel()
+        // Update the icon right away, from the user's point of view the change is done
+        currentSongIsFavorite = !wasFavorite
+        updateFavoriteIcon()
+
+        favoriteUpdateJob = lifecycleScope.launch {
+            val requestSucceeded = requestOrNull {
+                if (wasFavorite) {
+                    connectionHelper.removeFavorite(playerId, url, title)
+                } else {
+                    connectionHelper.addFavorite(playerId, url, title)
+                }
+            } != null
+
+            if (!requestSucceeded) {
+                if (currentSong == song) {
+                    currentSongIsFavorite = wasFavorite
+                    updateFavoriteIcon()
+                }
+                listener.showTransientMessage(getString(R.string.favorite_error))
+                return@launch
+            }
+
+            // Ask the server for the actual state, in case the favorites were changed elsewhere
+            val isFavorite = requestOrNull { connectionHelper.isFavorite(playerId, url) }
+                ?: !wasFavorite
+            if (currentSong == song) {
+                currentSongIsFavorite = isFavorite
+                updateFavoriteIcon()
+            }
+
+            listener.showTransientMessage(
+                getString(
+                    if (isFavorite) {
+                        R.string.favorite_added
+                    } else {
+                        R.string.favorite_removed
+                    }
+                ),
+                title
+            )
+        }
+    }
 
     private fun View.applyInsetsAsMargin(side: Int, insetSelector: View.(Insets) -> Int) {
         ViewCompat.setOnApplyWindowInsetsListener(this) { v, windowInsets ->

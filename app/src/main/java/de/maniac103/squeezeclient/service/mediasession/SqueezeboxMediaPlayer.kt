@@ -344,7 +344,7 @@ class SqueezeboxMediaPlayer(
         return MediaItemData.Builder(position)
             .setMediaItem(
                 MediaItem.Builder()
-                    .setMediaId(position.toString())
+                    .setMediaId("$position-${hashCode()}")
                     .setMediaMetadata(metadata)
                     .build()
             )

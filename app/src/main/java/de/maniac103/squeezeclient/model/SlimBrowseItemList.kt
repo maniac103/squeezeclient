@@ -47,7 +47,8 @@ data class SlimBrowseItemList(
         val actions: JiveActions?,
         val nextWindow: NextWindow?,
         val subItems: List<SlimBrowseItem>?,
-        val webLink: String?
+        val webLink: String?,
+        val tag: String? = null
     ) : ParcelableArtworkItem
 
     @Serializable

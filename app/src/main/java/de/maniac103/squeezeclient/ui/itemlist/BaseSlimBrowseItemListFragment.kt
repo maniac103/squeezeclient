@@ -196,10 +196,7 @@ abstract class BaseSlimBrowseItemListFragment :
         val actions = selectedItem.actions ?: return null
 
         return when {
-            // FIXME: the item title check is kinda ugly, but there's no proper way to
-            // implement a marker object it seems, since SlimBrowseItem is a data class
-            actions.downloadData != null &&
-                selectedItem.title == getString(R.string.action_download) ->
+            actions.downloadData != null && selectedItem.tag == "download" ->
                 triggerDownload(actions.downloadData)
 
             actions.doAction != null ->
@@ -259,6 +256,7 @@ abstract class BaseSlimBrowseItemListFragment :
                 // - Must contain a go action (otherwise it's assumed to be non-clickable)
                 // - Go action must not point to a context menu
                 // - Download data must match that of the base item
+                // - Tag must match the expectation of onContextItemSelected
                 val item = SlimBrowseItemList.SlimBrowseItem(
                     listPosition = size,
                     title = getString(R.string.action_download),
@@ -286,7 +284,8 @@ abstract class BaseSlimBrowseItemListFragment :
                     ),
                     nextWindow = null,
                     subItems = null,
-                    webLink = null
+                    webLink = null,
+                    tag = "download"
                 )
                 add(item)
             }

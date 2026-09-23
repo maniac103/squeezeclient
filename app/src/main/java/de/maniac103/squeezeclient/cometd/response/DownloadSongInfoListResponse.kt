@@ -47,7 +47,7 @@ data class DownloadSongInfoListResponse(
         @JsonNames("trackartist")
         val artist: String,
         @SerialName("artwork_track_id")
-        val artworkTrackId: String,
+        val artworkTrackId: String? = null,
         val duration: Double,
         @SerialName("samplerate")
         val sampleRate: Int,

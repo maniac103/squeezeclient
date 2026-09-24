@@ -74,7 +74,7 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
     private var progress = Data.EMPTY
 
     override suspend fun doWork(): Result {
-        val items = inputData.getStringArray(InputDataKeys.ITEMS)
+        val items = inputData.getNullableStringArray(InputDataKeys.ITEMS)
             ?.toSongInfos(applicationContext)
             ?: return Result.success()
         val serverConfig = applicationContext.prefs.serverConfig
@@ -309,8 +309,8 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
 
         private fun List<DownloadSongInfo>.toDataValue(context: Context): Array<String?> =
             map { context.jsonParser.encodeToString(it) }.toTypedArray()
-        private fun Array<String>.toSongInfos(context: Context) =
-            map { context.jsonParser.decodeFromString<DownloadSongInfo>(it) }
+        private fun Array<String?>.toSongInfos(context: Context) = filterNotNull()
+            .map { context.jsonParser.decodeFromString<DownloadSongInfo>(it) }
 
         fun enqueue(context: Context, items: List<DownloadSongInfo>) {
             val inputData = Data.Builder()
@@ -337,9 +337,10 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
 
                 val notificationId = NotificationIds.forDownloadWork(failedEntries.first().id)
                 val failedItems = failedEntries
-                    .mapNotNull { it.outputData.getStringArray(OutputDataKeys.FAILED_ITEMS) }
+                    .mapNotNull { it.outputData.getNullableStringArray(OutputDataKeys.FAILED_ITEMS) }
                     .toTypedArray()
                     .flatten()
+                    .filterNotNull()
                 val channel = context.getOrCreateDownloadWorkerNotificationChannel()
                 val notification = createDownloadRetryNotification(
                     context,

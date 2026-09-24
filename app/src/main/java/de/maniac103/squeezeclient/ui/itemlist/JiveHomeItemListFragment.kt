@@ -14,16 +14,26 @@
  * If not, see <http://www.gnu.org/licenses/>.
  *
  */
-
 package de.maniac103.squeezeclient.ui.itemlist
 
 import android.os.Bundle
-import androidx.lifecycle.Lifecycle
+import android.view.View
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.unit.dp
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.SavedStateViewModelFactory
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import de.maniac103.squeezeclient.databinding.FragmentGenericListBinding
+import androidx.lifecycle.viewmodel.compose.viewModel
+import de.maniac103.squeezeclient.databinding.FragmentComposeBinding
 import de.maniac103.squeezeclient.extfuncs.ViewEdge
 import de.maniac103.squeezeclient.extfuncs.addSystemBarAndCutoutInsetsListener
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
@@ -37,20 +47,17 @@ import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.ui.MainContentChild
 import de.maniac103.squeezeclient.ui.bottomsheets.ChoicesBottomSheetFragment
 import de.maniac103.squeezeclient.ui.bottomsheets.InputBottomSheetFragment
-import de.maniac103.squeezeclient.ui.common.BasePrepopulatedListAdapter
 import de.maniac103.squeezeclient.ui.common.ViewBindingFragment
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
 
-class JiveHomeListItemFragment :
-    ViewBindingFragment<FragmentGenericListBinding>(FragmentGenericListBinding::inflate),
+class JiveHomeItemListComposeFragment :
+    ViewBindingFragment<FragmentComposeBinding>(FragmentComposeBinding::inflate),
     MainContentChild,
-    BasePrepopulatedListAdapter.ItemSelectionListener<JiveHomeMenuItem>,
     ChoicesBottomSheetFragment.SelectionListener,
     InputBottomSheetFragment.InputSubmitListener {
 
@@ -60,53 +67,51 @@ class JiveHomeListItemFragment :
     }
 
     private val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)
-    private val nodeId get() = requireArguments().getString("nodeId")!!
     private val listener get() = requireParentAs<NavigationListener>()
-    override val scrollingTargetView get() = binding.recycler
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override val titleFlow get() = connectionHelper
-        .playerState(playerId)
-        .flatMapLatest { it.homeMenu }
-        .mapNotNull { it[nodeId]?.title }
-        .map { listOf(it) }
+    override val titleFlow get() = viewModel.titleFlow
     override val iconFlow = flowOf(null)
 
-    private var adapter: JiveHomeItemListAdapter? = null
-    private var latestMenu = mapOf<String, JiveHomeMenuItem>()
+    override val scrollingTargetView: View? get() = null
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                val playerState = connectionHelper.playerState(playerId)
-                playerState.flatMapLatest { it.homeMenu }.collect { menu ->
-                    latestMenu = menu
-                    updateMenuData()
+    private val viewModel: JiveHomeItemListViewModel by viewModels {
+        SavedStateViewModelFactory(requireActivity().application, this, requireArguments())
+    }
+
+    override fun onBindingCreated(binding: FragmentComposeBinding) {
+        binding.compose.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                MaterialTheme {
+                    // TODO: insets handling
+                    JiveHomeItemList(viewModel) { item -> handleItemSelected(item) }
                 }
             }
         }
-    }
-
-    override fun onBindingCreated(binding: FragmentGenericListBinding) {
-        binding.recycler.addSystemBarAndCutoutInsetsListener(ViewEdge.Center, ViewEdge.BottomStart)
         binding.root.enableMainContentBackground()
-        binding.recycler.layoutManager = LinearLayoutManager(
-            requireContext(),
-            RecyclerView.VERTICAL,
-            false
-        )
-        adapter = JiveHomeItemListAdapter().apply {
-            itemSelectionListener = this@JiveHomeListItemFragment
-            binding.recycler.adapter = this
-        }
-        updateMenuData()
     }
 
-    // JiveHomeItemListAdapter.SelectionListener implementation
+    // ChoicesBottomSheetFragment.SelectionListener implementation
 
-    override fun onItemSelected(item: JiveHomeMenuItem) = when {
+    override fun onChoiceSelected(choice: JiveAction, extraData: Bundle?) = lifecycleScope.launch {
+        connectionHelper.executeAction(playerId, choice)
+    }
+
+    // InputBottomSheetFragment.InputSubmitListener implementation
+
+    override fun onInputSubmitted(title: String, action: JiveAction, isGoAction: Boolean) =
+        if (isGoAction) {
+            listener.onGoAction(title, action)
+        } else {
+            lifecycleScope.launch {
+                connectionHelper.executeAction(playerId, action)
+            }
+        }
+
+    // Private implementation details
+
+    private fun handleItemSelected(item: JiveHomeMenuItem) = when {
         item.input != null -> {
             showInput(item)
             null
@@ -131,25 +136,6 @@ class JiveHomeListItemFragment :
         }
     }
 
-    // ChoicesBottomSheetFragment.SelectionListener implementation
-
-    override fun onChoiceSelected(choice: JiveAction, extraData: Bundle?) = lifecycleScope.launch {
-        connectionHelper.executeAction(playerId, choice)
-    }
-
-    // InputBottomSheetFragment.InputSubmitListener implementation
-
-    override fun onInputSubmitted(title: String, action: JiveAction, isGoAction: Boolean) =
-        if (isGoAction) {
-            listener.onGoAction(title, action)
-        } else {
-            lifecycleScope.launch {
-                connectionHelper.executeAction(playerId, action)
-            }
-        }
-
-    // Private implementation details
-
     private fun showInput(item: JiveHomeMenuItem) {
         val input = requireNotNull(item.input)
         if (input.type == JiveActions.Input.Type.Time) {
@@ -168,17 +154,34 @@ class JiveHomeListItemFragment :
         f.show(childFragmentManager, "choices")
     }
 
-    private fun updateMenuData() {
-        val items = latestMenu.values.filter { it.node == nodeId }.sortedBy { it.sortWeight }
-        adapter?.replaceItems(items)
-    }
-
     companion object {
-        fun create(playerId: PlayerId, nodeId: String) = JiveHomeListItemFragment().apply {
+        fun create(playerId: PlayerId, nodeId: String) = JiveHomeItemListComposeFragment().apply {
             arguments = Bundle().apply {
                 putParcelable("playerId", playerId)
                 putString("nodeId", nodeId)
             }
+        }
+    }
+}
+
+@Composable
+fun JiveHomeItemList(
+    viewModel: JiveHomeItemListViewModel = viewModel(),
+    itemSelectionListener: (JiveHomeMenuItem) -> Unit = {}
+) {
+    val menuEntries by viewModel.homeMenuItemsFlow.collectAsState(emptyList())
+
+    LazyColumn(
+        modifier = Modifier.padding(bottom = 16.dp)
+    ) {
+        items(menuEntries) { entry ->
+            JiveHomeItemListEntry(
+                title = entry.title,
+                subtext = entry.subText,
+                choiceLabel = entry.choiceLabel,
+                iconResourceId = entry.iconResourceId,
+                modifier = Modifier.clickable { itemSelectionListener(entry.source) }
+            )
         }
     }
 }

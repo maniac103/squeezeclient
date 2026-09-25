@@ -14,37 +14,54 @@
  * If not, see <http://www.gnu.org/licenses/>.
  *
  */
-
 package de.maniac103.squeezeclient.ui.itemlist
 
 import android.os.Bundle
-import de.maniac103.squeezeclient.extfuncs.connectionHelper
-import de.maniac103.squeezeclient.extfuncs.getParcelable
-import de.maniac103.squeezeclient.extfuncs.getParcelableOrNull
-import de.maniac103.squeezeclient.model.ArtworkItem
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.SavedStateViewModelFactory
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.paging.compose.collectAsLazyPagingItems
+import de.maniac103.squeezeclient.extfuncs.prefs
+import de.maniac103.squeezeclient.extfuncs.serverConfig
 import de.maniac103.squeezeclient.model.JiveAction
-import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.ParcelableArtworkItem
 import de.maniac103.squeezeclient.model.PlayerId
+import de.maniac103.squeezeclient.model.ServerConfiguration
+import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.model.WindowStyle
-import kotlinx.coroutines.flow.flowOf
 
 class SlimBrowseItemListFragment : BaseSlimBrowseItemListFragment() {
-    override val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)
-    override val titleFlow get() = requireArguments().run {
-        flowOf(listOfNotNull(getString("parentTitle"), getString("title")))
+    private val viewModel: SlimBrowseItemListViewModel by viewModels {
+        SavedStateViewModelFactory(requireActivity().application, this, requireArguments())
     }
-    override val iconFlow get() = flowOf(
-        requireArguments().getParcelableOrNull("icon", ArtworkItem::class)
-    )
-    override val showIcons get() = requireArguments().getBoolean("showIcons")
-    override val useGrid get() = super.useGrid && requireArguments().getBoolean("canUseGrid")
-    override val fetchAction get() =
-        requireArguments().getParcelable("fetchAction", JiveAction::class)
-    override val fastScrollEnabled = true
 
-    override suspend fun onLoadPage(page: PagingParams) =
-        connectionHelper.fetchItemsForAction(playerId, fetchAction, page, true)
+    override val baseViewModel get() = viewModel
+
+    @Composable
+    override fun createContent(
+        itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit,
+        contextMenuClickListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit
+    ) {
+        SlimBrowseItemList(
+            viewModel,
+            prefs.serverConfig,
+            itemSelectionListener = itemSelectionListener,
+            contextMenuClickListener = contextMenuClickListener
+        )
+    }
 
     companion object {
         fun create(
@@ -69,4 +86,25 @@ class SlimBrowseItemListFragment : BaseSlimBrowseItemListFragment() {
             }
         }
     }
+}
+
+@Composable
+fun SlimBrowseItemList(
+    viewModel: SlimBrowseItemListViewModel = viewModel(),
+    serverConfig: ServerConfiguration?,
+    itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {},
+    contextMenuClickListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {}
+) {
+    val entries = viewModel.itemsFlow.collectAsLazyPagingItems()
+    val busyItem by viewModel.busyItemFlow.collectAsState()
+
+    SlimBrowsePagedItemListOrGrid(
+        entries,
+        busyItem,
+        serverConfig,
+        viewModel.useGrid,
+        viewModel.showIcons,
+        itemSelectionListener,
+        contextMenuClickListener
+    )
 }

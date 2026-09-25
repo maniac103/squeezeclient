@@ -18,28 +18,42 @@
 package de.maniac103.squeezeclient.ui.search
 
 import android.os.Bundle
-import de.maniac103.squeezeclient.R
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.SavedStateViewModelFactory
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.paging.compose.collectAsLazyPagingItems
 import de.maniac103.squeezeclient.cometd.request.LibrarySearchRequest
-import de.maniac103.squeezeclient.extfuncs.connectionHelper
-import de.maniac103.squeezeclient.extfuncs.getParcelable
-import de.maniac103.squeezeclient.model.PagingParams
+import de.maniac103.squeezeclient.extfuncs.prefs
+import de.maniac103.squeezeclient.extfuncs.serverConfig
 import de.maniac103.squeezeclient.model.PlayerId
+import de.maniac103.squeezeclient.model.ServerConfiguration
+import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.ui.itemlist.BaseSlimBrowseItemListFragment
-import kotlinx.coroutines.flow.flowOf
+import de.maniac103.squeezeclient.ui.itemlist.SlimBrowsePagedItemListOrGrid
+import kotlin.getValue
 
 class LibrarySearchResultsFragment : BaseSlimBrowseItemListFragment() {
-    override val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)
-    override val titleFlow get() =
-        flowOf(listOf(getString(R.string.page_title_library_search, searchTerm)))
-    override val iconFlow get() = flowOf(null)
-    private val searchType get() =
-        requireArguments().getParcelable("type", LibrarySearchRequest.Mode::class)
-    private val searchTerm get() = requireArguments().getString("query")!!
-    override val fastScrollEnabled = true
-    override val showIcons = true
+    private val viewModel: LibrarySearchResultsViewModel by viewModels {
+        SavedStateViewModelFactory(requireActivity().application, this, requireArguments())
+    }
 
-    override suspend fun onLoadPage(page: PagingParams) =
-        connectionHelper.getLocalLibrarySearchResults(playerId, searchTerm, searchType, page)
+    override val baseViewModel get() = viewModel
+
+    @Composable
+    override fun createContent(
+        itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit,
+        contextMenuClickListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit
+    ) {
+        LibrarySearchResultsItemList(
+            viewModel,
+            prefs.serverConfig,
+            itemSelectionListener = itemSelectionListener,
+            contextMenuClickListener = contextMenuClickListener
+        )
+    }
 
     companion object {
         fun create(playerId: PlayerId, type: LibrarySearchRequest.Mode, searchTerm: String) =
@@ -51,4 +65,25 @@ class LibrarySearchResultsFragment : BaseSlimBrowseItemListFragment() {
                 }
             }
     }
+}
+
+@Composable
+fun LibrarySearchResultsItemList(
+    viewModel: LibrarySearchResultsViewModel = viewModel(),
+    serverConfig: ServerConfiguration?,
+    itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {},
+    contextMenuClickListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {}
+) {
+    val entries = viewModel.itemsFlow.collectAsLazyPagingItems()
+    val busyItem by viewModel.busyItemFlow.collectAsState()
+
+    SlimBrowsePagedItemListOrGrid(
+        entries,
+        busyItem,
+        serverConfig,
+        viewModel.useGrid,
+        true,
+        itemSelectionListener,
+        contextMenuClickListener
+    )
 }

@@ -46,13 +46,13 @@ val Context.backProgressInterpolator: Interpolator get() =
 val Context.isRtl get() =
     resources.configuration.locales[0].layoutDirection == View.LAYOUT_DIRECTION_RTL
 
-fun Context.imageCacheContains(item: ArtworkItem?) = item?.extractIconUrl(this)
+fun Context.imageCacheContains(item: ArtworkItem?) = item?.extractIconUrl(prefs.serverConfig)
     ?.let { MemoryCache.Key(it) }
     ?.let { imageLoader.memoryCache?.keys?.contains(it) == true }
 
 suspend fun Context.loadArtwork(item: ArtworkItem?, size: Int): Drawable? {
     val request = ImageRequest.Builder(this)
-        .data(item?.extractIconUrl(this))
+        .data(item?.extractIconUrl(prefs.serverConfig))
         .size(size)
         .addServerCredentialsIfNeeded(this)
         .build()

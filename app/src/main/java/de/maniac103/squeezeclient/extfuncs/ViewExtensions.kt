@@ -59,7 +59,7 @@ fun View.showIme() {
 fun ShapeableImageView.loadArtwork(
     item: ArtworkItem?,
     builder: ImageRequest.Builder.() -> Unit = {}
-) = load(item?.extractIconUrl(context)) {
+) = load(item?.extractIconUrl(context.prefs.serverConfig)) {
     addServerCredentialsIfNeeded(context)
     target(ImageViewTarget(this@loadArtwork))
     builder()

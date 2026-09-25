@@ -31,7 +31,9 @@ import de.maniac103.squeezeclient.databinding.BottomSheetContextMenuBinding
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.extfuncs.getParcelableList
+import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.extfuncs.requireParentAs
+import de.maniac103.squeezeclient.extfuncs.serverConfig
 import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
@@ -78,7 +80,7 @@ class ContextMenuBottomSheetFragment :
 
         val parent = parent
         binding.icon.apply {
-            val iconUrl = parent.extractIconUrl(requireContext())
+            val iconUrl = parent.extractIconUrl(prefs.serverConfig)
             isVisible = iconUrl != null
             load(iconUrl)
         }

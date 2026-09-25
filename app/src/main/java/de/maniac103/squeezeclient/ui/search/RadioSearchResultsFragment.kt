@@ -18,25 +18,41 @@
 package de.maniac103.squeezeclient.ui.search
 
 import android.os.Bundle
-import de.maniac103.squeezeclient.R
-import de.maniac103.squeezeclient.extfuncs.connectionHelper
-import de.maniac103.squeezeclient.extfuncs.getParcelable
-import de.maniac103.squeezeclient.model.PagingParams
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.SavedStateViewModelFactory
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.paging.compose.collectAsLazyPagingItems
+import de.maniac103.squeezeclient.extfuncs.prefs
+import de.maniac103.squeezeclient.extfuncs.serverConfig
 import de.maniac103.squeezeclient.model.PlayerId
+import de.maniac103.squeezeclient.model.ServerConfiguration
+import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.ui.itemlist.BaseSlimBrowseItemListFragment
-import kotlinx.coroutines.flow.flowOf
+import de.maniac103.squeezeclient.ui.itemlist.SlimBrowsePagedItemListOrGrid
+import kotlin.getValue
 
 class RadioSearchResultsFragment : BaseSlimBrowseItemListFragment() {
-    override val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)
-    override val titleFlow get() =
-        flowOf(listOf(getString(R.string.page_title_radio_search, searchTerm)))
-    override val iconFlow get() = flowOf(null)
-    private val searchTerm get() = requireArguments().getString("query")!!
-    override val showIcons = true
-    override val fastScrollEnabled = true
+    private val viewModel: RadioSearchResultViewModel by viewModels {
+        SavedStateViewModelFactory(requireActivity().application, this, requireArguments())
+    }
 
-    override suspend fun onLoadPage(page: PagingParams) =
-        connectionHelper.getRadioSearchResults(playerId, searchTerm, page)
+    override val baseViewModel get() = viewModel
+
+    @Composable
+    override fun createContent(
+        itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit,
+        contextMenuClickListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit
+    ) {
+        RadioSearchResultsItemList(
+            viewModel,
+            prefs.serverConfig,
+            itemSelectionListener = itemSelectionListener,
+            contextMenuClickListener = contextMenuClickListener
+        )
+    }
 
     companion object {
         fun create(playerId: PlayerId, searchTerm: String) = RadioSearchResultsFragment().apply {
@@ -46,4 +62,26 @@ class RadioSearchResultsFragment : BaseSlimBrowseItemListFragment() {
             }
         }
     }
+}
+
+
+@Composable
+fun RadioSearchResultsItemList(
+    viewModel: RadioSearchResultViewModel = viewModel(),
+    serverConfig: ServerConfiguration?,
+    itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {},
+    contextMenuClickListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {}
+) {
+    val entries = viewModel.itemsFlow.collectAsLazyPagingItems()
+    val busyItem by viewModel.busyItemFlow.collectAsState()
+
+    SlimBrowsePagedItemListOrGrid(
+        entries,
+        busyItem,
+        serverConfig,
+        viewModel.useGrid,
+        true,
+        itemSelectionListener,
+        contextMenuClickListener
+    )
 }

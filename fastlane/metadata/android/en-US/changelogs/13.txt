@@ -1,0 +1,8 @@
+- Remove volume control from media session if not supported by player (#47)
+- Furtherly reduce gaps between tracks in local player (#46)
+- Fix FLAC playback failing after resuming a paused sync group (#48)
+- Improve media session handling for intermittent network outages
+- Fix Wear app not finding the phone app
+- Fix download of tracks without artwork (#64)
+- Misc. bug fixes
+

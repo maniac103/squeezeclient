@@ -33,6 +33,7 @@ import androidx.media3.common.util.UnstableApi
 import de.maniac103.squeezeclient.cometd.ConnectionHelper
 import de.maniac103.squeezeclient.cometd.request.PlaybackButtonRequest
 import de.maniac103.squeezeclient.extfuncs.prefs
+import de.maniac103.squeezeclient.extfuncs.serverConfig
 import de.maniac103.squeezeclient.extfuncs.volumeStepSize
 import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
@@ -412,7 +413,7 @@ class SqueezeboxMediaPlayer(
             .setTitle(title)
             .setArtist(artist)
             .setAlbumTitle(album)
-            .setArtworkUri(extractIconUrl(appContext)?.toUri())
+            .setArtworkUri(extractIconUrl(appContext.prefs.serverConfig)?.toUri())
             .build()
         return MediaItemData.Builder(position)
             .setMediaItem(

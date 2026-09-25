@@ -17,22 +17,19 @@
 
 package de.maniac103.squeezeclient.model
 
-import android.content.Context
 import android.os.Parcelable
-import de.maniac103.squeezeclient.extfuncs.prefs
-import de.maniac103.squeezeclient.extfuncs.serverConfig
 
 interface ArtworkItem {
     val icon: String?
     val iconId: String?
 
-    fun extractIconUrl(context: Context): String? {
+    fun extractIconUrl(server: ServerConfiguration?): String? {
         val maybeRelativeUrl = when {
             iconId?.toLongOrNull(16) != null -> "/music/$iconId/cover"
             iconId != null -> iconId
             else -> icon
         }
-        val baseUrl = context.prefs.serverConfig?.url ?: return maybeRelativeUrl
+        val baseUrl = server?.url ?: return maybeRelativeUrl
         return maybeRelativeUrl?.let { baseUrl.resolve(it).toString() }
     }
 }

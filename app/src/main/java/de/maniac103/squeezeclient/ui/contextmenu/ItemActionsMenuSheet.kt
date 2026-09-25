@@ -30,7 +30,9 @@ import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.databinding.BottomSheetItemActionsBinding
 import de.maniac103.squeezeclient.databinding.ListItemContextMenuBinding
 import de.maniac103.squeezeclient.extfuncs.getParcelable
+import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.extfuncs.requireParentAs
+import de.maniac103.squeezeclient.extfuncs.serverConfig
 import de.maniac103.squeezeclient.model.DownloadRequestData
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
@@ -63,7 +65,7 @@ class ItemActionsMenuSheet : BottomSheetDialogFragment() {
 
         val item = item
         binding.icon.apply {
-            val iconUrl = item.extractIconUrl(requireContext())
+            val iconUrl = item.extractIconUrl(prefs.serverConfig)
             isVisible = iconUrl != null
             load(iconUrl)
         }

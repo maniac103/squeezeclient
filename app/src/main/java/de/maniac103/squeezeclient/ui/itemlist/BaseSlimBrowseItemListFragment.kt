@@ -1,6 +1,6 @@
 /*
  * This file is part of Squeeze Client, an Android client for the LMS music server.
- * Copyright (c) 2024 Danny Baumann
+ * Copyright (c) 2026 Danny Baumann
  *
  * This program is free software: you can redistribute it and/or modify it under the terms of the
  * GNU General Public License as published by the Free Software Foundation,
@@ -20,49 +20,59 @@ package de.maniac103.squeezeclient.ui.itemlist
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.view.View
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.lifecycleScope
-import androidx.paging.PagingDataAdapter
-import androidx.recyclerview.widget.DiffUtil
+import androidx.paging.compose.LazyPagingItems
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.markodevcic.peko.PermissionRequester
 import com.markodevcic.peko.PermissionResult
 import de.maniac103.squeezeclient.R
-import de.maniac103.squeezeclient.databinding.FragmentGenericListBinding
-import de.maniac103.squeezeclient.extfuncs.ViewEdge
-import de.maniac103.squeezeclient.extfuncs.addSystemBarAndCutoutInsetsListener
+import de.maniac103.squeezeclient.databinding.FragmentComposeBinding
 import de.maniac103.squeezeclient.extfuncs.await
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.extfuncs.requireParentAs
 import de.maniac103.squeezeclient.extfuncs.showActionTimePicker
+import de.maniac103.squeezeclient.model.ArtworkItem
 import de.maniac103.squeezeclient.model.DownloadRequestData
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.JiveActions
 import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
+import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.service.DownloadWorker
 import de.maniac103.squeezeclient.ui.MainContentChild
 import de.maniac103.squeezeclient.ui.bottomsheets.ChoicesBottomSheetFragment
 import de.maniac103.squeezeclient.ui.bottomsheets.InputBottomSheetFragment
-import de.maniac103.squeezeclient.ui.common.BasePagingListFragment
-import de.maniac103.squeezeclient.ui.common.SlimBrowseItemListAdapter
-import de.maniac103.squeezeclient.ui.common.SlimBrowseItemListViewHolder
+import de.maniac103.squeezeclient.ui.common.ViewBindingFragment
 import de.maniac103.squeezeclient.ui.contextmenu.ContextMenuBottomSheetFragment
 import de.maniac103.squeezeclient.ui.contextmenu.ItemActionsMenuSheet
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 abstract class BaseSlimBrowseItemListFragment :
-    BasePagingListFragment<SlimBrowseItemList.SlimBrowseItem, SlimBrowseItemListViewHolder>(),
+    ViewBindingFragment<FragmentComposeBinding>(FragmentComposeBinding::inflate),
     MainContentChild,
-    SlimBrowseItemListAdapter.ItemSelectionListener,
     ChoicesBottomSheetFragment.SelectionListener,
-    ContextMenuBottomSheetFragment.Listener,
-    ItemActionsMenuSheet.Listener,
-    InputBottomSheetFragment.ItemSubmitListener {
+    InputBottomSheetFragment.ItemSubmitListener,
+    ContextMenuBottomSheetFragment.Listener {
 
     interface NavigationListener {
         fun onOpenSubItemList(item: SlimBrowseItemList.SlimBrowseItem, itemFetchAction: JiveAction)
@@ -75,101 +85,44 @@ abstract class BaseSlimBrowseItemListFragment :
         ): Job?
     }
 
-    protected abstract val playerId: PlayerId
-    protected abstract val showIcons: Boolean
-    protected open val fetchAction: JiveAction? = null
+    interface ViewModelInterface {
+        val titleFlow: Flow<List<String>>
+        val iconFlow: Flow<ArtworkItem?>
 
-    override val scrollingTargetView get() = binding.recycler
+        val playerId: PlayerId
+        val fetchAction: JiveAction?
+
+        fun setItemBusy(item: SlimBrowseItemList.SlimBrowseItem, job: Job)
+    }
+
+    protected abstract val baseViewModel: ViewModelInterface
     private val listener get() = requireParentAs<NavigationListener>()
 
-    override fun onBindingCreated(binding: FragmentGenericListBinding) {
-        super.onBindingCreated(binding)
-        binding.recycler.addSystemBarAndCutoutInsetsListener(ViewEdge.Center, ViewEdge.BottomStart)
+    override val titleFlow get() = baseViewModel.titleFlow
+    override val iconFlow get() = baseViewModel.iconFlow
+    override val scrollingTargetView: View? get() = null
+
+    override fun onBindingCreated(binding: FragmentComposeBinding) {
+        binding.compose.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                MaterialTheme {
+                    // TODO: insets handling
+                    createContent(
+                        itemSelectionListener = { item -> handleItemSelected(item) },
+                        contextMenuClickListener = { item -> handleContextMenu(item) }
+                    )
+                }
+            }
+        }
         binding.root.enableMainContentBackground()
     }
 
-    override fun onCreateAdapter(
-        diffCallback: DiffUtil.ItemCallback<SlimBrowseItemList.SlimBrowseItem>
-    ): PagingDataAdapter<SlimBrowseItemList.SlimBrowseItem, SlimBrowseItemListViewHolder> {
-        val adapter = SlimBrowseItemListAdapter(diffCallback, showIcons, useGrid)
-        adapter.itemSelectionListener = this
-        return adapter
-    }
-
-    override fun areItemsTheSame(
-        lhs: SlimBrowseItemList.SlimBrowseItem,
-        rhs: SlimBrowseItemList.SlimBrowseItem
-    ) = lhs.listPosition == rhs.listPosition
-
-    override fun areItemContentsTheSame(
-        lhs: SlimBrowseItemList.SlimBrowseItem,
-        rhs: SlimBrowseItemList.SlimBrowseItem
-    ) = lhs == rhs
-
-    // SlimBrowseItemListAdapter.ItemSelectionListener implementation
-
-    override fun onItemSelected(item: SlimBrowseItemList.SlimBrowseItem): Job? {
-        val actions = item.actions ?: return null
-        return when {
-            actions.input != null -> {
-                showInput(item)
-                null
-            }
-
-            actions.choices != null -> {
-                showChoices(item)
-                null
-            }
-
-            actions.checkbox != null -> {
-                val action = if (actions.checkbox.state) {
-                    actions.checkbox.offAction
-                } else {
-                    actions.checkbox.onAction
-                }
-                listener.onHandleDoOrGoAction(action, false, item, null)
-            }
-
-            actions.radio != null -> {
-                listener.onHandleDoOrGoAction(actions.radio.action, false, item, null)
-            }
-
-            item.webLink != null -> {
-                listener.onOpenWebLink(item.title, item.webLink.toUri())
-                null
-            }
-
-            item.subItems != null -> {
-                fetchAction?.let { listener.onOpenSubItemList(item, it) }
-                null
-            }
-
-            actions.goAction != null -> {
-                listener.onHandleDoOrGoAction(actions.goAction, true, item, null)
-            }
-
-            else -> null
-        }
-    }
-
-    override fun onContextMenu(item: SlimBrowseItemList.SlimBrowseItem): Job? {
-        val actions = item.actions ?: return null
-        return when {
-            actions.moreAction != null -> lifecycleScope.launch {
-                val itemList = loadContextMenuItems(actions.moreAction, actions)
-                val f = ContextMenuBottomSheetFragment.create(playerId, item, itemList)
-                f.show(childFragmentManager, "contextmenu")
-            }
-
-            actions.hasContextMenu -> {
-                val f = ItemActionsMenuSheet.create(item)
-                f.show(childFragmentManager, "itemactions")
-                null
-            }
-
-            else -> null
-        }
-    }
+    @Composable
+    protected abstract fun createContent(
+        itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit,
+        contextMenuClickListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit
+    )
 
     // ChoicesBottomSheetFragment.SelectionListener implementation
 
@@ -179,7 +132,7 @@ abstract class BaseSlimBrowseItemListFragment :
         return listener.onHandleDoOrGoAction(choice, false, item, null)
     }
 
-    // InputBottomSheetFragment.ItemSubmitListeber implementation
+    // InputBottomSheetFragment.InputSubmitListener implementation
 
     override fun onInputSubmitted(
         item: SlimBrowseItemList.SlimBrowseItem,
@@ -209,33 +162,77 @@ abstract class BaseSlimBrowseItemListFragment :
         }
     }
 
-    // ItemActionsMenuSheet.Listener implementation
-
-    override fun onActionSelected(action: JiveAction, item: SlimBrowseItemList.SlimBrowseItem) =
-        listener.onHandleDoOrGoAction(action, false, item, null)
-    override fun onDownloadSelected(data: DownloadRequestData) = triggerDownload(data)
-
     // Private implementation details
 
-    private fun showInput(item: SlimBrowseItemList.SlimBrowseItem) {
-        val input = requireNotNull(item.actions?.input)
-        if (input.type == JiveActions.Input.Type.Time) {
-            showActionTimePicker(item.title, input) {
-                onInputSubmitted(item, input.action.withInputValue(it), false)
+    private fun handleItemSelected(item: SlimBrowseItemList.SlimBrowseItem) {
+        val actions = item.actions ?: return
+        val job = when {
+            actions.input != null -> {
+                showInput(item)
+                null
             }
-        } else {
-            val f = InputBottomSheetFragment.createForItem(item, input)
-            f.show(childFragmentManager, "input")
+
+            actions.choices != null -> {
+                showChoices(item)
+                null
+            }
+
+            actions.checkbox != null -> {
+                val action = if (actions.checkbox.state) {
+                    actions.checkbox.offAction
+                } else {
+                    actions.checkbox.onAction
+                }
+                listener.onHandleDoOrGoAction(action, false, item, null)
+            }
+
+            actions.radio != null -> {
+                listener.onHandleDoOrGoAction(actions.radio.action, false, item, null)
+            }
+
+            item.webLink != null -> {
+                listener.onOpenWebLink(item.title, item.webLink.toUri())
+                null
+            }
+
+            item.subItems != null -> {
+                baseViewModel.fetchAction?.let { listener.onOpenSubItemList(item, it) }
+                null
+            }
+
+            actions.goAction != null -> {
+                listener.onHandleDoOrGoAction(actions.goAction, true, item, null)
+            }
+
+            else -> null
+        }
+
+        if (job != null) {
+            baseViewModel.setItemBusy(item, job)
         }
     }
 
-    private fun showChoices(item: SlimBrowseItemList.SlimBrowseItem) {
-        val choices = item.actions?.choices ?: return
-        val extraData = Bundle().apply {
-            putParcelable("item", item)
+    private fun handleContextMenu(item: SlimBrowseItemList.SlimBrowseItem) {
+        val actions = item.actions ?: return
+        val job = when {
+            actions.moreAction != null -> lifecycleScope.launch {
+                val itemList = loadContextMenuItems(actions.moreAction, actions)
+                val f = ContextMenuBottomSheetFragment.create(baseViewModel.playerId, item, itemList)
+                f.show(childFragmentManager, "contextmenu")
+            }
+
+            actions.hasContextMenu -> {
+                val f = ItemActionsMenuSheet.create(item)
+                f.show(childFragmentManager, "itemactions")
+                null
+            }
+
+            else -> null
         }
-        val f = ChoicesBottomSheetFragment.create(item.title, choices, extraData)
-        f.show(childFragmentManager, "choices")
+
+        if (job != null) {
+            baseViewModel.setItemBusy(item, job)
+        }
     }
 
     private suspend fun loadContextMenuItems(
@@ -243,7 +240,7 @@ abstract class BaseSlimBrowseItemListFragment :
         actions: JiveActions
     ): List<SlimBrowseItemList.SlimBrowseItem> {
         val loadedItems = connectionHelper.fetchItemsForAction(
-            playerId,
+            baseViewModel.playerId,
             action,
             PagingParams.All,
             false
@@ -292,6 +289,27 @@ abstract class BaseSlimBrowseItemListFragment :
         }
     }
 
+    private fun showInput(item: SlimBrowseItemList.SlimBrowseItem) {
+        val input = requireNotNull(item.actions?.input)
+        if (input.type == JiveActions.Input.Type.Time) {
+            showActionTimePicker(item.title, input) {
+                onInputSubmitted(item, input.action.withInputValue(it), false)
+            }
+        } else {
+            val f = InputBottomSheetFragment.createForItem(item, input)
+            f.show(childFragmentManager, "input")
+        }
+    }
+
+    private fun showChoices(item: SlimBrowseItemList.SlimBrowseItem) {
+        val choices = item.actions?.choices ?: return
+        val extraData = Bundle().apply {
+            putParcelable("item", item)
+        }
+        val f = ChoicesBottomSheetFragment.create(item.title, choices, extraData)
+        f.show(childFragmentManager, "choices")
+    }
+
     private fun triggerDownload(data: DownloadRequestData) = lifecycleScope.launch {
         if (!requestNotificationPermissionForDownload()) {
             return@launch
@@ -331,5 +349,56 @@ abstract class BaseSlimBrowseItemListFragment :
         }
         return requester.request(android.Manifest.permission.POST_NOTIFICATIONS)
             .first() is PermissionResult.Granted
+    }
+}
+
+
+@Composable
+fun SlimBrowsePagedItemListOrGrid(
+    entries: LazyPagingItems<SlimBrowseItemList.SlimBrowseItem>,
+    busyItem: SlimBrowseItemList.SlimBrowseItem?,
+    serverConfig: ServerConfiguration?,
+    useGrid: Boolean,
+    showIcons: Boolean,
+    itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {},
+    contextMenuClickListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {}
+) {
+    // TODO: implement fast scroll
+
+    if (useGrid) {
+        val state = rememberLazyGridState()
+
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(160.dp),
+            state = state,
+            contentPadding = PaddingValues(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            items(entries.itemCount) { index ->
+                entries[index]?.let { entry ->
+
+                }
+            }
+        }
+    } else {
+        LazyColumn(
+            modifier = Modifier.padding(bottom = 16.dp)
+        ) {
+            items(entries.itemCount) { index ->
+                entries[index]?.let { entry ->
+                    SlimBrowseItemListEntry(
+                        item = entry,
+                        serverConfig = serverConfig,
+                        showIcon = showIcons,
+                        busy = entry == busyItem,
+                        modifier = Modifier.clickable(
+                            onClick = { itemSelectionListener(entry) }
+                        ),
+                        contextMenuClickListener = contextMenuClickListener
+                    )
+                }
+            }
+        }
     }
 }

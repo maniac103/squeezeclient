@@ -68,13 +68,16 @@ fun JiveHomeItemListEntry(
                     style = Theme.TextStyles.listItemSecondary
                 )
             }
+        }
 
-            if (!choiceLabel.isNullOrEmpty()) {
-                Text(
-                    text = choiceLabel
-                    // FIXME
-                )
-            }
+        if (!choiceLabel.isNullOrEmpty()) {
+            Text(
+                text = choiceLabel,
+                style = Theme.TextStyles.listItemSecondary,
+                modifier = Modifier
+                    .align(Alignment.CenterVertically)
+                    .padding(end = 16.dp)
+            )
         }
     }
 }

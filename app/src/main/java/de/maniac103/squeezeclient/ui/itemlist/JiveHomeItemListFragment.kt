@@ -34,8 +34,6 @@ import androidx.lifecycle.SavedStateViewModelFactory
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import de.maniac103.squeezeclient.databinding.FragmentComposeBinding
-import de.maniac103.squeezeclient.extfuncs.ViewEdge
-import de.maniac103.squeezeclient.extfuncs.addSystemBarAndCutoutInsetsListener
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.extfuncs.requireParentAs
@@ -51,11 +49,9 @@ import de.maniac103.squeezeclient.ui.common.ViewBindingFragment
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
 
-class JiveHomeItemListComposeFragment :
+class JiveHomeItemListFragment :
     ViewBindingFragment<FragmentComposeBinding>(FragmentComposeBinding::inflate),
     MainContentChild,
     ChoicesBottomSheetFragment.SelectionListener,
@@ -155,7 +151,7 @@ class JiveHomeItemListComposeFragment :
     }
 
     companion object {
-        fun create(playerId: PlayerId, nodeId: String) = JiveHomeItemListComposeFragment().apply {
+        fun create(playerId: PlayerId, nodeId: String) = JiveHomeItemListFragment().apply {
             arguments = Bundle().apply {
                 putParcelable("playerId", playerId)
                 putString("nodeId", nodeId)

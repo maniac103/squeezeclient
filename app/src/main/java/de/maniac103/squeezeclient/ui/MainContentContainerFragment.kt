@@ -56,7 +56,7 @@ import de.maniac103.squeezeclient.ui.bottomsheets.SliderBottomSheetFragment
 import de.maniac103.squeezeclient.ui.common.BasePagingListFragment
 import de.maniac103.squeezeclient.ui.common.ViewBindingFragment
 import de.maniac103.squeezeclient.ui.itemlist.BaseSlimBrowseItemListFragment
-import de.maniac103.squeezeclient.ui.itemlist.JiveHomeItemListComposeFragment
+import de.maniac103.squeezeclient.ui.itemlist.JiveHomeItemListFragment
 import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseItemListFragment
 import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseSubItemListFragment
 import de.maniac103.squeezeclient.ui.search.LibrarySearchResultsFragment
@@ -83,7 +83,7 @@ class MainContentContainerFragment :
     ViewBindingFragment<FragmentMainlistcontainerBinding>(
         FragmentMainlistcontainerBinding::inflate
     ),
-    JiveHomeItemListComposeFragment.NavigationListener,
+    JiveHomeItemListFragment.NavigationListener,
     BaseSlimBrowseItemListFragment.NavigationListener,
     SliderBottomSheetFragment.ChangeListener,
     FragmentManager.OnBackStackChangedListener {
@@ -137,7 +137,7 @@ class MainContentContainerFragment :
 
     override fun onNodeSelected(nodeId: String) {
         if (homeMenu.values.any { it.node == nodeId }) {
-            val f = JiveHomeItemListComposeFragment.create(playerId, nodeId)
+            val f = JiveHomeItemListFragment.create(playerId, nodeId)
             val mode = when (nodeId) {
                 "home" -> ReplacementMode.SetAsHome
                 else -> ReplacementMode.OnTopOfStack

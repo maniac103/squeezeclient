@@ -18,113 +18,55 @@
 package de.maniac103.squeezeclient.ui.nowplaying
 
 import android.os.Bundle
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
-import androidx.paging.PagingDataAdapter
-import androidx.recyclerview.widget.DiffUtil
-import androidx.recyclerview.widget.ItemTouchHelper
-import androidx.recyclerview.widget.RecyclerView
-import de.maniac103.squeezeclient.databinding.FragmentGenericListBinding
-import de.maniac103.squeezeclient.extfuncs.ViewEdge
-import de.maniac103.squeezeclient.extfuncs.addSystemBarAndCutoutInsetsListener
-import de.maniac103.squeezeclient.extfuncs.connectionHelper
-import de.maniac103.squeezeclient.extfuncs.getParcelable
-import de.maniac103.squeezeclient.model.PagingParams
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.ScrollableState
+import androidx.compose.foundation.gestures.scrollable
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.SavedStateViewModelFactory
+import de.maniac103.squeezeclient.databinding.FragmentComposeBinding
+import de.maniac103.squeezeclient.extfuncs.prefs
+import de.maniac103.squeezeclient.extfuncs.serverConfig
 import de.maniac103.squeezeclient.model.PlayerId
-import de.maniac103.squeezeclient.model.Playlist
-import de.maniac103.squeezeclient.ui.common.BasePagingListFragment
+import de.maniac103.squeezeclient.ui.common.ViewBindingFragment
 import kotlin.time.ExperimentalTime
-import kotlin.time.Instant
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.launch
+import kotlin.getValue
 
 @OptIn(ExperimentalTime::class)
 class PlaylistFragment :
-    BasePagingListFragment<Playlist.PlaylistItem, PlaylistItemViewHolder>() {
-    private val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)
-    override val fastScrollEnabled = true
-    override val useGrid = false
-
-    private lateinit var adapter: PlaylistItemAdapter
-    private var lastKnownPlaylistTimestamp: Instant? = null
-
-    fun scrollToCurrentPlaylistPosition() {
-        val position = adapter.selectedItemPosition ?: return
-        binding.recycler.scrollToPosition(position)
+    ViewBindingFragment<FragmentComposeBinding>(FragmentComposeBinding::inflate) {
+    private val viewModel: PlaylistViewModel by viewModels {
+        SavedStateViewModelFactory(requireActivity().application, this, requireArguments())
     }
 
-    override fun onCreateAdapter(
-        diffCallback: DiffUtil.ItemCallback<Playlist.PlaylistItem>
-    ): PagingDataAdapter<Playlist.PlaylistItem, PlaylistItemViewHolder> {
-        val itemTouchCallback = PlaylistItemDragCallback(requireContext(), { from, to ->
-            // Item was dragged to another position
-            adapter.onItemMove(from, to)
-        }, { initial, drop ->
-            // Item was dropped after being dragged
-            lifecycleScope.launch {
-                adapter.onItemFinishedMove(initial, drop)
-                connectionHelper.movePlaylistItem(playerId, initial, drop)
-            }
-        }, { position ->
-            // Item was removed via swipe
-            lifecycleScope.launch {
-                connectionHelper.removePlaylistItem(playerId, position)
-                adapter.onItemRemoved(position)
-            }
-        })
-
-        val itemTouchHelper = ItemTouchHelper(itemTouchCallback)
-        itemTouchHelper.attachToRecyclerView(binding.recycler)
-
-        adapter = PlaylistItemAdapter(diffCallback).apply {
-            dragStartListener = { holder -> itemTouchHelper.startDrag(holder) }
-            itemClickListener = { holder ->
-                val position = holder.bindingAdapterPosition
-                if (position != RecyclerView.NO_POSITION) {
-                    lifecycleScope.launch {
-                        connectionHelper.advanceToPlaylistPosition(playerId, position)
-                    }
+    override fun onBindingCreated(binding: FragmentComposeBinding) {
+        binding.compose.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                MaterialTheme {
+                    PlaylistItemColumn(
+                        viewModel,
+                        MaterialTheme.colorScheme.surfaceContainerHighest,
+                        prefs.serverConfig,
+                        modifier = Modifier
+                            .nestedScroll(rememberNestedScrollInteropConnection())
+                            .scrollable(
+                                state = remember { ScrollableState(consumeScrollDelta = { 0f }) },
+                                orientation = Orientation.Vertical
+                            )
+                    )
                 }
             }
         }
-        return adapter
     }
 
-    override suspend fun onLoadPage(page: PagingParams) =
-        connectionHelper.fetchPlaylist(playerId, page)
-
-    override fun areItemsTheSame(lhs: Playlist.PlaylistItem, rhs: Playlist.PlaylistItem) =
-        lhs == rhs
-
-    override fun areItemContentsTheSame(lhs: Playlist.PlaylistItem, rhs: Playlist.PlaylistItem) =
-        lhs == rhs
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    override fun onBindingCreated(binding: FragmentGenericListBinding) {
-        super.onBindingCreated(binding)
-
-        binding.recycler.addSystemBarAndCutoutInsetsListener(ViewEdge.Bottom, ViewEdge.End)
-
-        lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                connectionHelper.playerState(playerId)
-                    .flatMapLatest { it.playStatus }
-                    .collect { status ->
-                        val lastPlaylistTimestamp = lastKnownPlaylistTimestamp
-                        val newPlaylistTimestamp = status.playlist.lastChange
-                        if (
-                            lastPlaylistTimestamp != null &&
-                            lastPlaylistTimestamp != newPlaylistTimestamp
-                        ) {
-                            refresh()
-                        }
-                        lastKnownPlaylistTimestamp = newPlaylistTimestamp
-                        adapter.selectedItemPosition = status.playlist.currentPosition - 1
-                    }
-            }
-        }
+    fun scrollToCurrentPlaylistPosition() {
+        viewModel.scrollToCurrentPlaylistPosition()
     }
 
     companion object {

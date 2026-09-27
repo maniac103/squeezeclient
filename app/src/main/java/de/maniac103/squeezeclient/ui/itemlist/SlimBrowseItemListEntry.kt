@@ -35,6 +35,7 @@ import coil3.network.httpHeaders
 import coil3.request.ImageRequest
 import coil3.request.placeholder
 import de.maniac103.squeezeclient.R
+import de.maniac103.squeezeclient.model.ArtworkItem
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.ui.Theme
@@ -249,7 +250,7 @@ fun SlimBrowseItemGridEntry(
             }
 
             val extraModifier = Modifier
-            //.align(Alignment.CenterVertically)
+                //.align(Alignment.CenterVertically)
                 .padding(end = 16.dp)
 
             when {
@@ -347,8 +348,8 @@ fun SlimBrowseItemList.SlimBrowseItem.extractExtra(
     }
 }
 
-fun SlimBrowseItemList.SlimBrowseItem.buildImageRequest(context: Context, serverConfig: ServerConfiguration?): ImageRequest {
-    val iconUrl = extractIconUrl(serverConfig)
+fun ArtworkItem?.buildImageRequest(context: Context, serverConfig: ServerConfiguration?): ImageRequest {
+    val iconUrl = this?.extractIconUrl(serverConfig)
     val requestBuilder = ImageRequest.Builder(context)
         .data(iconUrl)
         .placeholder(R.drawable.ic_disc_24dp)

@@ -172,6 +172,7 @@ dependencies {
     implementation(libs.okhttp.logging.interceptor)
     implementation(libs.peko)
     implementation(libs.recyclerview.fastscroll)
+    implementation(libs.reorderable)
     implementation(libs.zoomimageview.coil)
     "gmsImplementation"(project(":wearapi"))
 }

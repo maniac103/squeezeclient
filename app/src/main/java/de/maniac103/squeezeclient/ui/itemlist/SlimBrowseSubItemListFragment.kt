@@ -85,7 +85,7 @@ fun SlimBrowseSubItemList(
         modifier = Modifier.padding(bottom = 16.dp)
     ) {
         items(entries) { entry ->
-            SlimBrowseItemListEntry(
+            SlimBrowseItemListRow(
                 item = entry,
                 serverConfig = serverConfig,
                 showIcon = false,

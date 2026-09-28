@@ -48,6 +48,10 @@ class SlimBrowseItemListViewModel(
 
     override val fetchAction = savedStateHandle.get<JiveAction>("fetchAction")!!
 
+    fun refresh() {
+        pagingSourceFactory.invalidate()
+    }
+
     override suspend fun fetchPage(page: PagingParams) =
         application.connectionHelper.fetchItemsForAction(playerId, fetchAction, page, true)
 }

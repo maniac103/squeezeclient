@@ -53,7 +53,6 @@ import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.ui.bottomsheets.InfoBottomSheet
 import de.maniac103.squeezeclient.ui.bottomsheets.SliderBottomSheetFragment
-import de.maniac103.squeezeclient.ui.common.BasePagingListFragment
 import de.maniac103.squeezeclient.ui.common.ViewBindingFragment
 import de.maniac103.squeezeclient.ui.itemlist.BaseSlimBrowseItemListFragment
 import de.maniac103.squeezeclient.ui.itemlist.JiveHomeItemListFragment
@@ -77,6 +76,10 @@ interface MainContentChild {
     val scrollingTargetView: View?
     val titleFlow: Flow<List<String>>
     val iconFlow: Flow<ArtworkItem?>
+}
+
+interface RefreshableMainContentChild : MainContentChild {
+    fun refresh()
 }
 
 class MainContentContainerFragment :
@@ -457,7 +460,7 @@ class MainContentContainerFragment :
         val start = max(0, backStackEntryCount - levels)
         (start until backStackEntryCount)
             .map { getBackStackEntryAt(it) }
-            .mapNotNull { findFragmentByTag(it.name) as? BasePagingListFragment<*, *> }
+            .mapNotNull { findFragmentByTag(it.name) as? RefreshableMainContentChild }
             .forEach { it.refresh() }
     }
 

@@ -20,6 +20,7 @@ package de.maniac103.squeezeclient.ui.itemlist
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.InvalidatingPagingSourceFactory
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingSourceFactory
@@ -42,7 +43,11 @@ abstract class BasePagedSlimBrowseItemListViewModel(
     private val busyItemInternal = MutableStateFlow<SlimBrowseItemList.SlimBrowseItem?>(null)
     val busyItemFlow = busyItemInternal.asStateFlow()
 
-    val itemsFlow = createPager()
+    protected val pagingSourceFactory = InvalidatingPagingSourceFactory {
+        ItemPagingSource { page -> fetchPage(page) }
+    }
+
+    val itemsFlow = Pager(PagingConfig(100), pagingSourceFactory = pagingSourceFactory)
         .flow
         .cachedIn(viewModelScope)
 
@@ -51,14 +56,6 @@ abstract class BasePagedSlimBrowseItemListViewModel(
         job.invokeOnCompletion {
             busyItemInternal.value = null
         }
-    }
-
-    private fun createPager(): Pager<Int, SlimBrowseItemList.SlimBrowseItem> {
-        val pagingSourceFactory = PagingSourceFactory {
-            ItemPagingSource { page -> fetchPage(page) }
-        }
-
-        return Pager(PagingConfig(100), pagingSourceFactory = pagingSourceFactory)
     }
 
     protected abstract suspend fun fetchPage(page: PagingParams): SlimBrowseItemList

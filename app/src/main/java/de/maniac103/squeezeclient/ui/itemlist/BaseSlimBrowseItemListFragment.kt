@@ -381,7 +381,15 @@ fun SlimBrowsePagedItemListOrGrid(
         ) {
             items(entries.itemCount) { index ->
                 entries[index]?.let { entry ->
-
+                    SlimBrowseItemGridCell(
+                        item = entry,
+                        serverConfig = serverConfig,
+                        busy = entry == busyItem,
+                        modifier = Modifier.clickable(
+                            onClick = { itemSelectionListener(entry) }
+                        ),
+                        contextMenuClickListener = contextMenuClickListener
+                    )
                 }
             }
         }
@@ -391,7 +399,7 @@ fun SlimBrowsePagedItemListOrGrid(
         ) {
             items(entries.itemCount) { index ->
                 entries[index]?.let { entry ->
-                    SlimBrowseItemListEntry(
+                    SlimBrowseItemListRow(
                         item = entry,
                         serverConfig = serverConfig,
                         showIcon = showIcons,

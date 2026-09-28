@@ -18,77 +18,55 @@
 package de.maniac103.squeezeclient.ui.contextmenu
 
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.ViewGroup
-import androidx.core.view.isVisible
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import de.maniac103.squeezeclient.databinding.FragmentContextMenuListBinding
-import de.maniac103.squeezeclient.databinding.ListItemContextMenuBinding
-import de.maniac103.squeezeclient.extfuncs.getParcelable
-import de.maniac103.squeezeclient.extfuncs.getParcelableList
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.SavedStateViewModelFactory
+import androidx.lifecycle.viewmodel.compose.viewModel
+import de.maniac103.squeezeclient.databinding.FragmentComposeBinding
 import de.maniac103.squeezeclient.extfuncs.requireParentAs
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
-import de.maniac103.squeezeclient.ui.common.BasePrepopulatedListAdapter
 import de.maniac103.squeezeclient.ui.common.ViewBindingFragment
+import kotlin.getValue
 import kotlinx.coroutines.Job
 
 class ContextMenuItemListFragment :
-    ViewBindingFragment<FragmentContextMenuListBinding>(
-        FragmentContextMenuListBinding::inflate
+    ViewBindingFragment<FragmentComposeBinding>(
+        FragmentComposeBinding::inflate
     ) {
     fun interface ItemClickListener {
         fun onItemClicked(item: SlimBrowseItemList.SlimBrowseItem): Job?
     }
 
-    val parent get() =
-        requireArguments().getParcelable("parent", SlimBrowseItemList.SlimBrowseItem::class)
-    private val items get() =
-        requireArguments().getParcelableList("items", SlimBrowseItemList.SlimBrowseItem::class)
+    private val viewModel: ContextMenuItemListViewModel by viewModels {
+        SavedStateViewModelFactory(requireActivity().application, this, requireArguments())
+    }
     private val listener get() = requireParentAs<ItemClickListener>()
+    val parent get() = viewModel.parent
 
-    override fun onBindingCreated(binding: FragmentContextMenuListBinding) {
-        val itemAdapter = ItemAdapter(items).apply {
-            itemSelectionListener = BasePrepopulatedListAdapter.ItemSelectionListener { item ->
-                listener.onItemClicked(item)
+    override fun onBindingCreated(binding: FragmentComposeBinding) {
+        binding.compose.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                MaterialTheme {
+                    ContextMenuItemList(
+                        viewModel,
+                        { item ->
+                            val job = listener.onItemClicked(item)
+                            job?.let { viewModel.setItemBusy(item, it) }
+                        }
+                    )
+                }
             }
         }
-
-        binding.items.apply {
-            layoutManager = LinearLayoutManager(context, RecyclerView.VERTICAL, false)
-            adapter = itemAdapter
-        }
     }
-
-    private class ItemAdapter(items: List<SlimBrowseItemList.SlimBrowseItem>) :
-        BasePrepopulatedListAdapter<SlimBrowseItemList.SlimBrowseItem, ItemViewHolder>(items) {
-        override fun onCreateViewHolder(
-            inflater: LayoutInflater,
-            parent: ViewGroup,
-            viewType: Int
-        ): ItemViewHolder {
-            val binding = ListItemContextMenuBinding.inflate(inflater, parent, false)
-            return ItemViewHolder(binding)
-        }
-
-        override fun onBindViewHolder(
-            holder: ItemViewHolder,
-            item: SlimBrowseItemList.SlimBrowseItem
-        ) {
-            holder.binding.text.apply {
-                text = item.title
-                // FIXME: have isSelectable property?
-                isEnabled = item.actions?.goAction != null
-            }
-        }
-
-        override fun onHolderBusyStateChanged(holder: ItemViewHolder, busy: Boolean) {
-            holder.binding.loadingIndicator.isVisible = busy
-        }
-    }
-
-    private class ItemViewHolder(val binding: ListItemContextMenuBinding) :
-        RecyclerView.ViewHolder(binding.root)
 
     companion object {
         fun create(
@@ -99,6 +77,27 @@ class ContextMenuItemListFragment :
                 putParcelable("parent", parent)
                 putParcelableArrayList("items", ArrayList(items))
             }
+        }
+    }
+}
+
+@Composable
+fun ContextMenuItemList(
+    viewModel: ContextMenuItemListViewModel = viewModel(),
+    itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit
+) {
+    val items by viewModel.itemsFlow.collectAsState(emptyList())
+    val busyItem by viewModel.busyItemFlow.collectAsState()
+
+    LazyColumn {
+        items(items) { item ->
+            ContextMenuListRow(
+                title = item.title,
+                busy = item == busyItem,
+                selectable = item.actions?.goAction != null,
+                modifier = Modifier
+                    .clickable(onClick = { itemSelectionListener(item) })
+            )
         }
     }
 }

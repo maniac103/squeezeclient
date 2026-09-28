@@ -19,24 +19,44 @@ package de.maniac103.squeezeclient.ui.contextmenu
 
 import android.os.Bundle
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
-import androidx.core.view.isVisible
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import coil3.load
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.SavedStateViewModelFactory
+import androidx.lifecycle.viewmodel.compose.viewModel
+import coil3.compose.AsyncImage
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import de.maniac103.squeezeclient.R
-import de.maniac103.squeezeclient.databinding.BottomSheetItemActionsBinding
-import de.maniac103.squeezeclient.databinding.ListItemContextMenuBinding
-import de.maniac103.squeezeclient.extfuncs.getParcelable
-import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.extfuncs.requireParentAs
-import de.maniac103.squeezeclient.extfuncs.serverConfig
 import de.maniac103.squeezeclient.model.DownloadRequestData
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
-import de.maniac103.squeezeclient.ui.common.BasePrepopulatedListAdapter
+import de.maniac103.squeezeclient.ui.Theme
+import kotlin.getValue
 import kotlinx.coroutines.Job
 
 class ItemActionsMenuSheet : BottomSheetDialogFragment() {
@@ -45,101 +65,112 @@ class ItemActionsMenuSheet : BottomSheetDialogFragment() {
         fun onDownloadSelected(data: DownloadRequestData): Job?
     }
 
-    private val item get() =
-        requireArguments().getParcelable("item", SlimBrowseItemList.SlimBrowseItem::class)
+    private val viewModel: ItemActionsViewModel by viewModels {
+        SavedStateViewModelFactory(requireActivity().application, this, requireArguments())
+    }
     private val listener get() = requireParentAs<Listener>()
-
-    private lateinit var binding: BottomSheetItemActionsBinding
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View {
-        binding = BottomSheetItemActionsBinding.inflate(inflater, container, false)
-        return binding.root
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
-        val item = item
-        binding.icon.apply {
-            val iconUrl = item.extractIconUrl(prefs.serverConfig)
-            isVisible = iconUrl != null
-            load(iconUrl)
-        }
-        binding.title.text = item.title
-        binding.subtext.apply {
-            isVisible = !item.subText.isNullOrEmpty()
-            text = item.subText
-        }
-
-        val actionItems = requireNotNull(item.actions).let { actions ->
-            listOfNotNull(
-                actions.addAction?.let { ActionItem(R.string.action_add, it, null) },
-                actions.insertAction?.let { ActionItem(R.string.action_insert, it, null) },
-                actions.playAction?.let { ActionItem(R.string.action_play, it, null) },
-                actions.downloadData?.let { ActionItem(R.string.action_download, null, it) }
-            )
-        }
-
-        val itemAdapter = ItemAdapter(actionItems).apply {
-            itemSelectionListener =
-                BasePrepopulatedListAdapter.ItemSelectionListener { actionItem ->
-                    val job = if (actionItem.download != null) {
-                        listener.onDownloadSelected(actionItem.download)
+    ) = ComposeView(requireContext()).apply {
+        setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+        setContent {
+            MaterialTheme {
+                ItemActionsSheet { action ->
+                    val job = if (action.download != null) {
+                        listener.onDownloadSelected(action.download)
                     } else {
-                        listener.onActionSelected(requireNotNull(actionItem.action), item)
+                        listener.onActionSelected(requireNotNull(action.action), viewModel.item)
                     }
-                    job?.invokeOnCompletion {
-                        if (isAdded) {
-                            dismissAllowingStateLoss()
+                    if (job != null) {
+                        viewModel.setActionBusy(action, job)
+                        job.invokeOnCompletion {
+                           if (isAdded) {
+                               dismissAllowingStateLoss()
+                           }
                         }
                     }
-                    job
                 }
-        }
-
-        binding.items.apply {
-            layoutManager = LinearLayoutManager(view.context, RecyclerView.VERTICAL, false)
-            adapter = itemAdapter
+            }
         }
     }
-
-    private class ItemAdapter(items: List<ActionItem>) :
-        BasePrepopulatedListAdapter<ActionItem, ItemViewHolder>(items) {
-        override fun onCreateViewHolder(
-            inflater: LayoutInflater,
-            parent: ViewGroup,
-            viewType: Int
-        ): ItemViewHolder {
-            val binding = ListItemContextMenuBinding.inflate(inflater, parent, false)
-            return ItemViewHolder(binding)
-        }
-
-        override fun onBindViewHolder(holder: ItemViewHolder, item: ActionItem) {
-            holder.binding.text.text = holder.itemView.context.getString(item.labelResId)
-        }
-
-        override fun onHolderBusyStateChanged(holder: ItemViewHolder, busy: Boolean) {
-            holder.binding.loadingIndicator.isVisible = busy
-        }
-    }
-
-    data class ActionItem(
-        val labelResId: Int,
-        val action: JiveAction?,
-        val download: DownloadRequestData?
-    )
-    private class ItemViewHolder(val binding: ListItemContextMenuBinding) :
-        RecyclerView.ViewHolder(binding.root)
 
     companion object {
         fun create(item: SlimBrowseItemList.SlimBrowseItem) = ItemActionsMenuSheet().apply {
             arguments = Bundle().apply {
                 putParcelable("item", item)
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ItemActionsSheet(
+    viewModel: ItemActionsViewModel = viewModel(),
+    actionSelectedListener: (ItemActionsViewModel.ActionItem) -> Unit
+) {
+    val header by viewModel.headerFlow.collectAsState(null)
+    val actions by viewModel.actionsFlow.collectAsState(emptyList())
+    val busyAction by viewModel.busyActionFlow.collectAsState(null)
+
+    LazyColumn {
+        stickyHeader {
+            Box(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                BottomSheetDefaults.DragHandle(
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
+            Row(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+            ) {
+                header?.imageRequest?.let {
+                    AsyncImage(
+                        it,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .padding(start = 4.dp, end = 12.dp, top = 4.dp, bottom = 4.dp)
+                            .size(40.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                    )
+                }
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.CenterVertically)
+                ) {
+                    header?.title?.let {
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        )
+                    }
+                    header?.subText
+                        ?.takeIf { it.isNotEmpty() }
+                        ?.let {
+                            Text(
+                                text = it,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                                style = MaterialTheme.typography.titleSmall,
+                            )
+                        }
+                }
+            }
+        }
+        items(actions) { action ->
+            ContextMenuListRow(
+                title = stringResource(action.labelResId),
+                busy = action == busyAction,
+                selectable = true,
+                modifier = Modifier.clickable { actionSelectedListener(action) }
+            )
         }
     }
 }

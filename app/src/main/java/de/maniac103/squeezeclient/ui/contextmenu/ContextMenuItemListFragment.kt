@@ -27,11 +27,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ViewCompositionStrategy
-import androidx.fragment.app.viewModels
-import androidx.lifecycle.SavedStateViewModelFactory
 import androidx.lifecycle.viewmodel.compose.viewModel
 import de.maniac103.squeezeclient.databinding.FragmentComposeBinding
+import de.maniac103.squeezeclient.extfuncs.getParcelable
+import de.maniac103.squeezeclient.extfuncs.getParcelableList
 import de.maniac103.squeezeclient.extfuncs.requireParentAs
+import de.maniac103.squeezeclient.extfuncs.viewModelWithParams
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.ui.common.ViewBindingFragment
 import kotlin.getValue
@@ -45,11 +46,18 @@ class ContextMenuItemListFragment :
         fun onItemClicked(item: SlimBrowseItemList.SlimBrowseItem): Job?
     }
 
-    private val viewModel: ContextMenuItemListViewModel by viewModels {
-        SavedStateViewModelFactory(requireActivity().application, this, requireArguments())
+    private val viewModel by viewModelWithParams {
+        val items = requireArguments().getParcelableList(
+            "items",
+            SlimBrowseItemList.SlimBrowseItem::class
+        )
+        ContextMenuItemListViewModel(requireActivity().application, items)
     }
     private val listener get() = requireParentAs<ItemClickListener>()
-    val parent get() = viewModel.parent
+    val parent get() = requireArguments().getParcelable(
+        "parent",
+        SlimBrowseItemList.SlimBrowseItem::class
+    )
 
     override fun onBindingCreated(binding: FragmentComposeBinding) {
         binding.compose.apply {

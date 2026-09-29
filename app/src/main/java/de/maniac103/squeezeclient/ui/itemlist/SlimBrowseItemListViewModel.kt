@@ -18,7 +18,6 @@
 package de.maniac103.squeezeclient.ui.itemlist
 
 import android.app.Application
-import androidx.lifecycle.SavedStateHandle
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.model.ArtworkItem
 import de.maniac103.squeezeclient.model.JiveAction
@@ -28,25 +27,17 @@ import kotlinx.coroutines.flow.flowOf
 
 class SlimBrowseItemListViewModel(
     private val application: Application,
-    savedStateHandle: SavedStateHandle
+    override val playerId: PlayerId,
+    titles: List<String>,
+    icon: ArtworkItem?,
+    override val fetchAction: JiveAction,
+    val showIcons: Boolean,
+    canUseGrid: Boolean
 ) : BasePagedSlimBrowseItemListViewModel(application) {
-    override val playerId = savedStateHandle.get<PlayerId>("playerId")!!
+    override val titleFlow = flowOf(titles)
+    override val iconFlow = flowOf(icon)
 
-    override val titleFlow = flowOf(
-        listOfNotNull(
-            savedStateHandle.get<String>("parentTitle"),
-            savedStateHandle.get<String>("title")
-        )
-    )
-    override val iconFlow = flowOf(savedStateHandle.get<ArtworkItem>("icon"))
-
-    val showIcons = savedStateHandle.get<Boolean>("showIcons") == true
-    override val useGrid = when {
-        savedStateHandle.get<Boolean>("canUseGrid") == false -> false
-        else -> super.useGrid
-    }
-
-    override val fetchAction = savedStateHandle.get<JiveAction>("fetchAction")!!
+    override val useGrid = canUseGrid && super.useGrid
 
     fun refresh() {
         pagingSourceFactory.invalidate()

@@ -19,7 +19,6 @@ package de.maniac103.squeezeclient.ui.itemlist
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.model.JiveAction
@@ -36,17 +35,14 @@ import kotlinx.coroutines.flow.shareIn
 
 class SlimBrowseSubItemListViewModel(
     private val application: Application,
-    savedStateHandle: SavedStateHandle
+    override val playerId: PlayerId,
+    title: String?,
+    private val parentFetchAction: JiveAction,
+    private val parentItemPosition: Int
 ) : AndroidViewModel(application), BaseSlimBrowseItemListFragment.ViewModelInterface {
-    override val playerId = savedStateHandle.get<PlayerId>("playerId")!!
     override val fetchAction = null
 
-    private val parentFetchAction = savedStateHandle.get<JiveAction>("fetchAction")!!
-    private val parentItemPosition = savedStateHandle.get<Int>("listPosition")!!
-
-    override val titleFlow = flowOf(
-        listOfNotNull(savedStateHandle.get<String>("title"))
-    )
+    override val titleFlow = flowOf(listOfNotNull(title))
     override val iconFlow = flowOf(null)
 
     private val busyItemInternal = MutableStateFlow<SlimBrowseItemList.SlimBrowseItem?>(null)

@@ -20,12 +20,13 @@ import android.os.Bundle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.fragment.app.viewModels
-import androidx.lifecycle.SavedStateViewModelFactory
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.collectAsLazyPagingItems
+import de.maniac103.squeezeclient.extfuncs.getParcelable
+import de.maniac103.squeezeclient.extfuncs.getParcelableOrNull
 import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.extfuncs.serverConfig
+import de.maniac103.squeezeclient.extfuncs.viewModelWithParams
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.ParcelableArtworkItem
 import de.maniac103.squeezeclient.model.PlayerId
@@ -35,8 +36,21 @@ import de.maniac103.squeezeclient.model.WindowStyle
 import de.maniac103.squeezeclient.ui.RefreshableMainContentChild
 
 class SlimBrowseItemListFragment : BaseSlimBrowseItemListFragment(), RefreshableMainContentChild {
-    private val viewModel: SlimBrowseItemListViewModel by viewModels {
-        SavedStateViewModelFactory(requireActivity().application, this, requireArguments())
+    private val viewModel by viewModelWithParams {
+        val args = requireArguments()
+        val titles = listOfNotNull(
+            args.getString("parentTitle"), args.getString("title")
+        )
+
+        SlimBrowseItemListViewModel(
+            requireActivity().application,
+            args.getParcelable("playerId", PlayerId::class),
+            titles,
+            args.getParcelableOrNull("icon", ParcelableArtworkItem::class),
+            args.getParcelable("fetchAction", JiveAction::class),
+            args.getBoolean("showIcons"),
+            args.getBoolean("canUseGrid")
+        )
     }
 
     override val baseViewModel get() = viewModel

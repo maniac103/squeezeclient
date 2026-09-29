@@ -21,13 +21,13 @@ import android.os.Bundle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.fragment.app.viewModels
-import androidx.lifecycle.SavedStateViewModelFactory
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.collectAsLazyPagingItems
 import de.maniac103.squeezeclient.cometd.request.LibrarySearchRequest
+import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.extfuncs.serverConfig
+import de.maniac103.squeezeclient.extfuncs.viewModelWithParams
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
@@ -36,8 +36,14 @@ import de.maniac103.squeezeclient.ui.itemlist.SlimBrowsePagedItemListOrGrid
 import kotlin.getValue
 
 class LibrarySearchResultsFragment : BaseSlimBrowseItemListFragment() {
-    private val viewModel: LibrarySearchResultsViewModel by viewModels {
-        SavedStateViewModelFactory(requireActivity().application, this, requireArguments())
+    private val viewModel by viewModelWithParams {
+        val args = requireArguments()
+        LibrarySearchResultsViewModel(
+            requireActivity().application,
+            args.getParcelable("playerId", PlayerId::class),
+            args.getString("query")!!,
+            args.getParcelable("type", LibrarySearchRequest.Mode::class)
+        )
     }
 
     override val baseViewModel get() = viewModel

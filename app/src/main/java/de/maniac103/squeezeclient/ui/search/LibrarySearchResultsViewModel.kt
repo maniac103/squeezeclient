@@ -18,7 +18,6 @@
 package de.maniac103.squeezeclient.ui.search
 
 import android.app.Application
-import androidx.lifecycle.SavedStateHandle
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.cometd.request.LibrarySearchRequest
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
@@ -29,11 +28,10 @@ import kotlinx.coroutines.flow.flowOf
 
 class LibrarySearchResultsViewModel(
     private val application: Application,
-    savedStateHandle: SavedStateHandle
+    override val playerId: PlayerId,
+    private val searchTerm: String,
+    private val searchType: LibrarySearchRequest.Mode
 ) : BasePagedSlimBrowseItemListViewModel(application) {
-    override val playerId = savedStateHandle.get<PlayerId>("playerId")!!
-    private val searchTerm = savedStateHandle.get<String>("query")!!
-    private val searchType = savedStateHandle.get<LibrarySearchRequest.Mode>("type")!!
 
     override val titleFlow get() =
         flowOf(listOf(application.getString(R.string.page_title_library_search, searchTerm)))

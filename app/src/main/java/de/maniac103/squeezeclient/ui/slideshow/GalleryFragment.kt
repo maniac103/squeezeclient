@@ -31,7 +31,6 @@ import de.maniac103.squeezeclient.extfuncs.getParcelableList
 import de.maniac103.squeezeclient.extfuncs.loadSlideshowImage
 import de.maniac103.squeezeclient.model.SlideshowImage
 import de.maniac103.squeezeclient.ui.MainContentChild
-import de.maniac103.squeezeclient.ui.common.BasePrepopulatedListAdapter
 import de.maniac103.squeezeclient.ui.common.ViewBindingFragment
 import kotlinx.coroutines.flow.flowOf
 
@@ -51,18 +50,19 @@ class GalleryFragment :
         }
     }
 
-    private class GalleryAdapter(items: List<SlideshowImage>) :
-        BasePrepopulatedListAdapter<SlideshowImage, GalleryViewHolder>(items) {
+    private class GalleryAdapter(private val items: List<SlideshowImage>) :
+        RecyclerView.Adapter<GalleryViewHolder>() {
         override fun onCreateViewHolder(
-            inflater: LayoutInflater,
             parent: ViewGroup,
             viewType: Int
         ): GalleryViewHolder {
+            val inflater = LayoutInflater.from(parent.context)
             val binding = GridItemGalleryBinding.inflate(inflater, parent, false)
             return GalleryViewHolder(binding)
         }
 
-        override fun onBindViewHolder(holder: GalleryViewHolder, item: SlideshowImage) {
+        override fun onBindViewHolder(holder: GalleryViewHolder, position: Int) {
+            val item = items[position]
             val context = holder.binding.root.context
             holder.binding.root.setOnClickListener {
                 val intent = ImageViewActivity.createIntent(context, item)
@@ -86,6 +86,8 @@ class GalleryFragment :
             }
             holder.binding.text.text = item.caption
         }
+
+        override fun getItemCount() = items.size
     }
 
     private class GalleryViewHolder(val binding: GridItemGalleryBinding) :

@@ -46,8 +46,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.fragment.app.viewModels
-import androidx.lifecycle.SavedStateViewModelFactory
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
@@ -57,7 +55,6 @@ import de.maniac103.squeezeclient.extfuncs.viewModelWithParams
 import de.maniac103.squeezeclient.model.DownloadRequestData
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
-import de.maniac103.squeezeclient.ui.Theme
 import kotlin.getValue
 import kotlinx.coroutines.Job
 

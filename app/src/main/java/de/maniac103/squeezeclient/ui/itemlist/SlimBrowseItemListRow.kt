@@ -29,11 +29,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
-import coil3.network.NetworkHeaders
-import coil3.network.httpHeaders
 import coil3.request.ImageRequest
 import coil3.request.placeholder
 import de.maniac103.squeezeclient.R
+import de.maniac103.squeezeclient.extfuncs.addServerCredentialsIfNeeded
 import de.maniac103.squeezeclient.model.ArtworkItem
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
@@ -189,18 +188,9 @@ fun SlimBrowseItemListRowPreview() {
     }
 }
 
-fun ArtworkItem?.buildImageRequest(context: Context, serverConfig: ServerConfiguration?): ImageRequest {
-    val iconUrl = this?.extractIconUrl(serverConfig)
-    val requestBuilder = ImageRequest.Builder(context)
-        .data(iconUrl)
+fun ArtworkItem?.buildImageRequest(context: Context, serverConfig: ServerConfiguration?) =
+    ImageRequest.Builder(context)
+        .data(this?.extractIconUrl(serverConfig))
+        .addServerCredentialsIfNeeded(context)
         .placeholder(R.drawable.ic_disc_24dp)
-
-    serverConfig?.credentialsAsAuthorizationHeader?.let {
-        val headers = NetworkHeaders.Builder()
-            .set("Authorization", it)
-            .build()
-        requestBuilder.httpHeaders(headers)
-    }
-
-    return requestBuilder.build()
-}
+        .build()

@@ -23,7 +23,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.InvalidatingPagingSourceFactory
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
-import androidx.paging.PagingSourceFactory
 import androidx.paging.cachedIn
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.extfuncs.forceGridLayout
@@ -35,7 +34,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 abstract class BasePagedSlimBrowseItemListViewModel(
-    private val application: Application,
+    application: Application,
 ) : AndroidViewModel(application), BaseSlimBrowseItemListFragment.ViewModelInterface {
     open val useGrid = application.prefs.forceGridLayout ||
         application.resources.getBoolean(R.bool.force_grid_items_for_lists)

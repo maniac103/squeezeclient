@@ -29,7 +29,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
-import de.maniac103.squeezeclient.ui.Theme
 
 @Composable
 fun ContextMenuListRow(

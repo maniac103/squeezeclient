@@ -27,11 +27,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
-import androidx.fragment.app.viewModels
-import androidx.lifecycle.SavedStateViewModelFactory
 import de.maniac103.squeezeclient.databinding.FragmentComposeBinding
+import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.extfuncs.serverConfig
+import de.maniac103.squeezeclient.extfuncs.viewModelWithParams
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.ui.common.ViewBindingFragment
 import kotlin.time.ExperimentalTime
@@ -40,8 +40,9 @@ import kotlin.getValue
 @OptIn(ExperimentalTime::class)
 class PlaylistFragment :
     ViewBindingFragment<FragmentComposeBinding>(FragmentComposeBinding::inflate) {
-    private val viewModel: PlaylistViewModel by viewModels {
-        SavedStateViewModelFactory(requireActivity().application, this, requireArguments())
+    private val viewModel by viewModelWithParams {
+        val playerId = requireArguments().getParcelable("playerId", PlayerId::class)
+        PlaylistViewModel(requireActivity().application, playerId)
     }
 
     override fun onBindingCreated(binding: FragmentComposeBinding) {

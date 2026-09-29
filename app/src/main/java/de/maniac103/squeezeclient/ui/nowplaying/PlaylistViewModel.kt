@@ -19,7 +19,6 @@ package de.maniac103.squeezeclient.ui.nowplaying
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.paging.InvalidatingPagingSourceFactory
 import androidx.paging.Pager
@@ -41,10 +40,8 @@ import kotlinx.coroutines.flow.update
 @OptIn(ExperimentalCoroutinesApi::class)
 class PlaylistViewModel(
     private val application: Application,
-    savedStateHandle: SavedStateHandle
+    private val playerId: PlayerId
 ) : AndroidViewModel(application) {
-    private val playerId = savedStateHandle.get<PlayerId>("playerId")!!
-
     private var lastKnownPlaylistTimestamp: Instant? = null
     private val uiStateFlowInternal = MutableStateFlow(UiState(0, null))
     private val scrollRequestFlowInternal = MutableSharedFlow<Int>()

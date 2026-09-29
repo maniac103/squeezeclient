@@ -51,7 +51,9 @@ import androidx.lifecycle.SavedStateViewModelFactory
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.extfuncs.requireParentAs
+import de.maniac103.squeezeclient.extfuncs.viewModelWithParams
 import de.maniac103.squeezeclient.model.DownloadRequestData
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
@@ -65,8 +67,12 @@ class ItemActionsMenuSheet : BottomSheetDialogFragment() {
         fun onDownloadSelected(data: DownloadRequestData): Job?
     }
 
-    private val viewModel: ItemActionsViewModel by viewModels {
-        SavedStateViewModelFactory(requireActivity().application, this, requireArguments())
+    private val viewModel by viewModelWithParams {
+        val item = requireArguments().getParcelable(
+            "item",
+            SlimBrowseItemList.SlimBrowseItem::class
+        )
+        ItemActionsViewModel(requireActivity().application, item)
     }
     private val listener get() = requireParentAs<Listener>()
 

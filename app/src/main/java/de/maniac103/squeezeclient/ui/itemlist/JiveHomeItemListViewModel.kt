@@ -2,7 +2,6 @@ package de.maniac103.squeezeclient.ui.itemlist
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.SavedStateHandle
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.model.JiveHomeMenuItem
@@ -14,13 +13,9 @@ import kotlinx.coroutines.flow.mapNotNull
 
 class JiveHomeItemListViewModel(
     application: Application,
-    savedStateHandle: SavedStateHandle
+    playerId: PlayerId,
+    nodeId: String
 ) : AndroidViewModel(application) {
-    private val playerId = savedStateHandle.get<PlayerId>("playerId")
-        ?: throw IllegalArgumentException("Missing player ID")
-    private val nodeId = savedStateHandle.get<String>("nodeId")
-        ?: throw IllegalArgumentException("Missing node ID")
-
     @OptIn(ExperimentalCoroutinesApi::class)
     private val homeMenuFlow = application.connectionHelper
         .playerState(playerId)

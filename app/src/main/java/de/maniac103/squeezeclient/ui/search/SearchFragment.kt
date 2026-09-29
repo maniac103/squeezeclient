@@ -58,18 +58,21 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.fragment.app.viewModels
-import androidx.lifecycle.SavedStateViewModelFactory
 import androidx.lifecycle.viewmodel.compose.viewModel
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.cometd.request.LibrarySearchRequest
 import de.maniac103.squeezeclient.databinding.FragmentComposeBinding
+import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.extfuncs.requireParentAs
+import de.maniac103.squeezeclient.extfuncs.viewModelWithParams
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.ui.common.ViewBindingFragment
 
@@ -80,8 +83,9 @@ class SearchFragment : ViewBindingFragment<FragmentComposeBinding>(FragmentCompo
         fun onOpenRadioSearchPage(searchTerm: String)
     }
 
-    private val viewModel: SearchViewModel by viewModels {
-        SavedStateViewModelFactory(requireActivity().application, this, requireArguments())
+    private val viewModel by viewModelWithParams {
+        val playerId = requireArguments().getParcelable("playerId", PlayerId::class)
+        SearchViewModel(requireActivity().application, playerId)
     }
     private val listener get() = requireParentAs<Listener>()
 
@@ -168,6 +172,7 @@ fun SearchBox(
         pillModifier = pillModifier.scale(1F - backProgress),
         onQueryTextChanged = { viewModel.updateQuery(it) },
         onClearQuery = { viewModel.updateQuery("") },
+        onSubmitQuery = { viewModel.submitQueryImmediately() },
         onClose = onCloseListener,
         onCategoryClick = { category ->
             if (!category.busy) {
@@ -185,6 +190,7 @@ fun SearchBox(
     backgroundAlpha: Float = 1F,
     @SuppressLint("ModifierParameter") pillModifier: Modifier = Modifier,
     onQueryTextChanged: (String) -> Unit = {},
+    onSubmitQuery: () -> Unit = {},
     onClearQuery: () -> Unit = {},
     onClose: () -> Unit = {},
     onCategoryClick: (SearchViewModel.Category) -> Unit = {}
@@ -237,7 +243,17 @@ fun SearchBox(
                                 unfocusedIndicatorColor = Color.Transparent,
                                 focusedIndicatorColor = Color.Transparent
                             ),
-                            modifier = Modifier.focusRequester(focusRequester)
+                            singleLine = true,
+                            modifier = Modifier
+                                .onKeyEvent { event ->
+                                    if (event.key == Key.Enter) {
+                                        onSubmitQuery()
+                                        true
+                                    } else {
+                                        false
+                                    }
+                                }
+                                .focusRequester(focusRequester)
                         )
                         if (queryText.isNotEmpty()) {
                             IconButton(

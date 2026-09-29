@@ -19,7 +19,6 @@ package de.maniac103.squeezeclient.ui.search
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.cometd.request.LibrarySearchRequest
@@ -38,14 +37,12 @@ import kotlinx.coroutines.launch
 
 class SearchViewModel(
     private val application: Application,
-    savedStateHandle: SavedStateHandle
+    private val playerId: PlayerId
 ) : AndroidViewModel(application) {
-    private val playerId = savedStateHandle.get<PlayerId>("playerId")!!
-
     private val localResultsFlow = MutableStateFlow<List<Category>>(createLocalCategories(null))
     private val radioResultsFLow = MutableStateFlow<Category>(createRadioCategory(null))
     private val queryTextFlow = MutableStateFlow<QueryState>(QueryState("", false))
-    private val backProgressFlowInternal = MutableStateFlow<Float>(0F)
+    private val backProgressFlowInternal = MutableStateFlow(0F)
 
     private var submitJob: Job? = null
     private var searchJob: Job? = null
@@ -73,8 +70,16 @@ class SearchViewModel(
             submitJob = viewModelScope.launch {
                 delay(1.seconds)
                 submitJob = submitQuery(query)
-                queryTextFlow.value = QueryState(query, true)
             }
+        }
+    }
+
+    fun submitQueryImmediately() {
+        if (searchJob?.isActive != true) {
+            val query = queryTextFlow.value.text
+            submitJob?.cancel()
+            searchJob?.cancel()
+            searchJob = submitQuery(query)
         }
     }
 
@@ -92,6 +97,7 @@ class SearchViewModel(
             )
             radioResultsFLow.value = createRadioCategory(results.totalCount)
         }
+        queryTextFlow.value = QueryState(query, true)
     }
 
     private fun createLocalCategories(counts: LocalLibrarySearchResultCounts?) = listOf(

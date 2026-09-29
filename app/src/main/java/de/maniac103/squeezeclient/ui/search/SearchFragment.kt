@@ -19,69 +19,71 @@ package de.maniac103.squeezeclient.ui.search
 
 import android.annotation.SuppressLint
 import android.os.Bundle
-import android.view.KeyEvent
-import android.view.LayoutInflater
-import android.view.ViewGroup
 import androidx.activity.BackEventCompat
 import androidx.activity.OnBackPressedCallback
-import androidx.core.view.isVisible
-import androidx.core.widget.doAfterTextChanged
-import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
+import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.SavedStateViewModelFactory
+import androidx.lifecycle.viewmodel.compose.viewModel
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.cometd.request.LibrarySearchRequest
-import de.maniac103.squeezeclient.databinding.FragmentSearchBinding
-import de.maniac103.squeezeclient.databinding.ListItemSearchCategoryBinding
-import de.maniac103.squeezeclient.extfuncs.animateScale
-import de.maniac103.squeezeclient.extfuncs.backProgressInterpolator
-import de.maniac103.squeezeclient.extfuncs.connectionHelper
-import de.maniac103.squeezeclient.extfuncs.getParcelable
+import de.maniac103.squeezeclient.databinding.FragmentComposeBinding
 import de.maniac103.squeezeclient.extfuncs.requireParentAs
-import de.maniac103.squeezeclient.extfuncs.showIme
-import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
-import de.maniac103.squeezeclient.ui.common.BasePrepopulatedListAdapter
 import de.maniac103.squeezeclient.ui.common.ViewBindingFragment
-import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
-class SearchFragment : ViewBindingFragment<FragmentSearchBinding>(FragmentSearchBinding::inflate) {
+class SearchFragment : ViewBindingFragment<FragmentComposeBinding>(FragmentComposeBinding::inflate) {
     interface Listener {
         fun onCloseSearch()
         fun onOpenLocalSearchPage(searchTerm: String, type: LibrarySearchRequest.Mode)
         fun onOpenRadioSearchPage(searchTerm: String)
     }
 
-    private val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)
+    private val viewModel: SearchViewModel by viewModels {
+        SavedStateViewModelFactory(requireActivity().application, this, requireArguments())
+    }
     private val listener get() = requireParentAs<Listener>()
-
-    private var submitJob: Job? = null
-    private var searchJob: Job? = null
-
-    private val artistCategory = Category(
-        R.string.search_category_artists,
-        LibrarySearchRequest.Mode.Artist()
-    )
-    private val albumCategory = Category(
-        R.string.search_category_albums,
-        LibrarySearchRequest.Mode.Albums()
-    )
-    private val genreCategory = Category(
-        R.string.search_category_genres,
-        LibrarySearchRequest.Mode.Genres()
-    )
-    private val trackCategory = Category(
-        R.string.search_category_tracks,
-        LibrarySearchRequest.Mode.Tracks()
-    )
-    private val radioCategory = Category(
-        R.string.search_category_radio,
-        null
-    )
 
     private val onBackPressedCallback = object : OnBackPressedCallback(true) {
         override fun handleOnBackPressed() {
@@ -89,92 +91,43 @@ class SearchFragment : ViewBindingFragment<FragmentSearchBinding>(FragmentSearch
         }
 
         override fun handleOnBackProgressed(backEvent: BackEventCompat) {
-            val progress = 1F - 0.3F * backProgressInterpolator.getInterpolation(backEvent.progress)
-            binding.searchPill.apply {
-                scaleX = progress
-                scaleY = progress
-            }
-            binding.root.background.alpha = (255F * progress).toInt()
+            viewModel.setBackProgress(backEvent.progress)
         }
 
         override fun handleOnBackCancelled() {
-            binding.searchPill.animateScale(1F, 200.milliseconds)
-            binding.root.background.alpha = 255
+            viewModel.setBackProgress(0F)
         }
     }
 
-    override fun onBindingCreated(binding: FragmentSearchBinding) {
+    override fun onBindingCreated(binding: FragmentComposeBinding) {
         requireActivity().onBackPressedDispatcher.addCallback(
             viewLifecycleOwner,
             onBackPressedCallback
         )
 
-        binding.categories.apply {
-            val categories = listOf(
-                artistCategory,
-                albumCategory,
-                trackCategory,
-                genreCategory,
-                radioCategory
-            )
-            layoutManager = LinearLayoutManager(requireContext(), RecyclerView.VERTICAL, false)
-            adapter = Adapter(categories).apply {
-                itemSelectionListener = BasePrepopulatedListAdapter.ItemSelectionListener { cat ->
-                    val query = binding.editor.text?.toString()
-                    if (query != null && cat.count != null) {
-                        if (cat.type != null) {
-                            listener.onOpenLocalSearchPage(query, cat.type)
-                        } else {
-                            listener.onOpenRadioSearchPage(query)
-                        }
-                    }
-                    null
-                }
-            }
-        }
-        binding.editor.apply {
-            doAfterTextChanged { text ->
-                submitJob?.cancel()
-                if (text.isNullOrEmpty()) {
-                    binding.clearButton.isVisible = false
-                    binding.categories.isVisible = false
-                    binding.divider.isVisible = false
-                } else {
-                    binding.clearButton.isVisible = true
-                    submitJob = lifecycleScope.launch {
-                        delay(1.seconds)
-                        submitSearch(text.toString())
+        binding.compose.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                MaterialTheme {
+                    Scaffold(
+                        containerColor = Color.Transparent
+                    ) { innerPadding ->
+                        SearchBox(
+                            viewModel,
+                            pillModifier = Modifier
+                                .padding(innerPadding),
+                            onCloseListener = { listener.onCloseSearch() },
+                            onOpenResultsListener = { query, type ->
+                                if (type != null) {
+                                    listener.onOpenLocalSearchPage(query, type)
+                                } else {
+                                    listener.onOpenRadioSearchPage(query)
+                                }
+                            }
+                        )
                     }
                 }
             }
-            setOnKeyListener { _, keyCode, event ->
-                val text = text?.toString()
-                if (!text.isNullOrEmpty() &&
-                    event.hasNoModifiers() &&
-                    event.action == KeyEvent.ACTION_UP &&
-                    keyCode == KeyEvent.KEYCODE_ENTER
-                ) {
-                    submitSearch(text)
-                    return@setOnKeyListener true
-                }
-                return@setOnKeyListener false
-            }
-            setOnFocusChangeListener { _, hasFocus ->
-                if (hasFocus) {
-                    post {
-                        showIme()
-                    }
-                }
-            }
-        }
-        binding.backButton.setOnClickListener {
-            listener.onCloseSearch()
-        }
-        binding.clearButton.setOnClickListener {
-            binding.editor.text.clear()
-        }
-        binding.root.setOnClickListener {
-            listener.onCloseSearch()
         }
     }
 
@@ -183,88 +136,8 @@ class SearchFragment : ViewBindingFragment<FragmentSearchBinding>(FragmentSearch
         // MainActivity hides this screen while there is no connection; cancel pending
         // searches in that case, so that no requests are published without a connection.
         if (hidden) {
-            cancelSearchRequests()
+            viewModel.updateQuery("")
         }
-    }
-
-    private fun submitSearch(query: String) {
-        listOf(artistCategory, albumCategory, trackCategory, radioCategory)
-            .forEach { it.busy = true }
-        binding.divider.isVisible = true
-        binding.categories.isVisible = true
-        updateAdapter()
-        searchJob?.cancel()
-        searchJob = lifecycleScope.launch {
-            launch { submitLocalLibrarySearch(query) }
-            launch { submitRadioSearch(query) }
-        }
-    }
-
-    private suspend fun submitLocalLibrarySearch(query: String) {
-        val results = connectionHelper.getLocalLibrarySearchResultCounts(query)
-        artistCategory.count = results.artists
-        albumCategory.count = results.albums
-        genreCategory.count = results.genres
-        trackCategory.count = results.tracks
-        updateAdapter()
-    }
-
-    private suspend fun submitRadioSearch(query: String) {
-        val results = connectionHelper.getRadioSearchResults(
-            playerId,
-            query,
-            PagingParams.CountOnly
-        )
-        radioCategory.count = results.totalCount
-        updateAdapter()
-    }
-
-    private fun cancelSearchRequests() {
-        submitJob?.cancel()
-        submitJob = null
-        searchJob?.cancel()
-        searchJob = null
-        listOf(artistCategory, albumCategory, trackCategory, genreCategory, radioCategory)
-            .forEach { it.busy = false }
-        updateAdapter()
-    }
-
-    @SuppressLint("NotifyDataSetChanged")
-    private fun updateAdapter() = binding.categories.adapter?.notifyDataSetChanged()
-
-    private class Adapter(items: List<Category>) :
-        BasePrepopulatedListAdapter<Category, CategoryViewHolder>(items) {
-        override fun onCreateViewHolder(
-            inflater: LayoutInflater,
-            parent: ViewGroup,
-            viewType: Int
-        ): CategoryViewHolder {
-            val binding = ListItemSearchCategoryBinding.inflate(inflater, parent, false)
-            return CategoryViewHolder(binding)
-        }
-
-        override fun onBindViewHolder(holder: CategoryViewHolder, item: Category) {
-            holder.binding.title.text = holder.binding.root.context.getString(item.titleResId)
-            holder.binding.resultCount.isVisible = item.count != null
-            holder.binding.resultCount.text = item.count.toString()
-            holder.binding.progress.isVisible = item.busy
-        }
-    }
-
-    private class CategoryViewHolder(val binding: ListItemSearchCategoryBinding) :
-        RecyclerView.ViewHolder(binding.root)
-
-    private data class Category(val titleResId: Int, val type: LibrarySearchRequest.Mode?) {
-        var count: Int? = null
-            set(value) {
-                busy = false
-                field = value
-            }
-        var busy = false
-            set(value) {
-                if (value) count = null
-                field = value
-            }
     }
 
     companion object {
@@ -274,4 +147,160 @@ class SearchFragment : ViewBindingFragment<FragmentSearchBinding>(FragmentSearch
             }
         }
     }
+}
+
+@Composable
+fun SearchBox(
+    viewModel: SearchViewModel = viewModel(),
+    @SuppressLint("ModifierParameter") pillModifier: Modifier = Modifier,
+    onCloseListener: () -> Unit,
+    onOpenResultsListener: (query: String, type: LibrarySearchRequest.Mode?) -> Unit
+) {
+    val queryState by viewModel.queryFlow.collectAsState()
+    val categories by viewModel.categoriesFlow.collectAsState(emptyList())
+    val backProgress by viewModel.backProgressFlow.collectAsState()
+
+    SearchBox(
+        queryText = queryState.text,
+        submittedQueryText = queryState.submitted,
+        categories = categories,
+        backgroundAlpha = 1F - backProgress,
+        pillModifier = pillModifier.scale(1F - backProgress),
+        onQueryTextChanged = { viewModel.updateQuery(it) },
+        onClearQuery = { viewModel.updateQuery("") },
+        onClose = onCloseListener,
+        onCategoryClick = { category ->
+            if (!category.busy) {
+                onOpenResultsListener(queryState.text, category.type)
+            }
+        }
+    )
+}
+
+@Composable
+fun SearchBox(
+    queryText: String,
+    submittedQueryText: Boolean,
+    categories: List<SearchViewModel.Category>,
+    backgroundAlpha: Float = 1F,
+    @SuppressLint("ModifierParameter") pillModifier: Modifier = Modifier,
+    onQueryTextChanged: (String) -> Unit = {},
+    onClearQuery: () -> Unit = {},
+    onClose: () -> Unit = {},
+    onCategoryClick: (SearchViewModel.Category) -> Unit = {}
+) {
+    val focusRequester = remember { FocusRequester() }
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
+
+    Surface(
+        color = MaterialTheme.colorScheme.surface.copy(
+            alpha = 0.7F * backgroundAlpha
+        ),
+        modifier = Modifier
+            .fillMaxSize()
+            .clickable(onClick = { onClose() })
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = 8.dp, start = 16.dp, end = 16.dp)
+        ) {
+            Surface(
+                color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                modifier = pillModifier
+                    .align(Alignment.TopCenter)
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+                    .animateContentSize()
+                    .clip(RoundedCornerShape(24.dp))
+            ) {
+                Column {
+                    Row {
+                        IconButton(
+                            onClick = { onClose() },
+                            modifier = Modifier.align(Alignment.CenterVertically)
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_arrow_left_24dp),
+                                contentDescription = null // FIXME
+                            )
+                        }
+                        TextField(
+                            value = queryText,
+                            placeholder = {
+                                Text(stringResource(R.string.search_editor_hint))
+                            },
+                            onValueChange = { onQueryTextChanged(it) },
+                            colors = TextFieldDefaults.colors().copy(
+                                unfocusedIndicatorColor = Color.Transparent,
+                                focusedIndicatorColor = Color.Transparent
+                            ),
+                            modifier = Modifier.focusRequester(focusRequester)
+                        )
+                        if (queryText.isNotEmpty()) {
+                            IconButton(
+                                onClick = { onClearQuery() },
+                                modifier = Modifier.align(Alignment.CenterVertically)
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_close_24dp),
+                                    contentDescription = null // FIXME
+                                )
+                            }
+                        }
+                    }
+                    if (queryText.isNotEmpty() && submittedQueryText) {
+                        HorizontalDivider()
+                        LazyColumn {
+                            items(categories) { category ->
+                                SearchResultCountRow(
+                                    category = category,
+                                    modifier = Modifier
+                                        .clickable(onClick = { onCategoryClick(category) })
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SearchResultCountRow(
+    category: SearchViewModel.Category,
+    modifier: Modifier = Modifier
+) = ListItem(
+    colors = ListItemDefaults.colors().copy(
+        containerColor = Color.Transparent
+    ),
+    headlineContent = {
+        Text(text = category.title)
+    },
+    trailingContent = {
+        if (category.busy) {
+            CircularProgressIndicator(
+                strokeWidth = 2.dp,
+                modifier = Modifier.size(16.dp)
+            )
+        } else {
+            Text(
+                text = category.resultCount.toString()
+            )
+        }
+    },
+    modifier = modifier
+)
+
+@Preview
+@Composable
+fun SearchBoxPreview() {
+    val categories = listOf(
+        SearchViewModel.Category("First", null, 15, false),
+        SearchViewModel.Category("Second", null, 15, true)
+    )
+    SearchBox("Search text", true, categories)
 }

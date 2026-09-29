@@ -18,38 +18,18 @@
 package de.maniac103.squeezeclient.ui.search
 
 import android.app.Application
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.viewModelScope
-import androidx.paging.Pager
-import androidx.paging.PagingConfig
-import androidx.paging.PagingSourceFactory
-import androidx.paging.cachedIn
 import de.maniac103.squeezeclient.R
-import de.maniac103.squeezeclient.cometd.request.LibrarySearchRequest
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
-import de.maniac103.squeezeclient.extfuncs.forceGridLayout
-import de.maniac103.squeezeclient.extfuncs.getParcelable
-import de.maniac103.squeezeclient.extfuncs.prefs
-import de.maniac103.squeezeclient.model.ArtworkItem
-import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
-import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.ui.itemlist.BasePagedSlimBrowseItemListViewModel
-import de.maniac103.squeezeclient.ui.itemlist.BaseSlimBrowseItemListFragment
-import de.maniac103.squeezeclient.ui.itemlist.ItemPagingSource
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 
 class RadioSearchResultViewModel(
     private val application: Application,
-    savedStateHandle: SavedStateHandle
+    override val playerId: PlayerId,
+    private val searchTerm: String
 ) : BasePagedSlimBrowseItemListViewModel(application) {
-    override val playerId = savedStateHandle.get<PlayerId>("playerId")!!
-    private val searchTerm = savedStateHandle.get<String>("query")!!
-
     override val titleFlow get() =
         flowOf(listOf(application.getString(R.string.page_title_radio_search, searchTerm)))
     override val iconFlow get() = flowOf(null)

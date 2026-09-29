@@ -2,7 +2,6 @@ package de.maniac103.squeezeclient.ui.contextmenu
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.SavedStateHandle
 import coil3.request.ImageRequest
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.extfuncs.prefs
@@ -18,9 +17,8 @@ import kotlinx.coroutines.flow.flowOf
 
 class ItemActionsViewModel(
     application: Application,
-    savedStateHandle: SavedStateHandle
+    val item: SlimBrowseItemList.SlimBrowseItem
 ) : AndroidViewModel(application) {
-    val item = savedStateHandle.get<SlimBrowseItemList.SlimBrowseItem>("item")!!
     private val busyActionFlowInternal = MutableStateFlow<ActionItem?>(null)
 
     val headerFlow = flowOf(

@@ -17,81 +17,49 @@
 
 package de.maniac103.squeezeclient.ui.slideshow
 
-import android.app.Activity
-import android.app.ActivityOptions
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.ViewGroup
-import androidx.core.view.isVisible
-import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import de.maniac103.squeezeclient.databinding.FragmentGenericListBinding
-import de.maniac103.squeezeclient.databinding.GridItemGalleryBinding
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import coil3.compose.SubcomposeAsyncImage
+import coil3.request.ImageRequest
 import de.maniac103.squeezeclient.extfuncs.getParcelableList
-import de.maniac103.squeezeclient.extfuncs.loadSlideshowImage
+import de.maniac103.squeezeclient.extfuncs.loadMaybeRelativeUrl
+import de.maniac103.squeezeclient.extfuncs.prefs
+import de.maniac103.squeezeclient.extfuncs.serverConfig
+import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlideshowImage
 import de.maniac103.squeezeclient.ui.MainContentChild
-import de.maniac103.squeezeclient.ui.common.ViewBindingFragment
+import de.maniac103.squeezeclient.ui.common.ComposeFragment
 import kotlinx.coroutines.flow.flowOf
 
-class GalleryFragment :
-    ViewBindingFragment<FragmentGenericListBinding>(FragmentGenericListBinding::inflate),
-    MainContentChild {
+class GalleryFragment : ComposeFragment(), MainContentChild {
     private val items get() = requireArguments().getParcelableList("items", SlideshowImage::class)
     override val titleFlow get() = flowOf(requireArguments().getStringArrayList("title")!!)
     override val iconFlow get() = flowOf(null)
-    override val scrollingTargetView get() = binding.recycler
+    override val scrollingTargetView get() = null // FIXME
 
-    override fun onBindingCreated(binding: FragmentGenericListBinding) {
-        binding.root.enableMainContentBackground()
-        binding.recycler.apply {
-            layoutManager = GridLayoutManager(requireContext(), 2, RecyclerView.VERTICAL, false)
-            adapter = GalleryAdapter(items)
+    @Composable
+    override fun createContent() =
+        GalleryGrid(items, prefs.serverConfig) { item ->
+            val intent = ImageViewActivity.createIntent(requireContext(), item)
+            startActivity(intent)
         }
-    }
-
-    private class GalleryAdapter(private val items: List<SlideshowImage>) :
-        RecyclerView.Adapter<GalleryViewHolder>() {
-        override fun onCreateViewHolder(
-            parent: ViewGroup,
-            viewType: Int
-        ): GalleryViewHolder {
-            val inflater = LayoutInflater.from(parent.context)
-            val binding = GridItemGalleryBinding.inflate(inflater, parent, false)
-            return GalleryViewHolder(binding)
-        }
-
-        override fun onBindViewHolder(holder: GalleryViewHolder, position: Int) {
-            val item = items[position]
-            val context = holder.binding.root.context
-            holder.binding.root.setOnClickListener {
-                val intent = ImageViewActivity.createIntent(context, item)
-                val options = (context as? Activity)?.let { activity ->
-                    ActivityOptions.makeSceneTransitionAnimation(
-                        activity,
-                        holder.binding.image,
-                        "image"
-                    )
-                }
-                context.startActivity(intent, options?.toBundle())
-            }
-
-            holder.binding.loadingIndicator.isVisible = true
-            holder.binding.image.loadSlideshowImage(item) {
-                listener(
-                    onSuccess = { request, result ->
-                        holder.binding.loadingIndicator.isVisible = false
-                    }
-                )
-            }
-            holder.binding.text.text = item.caption
-        }
-
-        override fun getItemCount() = items.size
-    }
-
-    private class GalleryViewHolder(val binding: GridItemGalleryBinding) :
-        RecyclerView.ViewHolder(binding.root)
 
     companion object {
         fun create(items: List<SlideshowImage>, title: String, parentTitle: String?) =
@@ -102,5 +70,60 @@ class GalleryFragment :
                     putStringArrayList("title", ArrayList(titleList))
                 }
             }
+    }
+}
+
+@Composable
+fun GalleryGrid(
+    items: List<SlideshowImage>,
+    serverConfig: ServerConfiguration?,
+    itemSelectionListener: (SlideshowImage) -> Unit = {}
+) = LazyVerticalGrid(
+    columns = GridCells.Fixed(2)
+) {
+    items(items) { item ->
+        val imageRequest = ImageRequest.Builder(LocalContext.current)
+            .loadMaybeRelativeUrl(item.imageUrl, serverConfig)
+            .build()
+
+        GalleryGridItem(
+            imageRequest = imageRequest,
+            caption = item.caption,
+            modifier = Modifier
+                .clickable(onClick = { itemSelectionListener(item) })
+        )
+    }
+}
+
+@Composable
+fun GalleryGridItem(
+    imageRequest: ImageRequest,
+    caption: String,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .padding(8.dp)
+    ) {
+        SubcomposeAsyncImage(
+            model = imageRequest,
+            contentDescription = caption,
+            loading = {
+                CircularProgressIndicator(
+                    strokeWidth = 4.dp,
+                    modifier = Modifier
+                        .size(64.dp)
+                )
+            },
+            modifier = Modifier
+                .clip(RoundedCornerShape(10 /* percent */))
+                .align(Alignment.CenterHorizontally)
+        )
+        Text(
+            text = caption,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+        )
     }
 }

@@ -51,6 +51,7 @@ import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.placeholder
 import de.maniac103.squeezeclient.R
+import de.maniac103.squeezeclient.extfuncs.loadArtworkOrPlaceholder
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.ui.Theme
@@ -63,7 +64,9 @@ fun SlimBrowseItemGridCell(
     modifier: Modifier = Modifier,
     contextMenuClickListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {}
 ) {
-    val iconRequest = item.buildImageRequest(LocalContext.current, serverConfig)
+    val iconRequest = ImageRequest.Builder(LocalContext.current)
+        .loadArtworkOrPlaceholder(item, serverConfig)
+        .build()
 
     return SlimBrowseItemGridCell(
         title = item.title,

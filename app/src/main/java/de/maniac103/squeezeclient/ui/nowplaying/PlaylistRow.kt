@@ -34,11 +34,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
 import de.maniac103.squeezeclient.R
+import de.maniac103.squeezeclient.extfuncs.loadArtworkOrPlaceholder
 import de.maniac103.squeezeclient.model.JiveActions
 import de.maniac103.squeezeclient.model.Playlist
 import de.maniac103.squeezeclient.model.ServerConfiguration
-import de.maniac103.squeezeclient.ui.itemlist.buildImageRequest
 
 @Composable
 fun PlaylistRow(
@@ -54,12 +55,16 @@ fun PlaylistRow(
         else -> "${item.artist} · ${item.album}"
     }
 
+    val artworkRequest = ImageRequest.Builder(LocalContext.current)
+        .loadArtworkOrPlaceholder(item, serverConfig)
+        .build()
+
     ListItem(
         headlineContent = { Text(item.title) },
         supportingContent = { subtext.takeIf { it.isNotEmpty() }?.let { Text(it) } },
         leadingContent = {
             AsyncImage(
-                item.buildImageRequest(LocalContext.current, serverConfig),
+                artworkRequest,
                 contentDescription = null,
                 modifier = Modifier
                     .size(40.dp)

@@ -18,10 +18,28 @@
 package de.maniac103.squeezeclient.ui.bottomsheets
 
 import android.os.Bundle
-import android.view.inputmethod.EditorInfo
-import androidx.core.widget.doAfterTextChanged
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.dp
 import de.maniac103.squeezeclient.R
-import de.maniac103.squeezeclient.databinding.BottomSheetContentInputBinding
 import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.extfuncs.getParcelableOrNull
 import de.maniac103.squeezeclient.model.JiveAction
@@ -29,8 +47,7 @@ import de.maniac103.squeezeclient.model.JiveActions
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import kotlinx.coroutines.Job
 
-class InputBottomSheetFragment :
-    BaseBottomSheet<BottomSheetContentInputBinding>(BottomSheetContentInputBinding::inflate) {
+class InputBottomSheetFragment : BaseBottomSheet() {
     interface ItemSubmitListener {
         fun onInputSubmitted(
             item: SlimBrowseItemList.SlimBrowseItem,
@@ -50,33 +67,56 @@ class InputBottomSheetFragment :
         requireArguments().getParcelableOrNull("item", SlimBrowseItemList.SlimBrowseItem::class)
     private val input get() = requireArguments().getParcelable("input", JiveActions.Input::class)
 
-    override fun onContentInflated(content: BottomSheetContentInputBinding) {
-        val input = input
-        content.editor.apply {
-            doAfterTextChanged { text ->
-                text?.let {
-                    content.editorWrapper.error = determineErrorState(text, input)
-                    content.sendButton.isEnabled = content.editorWrapper.error == null
-                }
-            }
-            setText(input.initialText)
-            setOnEditorActionListener { _, actionId, _ ->
-                if (actionId == EditorInfo.IME_ACTION_SEND && error == null) {
-                    submitInput(text.toString())
-                    true
-                } else {
-                    false
-                }
-            }
+    @Composable
+    override fun createContent() = Column {
+        val textState = rememberTextFieldState(input.initialText ?: "")
+        val busy by busyFlow.collectAsState()
+        val errorMessage by remember {
+            derivedStateOf { determineErrorState(textState.text, input) }
         }
-        content.sendButton.setOnClickListener {
-            content.editor.text?.toString()?.let { submitInput(it) }
-        }
-    }
 
-    override fun onIndicateBusyState(content: BottomSheetContentInputBinding, busy: Boolean) {
-        super.onIndicateBusyState(content, busy)
-        content.sendButton.isEnabled = !busy
+        OutlinedTextField(
+            state = textState,
+            lineLimits = TextFieldLineLimits.SingleLine,
+            enabled = !busy,
+            isError = errorMessage != null,
+            keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Send
+            ),
+            onKeyboardAction = {
+                if (errorMessage != null) {
+                    submitInput(textState.text.toString())
+                }
+            },
+            supportingText = {
+                errorMessage?.let { error ->
+                    Text(
+                        text = error,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+        )
+
+        FilledTonalButton(
+            onClick = {
+                submitInput(textState.text.toString())
+            },
+            enabled = !busy,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp)
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_send_24dp),
+                contentDescription = null // FIXME
+            )
+            Text(
+                text = stringResource(R.string.input_submit)
+            )
+        }
     }
 
     private fun submitInput(inputText: String) {

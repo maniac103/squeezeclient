@@ -19,6 +19,7 @@ package de.maniac103.squeezeclient.ui.search
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.view.View
 import androidx.activity.BackEventCompat
 import androidx.activity.OnBackPressedCallback
 import androidx.compose.animation.animateContentSize
@@ -61,7 +62,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -69,14 +69,13 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.cometd.request.LibrarySearchRequest
-import de.maniac103.squeezeclient.databinding.FragmentComposeBinding
 import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.extfuncs.requireParentAs
 import de.maniac103.squeezeclient.extfuncs.viewModelWithParams
 import de.maniac103.squeezeclient.model.PlayerId
-import de.maniac103.squeezeclient.ui.common.ViewBindingFragment
+import de.maniac103.squeezeclient.ui.common.ComposeFragment
 
-class SearchFragment : ViewBindingFragment<FragmentComposeBinding>(FragmentComposeBinding::inflate) {
+class SearchFragment : ComposeFragment() {
     interface Listener {
         fun onCloseSearch()
         fun onOpenLocalSearchPage(searchTerm: String, type: LibrarySearchRequest.Mode)
@@ -103,35 +102,30 @@ class SearchFragment : ViewBindingFragment<FragmentComposeBinding>(FragmentCompo
         }
     }
 
-    override fun onBindingCreated(binding: FragmentComposeBinding) {
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
         requireActivity().onBackPressedDispatcher.addCallback(
             viewLifecycleOwner,
             onBackPressedCallback
         )
+    }
 
-        binding.compose.apply {
-            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
-            setContent {
-                MaterialTheme {
-                    Scaffold(
-                        containerColor = Color.Transparent
-                    ) { innerPadding ->
-                        SearchBox(
-                            viewModel,
-                            pillModifier = Modifier
-                                .padding(innerPadding),
-                            onCloseListener = { listener.onCloseSearch() },
-                            onOpenResultsListener = { query, type ->
-                                if (type != null) {
-                                    listener.onOpenLocalSearchPage(query, type)
-                                } else {
-                                    listener.onOpenRadioSearchPage(query)
-                                }
-                            }
-                        )
+    @Composable
+    override fun createContent() {
+        Scaffold(containerColor = Color.Transparent) { innerPadding ->
+            SearchBox(
+                viewModel,
+                pillModifier = Modifier
+                    .padding(innerPadding),
+                onCloseListener = { listener.onCloseSearch() },
+                onOpenResultsListener = { query, type ->
+                    if (type != null) {
+                        listener.onOpenLocalSearchPage(query, type)
+                    } else {
+                        listener.onOpenRadioSearchPage(query)
                     }
                 }
-            }
+            )
         }
     }
 

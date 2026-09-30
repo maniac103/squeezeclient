@@ -60,7 +60,7 @@ class SlimBrowseItemListFragment : BaseSlimBrowseItemListFragment(), Refreshable
     }
 
     @Composable
-    override fun createContent(
+    override fun createListContent(
         itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit,
         contextMenuClickListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit
     ) {

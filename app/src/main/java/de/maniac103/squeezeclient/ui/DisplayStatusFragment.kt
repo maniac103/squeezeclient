@@ -46,9 +46,9 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
-import de.maniac103.squeezeclient.extfuncs.addServerCredentialsIfNeeded
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.getParcelable
+import de.maniac103.squeezeclient.extfuncs.loadMaybeRelativeUrl
 import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.extfuncs.serverConfig
 import de.maniac103.squeezeclient.model.DisplayMessage
@@ -143,10 +143,9 @@ fun DisplayStatusIndicator(
                     .background(MaterialTheme.colorScheme.secondaryContainer)
                     .padding(8.dp)
             ) {
-                messageToShow.extractIconUrl(serverConfig)?.let { iconUrl ->
+                messageToShow.extractIconUrl()?.let { iconUrl ->
                     val iconRequest = ImageRequest.Builder(LocalContext.current)
-                        .data(iconUrl)
-                        .addServerCredentialsIfNeeded(LocalContext.current)
+                        .loadMaybeRelativeUrl(iconUrl, serverConfig)
                         .build()
 
                     AsyncImage(

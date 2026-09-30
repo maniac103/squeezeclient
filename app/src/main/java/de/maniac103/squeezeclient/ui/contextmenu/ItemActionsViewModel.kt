@@ -4,15 +4,16 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import coil3.request.ImageRequest
 import de.maniac103.squeezeclient.R
+import de.maniac103.squeezeclient.extfuncs.loadMaybeRelativeUrl
 import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.extfuncs.serverConfig
 import de.maniac103.squeezeclient.model.DownloadRequestData
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
-import de.maniac103.squeezeclient.ui.itemlist.buildImageRequest
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 
 class ItemActionsViewModel(
@@ -21,13 +22,13 @@ class ItemActionsViewModel(
 ) : AndroidViewModel(application) {
     private val busyActionFlowInternal = MutableStateFlow<ActionItem?>(null)
 
-    val headerFlow = flowOf(
-        Header(
-            item.title,
-            item.subText,
-            item.buildImageRequest(application, application.prefs.serverConfig)
-        )
-    )
+    val headerFlow = flow {
+        val imageRequest = ImageRequest.Builder(application)
+            .loadMaybeRelativeUrl(item.extractIconUrl(), application.prefs.serverConfig)
+            .build()
+        val header = Header(item.title, item.subText, imageRequest)
+        emit(header)
+    }
     val actionsFlow = flowOf(
         requireNotNull(item.actions).let { actions ->
             listOfNotNull(

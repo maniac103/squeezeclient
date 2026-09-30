@@ -54,9 +54,9 @@ import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import de.maniac103.squeezeclient.R
-import de.maniac103.squeezeclient.extfuncs.addServerCredentialsIfNeeded
 import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.extfuncs.getParcelableList
+import de.maniac103.squeezeclient.extfuncs.loadMaybeRelativeUrl
 import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.extfuncs.requireParentAs
 import de.maniac103.squeezeclient.extfuncs.serverConfig
@@ -160,10 +160,9 @@ fun ContextMenuBottomSheetContent(
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
         Row {
-            parent.extractIconUrl(serverConfig)?.let { iconUrl ->
+            parent.extractIconUrl()?.let { iconUrl ->
                 val iconRequest = ImageRequest.Builder(LocalContext.current)
-                    .data(iconUrl)
-                    .addServerCredentialsIfNeeded(LocalContext.current)
+                    .loadMaybeRelativeUrl(iconUrl, serverConfig)
                     .build()
 
                 AsyncImage(

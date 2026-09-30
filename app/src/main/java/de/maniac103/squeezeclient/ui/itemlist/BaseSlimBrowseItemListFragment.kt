@@ -29,10 +29,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.lifecycleScope
@@ -59,7 +57,7 @@ import de.maniac103.squeezeclient.service.DownloadWorker
 import de.maniac103.squeezeclient.ui.MainContentChild
 import de.maniac103.squeezeclient.ui.bottomsheets.ChoicesBottomSheetFragment
 import de.maniac103.squeezeclient.ui.bottomsheets.InputBottomSheetFragment
-import de.maniac103.squeezeclient.ui.common.ViewBindingFragment
+import de.maniac103.squeezeclient.ui.common.ComposeFragment
 import de.maniac103.squeezeclient.ui.contextmenu.ContextMenuBottomSheetFragment
 import de.maniac103.squeezeclient.ui.contextmenu.ItemActionsMenuSheet
 import kotlinx.coroutines.Job
@@ -68,7 +66,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 abstract class BaseSlimBrowseItemListFragment :
-    ViewBindingFragment<FragmentComposeBinding>(FragmentComposeBinding::inflate),
+    ComposeFragment(),
     MainContentChild,
     ChoicesBottomSheetFragment.SelectionListener,
     InputBottomSheetFragment.ItemSubmitListener,
@@ -103,23 +101,18 @@ abstract class BaseSlimBrowseItemListFragment :
     override val scrollingTargetView: View? get() = null
 
     override fun onBindingCreated(binding: FragmentComposeBinding) {
-        binding.compose.apply {
-            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
-            setContent {
-                MaterialTheme {
-                    // TODO: insets handling
-                    createContent(
-                        itemSelectionListener = { item -> handleItemSelected(item) },
-                        contextMenuClickListener = { item -> handleContextMenu(item) }
-                    )
-                }
-            }
-        }
+        super.onBindingCreated(binding)
         binding.root.enableMainContentBackground()
     }
 
     @Composable
-    protected abstract fun createContent(
+    override fun createContent() = createListContent(
+        itemSelectionListener = { item -> handleItemSelected(item) },
+        contextMenuClickListener = { item -> handleContextMenu(item) }
+    )
+
+    @Composable
+    protected abstract fun createListContent(
         itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit,
         contextMenuClickListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit
     )

@@ -37,18 +37,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.commitNow
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
+import de.maniac103.squeezeclient.ui.composables.ArtworkImage
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.getParcelable
-import de.maniac103.squeezeclient.extfuncs.loadMaybeRelativeUrl
 import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.extfuncs.serverConfig
 import de.maniac103.squeezeclient.model.DisplayMessage
@@ -143,18 +140,14 @@ fun DisplayStatusIndicator(
                     .background(MaterialTheme.colorScheme.secondaryContainer)
                     .padding(8.dp)
             ) {
-                messageToShow.extractIconUrl()?.let { iconUrl ->
-                    val iconRequest = ImageRequest.Builder(LocalContext.current)
-                        .loadMaybeRelativeUrl(iconUrl, serverConfig)
-                        .build()
-
-                    AsyncImage(
-                        model = iconRequest,
-                        contentDescription = null,
+                messageToShow.extractIconUrl()?.let {
+                    ArtworkImage(
+                        artwork = messageToShow,
+                        serverConfig = serverConfig,
+                        usePlaceholder = false,
                         modifier = Modifier
                             .size(32.dp)
                             .align(Alignment.CenterVertically)
-                            .clip(RoundedCornerShape(8.dp))
                     )
                 }
                 Text(

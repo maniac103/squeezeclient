@@ -409,11 +409,14 @@ class SqueezeboxMediaPlayer(
     }
 
     private fun Playlist.PlaylistItem.toMediaItemDataBuilder(position: Int): MediaItemData.Builder {
+        val artworkUri = extractIconUrl()
+            ?.let { appContext.prefs.serverConfig?.url?.resolve(it)?.toString() ?: it }
+            ?.toUri()
         val metadata = MediaMetadata.Builder()
             .setTitle(title)
             .setArtist(artist)
             .setAlbumTitle(album)
-            .setArtworkUri(extractIconUrl(appContext.prefs.serverConfig)?.toUri())
+            .setArtworkUri(artworkUri)
             .build()
         return MediaItemData.Builder(position)
             .setMediaItem(

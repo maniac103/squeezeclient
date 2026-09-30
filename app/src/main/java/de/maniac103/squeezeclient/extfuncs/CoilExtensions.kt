@@ -18,15 +18,43 @@
 package de.maniac103.squeezeclient.extfuncs
 
 import android.content.Context
+import androidx.compose.ui.platform.LocalContext
 import coil3.network.NetworkHeaders
 import coil3.network.httpHeaders
 import coil3.request.ImageRequest
+import coil3.request.placeholder
+import de.maniac103.squeezeclient.R
+import de.maniac103.squeezeclient.model.ArtworkItem
+import de.maniac103.squeezeclient.model.ServerConfiguration
 
-fun ImageRequest.Builder.addServerCredentialsIfNeeded(context: Context) = apply {
-    context.prefs.serverConfig?.credentialsAsAuthorizationHeader?.let {
+fun ImageRequest.Builder.addServerCredentialsIfNeeded(context: Context) =
+    addServerCredentialsIfNeeded(context.prefs.serverConfig)
+
+fun ImageRequest.Builder.addServerCredentialsIfNeeded(serverConfig: ServerConfiguration?) = apply {
+    serverConfig?.credentialsAsAuthorizationHeader?.let {
         val headers = NetworkHeaders.Builder()
             .set("Authorization", it)
             .build()
         httpHeaders(headers)
     }
+}
+
+fun ImageRequest.Builder.loadMaybeRelativeUrl(
+    url: String?,
+    serverConfig: ServerConfiguration?
+) = apply {
+    val absoluteUrl = url?.let {
+        serverConfig?.url?.resolve(url)?.toString() ?: url
+    }
+
+    data(absoluteUrl)
+    addServerCredentialsIfNeeded(serverConfig)
+}
+
+fun ImageRequest.Builder.loadArtworkOrPlaceholder(
+    artwork: ArtworkItem,
+    serverConfig: ServerConfiguration?
+) = apply {
+    loadMaybeRelativeUrl(artwork.extractIconUrl(), serverConfig)
+    placeholder(R.drawable.ic_disc_24dp)
 }

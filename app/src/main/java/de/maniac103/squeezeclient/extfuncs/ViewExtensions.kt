@@ -26,6 +26,7 @@ import androidx.constraintlayout.motion.widget.MotionLayout
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
+import coil3.imageLoader
 import coil3.load
 import coil3.request.ImageRequest
 import coil3.request.placeholder
@@ -45,31 +46,14 @@ fun View.animateScale(scale: Float, duration: Duration) =
 fun ShapeableImageView.loadArtwork(
     item: ArtworkItem?,
     builder: ImageRequest.Builder.() -> Unit = {}
-) = load(item?.extractIconUrl(context.prefs.serverConfig)) {
-    addServerCredentialsIfNeeded(context)
-    target(ImageViewTarget(this@loadArtwork))
-    builder()
-}
+) {
+    val imageRequest = ImageRequest.Builder(context)
+        .loadMaybeRelativeUrl(item?.extractIconUrl(), context.prefs.serverConfig)
+        .target(ImageViewTarget(this@loadArtwork))
+        .apply { builder() }
+        .build()
 
-fun ShapeableImageView.loadArtworkOrPlaceholder(
-    item: ArtworkItem?,
-    builder: ImageRequest.Builder.() -> Unit = {}
-) = loadArtwork(item) {
-    placeholder(R.drawable.ic_disc_24dp)
-    builder()
-}
-
-fun ImageView.loadSlideshowImage(
-    item: SlideshowImage,
-    builder: ImageRequest.Builder.() -> Unit = {}
-) = item.imageUrl.let { url ->
-    val baseUrl = context.prefs.serverConfig?.url
-    val absoluteUrl = baseUrl?.resolve(url)?.toString() ?: url
-    load(absoluteUrl) {
-        addServerCredentialsIfNeeded(context)
-        target(ImageViewTarget(this@loadSlideshowImage))
-        builder()
-    }
+    context.imageLoader.enqueue(imageRequest)
 }
 
 enum class ViewEdge {

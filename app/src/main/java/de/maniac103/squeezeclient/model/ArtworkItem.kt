@@ -23,14 +23,10 @@ interface ArtworkItem {
     val icon: String?
     val iconId: String?
 
-    fun extractIconUrl(server: ServerConfiguration?): String? {
-        val maybeRelativeUrl = when {
-            iconId?.toLongOrNull(16) != null -> "/music/$iconId/cover"
-            iconId != null -> iconId
-            else -> icon
-        }
-        val baseUrl = server?.url ?: return maybeRelativeUrl
-        return maybeRelativeUrl?.let { baseUrl.resolve(it).toString() }
+    fun extractIconUrl(): String? = when {
+        iconId?.toLongOrNull(16) != null -> "/music/$iconId/cover"
+        iconId != null -> iconId
+        else -> icon
     }
 }
 

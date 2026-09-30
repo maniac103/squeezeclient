@@ -22,20 +22,51 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.webkit.MimeTypeMap
+import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.core.content.IntentCompat
-import androidx.core.view.isVisible
 import coil3.annotation.ExperimentalCoilApi
+import coil3.compose.AsyncImage
+import coil3.compose.AsyncImagePainter
 import coil3.imageLoader
-import coil3.request.crossfade
-import coil3.request.lifecycle
-import coil3.size.Precision
+import coil3.request.ImageRequest
 import de.maniac103.squeezeclient.R
-import de.maniac103.squeezeclient.databinding.ActivityImageBinding
-import de.maniac103.squeezeclient.extfuncs.loadSlideshowImage
+import de.maniac103.squeezeclient.extfuncs.addServerCredentialsIfNeeded
+import de.maniac103.squeezeclient.extfuncs.prefs
+import de.maniac103.squeezeclient.extfuncs.serverConfig
 import de.maniac103.squeezeclient.model.SlideshowImage
 import kotlin.io.path.createTempFile
 
@@ -43,48 +74,96 @@ class ImageViewActivity : AppCompatActivity() {
     private val item get() =
         IntentCompat.getParcelableExtra(intent, EXTRA_ITEM, SlideshowImage::class.java)!!
 
-    private lateinit var binding: ActivityImageBinding
-    private lateinit var imageUrl: String
-
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         delegate.localNightMode = AppCompatDelegate.MODE_NIGHT_YES
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        binding = ActivityImageBinding.inflate(layoutInflater)
-        setContentView(binding.root)
 
-        binding.image.loadSlideshowImage(item) {
-            lifecycle(lifecycle)
-            precision(Precision.INEXACT)
-            crossfade(true)
-            listener { request, _ ->
-                imageUrl = request.data.toString()
-                binding.progress.isVisible = false
-                binding.toolbar.inflateMenu(R.menu.image_view_toolbar)
+        setContent {
+            val imageUrl = item.imageUrl.let { url ->
+                prefs.serverConfig?.url?.resolve(url)?.toString() ?: url
             }
-        }
 
-        binding.toolbar.apply {
-            title = item.caption
-            setNavigationOnClickListener {
-                finishAfterTransition()
-            }
-            setOnMenuItemClickListener { item ->
-                when (item.itemId) {
-                    R.id.share -> {
-                        share()
-                        true
+            val imageRequest = ImageRequest.Builder(this)
+                .data(imageUrl)
+                .addServerCredentialsIfNeeded(this)
+                .build()
+
+            MaterialTheme(
+                colorScheme = darkColorScheme()
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    var imageIsLoading by remember { mutableStateOf(true) }
+
+                    Scaffold(
+                        topBar = {
+                            TopAppBar(
+                                title = { Text(text = item.caption) },
+                                colors = TopAppBarDefaults.topAppBarColors().copy(
+                                    containerColor = Color.Transparent
+                                ),
+                                navigationIcon = {
+                                    IconButton(
+                                        onClick = { finishAfterTransition() }
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(R.drawable.ic_arrow_left_24dp),
+                                            contentDescription = null // FIXME
+                                        )
+                                    }
+                                },
+                                actions = {
+                                    if (!imageIsLoading) {
+                                        IconButton(
+                                            onClick = { share(imageUrl) }
+                                        ) {
+                                            Icon(
+                                                painter = painterResource(R.drawable.ic_share_24dp),
+                                                contentDescription = null // FIXME
+                                            )
+                                        }
+
+                                    }
+                                },
+                                modifier = Modifier.background(
+                                    Brush.verticalGradient(
+                                        colors = listOf(
+                                            Color.Black.copy(alpha = 0.75F),
+                                            Color.Transparent
+                                        )
+                                    )
+                                )
+                            )
+                        },
+                        modifier = Modifier.fillMaxSize()
+                    ) { _ ->
+                        if (imageIsLoading) {
+                            CircularProgressIndicator(
+                                strokeWidth = 6.dp,
+                                modifier = Modifier.size(128.dp)
+                            )
+                        }
                     }
-
-                    else -> false
+                    ZoomableAsyncImage(
+                        imageRequest = imageRequest,
+                        contentDescription = item.caption,
+                        loadingStateListener = { state ->
+                            imageIsLoading = state is AsyncImagePainter.State.Loading
+                        },
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                    )
                 }
             }
         }
     }
 
     @OptIn(ExperimentalCoilApi::class)
-    private fun share() {
-        val extension = MimeTypeMap.getFileExtensionFromUrl(item.imageUrl)
+    private fun share(imageUrl: String) {
+        val extension = MimeTypeMap.getFileExtensionFromUrl(imageUrl)
         val uri = imageLoader.diskCache?.openSnapshot(imageUrl)?.use { snapshot ->
             val tempFile = createTempFile(
                 snapshot.data.parent?.toNioPath(),
@@ -113,4 +192,38 @@ class ImageViewActivity : AppCompatActivity() {
             Intent(context, ImageViewActivity::class.java)
                 .putExtra(EXTRA_ITEM, item)
     }
+}
+
+@Composable
+fun ZoomableAsyncImage(
+    imageRequest: ImageRequest,
+    contentDescription: String,
+    loadingStateListener: (AsyncImagePainter.State) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var scale by remember { mutableFloatStateOf(1F) }
+    var offset by remember { mutableStateOf(Offset(0f, 0f)) }
+
+    AsyncImage(
+        model = imageRequest,
+        contentDescription = contentDescription,
+        onState = { loadingStateListener(it) },
+        modifier = modifier
+            .pointerInput(Unit) {
+                detectTransformGestures { _, pan, zoom, _ ->
+                    // Update the scale based on zoom gestures.
+                    scale *= zoom
+
+                    // Limit the zoom levels within a certain range (optional).
+                    scale = scale.coerceIn(0.5f, 3f)
+
+                    // Update the offset to implement panning when zoomed.
+                    offset = if (scale == 1f) Offset(0f, 0f) else offset + pan
+                }
+            }
+            .graphicsLayer(
+                scaleX = scale, scaleY = scale,
+                translationX = offset.x, translationY = offset.y
+            )
+    )
 }

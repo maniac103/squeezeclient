@@ -1,6 +1,5 @@
 package de.maniac103.squeezeclient.ui.itemlist
 
-import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -32,8 +31,7 @@ import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.placeholder
 import de.maniac103.squeezeclient.R
-import de.maniac103.squeezeclient.extfuncs.addServerCredentialsIfNeeded
-import de.maniac103.squeezeclient.model.ArtworkItem
+import de.maniac103.squeezeclient.extfuncs.loadArtworkOrPlaceholder
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.ui.Theme
@@ -48,7 +46,9 @@ fun SlimBrowseItemListRow(
     contextMenuClickListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {}
 ) {
     val iconRequest = if (showIcon) {
-        item.buildImageRequest(LocalContext.current, serverConfig)
+        ImageRequest.Builder(LocalContext.current)
+            .loadArtworkOrPlaceholder(item, serverConfig)
+            .build()
     } else {
         null
     }
@@ -187,10 +187,3 @@ fun SlimBrowseItemListRowPreview() {
         SlimBrowseItemListRow("Checkbox", "Subtext", SlimBrowseItemTrailingWidget.Checkbox(true), dummyRequest, false)
     }
 }
-
-fun ArtworkItem?.buildImageRequest(context: Context, serverConfig: ServerConfiguration?) =
-    ImageRequest.Builder(context)
-        .data(this?.extractIconUrl(serverConfig))
-        .addServerCredentialsIfNeeded(context)
-        .placeholder(R.drawable.ic_disc_24dp)
-        .build()

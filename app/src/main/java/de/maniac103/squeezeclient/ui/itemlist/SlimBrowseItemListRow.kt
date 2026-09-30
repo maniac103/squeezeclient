@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.RadioButton
@@ -20,18 +19,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
-import coil3.request.placeholder
 import de.maniac103.squeezeclient.R
-import de.maniac103.squeezeclient.extfuncs.loadArtworkOrPlaceholder
+import de.maniac103.squeezeclient.ui.composables.ArtworkImage
+import de.maniac103.squeezeclient.model.ArtworkItem
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.ui.Theme
@@ -44,30 +39,23 @@ fun SlimBrowseItemListRow(
     busy: Boolean,
     modifier: Modifier = Modifier,
     contextMenuClickListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {}
-) {
-    val iconRequest = if (showIcon) {
-        ImageRequest.Builder(LocalContext.current)
-            .loadArtworkOrPlaceholder(item, serverConfig)
-            .build()
-    } else {
-        null
-    }
-    return SlimBrowseItemListRow(
-        title = item.title,
-        subtext = item.subText ?: item.extraInfo,
-        trailingWidget = item.extractTrailingWidget(contextMenuClickListener),
-        iconRequest = iconRequest,
-        busy = busy,
-        modifier = modifier
-    )
-}
+) = SlimBrowseItemListRow(
+    title = item.title,
+    subtext = item.subText ?: item.extraInfo,
+    trailingWidget = item.extractTrailingWidget(contextMenuClickListener),
+    artwork = if (showIcon) item else null,
+    serverConfig = serverConfig,
+    busy = busy,
+    modifier = modifier
+)
 
 @Composable
 fun SlimBrowseItemListRow(
     title: String,
     subtext: String?,
     trailingWidget: SlimBrowseItemTrailingWidget?,
-    iconRequest: ImageRequest?,
+    artwork: ArtworkItem?,
+    serverConfig: ServerConfiguration?,
     busy: Boolean,
     modifier: Modifier = Modifier
 ) {
@@ -77,15 +65,14 @@ fun SlimBrowseItemListRow(
             .defaultMinSize(minHeight = 64.dp)
             .padding(top = 8.dp, bottom = 8.dp)
     ) {
-        if (iconRequest != null) {
-            AsyncImage(
-                iconRequest,
-                contentDescription = null,
+        if (artwork != null) {
+            ArtworkImage(
+                artwork = artwork,
+                serverConfig = serverConfig,
                 modifier = Modifier
                     .padding(horizontal = 16.dp)
                     .size(40.dp)
                     .align(Alignment.CenterVertically)
-                    .clip(RoundedCornerShape(8.dp))
             )
         } else {
             Spacer(modifier = Modifier.size(16.dp))
@@ -171,19 +158,19 @@ fun SlimBrowseItemListRow(
 @Preview
 @Composable
 fun SlimBrowseItemListRowPreview() {
-    val dummyRequest = ImageRequest.Builder(LocalContext.current)
-        .data(null)
-        .placeholder(R.drawable.ic_disc_24dp)
-        .build()
+    val dummyArtwork = object : ArtworkItem {
+        override val icon = null
+        override val iconId = null
+    }
 
     Column(modifier = Modifier.fillMaxWidth()) {
-        SlimBrowseItemListRow("Title", "Subtext", null, dummyRequest, false)
-        SlimBrowseItemListRow("No Subtext", null, null, dummyRequest, false)
-        SlimBrowseItemListRow("No icon", null, null, null, false)
-        SlimBrowseItemListRow("Busy", "Subtext", null, dummyRequest, true)
-        SlimBrowseItemListRow("Menu", "Subtext", SlimBrowseItemTrailingWidget.ContextMenu {}, dummyRequest, false)
-        SlimBrowseItemListRow("Choice", "Subtext", SlimBrowseItemTrailingWidget.Choice("On"), dummyRequest, false)
-        SlimBrowseItemListRow("Radio", "Subtext", SlimBrowseItemTrailingWidget.Radio(true), dummyRequest, false)
-        SlimBrowseItemListRow("Checkbox", "Subtext", SlimBrowseItemTrailingWidget.Checkbox(true), dummyRequest, false)
+        SlimBrowseItemListRow("Title", "Subtext", null, dummyArtwork, null, false)
+        SlimBrowseItemListRow("No Subtext", null, null, dummyArtwork, null, false)
+        SlimBrowseItemListRow("No icon", null, null, null, null, false)
+        SlimBrowseItemListRow("Busy", "Subtext", null, dummyArtwork, null, true)
+        SlimBrowseItemListRow("Menu", "Subtext", SlimBrowseItemTrailingWidget.ContextMenu {}, dummyArtwork, null, false)
+        SlimBrowseItemListRow("Choice", "Subtext", SlimBrowseItemTrailingWidget.Choice("On"), dummyArtwork, null, false)
+        SlimBrowseItemListRow("Radio", "Subtext", SlimBrowseItemTrailingWidget.Radio(true), dummyArtwork, null, false)
+        SlimBrowseItemListRow("Checkbox", "Subtext", SlimBrowseItemTrailingWidget.Checkbox(true), dummyArtwork, null, false)
     }
 }

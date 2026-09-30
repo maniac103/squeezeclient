@@ -47,6 +47,7 @@ fun ContextMenuListRow(
             modifier = Modifier
                 .alpha(if (selectable) 1F else 0.38F)
                 .align(Alignment.CenterVertically)
+                .weight(1F)
                 .padding(horizontal = 16.dp)
         )
         if (busy) {

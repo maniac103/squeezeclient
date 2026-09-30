@@ -17,32 +17,57 @@
 
 package de.maniac103.squeezeclient.ui.contextmenu
 
-import android.animation.LayoutTransition
 import android.os.Bundle
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
-import androidx.core.view.isVisible
-import androidx.fragment.app.commit
-import androidx.lifecycle.lifecycleScope
-import coil3.load
+import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import de.maniac103.squeezeclient.databinding.BottomSheetContextMenuBinding
-import de.maniac103.squeezeclient.extfuncs.connectionHelper
+import de.maniac103.squeezeclient.R
+import de.maniac103.squeezeclient.extfuncs.addServerCredentialsIfNeeded
 import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.extfuncs.getParcelableList
 import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.extfuncs.requireParentAs
 import de.maniac103.squeezeclient.extfuncs.serverConfig
-import de.maniac103.squeezeclient.model.PagingParams
+import de.maniac103.squeezeclient.extfuncs.viewModelWithParams
 import de.maniac103.squeezeclient.model.PlayerId
+import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
+import kotlin.collections.emptyList
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 
-class ContextMenuBottomSheetFragment :
-    BottomSheetDialogFragment(),
-    ContextMenuItemListFragment.ItemClickListener {
+class ContextMenuBottomSheetFragment : BottomSheetDialogFragment() {
     interface Listener {
         fun onContextItemSelected(
             parentItem: SlimBrowseItemList.SlimBrowseItem,
@@ -50,91 +75,53 @@ class ContextMenuBottomSheetFragment :
         ): Job?
     }
 
-    private val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)
-    private val parent get() =
-        requireArguments().getParcelable("parent", SlimBrowseItemList.SlimBrowseItem::class)
-    private val initialItems get() = requireArguments().getParcelableList(
-        "initialItems",
-        SlimBrowseItemList.SlimBrowseItem::class
-    )
-    private val listener get() = requireParentAs<Listener>()
+    private val viewModel by viewModelWithParams {
+        val args = requireArguments()
+        val playerId = args.getParcelable("playerId", PlayerId::class)
+        val parent = args.getParcelable("parent", SlimBrowseItemList.SlimBrowseItem::class)
+        val initialItems = args.getParcelableList(
+            "initialItems",
+            SlimBrowseItemList.SlimBrowseItem::class
+        )
+        ContextMenuBottomSheetViewModel(
+            requireActivity().application,
+            playerId,
+            initialItems,
+            parent
+        )
+    }
 
-    private lateinit var binding: BottomSheetContextMenuBinding
+    private val listener get() = requireParentAs<Listener>()
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View {
-        binding = BottomSheetContextMenuBinding.inflate(inflater, container, false)
-        return binding.root
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
-        binding.root.layoutTransition = LayoutTransition().apply {
-            setDuration(200)
-            setAnimateParentHierarchy(false)
-        }
-
-        val parent = parent
-        binding.icon.apply {
-            val iconUrl = parent.extractIconUrl(prefs.serverConfig)
-            isVisible = iconUrl != null
-            load(iconUrl)
-        }
-        binding.title.text = parent.title
-        binding.subtext.apply {
-            isVisible = !parent.subText.isNullOrEmpty()
-            text = parent.subText
-        }
-        binding.breadcrumbBackButton.setOnClickListener {
-            childFragmentManager.popBackStack()
-        }
-
-        childFragmentManager.apply {
-            addOnBackStackChangedListener {
-                binding.breadcrumbContainer.isVisible = backStackEntryCount > 0
-                val f = findFragmentById(binding.listContainer.id) as? ContextMenuItemListFragment
-                binding.breadcrumbText.text = f?.parent?.title
-            }
-            commit {
-                replace(
-                    binding.listContainer.id,
-                    ContextMenuItemListFragment.create(parent, initialItems)
-                )
-            }
-        }
-    }
-
-    override fun onItemClicked(item: SlimBrowseItemList.SlimBrowseItem): Job? {
-        val goAction = item.actions?.goAction
-        if (goAction?.isContextMenu == true) {
-            return lifecycleScope.launch {
-                val newItems = connectionHelper.fetchItemsForAction(
-                    playerId,
-                    goAction,
-                    PagingParams.All,
-                    false
-                )
-                childFragmentManager.commit(true) {
-                    replace(
-                        binding.listContainer.id,
-                        ContextMenuItemListFragment.create(item, newItems.items)
-                    )
-                    addToBackStack(goAction.toString())
+    ) = ComposeView(inflater.context).apply {
+        setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+        setContent {
+            MaterialTheme {
+                ContextMenuBottomSheetContent(viewModel, prefs.serverConfig) { item ->
+                    handleItemClick(item)
                 }
             }
         }
+    }
 
-        val job = listener.onContextItemSelected(parent, item)
-        job?.invokeOnCompletion {
-            if (isAdded) {
-                dismissAllowingStateLoss()
+    private fun handleItemClick(item: SlimBrowseItemList.SlimBrowseItem) {
+        val goAction = item.actions?.goAction
+        if (goAction?.isContextMenu == true) {
+            viewModel.pushPage(item, goAction)
+        } else {
+            listener.onContextItemSelected(viewModel.parentItem, item)?.let { job ->
+                viewModel.setItemBusy(item, job)
+                job.invokeOnCompletion {
+                    if (isAdded) {
+                        dismissAllowingStateLoss()
+                    }
+                }
             }
         }
-        return job
     }
 
     companion object {
@@ -149,5 +136,106 @@ class ContextMenuBottomSheetFragment :
                 putParcelableArrayList("initialItems", ArrayList(initialItems))
             }
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ContextMenuBottomSheetContent(
+    viewModel: ContextMenuBottomSheetViewModel = viewModel(),
+    serverConfig: ServerConfiguration?,
+    itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {}
+) {
+    val parent = viewModel.parentItem
+    val items by viewModel.pageFlow.collectAsState(emptyList())
+    val busyItem by viewModel.busyItemFlow.collectAsState()
+    val backNavTitle by viewModel.backNavTitleFlow.collectAsState(null)
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .animateContentSize()
+    ) {
+        BottomSheetDefaults.DragHandle(
+            modifier = Modifier.align(Alignment.CenterHorizontally)
+        )
+        Row {
+            parent.extractIconUrl(serverConfig)?.let { iconUrl ->
+                val iconRequest = ImageRequest.Builder(LocalContext.current)
+                    .data(iconUrl)
+                    .addServerCredentialsIfNeeded(LocalContext.current)
+                    .build()
+
+                AsyncImage(
+                    model = iconRequest,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .padding(start = 4.dp, end = 12.dp, top = 4.dp, bottom = 4.dp)
+                        .size(40.dp)
+                        .align(Alignment.CenterVertically)
+                        .clip(RoundedCornerShape(8.dp))
+                )
+            }
+            Column(
+                modifier = Modifier.align(Alignment.CenterVertically)
+            ) {
+                Text(
+                    text = parent.title,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.SemiBold
+                    )
+                )
+                parent.subText?.let { subText ->
+                    Text(
+                        text = subText,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.titleSmall
+                    )
+                }
+            }
+        }
+        backNavTitle?.let { backNavTitle ->
+            Row {
+                IconButton(
+                    onClick = { viewModel.popPage() },
+                    modifier = Modifier.align(Alignment.CenterVertically)
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_chevron_left_24dp),
+                        contentDescription = null // FIXME
+                    )
+                }
+                Text(
+                    text = backNavTitle,
+                    modifier = Modifier.align(Alignment.CenterVertically)
+                )
+            }
+        }
+        ContextMenuItemList(
+            items = items,
+            busyItem = busyItem,
+            itemSelectionListener = itemSelectionListener
+        )
+    }
+}
+
+@Composable
+fun ContextMenuItemList(
+    items: List<SlimBrowseItemList.SlimBrowseItem>,
+    busyItem: SlimBrowseItemList.SlimBrowseItem?,
+    itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit,
+    modifier: Modifier = Modifier
+) = LazyColumn(
+    modifier = modifier
+) {
+    items(items) { item ->
+        ContextMenuListRow(
+            title = item.title,
+            busy = item == busyItem,
+            selectable = item.actions?.goAction != null,
+            modifier = Modifier
+                .clickable(onClick = { itemSelectionListener(item) })
+        )
     }
 }

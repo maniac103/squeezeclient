@@ -18,8 +18,24 @@
 package de.maniac103.squeezeclient.ui.bottomsheets
 
 import android.os.Bundle
-import com.google.android.material.slider.Slider
-import de.maniac103.squeezeclient.databinding.BottomSheetContentSliderBinding
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Label
+import androidx.compose.material3.PlainTooltip
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.extfuncs.requireParentAs
 import de.maniac103.squeezeclient.model.JiveAction
@@ -27,9 +43,7 @@ import de.maniac103.squeezeclient.model.JiveActions
 import kotlin.math.roundToInt
 import kotlinx.coroutines.Job
 
-class SliderBottomSheetFragment :
-    BaseBottomSheet<BottomSheetContentSliderBinding>(BottomSheetContentSliderBinding::inflate),
-    Slider.OnSliderTouchListener {
+class SliderBottomSheetFragment : BaseBottomSheet() {
     interface ChangeListener {
         fun onSliderChanged(input: JiveAction): Job
     }
@@ -38,31 +52,45 @@ class SliderBottomSheetFragment :
     private val slider get() = requireArguments().getParcelable("slider", JiveActions.Slider::class)
     private val listener get() = requireParentAs<ChangeListener>()
 
-    override fun onContentInflated(content: BottomSheetContentSliderBinding) {
-        val slider = slider
-        content.slider.apply {
-            valueFrom = slider.min.toFloat()
-            valueTo = slider.max.toFloat()
-            value = slider.initialValue.toFloat()
-            setLabelFormatter { value -> value.roundToInt().toString() }
-            // TODO: icons
-            addOnSliderTouchListener(this@SliderBottomSheetFragment)
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    override fun createContent() {
+        val busy by busyFlow.collectAsState()
+        var sliderPosition by rememberSaveable {
+            mutableFloatStateOf(slider.initialValue.toFloat())
         }
-    }
+        val interactionSource = remember { MutableInteractionSource() }
 
-    override fun onStartTrackingTouch(slider: Slider) {
-    }
-
-    override fun onStopTrackingTouch(slider: Slider) {
-        val inputValue = slider.value.roundToInt().toString()
-        val action = this@SliderBottomSheetFragment.slider.action.withInputValue(inputValue)
-        val job = listener.onSliderChanged(action)
-        handleAction(job, false)
-    }
-
-    override fun onIndicateBusyState(content: BottomSheetContentSliderBinding, busy: Boolean) {
-        super.onIndicateBusyState(content, busy)
-        content.slider.isEnabled = !busy
+        Slider(
+            value = sliderPosition,
+            valueRange = slider.min.toFloat()..slider.max.toFloat(),
+            enabled = !busy,
+            interactionSource = interactionSource,
+            onValueChange = { sliderPosition = it },
+            onValueChangeFinished = {
+                val inputValue = sliderPosition.roundToInt().toString()
+                val action = this@SliderBottomSheetFragment.slider.action.withInputValue(inputValue)
+                val job = listener.onSliderChanged(action)
+                handleAction(job, false)
+            },
+            thumb = {
+                Label(
+                    interactionSource = interactionSource,
+                    label = {
+                        PlainTooltip(
+                            modifier = Modifier
+                                .wrapContentSize()
+                        ) {
+                            Text(text = sliderPosition.roundToInt().toString())
+                        }
+                    }
+                ) {
+                    SliderDefaults.Thumb(interactionSource)
+                }
+            },
+            modifier = Modifier
+                .padding(16.dp)
+        )
     }
 
     companion object {

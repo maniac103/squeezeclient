@@ -21,30 +21,43 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.view.isVisible
-import androidx.viewbinding.ViewBinding
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import de.maniac103.squeezeclient.databinding.BottomSheetBaseBinding
-import de.maniac103.squeezeclient.ui.common.ViewBindingCreator
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
-abstract class BaseBottomSheet<VB : ViewBinding>(private val creator: ViewBindingCreator<VB>) :
-    BottomSheetDialogFragment() {
+abstract class BaseBottomSheet : BottomSheetDialogFragment() {
     protected abstract val title: String
-    private lateinit var binding: BottomSheetBaseBinding
-    private lateinit var content: VB
-
-    protected abstract fun onContentInflated(content: VB)
-
-    protected open fun onIndicateBusyState(content: VB, busy: Boolean) {
-        binding.progress.isVisible = busy
-    }
+    protected val busyFlow = MutableStateFlow(false)
 
     protected fun handleAction(job: Job?, dismissOnDone: Boolean) {
         if (job != null) {
-            onIndicateBusyState(content, true)
+            busyFlow.value = true
             job.invokeOnCompletion {
-                onIndicateBusyState(content, false)
+                busyFlow.value = false
                 if (dismissOnDone) {
                     dismissAllowingStateLoss()
                 }
@@ -58,17 +71,59 @@ abstract class BaseBottomSheet<VB : ViewBinding>(private val creator: ViewBindin
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        super.onCreateView(inflater, container, savedInstanceState)
-        binding = BottomSheetBaseBinding.inflate(inflater, container, false)
-        content = creator(inflater, binding.container, false)
-        binding.container.addView(content.root)
-        return binding.root
+    ) = ComposeView(inflater.context).apply {
+        setContent {
+            MaterialTheme {
+                BottomSheetContentWrapper(title, busyFlow) {
+                    createContent()
+                }
+            }
+        }
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        onContentInflated(content)
-        binding.title.text = title
+    @Composable
+    abstract fun createContent()
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BottomSheetContentWrapper(
+    title: String,
+    busyFlow: StateFlow<Boolean>,
+    content: @Composable () -> Unit
+) {
+    val busy by busyFlow.collectAsState()
+
+    Column {
+        BottomSheetDefaults.DragHandle(
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+        )
+        Row {
+            Text(
+                text = title,
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier
+                    .weight(1F)
+                    .padding(16.dp)
+            )
+            if (busy) {
+                CircularProgressIndicator(
+                    strokeWidth = 3.dp,
+                    modifier = Modifier
+                        .padding(end = 8.dp)
+                        .size(24.dp)
+                )
+            }
+        }
+        Box(
+            modifier = Modifier
+                .nestedScroll(rememberNestedScrollInteropConnection())
+                .verticalScroll(rememberScrollState())
+                .padding(top = 0.dp, start = 16.dp, end = 16.dp, bottom = 16.dp)
+        ) {
+            content()
+        }
     }
 }

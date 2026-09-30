@@ -18,7 +18,6 @@
 package de.maniac103.squeezeclient.ui
 
 import android.os.Bundle
-import android.view.ViewGroup.MarginLayoutParams
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -41,23 +40,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.commitNow
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
-import de.maniac103.squeezeclient.databinding.FragmentComposeBinding
 import de.maniac103.squeezeclient.extfuncs.addServerCredentialsIfNeeded
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.getParcelable
+import de.maniac103.squeezeclient.extfuncs.prefs
+import de.maniac103.squeezeclient.extfuncs.serverConfig
 import de.maniac103.squeezeclient.model.DisplayMessage
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.ServerConfiguration
-import de.maniac103.squeezeclient.ui.common.ViewBindingFragment
+import de.maniac103.squeezeclient.ui.common.ComposeFragment
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -69,8 +66,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 
-class DisplayStatusFragment :
-    ViewBindingFragment<FragmentComposeBinding>(FragmentComposeBinding::inflate) {
+class DisplayStatusFragment : ComposeFragment() {
     private val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)
 
     private var hideJob: Job? = null
@@ -82,21 +78,20 @@ class DisplayStatusFragment :
             .filter { it.type != DisplayMessage.MessageType.PopupPlay }
     }
 
-    override fun onBindingCreated(binding: FragmentComposeBinding) {
-        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, windowInsets ->
-            val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.updateLayoutParams<MarginLayoutParams> {
-                bottomMargin = insets.bottom
-            }
-            windowInsets
-        }
-
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
         lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 messageFlow.collect { show(it.duration) }
             }
         }
     }
+
+    @Composable
+    override fun createContent() = DisplayStatusIndicator(
+        messageFlow,
+        prefs.serverConfig
+    )
 
     private fun show(duration: Duration?) {
         if (!isVisible) {

@@ -22,12 +22,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -44,7 +42,7 @@ import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.ui.MainContentChild
 import de.maniac103.squeezeclient.ui.bottomsheets.ChoicesBottomSheetFragment
 import de.maniac103.squeezeclient.ui.bottomsheets.InputBottomSheetFragment
-import de.maniac103.squeezeclient.ui.common.ViewBindingFragment
+import de.maniac103.squeezeclient.ui.common.ComposeFragment
 import kotlin.getValue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -52,7 +50,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 
 class JiveHomeItemListFragment :
-    ViewBindingFragment<FragmentComposeBinding>(FragmentComposeBinding::inflate),
+    ComposeFragment(),
     MainContentChild,
     ChoicesBottomSheetFragment.SelectionListener,
     InputBottomSheetFragment.InputSubmitListener {
@@ -77,17 +75,13 @@ class JiveHomeItemListFragment :
     }
 
     override fun onBindingCreated(binding: FragmentComposeBinding) {
-        binding.compose.apply {
-            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
-            setContent {
-                MaterialTheme {
-                    // TODO: insets handling
-                    JiveHomeItemList(viewModel) { item -> handleItemSelected(item) }
-                }
-            }
-        }
+        super.onBindingCreated(binding)
         binding.root.enableMainContentBackground()
     }
+
+    @Composable
+    override fun createContent() =
+        JiveHomeItemList(viewModel) { item -> handleItemSelected(item) }
 
     // ChoicesBottomSheetFragment.SelectionListener implementation
 

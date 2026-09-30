@@ -22,49 +22,39 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
-import de.maniac103.squeezeclient.databinding.FragmentComposeBinding
 import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.extfuncs.serverConfig
 import de.maniac103.squeezeclient.extfuncs.viewModelWithParams
 import de.maniac103.squeezeclient.model.PlayerId
-import de.maniac103.squeezeclient.ui.common.ViewBindingFragment
+import de.maniac103.squeezeclient.ui.common.ComposeFragment
 import kotlin.time.ExperimentalTime
 import kotlin.getValue
 
 @OptIn(ExperimentalTime::class)
-class PlaylistFragment :
-    ViewBindingFragment<FragmentComposeBinding>(FragmentComposeBinding::inflate) {
+class PlaylistFragment : ComposeFragment() {
     private val viewModel by viewModelWithParams {
         val playerId = requireArguments().getParcelable("playerId", PlayerId::class)
         PlaylistViewModel(requireActivity().application, playerId)
     }
 
-    override fun onBindingCreated(binding: FragmentComposeBinding) {
-        binding.compose.apply {
-            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
-            setContent {
-                MaterialTheme {
-                    PlaylistItemColumn(
-                        viewModel,
-                        MaterialTheme.colorScheme.surfaceContainerHighest,
-                        prefs.serverConfig,
-                        modifier = Modifier
-                            .nestedScroll(rememberNestedScrollInteropConnection())
-                            .scrollable(
-                                state = remember { ScrollableState(consumeScrollDelta = { 0f }) },
-                                orientation = Orientation.Vertical
-                            )
-                    )
-                }
-            }
-        }
-    }
+    @Composable
+    override fun createContent() = PlaylistItemColumn(
+        viewModel,
+        MaterialTheme.colorScheme.surfaceContainerHighest,
+        prefs.serverConfig,
+        modifier = Modifier
+            .nestedScroll(rememberNestedScrollInteropConnection())
+            .scrollable(
+                state = remember { ScrollableState(consumeScrollDelta = { 0f }) },
+                orientation = Orientation.Vertical
+            )
+    )
 
     fun scrollToCurrentPlaylistPosition() {
         viewModel.scrollToCurrentPlaylistPosition()

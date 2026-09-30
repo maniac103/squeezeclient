@@ -22,13 +22,6 @@ class ItemActionsViewModel(
 ) : AndroidViewModel(application) {
     private val busyActionFlowInternal = MutableStateFlow<ActionItem?>(null)
 
-    val headerFlow = flow {
-        val imageRequest = ImageRequest.Builder(application)
-            .loadMaybeRelativeUrl(item.extractIconUrl(), application.prefs.serverConfig)
-            .build()
-        val header = Header(item.title, item.subText, imageRequest)
-        emit(header)
-    }
     val actionsFlow = flowOf(
         requireNotNull(item.actions).let { actions ->
             listOfNotNull(
@@ -48,7 +41,6 @@ class ItemActionsViewModel(
         }
     }
 
-    data class Header(val title: String, val subText: String?, val imageRequest: ImageRequest?)
     data class ActionItem(
         val labelResId: Int,
         val action: JiveAction?,

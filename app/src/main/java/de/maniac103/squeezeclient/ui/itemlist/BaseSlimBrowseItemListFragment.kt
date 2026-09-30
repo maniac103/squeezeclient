@@ -23,12 +23,16 @@ import android.os.Bundle
 import android.view.View
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -356,6 +360,16 @@ fun SlimBrowsePagedItemListOrGrid(
     itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {},
     contextMenuClickListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {}
 ) {
+    if (!entries.loadState.isIdle) {
+        Box() {
+            LinearProgressIndicator(
+                modifier = Modifier
+                    .fillMaxWidth()
+            )
+        }
+        return
+    }
+
     // TODO: implement fast scroll
 
     if (useGrid) {

@@ -18,16 +18,17 @@
 package de.maniac103.squeezeclient.ui.bottomsheets
 
 import android.os.Bundle
-import de.maniac103.squeezeclient.databinding.BottomSheetContentInfoBinding
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 
-class InfoBottomSheet :
-    BaseBottomSheet<BottomSheetContentInfoBinding>(BottomSheetContentInfoBinding::inflate) {
+class InfoBottomSheet : BaseBottomSheet() {
     override val title get() = requireArguments().getString("title")!!
     private val text get() = requireArguments().getString("text")!!
 
-    override fun onContentInflated(content: BottomSheetContentInfoBinding) {
-        content.text.text = text
-    }
+    @Composable
+    override fun createContent() = Text(
+        text = text
+    )
 
     companion object {
         fun create(title: String, text: String) = InfoBottomSheet().apply {

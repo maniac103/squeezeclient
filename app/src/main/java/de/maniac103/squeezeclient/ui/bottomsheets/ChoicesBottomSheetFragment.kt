@@ -18,17 +18,22 @@
 package de.maniac103.squeezeclient.ui.bottomsheets
 
 import android.os.Bundle
-import androidx.core.view.forEach
-import de.maniac103.squeezeclient.databinding.BottomSheetContentChoicesBinding
-import de.maniac103.squeezeclient.databinding.ListItemChoiceRadioBinding
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.extfuncs.requireParentAs
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.JiveActions
 import kotlinx.coroutines.Job
 
-class ChoicesBottomSheetFragment :
-    BaseBottomSheet<BottomSheetContentChoicesBinding>(BottomSheetContentChoicesBinding::inflate) {
+class ChoicesBottomSheetFragment : BaseBottomSheet() {
     interface SelectionListener {
         fun onChoiceSelected(choice: JiveAction, extraData: Bundle?): Job?
     }
@@ -39,27 +44,29 @@ class ChoicesBottomSheetFragment :
     private val extraData get() = requireArguments().getBundle("extra")
     private val listener get() = requireParentAs<SelectionListener>()
 
-    override fun onContentInflated(content: BottomSheetContentChoicesBinding) {
-        val inflater = layoutInflater
-        content.radioGroup.apply {
-            choices.items.forEachIndexed { index, item ->
-                val radio = ListItemChoiceRadioBinding.inflate(inflater, this, false).root.apply {
-                    text = item.title
-                    id = index
-                }
-                addView(radio)
-            }
-            check(choices.selectedIndex)
-            setOnCheckedChangeListener { _, index ->
-                val job = listener.onChoiceSelected(choices.items[index].action, extraData)
-                handleAction(job, true)
+    @Composable
+    override fun createContent() = Column(
+
+    ) {
+        val busy by busyFlow.collectAsState()
+
+        choices.items.forEachIndexed { index, choice ->
+            Row {
+                RadioButton(
+                    selected = index == choices.selectedIndex,
+                    enabled = !busy,
+                    onClick = {
+                        val job = listener.onChoiceSelected(choice.action, extraData)
+                        handleAction(job, true)
+                    },
+                    modifier = Modifier.align(Alignment.CenterVertically)
+                )
+                Text(
+                    text = choice.title,
+                    modifier = Modifier.align(Alignment.CenterVertically)
+                )
             }
         }
-    }
-
-    override fun onIndicateBusyState(content: BottomSheetContentChoicesBinding, busy: Boolean) {
-        super.onIndicateBusyState(content, busy)
-        content.radioGroup.forEach { it.isEnabled = !busy }
     }
 
     companion object {

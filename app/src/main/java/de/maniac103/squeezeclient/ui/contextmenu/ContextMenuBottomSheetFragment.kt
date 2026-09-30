@@ -29,7 +29,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -41,22 +40,18 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import de.maniac103.squeezeclient.R
+import de.maniac103.squeezeclient.ui.composables.ArtworkImage
 import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.extfuncs.getParcelableList
-import de.maniac103.squeezeclient.extfuncs.loadMaybeRelativeUrl
 import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.extfuncs.requireParentAs
 import de.maniac103.squeezeclient.extfuncs.serverConfig
@@ -160,19 +155,15 @@ fun ContextMenuBottomSheetContent(
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
         Row {
-            parent.extractIconUrl()?.let { iconUrl ->
-                val iconRequest = ImageRequest.Builder(LocalContext.current)
-                    .loadMaybeRelativeUrl(iconUrl, serverConfig)
-                    .build()
-
-                AsyncImage(
-                    model = iconRequest,
-                    contentDescription = null,
+            parent.extractIconUrl()?.let {
+                ArtworkImage(
+                    artwork = parent,
+                    serverConfig = serverConfig,
+                    usePlaceholder = false,
                     modifier = Modifier
                         .padding(start = 4.dp, end = 12.dp, top = 4.dp, bottom = 4.dp)
                         .size(40.dp)
                         .align(Alignment.CenterVertically)
-                        .clip(RoundedCornerShape(8.dp))
                 )
             }
             Column(

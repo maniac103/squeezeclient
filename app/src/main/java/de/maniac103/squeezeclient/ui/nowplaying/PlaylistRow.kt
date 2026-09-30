@@ -19,24 +19,19 @@ package de.maniac103.squeezeclient.ui.nowplaying
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
 import de.maniac103.squeezeclient.R
-import de.maniac103.squeezeclient.extfuncs.loadArtworkOrPlaceholder
+import de.maniac103.squeezeclient.ui.composables.ArtworkImage
 import de.maniac103.squeezeclient.model.JiveActions
 import de.maniac103.squeezeclient.model.Playlist
 import de.maniac103.squeezeclient.model.ServerConfiguration
@@ -55,20 +50,15 @@ fun PlaylistRow(
         else -> "${item.artist} · ${item.album}"
     }
 
-    val artworkRequest = ImageRequest.Builder(LocalContext.current)
-        .loadArtworkOrPlaceholder(item, serverConfig)
-        .build()
-
     ListItem(
         headlineContent = { Text(item.title) },
         supportingContent = { subtext.takeIf { it.isNotEmpty() }?.let { Text(it) } },
         leadingContent = {
-            AsyncImage(
-                artworkRequest,
-                contentDescription = null,
+            ArtworkImage(
+                artwork = item,
+                serverConfig = serverConfig,
                 modifier = Modifier
                     .size(40.dp)
-                    .clip(RoundedCornerShape(8.dp))
             )
         },
         trailingContent = {

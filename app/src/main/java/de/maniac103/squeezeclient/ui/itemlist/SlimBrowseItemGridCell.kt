@@ -30,7 +30,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.RadioButton
@@ -40,18 +39,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
-import coil3.request.ImageRequest
-import coil3.request.placeholder
 import de.maniac103.squeezeclient.R
-import de.maniac103.squeezeclient.extfuncs.loadArtworkOrPlaceholder
+import de.maniac103.squeezeclient.ui.composables.ArtworkImage
+import de.maniac103.squeezeclient.model.ArtworkItem
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.ui.Theme
@@ -63,27 +58,23 @@ fun SlimBrowseItemGridCell(
     busy: Boolean,
     modifier: Modifier = Modifier,
     contextMenuClickListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {}
-) {
-    val iconRequest = ImageRequest.Builder(LocalContext.current)
-        .loadArtworkOrPlaceholder(item, serverConfig)
-        .build()
-
-    return SlimBrowseItemGridCell(
-        title = item.title,
-        subtext = item.subText ?: item.extraInfo,
-        trailingWidget = item.extractTrailingWidget(contextMenuClickListener),
-        iconRequest = iconRequest,
-        busy = busy,
-        modifier = modifier
-    )
-}
+) = SlimBrowseItemGridCell(
+    title = item.title,
+    subtext = item.subText ?: item.extraInfo,
+    trailingWidget = item.extractTrailingWidget(contextMenuClickListener),
+    artwork = item,
+    serverConfig = serverConfig,
+    busy = busy,
+    modifier = modifier
+)
 
 @Composable
 fun SlimBrowseItemGridCell(
     title: String,
     subtext: String?,
     trailingWidget: SlimBrowseItemTrailingWidget?,
-    iconRequest: ImageRequest,
+    artwork: ArtworkItem,
+    serverConfig: ServerConfiguration?,
     busy: Boolean,
     modifier: Modifier = Modifier
 ) {
@@ -93,13 +84,12 @@ fun SlimBrowseItemGridCell(
             .defaultMinSize(minHeight = 64.dp)
             .padding(8.dp)
     ) {
-        AsyncImage(
-            iconRequest,
-            contentDescription = null,
+        ArtworkImage(
+            artwork = artwork,
+            serverConfig = serverConfig,
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(1F)
-                .clip(RoundedCornerShape(8.dp))
         )
 
         Row(
@@ -206,10 +196,10 @@ fun SlimBrowseItemGridCellPreview() {
         Item("Radio", "Subtext", SlimBrowseItemTrailingWidget.Radio(true), false),
         Item("Checkbox", "Subtext", SlimBrowseItemTrailingWidget.Checkbox(true), false)
     )
-    val dummyRequest = ImageRequest.Builder(LocalContext.current)
-        .data(null)
-        .placeholder(R.drawable.ic_disc_24dp)
-        .build()
+    val dummyArtwork = object : ArtworkItem {
+        override val icon = null
+        override val iconId = null
+    }
 
     LazyVerticalGrid(
         columns = GridCells.Adaptive(160.dp),
@@ -220,7 +210,8 @@ fun SlimBrowseItemGridCellPreview() {
                 item.title,
                 item.subtext,
                 item.trailingWidget,
-                dummyRequest,
+                dummyArtwork,
+                null,
                 item.busy
             )
         }

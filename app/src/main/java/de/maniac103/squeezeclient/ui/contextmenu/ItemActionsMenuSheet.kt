@@ -29,7 +29,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -39,7 +38,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.stringResource
@@ -47,13 +45,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil3.compose.AsyncImage
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import de.maniac103.squeezeclient.ui.composables.ArtworkImage
 import de.maniac103.squeezeclient.extfuncs.getParcelable
+import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.extfuncs.requireParentAs
+import de.maniac103.squeezeclient.extfuncs.serverConfig
 import de.maniac103.squeezeclient.extfuncs.viewModelWithParams
 import de.maniac103.squeezeclient.model.DownloadRequestData
 import de.maniac103.squeezeclient.model.JiveAction
+import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import kotlin.getValue
 import kotlinx.coroutines.Job
@@ -81,7 +82,10 @@ class ItemActionsMenuSheet : BottomSheetDialogFragment() {
         setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
         setContent {
             MaterialTheme {
-                ItemActionsSheet { action ->
+                ItemActionsSheet(
+                    viewModel,
+                    context.prefs.serverConfig
+                ) { action ->
                     val job = if (action.download != null) {
                         listener.onDownloadSelected(action.download)
                     } else {
@@ -113,9 +117,10 @@ class ItemActionsMenuSheet : BottomSheetDialogFragment() {
 @Composable
 fun ItemActionsSheet(
     viewModel: ItemActionsViewModel = viewModel(),
+    serverConfig: ServerConfiguration?,
     actionSelectedListener: (ItemActionsViewModel.ActionItem) -> Unit
 ) {
-    val header by viewModel.headerFlow.collectAsState(null)
+    val item = viewModel.item
     val actions by viewModel.actionsFlow.collectAsState(emptyList())
     val busyAction by viewModel.busyActionFlow.collectAsState(null)
 
@@ -132,38 +137,34 @@ fun ItemActionsSheet(
                 modifier = Modifier
                     .padding(horizontal = 16.dp)
             ) {
-                header?.imageRequest?.let {
-                    AsyncImage(
-                        it,
-                        contentDescription = null,
+                viewModel.item.extractIconUrl()?.let {
+                    ArtworkImage(
+                        artwork = item,
+                        serverConfig = serverConfig,
+                        usePlaceholder = false,
                         modifier = Modifier
                             .padding(start = 4.dp, end = 12.dp, top = 4.dp, bottom = 4.dp)
                             .size(40.dp)
-                            .clip(RoundedCornerShape(8.dp))
                     )
                 }
                 Column(
                     modifier = Modifier
                         .align(Alignment.CenterVertically)
                 ) {
-                    header?.title?.let {
+                    Text(
+                        text = item.title,
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    )
+                    if (!item.subText.isNullOrEmpty()) {
                         Text(
-                            text = it,
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.SemiBold
-                            )
+                            text = item.subText,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.titleSmall,
                         )
                     }
-                    header?.subText
-                        ?.takeIf { it.isNotEmpty() }
-                        ?.let {
-                            Text(
-                                text = it,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis,
-                                style = MaterialTheme.typography.titleSmall,
-                            )
-                        }
                 }
             }
         }

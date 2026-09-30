@@ -47,7 +47,7 @@ class RadioSearchResultsFragment : BaseSlimBrowseItemListFragment() {
     override val baseViewModel get() = viewModel
 
     @Composable
-    override fun createContent(
+    override fun createListContent(
         itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit,
         contextMenuClickListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit
     ) {

@@ -145,6 +145,7 @@ dependencies {
     testImplementation(libs.junit)
     coreLibraryDesugaring(libs.android.desugar.jdk.libs)
     implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.browser)
     implementation(platform(libs.androidx.compose.bom))
@@ -181,6 +182,5 @@ dependencies {
     implementation(libs.peko)
     implementation(libs.recyclerview.fastscroll)
     implementation(libs.reorderable)
-    implementation(libs.zoomimageview.coil)
     "gmsImplementation"(project(":wearapi"))
 }

@@ -53,8 +53,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.core.content.IntentCompat
@@ -110,7 +111,7 @@ class ImageViewActivity : AppCompatActivity() {
                                         onClick = { finishAfterTransition() }
                                     ) {
                                         Icon(
-                                            painter = painterResource(R.drawable.ic_arrow_left_24dp),
+                                            ImageVector.vectorResource(R.drawable.ic_arrow_left_24dp),
                                             contentDescription = null // FIXME
                                         )
                                     }
@@ -121,7 +122,7 @@ class ImageViewActivity : AppCompatActivity() {
                                             onClick = { share(imageUrl) }
                                         ) {
                                             Icon(
-                                                painter = painterResource(R.drawable.ic_share_24dp),
+                                                ImageVector.vectorResource(R.drawable.ic_share_24dp),
                                                 contentDescription = null // FIXME
                                             )
                                         }

@@ -27,6 +27,7 @@ import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberSliderState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -56,19 +57,19 @@ class SliderBottomSheetFragment : BaseBottomSheet() {
     @Composable
     override fun createContent() {
         val busy by busyFlow.collectAsState()
-        var sliderPosition by rememberSaveable {
-            mutableFloatStateOf(slider.initialValue.toFloat())
-        }
+        val sliderState = rememberSliderState(
+            value = slider.initialValue.toFloat(),
+            trackRange = slider.min.toFloat() .. slider.max.toFloat()
+        )
         val interactionSource = remember { MutableInteractionSource() }
 
         Slider(
-            value = sliderPosition,
-            valueRange = slider.min.toFloat()..slider.max.toFloat(),
+            state = sliderState,
             enabled = !busy,
             interactionSource = interactionSource,
-            onValueChange = { sliderPosition = it },
+            onValueChange = { sliderState.value = it },
             onValueChangeFinished = {
-                val inputValue = sliderPosition.roundToInt().toString()
+                val inputValue = sliderState.value.roundToInt().toString()
                 val action = this@SliderBottomSheetFragment.slider.action.withInputValue(inputValue)
                 val job = listener.onSliderChanged(action)
                 handleAction(job, false)
@@ -81,7 +82,7 @@ class SliderBottomSheetFragment : BaseBottomSheet() {
                             modifier = Modifier
                                 .wrapContentSize()
                         ) {
-                            Text(text = sliderPosition.roundToInt().toString())
+                            Text(text = sliderState.value.roundToInt().toString())
                         }
                     }
                 ) {

@@ -284,12 +284,9 @@ fun SearchResultCountRow(
     category: SearchViewModel.Category,
     modifier: Modifier = Modifier
 ) = ListItem(
-    colors = ListItemDefaults.colors().copy(
+    colors = ListItemDefaults.colors(
         containerColor = Color.Transparent
     ),
-    headlineContent = {
-        Text(text = category.title)
-    },
     trailingContent = {
         if (category.busy) {
             CircularProgressIndicator(
@@ -303,7 +300,9 @@ fun SearchResultCountRow(
         }
     },
     modifier = modifier
-)
+) {
+    Text(text = category.title)
+}
 
 @Preview
 @Composable

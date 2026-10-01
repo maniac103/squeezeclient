@@ -26,8 +26,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import de.maniac103.squeezeclient.R
@@ -64,7 +65,7 @@ fun PlaylistRow(
         },
         trailingContent = {
             Image(
-                painterResource(R.drawable.ic_drag_horizontal_24dp),
+                ImageVector.vectorResource(R.drawable.ic_drag_horizontal_24dp),
                 contentScale = ContentScale.Inside,
                 contentDescription = null, // FIXME
                 modifier = dragHandleModifier

@@ -35,8 +35,9 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import de.maniac103.squeezeclient.R
@@ -110,7 +111,7 @@ class InputBottomSheetFragment : BaseBottomSheet() {
                 .padding(top = 8.dp)
         ) {
             Icon(
-                painter = painterResource(R.drawable.ic_send_24dp),
+                ImageVector.vectorResource(R.drawable.ic_send_24dp),
                 contentDescription = null // FIXME
             )
             Text(

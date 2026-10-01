@@ -40,9 +40,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -192,7 +193,7 @@ fun ContextMenuBottomSheetContent(
                     modifier = Modifier.align(Alignment.CenterVertically)
                 ) {
                     Icon(
-                        painter = painterResource(R.drawable.ic_chevron_left_24dp),
+                        ImageVector.vectorResource(R.drawable.ic_chevron_left_24dp),
                         contentDescription = null // FIXME
                     )
                 }

@@ -27,19 +27,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.PowerOff
-import androidx.compose.material.icons.filled.SettingsPower
-import androidx.compose.material.icons.filled.Stop
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -138,17 +132,17 @@ fun AppUi(
                                 ) {
                                     ActionRow(
                                         titleResId = R.string.action_stop_players,
-                                        icon = Icons.Filled.Stop,
+                                        iconResId = R.drawable.ic_play_24dp,
                                         onClick = onStopPlayers
                                     )
                                     ActionRow(
                                         titleResId = R.string.action_turn_off_players,
-                                        icon = Icons.Filled.SettingsPower,
+                                        iconResId = R.drawable.ic_power_24dp,
                                         onClick = onTurnOffPlayers
                                     )
                                     ActionRow(
                                         titleResId = R.string.action_disconnect,
-                                        icon = Icons.Filled.Close,
+                                        iconResId = R.drawable.ic_close_24dp,
                                         onClick = onDisconnect
                                     )
                                 }
@@ -187,18 +181,18 @@ fun BoxScope.StatusMessage(textResId: Int, node: Node?) {
 
 @Composable
 fun PlayerRow(playerInfo: PlayerInfo, isActive: Boolean, onClick: (PlayerInfo) -> Unit) {
-    val (stateStringId, stateIcon) = if (!playerInfo.isPowered) {
-        Pair(R.string.player_state_off, Icons.Filled.PowerOff)
+    val (stateStringResId, stateIconResId) = if (!playerInfo.isPowered) {
+        Pair(R.string.player_state_off, R.drawable.ic_power_plug_off_24dp)
     } else {
         when (playerInfo.playState) {
-            PlayerInfo.PlayState.Playing -> Pair(
-                R.string.player_state_playing,
-                Icons.Filled.PlayArrow
-            )
+            PlayerInfo.PlayState.Playing ->
+                Pair(R.string.player_state_playing, R.drawable.ic_play_24dp)
 
-            PlayerInfo.PlayState.Paused -> Pair(R.string.player_state_paused, Icons.Filled.Pause)
+            PlayerInfo.PlayState.Paused ->
+                Pair(R.string.player_state_paused, R.drawable.ic_pause_24dp)
 
-            PlayerInfo.PlayState.Stopped -> Pair(R.string.player_state_stopped, Icons.Filled.Stop)
+            PlayerInfo.PlayState.Stopped ->
+                Pair(R.string.player_state_stopped, R.drawable.ic_stop_24dp)
         }
     }
     Chip(
@@ -206,15 +200,15 @@ fun PlayerRow(playerInfo: PlayerInfo, isActive: Boolean, onClick: (PlayerInfo) -
         label = { Text(text = playerInfo.name) },
         secondaryLabel = {
             Icon(
-                imageVector = stateIcon,
-                contentDescription = stringResource(stateStringId),
+                imageVector = ImageVector.vectorResource(stateIconResId),
+                contentDescription = stringResource(stateStringResId),
                 modifier = Modifier
                     .size(16.dp)
                     .padding(end = 4.dp)
                     .align(Alignment.CenterVertically)
             )
             Text(
-                text = stringResource(stateStringId),
+                text = stringResource(stateStringResId),
                 modifier = Modifier.align(Alignment.CenterVertically)
             )
         },
@@ -228,15 +222,20 @@ fun PlayerRow(playerInfo: PlayerInfo, isActive: Boolean, onClick: (PlayerInfo) -
 }
 
 @Composable
-fun ActionRow(titleResId: Int, icon: ImageVector, onClick: () -> Unit) {
-    Chip(
-        label = { Text(stringResource(titleResId)) },
-        icon = { Icon(imageVector = icon, contentDescription = stringResource(id = titleResId)) },
-        colors = ChipDefaults.secondaryChipColors(),
-        onClick = { onClick() },
-        modifier = Modifier.fillMaxWidth()
-    )
-}
+fun ActionRow(titleResId: Int, iconResId: Int, onClick: () -> Unit) = Chip(
+    label = {
+        Text(stringResource(titleResId))
+    },
+    icon = {
+        Icon(
+            imageVector = ImageVector.vectorResource(iconResId),
+            contentDescription = stringResource(id = titleResId)
+        )
+    },
+    colors = ChipDefaults.secondaryChipColors(),
+    onClick = { onClick() },
+    modifier = Modifier.fillMaxWidth()
+)
 
 @Preview(device = WearDevices.SMALL_ROUND, showSystemUi = true)
 @Composable

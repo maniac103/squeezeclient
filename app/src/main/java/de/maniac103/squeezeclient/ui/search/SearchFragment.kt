@@ -59,11 +59,12 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -223,7 +224,7 @@ fun SearchBox(
                             modifier = Modifier.align(Alignment.CenterVertically)
                         ) {
                             Icon(
-                                painter = painterResource(R.drawable.ic_arrow_left_24dp),
+                                ImageVector.vectorResource(R.drawable.ic_arrow_left_24dp),
                                 contentDescription = null // FIXME
                             )
                         }
@@ -255,7 +256,7 @@ fun SearchBox(
                                 modifier = Modifier.align(Alignment.CenterVertically)
                             ) {
                                 Icon(
-                                    painter = painterResource(R.drawable.ic_close_24dp),
+                                    ImageVector.vectorResource(R.drawable.ic_close_24dp),
                                     contentDescription = null // FIXME
                                 )
                             }

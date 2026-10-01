@@ -70,6 +70,7 @@ import de.maniac103.squeezeclient.ui.nowplaying.NowPlayingFragment
 import de.maniac103.squeezeclient.ui.playermanagement.PlayerManagementActivity
 import de.maniac103.squeezeclient.ui.prefs.SettingsActivity
 import de.maniac103.squeezeclient.ui.search.SearchFragment
+import de.maniac103.squeezeclient.ui.serversetup.ServerSetupActivity
 import de.maniac103.squeezeclient.ui.volume.VolumeFragment
 import de.maniac103.squeezeclient.ui.widget.AlphaSpan
 import kotlin.math.roundToInt

@@ -49,7 +49,7 @@
         </activity>
 
         <activity
-            android:name=".ui.ServerSetupActivity"
+            android:name=".ui.serversetup.ServerSetupActivity"
             android:windowSoftInputMode="adjustResize"
             android:exported="false" />
 

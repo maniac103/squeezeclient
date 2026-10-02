@@ -17,6 +17,7 @@
 
 package de.maniac103.squeezeclient.ui.itemlist
 
+import android.content.res.Configuration
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -35,6 +36,8 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.lifecycleScope
@@ -374,9 +377,11 @@ fun SlimBrowsePagedItemListOrGrid(
 
     if (useGrid) {
         val state = rememberLazyGridState()
+        val isLandscape =
+            LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
 
         LazyVerticalGrid(
-            columns = GridCells.Adaptive(160.dp),
+            columns = GridCells.Adaptive(if (isLandscape) 160.dp else 120.dp),
             state = state,
             contentPadding = PaddingValues(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),

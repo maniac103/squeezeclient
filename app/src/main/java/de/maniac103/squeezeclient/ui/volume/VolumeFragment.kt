@@ -19,95 +19,89 @@ package de.maniac103.squeezeclient.ui.volume
 
 import android.os.Bundle
 import android.view.KeyEvent
-import android.widget.SeekBar
-import androidx.lifecycle.Lifecycle
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.FilledIconToggleButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.SliderState
+import androidx.compose.material3.Surface
+import androidx.compose.material3.VerticalSlider
+import androidx.compose.material3.rememberSliderState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.databinding.FragmentVolumeBinding
-import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.extfuncs.prefs
+import de.maniac103.squeezeclient.extfuncs.viewModelWithParams
 import de.maniac103.squeezeclient.extfuncs.volumeStepSize
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.ui.common.ViewBindingFragment
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 
 class VolumeFragment : ViewBindingFragment<FragmentVolumeBinding>(FragmentVolumeBinding::inflate) {
-    private val playerId get() = requireArguments().getParcelable("playerId", PlayerId::class)
+    private val viewModel by viewModelWithParams {
+        val playerId = requireArguments().getParcelable("playerId", PlayerId::class)
+        VolumePopupViewModel(requireActivity().application, playerId)
+    }
 
-    private var currentPlayerVolume: Int? = null
-    private var isMuted: Boolean? = null
     private var hideJob: Job? = null
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     override fun onBindingCreated(binding: FragmentVolumeBinding) {
         binding.background.setOnClickListener {
             hideImmediately()
         }
 
-        binding.volumeSlider.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            private var updateJob: Job? = null
-            override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
-                if (fromUser) {
-                    updateJob?.cancel()
-                    updateJob = lifecycleScope.launch {
-                        delay(200.milliseconds)
-                        connectionHelper.setVolume(playerId, progress)
-                    }
+        binding.compose.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                MaterialTheme {
+                    val volume by viewModel.volumeFlow.collectAsState()
+                    val muted by viewModel.mutedFlow.collectAsState()
+                    VolumeControlPopup(
+                        volume = volume,
+                        muted = muted,
+                        onVolumeChanged = viewModel::setVolume,
+                        onMuteChanged = viewModel::setMuted
+                    )
                 }
-            }
-            override fun onStartTrackingTouch(seekBar: SeekBar) {
-            }
-            override fun onStopTrackingTouch(seekBar: SeekBar) {
-            }
-        })
-
-        binding.volumeMute.apply {
-            setOnClickListener {
-                isMuted?.not()?.let { newMuted ->
-                    isMuted = newMuted
-                    lifecycleScope.launch {
-                        connectionHelper.setMuteState(playerId, newMuted)
-                        updateUiFromState()
-                    }
-                }
-            }
-        }
-
-        lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                connectionHelper.playerState(playerId)
-                    .flatMapLatest { it.playStatus }
-                    .collect { status ->
-                        currentPlayerVolume = status.currentVolume
-                        isMuted = status.muted
-                        updateUiFromState()
-                    }
             }
         }
     }
 
     fun handleKeyDown(keyCode: Int): Boolean {
-        val newVolume = when (keyCode) {
-            KeyEvent.KEYCODE_VOLUME_UP -> currentPlayerVolume?.plus(prefs.volumeStepSize)
-            KeyEvent.KEYCODE_VOLUME_DOWN -> currentPlayerVolume?.minus(prefs.volumeStepSize)
+        if (!viewModel.volumeControlSupported) {
+            return false
+        }
+        val delta = when (keyCode) {
+            KeyEvent.KEYCODE_VOLUME_UP -> prefs.volumeStepSize / 100F
+            KeyEvent.KEYCODE_VOLUME_DOWN -> prefs.volumeStepSize / 100F
             else -> null
         } ?: return false
 
         showIfNeeded()
-        lifecycleScope.launch {
-            currentPlayerVolume = newVolume
-            connectionHelper.setVolume(playerId, newVolume)
-            updateUiFromState()
-        }
+        viewModel.adjustVolume(delta)
+
         return true
     }
 
@@ -115,7 +109,7 @@ class VolumeFragment : ViewBindingFragment<FragmentVolumeBinding>(FragmentVolume
         keyCode == KeyEvent.KEYCODE_VOLUME_UP || keyCode == KeyEvent.KEYCODE_VOLUME_DOWN
 
     fun showIfNeeded(duration: Duration = 2.seconds) {
-        if (!isVisible && currentPlayerVolume != null) {
+        if (!isVisible && viewModel.volumeControlSupported) {
             parentFragmentManager.beginTransaction()
                 .setCustomAnimations(R.animator.volume_slide_in, R.animator.volume_slide_out)
                 .show(this)
@@ -139,11 +133,6 @@ class VolumeFragment : ViewBindingFragment<FragmentVolumeBinding>(FragmentVolume
             .commitNowAllowingStateLoss()
     }
 
-    private fun updateUiFromState() {
-        binding.volumeSlider.progress = currentPlayerVolume ?: 0
-        binding.volumeMute.isActivated = isMuted ?: false
-    }
-
     companion object {
         fun create(playerId: PlayerId) = VolumeFragment().apply {
             arguments = Bundle().apply {
@@ -151,4 +140,78 @@ class VolumeFragment : ViewBindingFragment<FragmentVolumeBinding>(FragmentVolume
             }
         }
     }
+}
+
+@Composable
+fun VolumeControlPopup(
+    volume: Float,
+    muted: Boolean,
+    onVolumeChanged: (Float) -> Unit,
+    onMuteChanged: (Boolean) -> Unit
+) {
+    val sliderState = rememberSliderState(volume)
+
+    Column(
+        horizontalAlignment = Alignment.End,
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(end = 8.dp)
+    ) {
+        Spacer(modifier = Modifier.weight(0.4F))
+
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.8F),
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(4.dp)
+            ) {
+                VerticalSlider(
+                    state = sliderState,
+                    onValueChange = { sliderState.value = it },
+                    onValueChangeFinished = { onVolumeChanged(sliderState.value) },
+                    track = { state ->
+                        SliderDefaults.Track(
+                            state,
+                            trackCornerSize = 8.dp,
+                            drawStopIndicator = null,
+                            colors = SliderDefaults.colors(
+                                inactiveTrackColor = MaterialTheme.colorScheme.surfaceContainer
+                            ),
+                            modifier = Modifier.width(32.dp)
+                        )
+                    },
+                    topToBottom = false,
+                    modifier = Modifier
+                        .padding(vertical = 16.dp)
+                        .height(256.dp)
+                )
+
+                FilledIconToggleButton(
+                    checked = muted,
+                    onCheckedChange = onMuteChanged,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                ) {
+                    Icon(
+                        imageVector = ImageVector.vectorResource(R.drawable.ic_volume_muted_24dp),
+                        contentDescription = null // FIXME
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.weight(0.6F))
+    }
+}
+
+@Preview(widthDp = 360, heightDp = 640)
+@Composable
+fun VolumeControlPopupPreview() {
+    VolumeControlPopup(
+        volume = 0.6F,
+        muted = true,
+        onVolumeChanged = {},
+        onMuteChanged = {}
+    )
 }

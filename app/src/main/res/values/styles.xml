@@ -27,16 +27,6 @@
         <item name="cornerSize">10%</item>
     </style>
 
-    <style name="TextAppearance.AppCompat.Volume" parent="TextAppearance.AppCompat.Body1">
-        <item name="android:textStyle">normal</item>
-        <item name="android:textColor">?android:attr/textColorPrimary</item>
-    </style>
-
-    <style name="TextAppearance.AppCompat.Volume.Header">
-        <item name="android:textSize">12sp</item>
-        <item name="android:textColor">?android:attr/textColorSecondary</item>
-    </style>
-
     <style name="Preference.MaterialSwitchPreference" parent="Preference.SwitchPreferenceCompat.Material">
         <item name="android:widgetLayout">@layout/preference_switch</item>
     </style>

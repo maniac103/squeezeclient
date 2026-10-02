@@ -329,7 +329,7 @@ class MainActivity :
 
     // ConnectionErrorHintFragment.Listener implementation
 
-    override fun onActionInvoked(index: Int, tag: String?) = when (tag) {
+    override fun onActionInvoked(tag: String?) = when (tag) {
         ACTION_TAG_RECONNECT -> connectionHelper.connect()
         ACTION_TAG_SERVER_SETUP -> openServerSetup(true)
         else -> {}
@@ -436,10 +436,16 @@ class MainActivity :
                 val f = ConnectionErrorHintFragment.create(
                     R.drawable.ic_cloud_question_24dp,
                     R.string.connection_error_text_no_connection,
-                    action1LabelResId = R.string.connection_error_action_retry,
-                    action2LabelResId = R.string.connection_error_action_setup_server,
-                    action1Tag = ACTION_TAG_RECONNECT,
-                    action2Tag = ACTION_TAG_SERVER_SETUP
+                    buttons = listOf(
+                        ActionButtonSpec(
+                            R.string.connection_error_action_retry,
+                            ACTION_TAG_RECONNECT
+                        ),
+                        ActionButtonSpec(
+                            R.string.connection_error_action_setup_server,
+                            ACTION_TAG_SERVER_SETUP
+                        )
+                    )
                 )
                 showConnectionErrorHint(f)
             }
@@ -482,8 +488,12 @@ class MainActivity :
                 R.drawable.ic_cloud_question_24dp,
                 R.string.connection_error_text_connection_failure,
                 subtext = state.cause.message,
-                action1LabelResId = R.string.connection_error_action_retry,
-                action1Tag = ACTION_TAG_RECONNECT
+                buttons = listOf(
+                    ActionButtonSpec(
+                        R.string.connection_error_action_retry,
+                        ACTION_TAG_RECONNECT
+                    )
+                )
             )
             showConnectionErrorHint(f)
         }

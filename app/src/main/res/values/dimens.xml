@@ -22,20 +22,6 @@
     <dimen name="main_content_container_bottom_placeholder">48dp</dimen>
     <dimen name="main_content_list_bottom_padding">16dp</dimen>
     <dimen name="playlist_sheet_peek_height">48dp</dimen>
-    <dimen name="volume_popup_panel_width">56dp</dimen>
-    <dimen name="volume_popup_panel_corner_radius">28dp</dimen>
-    <dimen name="volume_popup_slider_height">256dp</dimen>
-    <dimen name="volume_popup_slider_width">40dp</dimen>
-    <dimen name="volume_popup_slider_corner_radius">20dp</dimen>
-    <dimen name="volume_popup_track_width">4dp</dimen>
-    <dimen name="volume_popup_track_corner_radius">2dp</dimen>
-    <dimen name="rounded_slider_track_inset">22dp</dimen>
-    <dimen name="rounded_slider_icon_size">20dp</dimen>
-    <!-- (volume_popup_panel_width - rounded_slider_icon_size) / 2 -->
-    <dimen name="volume_slider_icon_inset">11dp</dimen>
-    <dimen name="volume_popup_mute_button_size">42dp</dimen>
-    <dimen name="search_sheet_corner_radius">24dp</dimen>
-    <dimen name="item_grid_column_width">120dp</dimen>
     <dimen name="landscape_nowplaying_pane_width">320dp</dimen>
     <dimen name="breadcrumbs_icon_size">16dp</dimen>
 </resources>

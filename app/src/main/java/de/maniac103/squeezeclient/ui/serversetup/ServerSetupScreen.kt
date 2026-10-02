@@ -163,6 +163,7 @@ fun ServerSetupScreen(
                     state = serverAddressState,
                     enabled = selectedServer?.hostName.isNullOrEmpty(),
                     isError = addressHasError,
+                    lineLimits = TextFieldLineLimits.SingleLine,
                     supportingText = {
                         if (addressHasError) {
                             Text(
@@ -183,6 +184,7 @@ fun ServerSetupScreen(
                 // user name
                 OutlinedTextField(
                     state = userNameState,
+                    lineLimits = TextFieldLineLimits.SingleLine,
                     placeholder = { Text(stringResource(R.string.server_user_hint)) },
                     modifier = Modifier
                         .fillMaxWidth()

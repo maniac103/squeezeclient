@@ -1,6 +1,6 @@
 /*
  * This file is part of Squeeze Client, an Android client for the LMS music server.
- * Copyright (c) 2024 Danny Baumann
+ * Copyright (c) 2026 Danny Baumann
  *
  * This program is free software: you can redistribute it and/or modify it under the terms of the
  * GNU General Public License as published by the Free Software Foundation,
@@ -15,90 +15,32 @@
  *
  */
 
-package de.maniac103.squeezeclient.ui.bottomsheets
+package de.maniac103.squeezeclient.ui.composables
 
-import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 
-abstract class BaseBottomSheet : BottomSheetDialogFragment() {
-    protected abstract val title: String
-    protected val busyFlow = MutableStateFlow(false)
-
-    protected fun handleAction(job: Job?, dismissOnDone: Boolean) {
-        if (job != null) {
-            busyFlow.value = true
-            job.invokeOnCompletion {
-                busyFlow.value = false
-                if (dismissOnDone) {
-                    dismissAllowingStateLoss()
-                }
-            }
-        } else if (dismissOnDone) {
-            dismissAllowingStateLoss()
-        }
-    }
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ) = ComposeView(inflater.context).apply {
-        setContent {
-            MaterialTheme {
-                BottomSheetContentWrapper(title, busyFlow) {
-                    createContent()
-                }
-            }
-        }
-    }
-
-    @Composable
-    abstract fun createContent()
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BottomSheetContentWrapper(
     title: String,
-    busyFlow: StateFlow<Boolean>,
+    busy: Boolean,
     content: @Composable () -> Unit
 ) {
-    val busy by busyFlow.collectAsState()
-
     Column {
-        BottomSheetDefaults.DragHandle(
-            modifier = Modifier
-                .align(Alignment.CenterHorizontally)
-        )
         Row {
             Text(
                 text = title,

@@ -17,15 +17,7 @@
   ~
   -->
 
-<de.maniac103.squeezeclient.ui.common.MainContentContainerView
+<androidx.compose.ui.platform.ComposeView
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
-
-    <androidx.compose.ui.platform.ComposeView
-        android:id="@+id/compose"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-
-</de.maniac103.squeezeclient.ui.common.MainContentContainerView>
+    android:layout_height="match_parent" />

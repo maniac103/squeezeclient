@@ -21,8 +21,10 @@ import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import java.io.Serial
 
 @Parcelize
+@Serializable
 data class JiveActions(
     val goAction: JiveAction?,
     val doAction: JiveAction?,
@@ -45,12 +47,15 @@ data class JiveActions(
         downloadData != null
 
     @Parcelize
+    @Serializable
     data class Choices(val items: List<Choice>, val selectedIndex: Int) : Parcelable
 
     @Parcelize
+    @Serializable
     data class Choice(val title: String, val action: JiveAction) : Parcelable
 
     @Parcelize
+    @Serializable
     data class Slider(
         val min: Int,
         val max: Int,
@@ -60,14 +65,17 @@ data class JiveActions(
     ) : Parcelable
 
     @Parcelize
+    @Serializable
     data class Checkbox(val state: Boolean, val onAction: JiveAction, val offAction: JiveAction) :
         Parcelable
 
     @Parcelize
+    @Serializable
     data class Radio(val state: Boolean, val action: JiveAction) : Parcelable
 
     // inputStyle
     @Parcelize
+    @Serializable
     data class Input(
         val minLength: Int,
         val initialText: String?,

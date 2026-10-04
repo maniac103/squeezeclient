@@ -35,7 +35,7 @@ import kotlinx.coroutines.flow.asStateFlow
 
 abstract class BasePagedSlimBrowseItemListViewModel(
     application: Application,
-) : AndroidViewModel(application), BaseSlimBrowseItemListFragment.ViewModelInterface {
+) : AndroidViewModel(application) {
     open val useGrid = application.prefs.forceGridLayout ||
         application.resources.getBoolean(R.bool.force_grid_items_for_lists)
 
@@ -54,11 +54,15 @@ abstract class BasePagedSlimBrowseItemListViewModel(
         .flow
         .cachedIn(viewModelScope)
 
-    override fun setItemBusy(item: SlimBrowseItemList.SlimBrowseItem, job: Job) {
+    fun setItemBusy(item: SlimBrowseItemList.SlimBrowseItem, job: Job) {
         busyItemInternal.value = item
         job.invokeOnCompletion {
             busyItemInternal.value = null
         }
+    }
+
+    fun refresh() {
+        pagingSourceFactory.invalidate()
     }
 
     protected abstract suspend fun fetchPage(page: PagingParams): SlimBrowseItemList

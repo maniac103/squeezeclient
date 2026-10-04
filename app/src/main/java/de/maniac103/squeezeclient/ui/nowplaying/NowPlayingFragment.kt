@@ -75,7 +75,7 @@ class NowPlayingFragment :
     ViewBindingFragment<FragmentNowplayingBinding>(FragmentNowplayingBinding::inflate),
     MenuProvider,
     ContextMenuBottomSheetFragment.Listener,
-    InputBottomSheetFragment.PlainSubmitListener {
+    InputBottomSheetFragment.SubmitListener {
 
     interface Listener {
         fun onContextMenuAction(
@@ -330,7 +330,7 @@ class NowPlayingFragment :
         }
 
         R.id.save_playlist -> {
-            val f = InputBottomSheetFragment.createPlain(
+            val f = InputBottomSheetFragment.create(
                 getString(R.string.playlist_save_title),
                 minLength = 1
             )

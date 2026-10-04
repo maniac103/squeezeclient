@@ -19,8 +19,10 @@ package de.maniac103.squeezeclient.model
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.Serializable
 
 @Parcelize
+@Serializable
 data class JiveHomeMenuItem(
     val id: String,
     val node: String,

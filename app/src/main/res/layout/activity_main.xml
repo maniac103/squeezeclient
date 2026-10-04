@@ -46,36 +46,10 @@
                 app:titleCentered="true"
                 app:subtitleCentered="true" />
 
-            <LinearLayout
+            <androidx.compose.ui.platform.ComposeView
                 android:id="@+id/breadcrumbs_container"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="8dp"
-                android:orientation="horizontal"
-                android:visibility="gone"
-                android:animateLayoutChanges="true"
-                tools:visibility="visible"
-                tools:ignore="UseCompoundDrawables">
-
-                <ImageView
-                    android:id="@+id/breadcrumbs_home"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_vertical"
-                    android:src="@drawable/ic_home_24dp"
-                    app:tint="?colorControlNormal" />
-
-                <TextView
-                    android:id="@+id/breadcrumbs"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_vertical"
-                    android:ellipsize="start"
-                    android:maxLines="1"
-                    android:textAppearance="?textAppearanceLabelMedium"
-                    tools:text="> My music > Artists" />
-
-            </LinearLayout>
+                android:layout_height="wrap_content" />
 
         </com.google.android.material.appbar.AppBarLayout>
 

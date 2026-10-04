@@ -118,7 +118,7 @@ class ItemActionsMenuSheet : BottomSheetDialogFragment() {
 fun ItemActionsSheet(
     viewModel: ItemActionsViewModel = viewModel(),
     serverConfig: ServerConfiguration?,
-    actionSelectedListener: (ItemActionsViewModel.ActionItem) -> Unit
+    actionSelectedListener: (ItemActionsViewModel.ActionItem) -> Unit // FIXME: sealed class
 ) {
     val item = viewModel.item
     val actions by viewModel.actionsFlow.collectAsState(emptyList())

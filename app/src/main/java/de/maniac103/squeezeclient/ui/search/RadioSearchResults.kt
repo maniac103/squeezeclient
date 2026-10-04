@@ -17,58 +17,14 @@
 
 package de.maniac103.squeezeclient.ui.search
 
-import android.os.Bundle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.collectAsLazyPagingItems
-import de.maniac103.squeezeclient.extfuncs.getParcelable
-import de.maniac103.squeezeclient.extfuncs.prefs
-import de.maniac103.squeezeclient.extfuncs.serverConfig
-import de.maniac103.squeezeclient.extfuncs.viewModelWithParams
-import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
-import de.maniac103.squeezeclient.ui.itemlist.BaseSlimBrowseItemListFragment
 import de.maniac103.squeezeclient.ui.itemlist.SlimBrowsePagedItemListOrGrid
-import kotlin.getValue
-
-class RadioSearchResultsFragment : BaseSlimBrowseItemListFragment() {
-    private val viewModel by viewModelWithParams {
-        val args = requireArguments()
-        RadioSearchResultViewModel(
-            requireActivity().application,
-            args.getParcelable("playerId", PlayerId::class),
-            args.getString("query")!!
-        )
-    }
-
-    override val baseViewModel get() = viewModel
-
-    @Composable
-    override fun createListContent(
-        itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit,
-        contextMenuClickListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit
-    ) {
-        RadioSearchResultsItemList(
-            viewModel,
-            prefs.serverConfig,
-            itemSelectionListener = itemSelectionListener,
-            contextMenuClickListener = contextMenuClickListener
-        )
-    }
-
-    companion object {
-        fun create(playerId: PlayerId, searchTerm: String) = RadioSearchResultsFragment().apply {
-            arguments = Bundle().apply {
-                putParcelable("playerId", playerId)
-                putString("query", searchTerm)
-            }
-        }
-    }
-}
-
 
 @Composable
 fun RadioSearchResultsItemList(

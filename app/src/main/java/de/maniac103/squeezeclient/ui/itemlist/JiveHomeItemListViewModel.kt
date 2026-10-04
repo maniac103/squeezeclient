@@ -14,16 +14,12 @@ import kotlinx.coroutines.flow.mapNotNull
 class JiveHomeItemListViewModel(
     application: Application,
     playerId: PlayerId,
-    nodeId: String
+    val nodeId: String
 ) : AndroidViewModel(application) {
     @OptIn(ExperimentalCoroutinesApi::class)
     private val homeMenuFlow = application.connectionHelper
         .playerState(playerId)
         .flatMapLatest { it.homeMenu }
-
-    val titleFlow = homeMenuFlow
-        .mapNotNull { it[nodeId]?.title }
-        .map { listOf(it) }
 
     val homeMenuItemsFlow = homeMenuFlow.map { menu ->
         menu.values

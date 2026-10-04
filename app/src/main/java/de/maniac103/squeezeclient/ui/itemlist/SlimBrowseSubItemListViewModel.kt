@@ -35,23 +35,17 @@ import kotlinx.coroutines.flow.shareIn
 
 class SlimBrowseSubItemListViewModel(
     private val application: Application,
-    override val playerId: PlayerId,
-    title: String?,
+    val playerId: PlayerId,
     private val parentFetchAction: JiveAction,
     private val parentItemPosition: Int
-) : AndroidViewModel(application), BaseSlimBrowseItemListFragment.ViewModelInterface {
-    override val fetchAction = null
-
-    override val titleFlow = flowOf(listOfNotNull(title))
-    override val iconFlow = flowOf(null)
-
+) : AndroidViewModel(application) {
     private val busyItemInternal = MutableStateFlow<SlimBrowseItemList.SlimBrowseItem?>(null)
     val busyItemFlow = busyItemInternal.asStateFlow()
 
     val itemsFlow = flow { emit(loadItems()) }
         .shareIn(viewModelScope, SharingStarted.Lazily)
 
-    override fun setItemBusy(item: SlimBrowseItemList.SlimBrowseItem, job: Job) {
+    fun setItemBusy(item: SlimBrowseItemList.SlimBrowseItem, job: Job) {
         busyItemInternal.value = item
         job.invokeOnCompletion {
             busyItemInternal.value = null

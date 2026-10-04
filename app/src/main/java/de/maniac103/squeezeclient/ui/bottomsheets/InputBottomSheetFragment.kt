@@ -18,177 +18,77 @@
 package de.maniac103.squeezeclient.ui.bottomsheets
 
 import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.ViewGroup
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.text.input.TextFieldLineLimits
-import androidx.compose.foundation.text.input.rememberTextFieldState
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.Icon
+import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.unit.dp
-import de.maniac103.squeezeclient.R
-import de.maniac103.squeezeclient.extfuncs.getParcelable
-import de.maniac103.squeezeclient.extfuncs.getParcelableOrNull
-import de.maniac103.squeezeclient.model.JiveAction
-import de.maniac103.squeezeclient.model.JiveActions
-import de.maniac103.squeezeclient.model.SlimBrowseItemList
+import androidx.compose.ui.platform.ComposeView
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
+import de.maniac103.squeezeclient.ui.composables.BottomSheetContentWrapper
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
 
-class InputBottomSheetFragment : BaseBottomSheet() {
-    interface ItemSubmitListener {
-        fun onInputSubmitted(
-            item: SlimBrowseItemList.SlimBrowseItem,
-            action: JiveAction,
-            isGoAction: Boolean
-        ): Job?
-    }
-    interface InputSubmitListener {
-        fun onInputSubmitted(title: String, action: JiveAction, isGoAction: Boolean): Job?
-    }
-    interface PlainSubmitListener {
+class InputBottomSheetFragment : BottomSheetDialogFragment() {
+    interface SubmitListener {
         fun onInputSubmitted(value: String): Job?
     }
 
-    override val title get() = parentItem?.title ?: requireArguments().getString("parentTitle")!!
-    private val parentItem get() =
-        requireArguments().getParcelableOrNull("item", SlimBrowseItemList.SlimBrowseItem::class)
-    private val input get() = requireArguments().getParcelable("input", JiveActions.Input::class)
+    private val title get() = requireArguments().getString("title")!!
+    private val minLength get() = requireArguments().getInt("minLength")
+    private val busyFlow = MutableStateFlow(false)
 
-    @Composable
-    override fun createContent() = Column {
-        val textState = rememberTextFieldState(input.initialText ?: "")
-        val busy by busyFlow.collectAsState()
-        val errorMessage by remember {
-            derivedStateOf { determineErrorState(textState.text, input) }
-        }
-
-        OutlinedTextField(
-            state = textState,
-            lineLimits = TextFieldLineLimits.SingleLine,
-            enabled = !busy,
-            isError = errorMessage != null,
-            keyboardOptions = KeyboardOptions(
-                imeAction = ImeAction.Send
-            ),
-            onKeyboardAction = {
-                if (errorMessage != null) {
-                    submitInput(textState.text.toString())
-                }
-            },
-            supportingText = {
-                errorMessage?.let { error ->
-                    Text(
-                        text = error,
-                        color = MaterialTheme.colorScheme.error
+    @OptIn(ExperimentalMaterial3Api::class)
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ) = ComposeView(inflater.context).apply {
+        setContent {
+            MaterialTheme {
+                val busy by busyFlow.collectAsState()
+                Column {
+                    BottomSheetDefaults.DragHandle(
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
                     )
+                    BottomSheetContentWrapper(title, busy) {
+                        InputSheetContent(
+                            minLength = minLength,
+                            busy = busy,
+                            onSubmit = { value -> submitInput(value) }
+                        )
+                    }
                 }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-        )
-
-        FilledTonalButton(
-            onClick = {
-                submitInput(textState.text.toString())
-            },
-            enabled = !busy,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp)
-        ) {
-            Icon(
-                ImageVector.vectorResource(R.drawable.ic_send_24dp),
-                contentDescription = null // FIXME
-            )
-            Text(
-                text = stringResource(R.string.input_submit)
-            )
+            }
         }
     }
 
     private fun submitInput(inputText: String) {
-        val job = when (val parent = parentFragment ?: activity) {
-            is ItemSubmitListener -> {
-                val action = input.action.withInputValue(inputText)
-                parent.onInputSubmitted(requireNotNull(parentItem), action, input.actionHasTarget)
+        val listener = (parentFragment ?: activity) as? SubmitListener
+        val job = listener?.onInputSubmitted(inputText)
+        if (job != null) {
+            busyFlow.value = true
+            job.invokeOnCompletion {
+                busyFlow.value = false
+                dismissAllowingStateLoss()
             }
-
-            is InputSubmitListener -> {
-                val action = input.action.withInputValue(inputText)
-                parent.onInputSubmitted(title, action, input.actionHasTarget)
-            }
-
-            is PlainSubmitListener -> {
-                parent.onInputSubmitted(inputText)
-            }
-
-            else -> null
+        } else {
+            dismissAllowingStateLoss()
         }
-        handleAction(job, true)
-    }
-
-    private fun determineErrorState(text: CharSequence, input: JiveActions.Input) = when {
-        text.length < input.minLength ->
-            resources.getQuantityString(
-                R.plurals.input_length_error_message,
-                input.minLength,
-                input.minLength
-            )
-
-        !input.allowedChars.isNullOrEmpty() && text.any { c -> !input.allowedChars.contains(c) } ->
-            getString(R.string.input_character_error_message, input.allowedChars)
-
-        else -> null
     }
 
     companion object {
-        fun createForItem(item: SlimBrowseItemList.SlimBrowseItem, input: JiveActions.Input) =
-            InputBottomSheetFragment().apply {
-                arguments = Bundle().apply {
-                    putParcelable("item", item)
-                    putParcelable("input", input)
-                }
+        fun create(title: String, minLength: Int = 0) = InputBottomSheetFragment().apply {
+            arguments = Bundle().apply {
+                putString("title", title)
+                putInt("minLength", minLength)
             }
-
-        fun createPlain(
-            title: String,
-            minLength: Int = 0,
-            initialText: String? = null,
-            allowedChars: String? = null,
-            type: JiveActions.Input.Type = JiveActions.Input.Type.Text
-        ): InputBottomSheetFragment {
-            val dummyAction = JiveAction.createEmptyForInput()
-            val dummyInput = JiveActions.Input(
-                minLength,
-                initialText,
-                allowedChars,
-                type,
-                dummyAction,
-                false
-            )
-            return createForInput(title, dummyInput)
         }
-
-        fun createForInput(parentTitle: String, input: JiveActions.Input) =
-            InputBottomSheetFragment().apply {
-                arguments = Bundle().apply {
-                    putString("parentTitle", parentTitle)
-                    putParcelable("input", input)
-                }
-            }
     }
 }

@@ -28,17 +28,10 @@ import kotlinx.coroutines.flow.flowOf
 
 class LibrarySearchResultsViewModel(
     private val application: Application,
-    override val playerId: PlayerId,
+    val playerId: PlayerId,
     private val searchTerm: String,
     private val searchType: LibrarySearchRequest.Mode
 ) : BasePagedSlimBrowseItemListViewModel(application) {
-
-    override val titleFlow get() =
-        flowOf(listOf(application.getString(R.string.page_title_library_search, searchTerm)))
-    override val iconFlow get() = flowOf(null)
-
-    override val fetchAction get() = null
-
     override suspend fun fetchPage(page: PagingParams) =
         application.connectionHelper.getLocalLibrarySearchResults(playerId, searchTerm, searchType, page)
 }

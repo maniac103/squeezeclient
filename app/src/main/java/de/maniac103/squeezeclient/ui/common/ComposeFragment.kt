@@ -25,7 +25,7 @@ import de.maniac103.squeezeclient.databinding.FragmentComposeBinding
 abstract class ComposeFragment :
     ViewBindingFragment<FragmentComposeBinding>(FragmentComposeBinding::inflate) {
     override fun onBindingCreated(binding: FragmentComposeBinding) {
-        binding.compose.apply {
+        binding.root.apply {
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
                 MaterialTheme {

@@ -21,6 +21,7 @@ import android.os.Parcelable
 import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
 import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.Serializable
 
 class LibrarySearchRequest(playerId: PlayerId, searchTerm: String, mode: Mode, page: PagingParams) :
     Request(playerId, page, "browselibrary", "items") {
@@ -32,6 +33,7 @@ class LibrarySearchRequest(playerId: PlayerId, searchTerm: String, mode: Mode, p
     }
 
     @Parcelize
+    @Serializable
     sealed class Mode(val cmd: String) : Parcelable {
         class Artist : Mode("artists")
         class Tracks : Mode("tracks")

@@ -27,15 +27,9 @@ import kotlinx.coroutines.flow.flowOf
 
 class RadioSearchResultViewModel(
     private val application: Application,
-    override val playerId: PlayerId,
+    val playerId: PlayerId,
     private val searchTerm: String
 ) : BasePagedSlimBrowseItemListViewModel(application) {
-    override val titleFlow get() =
-        flowOf(listOf(application.getString(R.string.page_title_radio_search, searchTerm)))
-    override val iconFlow get() = flowOf(null)
-
-    override val fetchAction get() = null
-
     override suspend fun fetchPage(page: PagingParams) =
         application.connectionHelper.getRadioSearchResults(playerId, searchTerm, page)
 }

@@ -19,18 +19,14 @@ package de.maniac103.squeezeclient.ui
 
 import android.content.Intent
 import android.os.Bundle
-import android.text.SpannableStringBuilder
-import android.text.style.ImageSpan
 import android.util.Log
 import android.view.KeyEvent
 import android.view.Menu
-import android.view.View
 import android.widget.CompoundButton
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.material3.MaterialTheme
 import androidx.core.content.edit
-import androidx.core.text.buildSpannedString
-import androidx.core.text.inSpans
 import androidx.core.view.GravityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -48,7 +44,6 @@ import de.maniac103.squeezeclient.databinding.ActivityMainBinding
 import de.maniac103.squeezeclient.databinding.NavDrawerHeaderBinding
 import de.maniac103.squeezeclient.extfuncs.ViewEdge
 import de.maniac103.squeezeclient.extfuncs.addSystemBarAndCutoutInsetsListener
-import de.maniac103.squeezeclient.extfuncs.backProgressInterpolator
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.getParcelableOrNull
 import de.maniac103.squeezeclient.extfuncs.isRtl
@@ -66,19 +61,21 @@ import de.maniac103.squeezeclient.model.PlayerStatus
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.service.localplayer.LocalPlaybackService
 import de.maniac103.squeezeclient.service.mediasession.MediaService
+import de.maniac103.squeezeclient.ui.maincontent.Breadcrumbs
+import de.maniac103.squeezeclient.ui.maincontent.BreadcrumbsState
+import de.maniac103.squeezeclient.ui.maincontent.MainContentContainerFragment
 import de.maniac103.squeezeclient.ui.nowplaying.NowPlayingFragment
 import de.maniac103.squeezeclient.ui.playermanagement.PlayerManagementActivity
 import de.maniac103.squeezeclient.ui.prefs.SettingsActivity
 import de.maniac103.squeezeclient.ui.search.SearchFragment
 import de.maniac103.squeezeclient.ui.serversetup.ServerSetupActivity
 import de.maniac103.squeezeclient.ui.volume.VolumeFragment
-import de.maniac103.squeezeclient.ui.widget.AlphaSpan
-import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -102,6 +99,7 @@ class MainActivity :
     private var player: Player? = null
     private var playerIsActive = false
     private var consecutiveUnsuccessfulConnectAttempts = 0
+    private var breadcrumbsFlow = MutableStateFlow(BreadcrumbsState(emptyList(), 0F))
 
     private val mainListContainer get() =
         supportFragmentManager.findFragmentById(
@@ -167,6 +165,23 @@ class MainActivity :
             true
         }
 
+        binding.breadcrumbsContainer.apply {
+            setContent {
+                MaterialTheme {
+                    Breadcrumbs(
+                        breadcrumbsFlow,
+                        prefs.serverConfig,
+                        onHomeClicked = {
+                            mainListContainer?.goToHome()
+                        },
+                        onGoBack = { levels ->
+                            mainListContainer?.goBack(levels)
+                        }
+                    )
+                }
+            }
+        }
+
         drawerHeaderBinding = NavDrawerHeaderBinding.bind(binding.navigationView.getHeaderView(0))
         drawerHeaderBinding.serverSetup.setOnClickListener { openServerSetup(true) }
         ViewCompat.setOnApplyWindowInsetsListener(binding.navigationView) { v, windowInsets ->
@@ -197,6 +212,7 @@ class MainActivity :
             }
         }
 
+        binding.appbarContainer.setLiftable(false)
         binding.appbarContainer.addSystemBarAndCutoutInsetsListener(
             ViewEdge.Top,
             ViewEdge.TopStart
@@ -207,10 +223,6 @@ class MainActivity :
                 prefs.serverConfig?.let { drawerHeaderBinding.serverName.text = it.name }
                 connectionHelper.state.collect { state -> updateContentForConnectionState(state) }
             }
-        }
-
-        binding.breadcrumbsHome.setOnClickListener {
-            mainListContainer?.goToHome()
         }
 
         savedInstanceState?.let {
@@ -266,46 +278,12 @@ class MainActivity :
 
     // MainListHolderFragment.Listener implementation
 
-    override fun onScrollTargetChanged(scrollTarget: View?) {
-        binding.appbarContainer.setLiftOnScrollTargetView(scrollTarget)
+    override fun onContentScrollStateChanged(canScrollUp: Boolean) {
+        binding.appbarContainer.isLifted = canScrollUp
     }
 
-    override fun onContentStackChanged(
-        titles: List<MainContentContainerFragment.PageTitleInfo>,
-        pendingTitle: MainContentContainerFragment.PageTitleInfo?,
-        pendingProgress: Float
-    ) {
-        val hasBreadcrumbs = titles.isNotEmpty() || pendingTitle != null
-        binding.breadcrumbsContainer.isVisible = hasBreadcrumbs
-        binding.breadcrumbs.text = if (hasBreadcrumbs) {
-            buildSpannedString {
-                titles.forEach { info -> appendPage(info, 1F) }
-                pendingTitle?.let { pending ->
-                    val alpha = 1F - backProgressInterpolator.getInterpolation(pendingProgress)
-                    appendPage(pending, alpha)
-                }
-            }
-        } else {
-            null
-        }
-    }
-
-    private fun SpannableStringBuilder.appendPage(
-        pageInfo: MainContentContainerFragment.PageTitleInfo,
-        alpha: Float
-    ) = inSpans(AlphaSpan(alpha)) {
-        append(" › ")
-        val icon = pageInfo.icon?.mutate()?.apply {
-            setBounds(0, 0, intrinsicWidth, intrinsicHeight)
-            setAlpha((alpha * 255F).roundToInt())
-        }
-        icon?.let {
-            inSpans(ImageSpan(it)) {
-                append(" ")
-            }
-            append(" ")
-        }
-        append(pageInfo.title.joinToString(" › "))
+    override fun onBreadcrumbsChanged(state: BreadcrumbsState) {
+        breadcrumbsFlow.value = state
     }
 
     override fun openNowPlayingIfNeeded() {
@@ -324,7 +302,7 @@ class MainActivity :
         contextItem: SlimBrowseItemList.SlimBrowseItem
     ) = mainListContainer?.run {
         goToHome()
-        onHandleDoOrGoAction(action, true, contextItem, parentItem)
+        onNowPlayingContextMenuAction(action, contextItem, parentItem)
     }
 
     // ConnectionErrorHintFragment.Listener implementation
@@ -525,6 +503,7 @@ class MainActivity :
             searchFragment?.let { show(it) }
         }
         binding.nowplayingPlaceholder?.isVisible = true
+        binding.breadcrumbsContainer.isVisible = true
         binding.loadingIndicator.isVisible = false
         binding.toolbar.subtitle = player?.name
         updatePlayerDependentMenuItems()

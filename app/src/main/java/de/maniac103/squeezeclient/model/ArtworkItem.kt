@@ -18,6 +18,7 @@
 package de.maniac103.squeezeclient.model
 
 import android.os.Parcelable
+import kotlinx.serialization.Serializable
 
 interface ArtworkItem {
     val icon: String?
@@ -30,6 +31,7 @@ interface ArtworkItem {
     }
 }
 
-interface ParcelableArtworkItem :
+@Serializable
+sealed interface ParcelableArtworkItem :
     ArtworkItem,
     Parcelable

@@ -17,7 +17,6 @@
 
 package de.maniac103.squeezeclient.ui.slideshow
 
-import android.os.Bundle
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -38,60 +37,32 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import coil3.request.ImageRequest
-import de.maniac103.squeezeclient.extfuncs.getParcelableList
 import de.maniac103.squeezeclient.extfuncs.loadMaybeRelativeUrl
-import de.maniac103.squeezeclient.extfuncs.prefs
-import de.maniac103.squeezeclient.extfuncs.serverConfig
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlideshowImage
-import de.maniac103.squeezeclient.ui.MainContentChild
-import de.maniac103.squeezeclient.ui.common.ComposeFragment
-import kotlinx.coroutines.flow.flowOf
-
-class GalleryFragment : ComposeFragment(), MainContentChild {
-    private val items get() = requireArguments().getParcelableList("items", SlideshowImage::class)
-    override val titleFlow get() = flowOf(requireArguments().getStringArrayList("title")!!)
-    override val iconFlow get() = flowOf(null)
-    override val scrollingTargetView get() = null // FIXME
-
-    @Composable
-    override fun createContent() =
-        GalleryGrid(items, prefs.serverConfig) { item ->
-            val intent = ImageViewActivity.createIntent(requireContext(), item)
-            startActivity(intent)
-        }
-
-    companion object {
-        fun create(items: List<SlideshowImage>, title: String, parentTitle: String?) =
-            GalleryFragment().apply {
-                val titleList = listOfNotNull(parentTitle, title)
-                arguments = Bundle().apply {
-                    putParcelableArrayList("items", ArrayList(items))
-                    putStringArrayList("title", ArrayList(titleList))
-                }
-            }
-    }
-}
+import de.maniac103.squeezeclient.ui.composables.LazyGridScrollStateHelper
 
 @Composable
 fun GalleryGrid(
     items: List<SlideshowImage>,
     serverConfig: ServerConfiguration?,
     itemSelectionListener: (SlideshowImage) -> Unit = {}
-) = LazyVerticalGrid(
-    columns = GridCells.Fixed(2)
-) {
-    items(items) { item ->
-        val imageRequest = ImageRequest.Builder(LocalContext.current)
-            .loadMaybeRelativeUrl(item.imageUrl, serverConfig)
-            .build()
+) = LazyGridScrollStateHelper { state ->
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(2)
+    ) {
+        items(items) { item ->
+            val imageRequest = ImageRequest.Builder(LocalContext.current)
+                .loadMaybeRelativeUrl(item.imageUrl, serverConfig)
+                .build()
 
-        GalleryGridItem(
-            imageRequest = imageRequest,
-            caption = item.caption,
-            modifier = Modifier
-                .clickable(onClick = { itemSelectionListener(item) })
-        )
+            GalleryGridItem(
+                imageRequest = imageRequest,
+                caption = item.caption,
+                modifier = Modifier
+                    .clickable(onClick = { itemSelectionListener(item) })
+            )
+        }
     }
 }
 

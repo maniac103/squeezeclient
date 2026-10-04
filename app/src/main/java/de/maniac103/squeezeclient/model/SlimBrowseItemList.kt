@@ -33,6 +33,7 @@ data class SlimBrowseItemList(
     val window: Window? = null
 ) : ListResponse<SlimBrowseItemList.SlimBrowseItem>,
     Parcelable {
+    @Serializable
     @Parcelize
     data class SlimBrowseItem(
         val listPosition: Int,

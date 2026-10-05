@@ -96,7 +96,10 @@ abstract class BasePagingListFragment<T : Any, VH : RecyclerView.ViewHolder> :
                 onLoadPage(page)
             }
         }
-        val pager = Pager(PagingConfig(100), pagingSourceFactory = pagingSourceFactory)
+        val pager = Pager(
+            config = PagingConfig(pageSize = 200, initialLoadSize = 200),
+            pagingSourceFactory = pagingSourceFactory
+        )
         val flow = pager.flow.cachedIn(lifecycleScope)
         lifecycleScope.launch {
             flow.collectLatest {

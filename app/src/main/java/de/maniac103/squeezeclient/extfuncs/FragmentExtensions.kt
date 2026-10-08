@@ -17,24 +17,13 @@
 
 package de.maniac103.squeezeclient.extfuncs
 
-import android.text.format.DateFormat
-import android.view.animation.Interpolator
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.google.android.material.timepicker.MaterialTimePicker
-import com.google.android.material.timepicker.TimeFormat
-import de.maniac103.squeezeclient.model.JiveActions
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 
 val Fragment.connectionHelper get() = requireContext().connectionHelper
 val Fragment.prefs get() = requireContext().prefs
-val Fragment.backProgressInterpolator: Interpolator get() =
-    requireContext().backProgressInterpolator
 inline fun <reified T> Fragment.parentAs() = parentFragment as? T ?: activity as? T
 inline fun <reified T> Fragment.requireParentAs() = parentAs<T>() ?: throw IllegalStateException(
     "Parent of fragment $this doesn't implement required interface ${T::class.java.simpleName}"
@@ -48,32 +37,4 @@ inline fun <reified T : ViewModel> Fragment.viewModelWithParams(
             return constructor() as T
         }
     }
-}
-
-// TODO: Refactor this into an own class after upgrading MDC, see
-// https://github.com/material-components/material-components-android/issues/4310
-@OptIn(ExperimentalTime::class)
-fun Fragment.showActionTimePicker(
-    title: String,
-    input: JiveActions.Input,
-    resultConsumer: (secondsString: String) -> Unit
-) {
-    val (hour, minute) = input.initialText?.toIntOrNull()?.let { (it / 3600) to (it / 60) }
-        ?: (Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).hour to 0)
-    val timeFormat = if (DateFormat.is24HourFormat(context)) {
-        TimeFormat.CLOCK_24H
-    } else {
-        TimeFormat.CLOCK_12H
-    }
-    val picker = MaterialTimePicker.Builder()
-        .setTitleText(title)
-        .setHour(hour)
-        .setMinute(minute)
-        .setTimeFormat(timeFormat)
-        .build()
-    picker.addOnPositiveButtonClickListener {
-        val seconds = picker.hour * 3600 + picker.minute * 60
-        resultConsumer(seconds.toString())
-    }
-    picker.show(childFragmentManager, "timepicker")
 }

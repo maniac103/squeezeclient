@@ -36,6 +36,7 @@ import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavEntryDecorator
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.scene.DialogSceneStrategy
+import de.maniac103.squeezeclient.cometd.ConnectionHelper
 import de.maniac103.squeezeclient.model.DownloadRequestData
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.JiveHomeMenuItem
@@ -70,6 +71,7 @@ import de.maniac103.squeezeclient.ui.slideshow.GalleryGrid
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 
+// FIXME: refactor to use Koin (navigation<>, koinEntryProvider<>)
 @Composable
 inline fun <reified VM : ViewModel, K : NavKey> navEntryViewModel(
     key: K,
@@ -399,7 +401,7 @@ internal fun EntryProviderScope<NavKey>.infoNavEntry() = entry<MainContentNaviga
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun EntryProviderScope<NavKey>.contextMenuNavEntry(
-    application: Application,
+    connectionHelper: ConnectionHelper,
     serverConfig: ServerConfiguration?,
     onItemSelected: (item: SlimBrowseItemList.SlimBrowseItem, parentItem: SlimBrowseItemList.SlimBrowseItem?) -> Job?,
     onDone: (NavKey) -> Unit
@@ -408,7 +410,7 @@ internal fun EntryProviderScope<NavKey>.contextMenuNavEntry(
 ) { route ->
     val viewModel = navEntryViewModel(route) {
         ContextMenuBottomSheetViewModel(
-            application,
+            connectionHelper,
             route.playerId,
             route.menuItems,
             route.item

@@ -24,20 +24,22 @@ import de.maniac103.squeezeclient.model.ServerConfiguration
 
 @Composable
 fun ArtworkImage(
-    artwork: ArtworkItem,
+    artwork: ArtworkItem?,
     serverConfig: ServerConfiguration?,
     modifier: Modifier = Modifier,
-    usePlaceholder: Boolean = true
+    usePlaceholder: Boolean = true,
+    imageRequestModifier: ImageRequest.Builder.() -> Unit = {}
 ) {
     var currentAspectRatio by remember { mutableStateOf<Float?>(null) }
 
     val imageRequest = ImageRequest.Builder(LocalContext.current)
-        .loadMaybeRelativeUrl(artwork.extractIconUrl(), serverConfig)
+        .loadMaybeRelativeUrl(artwork?.extractIconUrl(), serverConfig)
         .apply {
             if (usePlaceholder) {
                 placeholder(R.drawable.ic_disc_24dp)
             }
         }
+        .apply { imageRequestModifier() }
         .build()
 
     Box(

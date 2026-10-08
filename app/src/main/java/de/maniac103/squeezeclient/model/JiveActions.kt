@@ -107,4 +107,8 @@ data class JiveActions(
         @SerialName("refreshGrandparent")
         RefreshGrandParent
     }
+
+    companion object {
+        val EMPTY = JiveActions(null, null, null, null, null, null, null, null, null, null, null, null, null)
+    }
 }

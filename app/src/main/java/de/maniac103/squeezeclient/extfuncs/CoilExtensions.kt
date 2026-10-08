@@ -18,13 +18,9 @@
 package de.maniac103.squeezeclient.extfuncs
 
 import android.content.Context
-import androidx.compose.ui.platform.LocalContext
 import coil3.network.NetworkHeaders
 import coil3.network.httpHeaders
 import coil3.request.ImageRequest
-import coil3.request.placeholder
-import de.maniac103.squeezeclient.R
-import de.maniac103.squeezeclient.model.ArtworkItem
 import de.maniac103.squeezeclient.model.ServerConfiguration
 
 fun ImageRequest.Builder.addServerCredentialsIfNeeded(context: Context) =
@@ -49,12 +45,4 @@ fun ImageRequest.Builder.loadMaybeRelativeUrl(
 
     data(absoluteUrl)
     addServerCredentialsIfNeeded(serverConfig)
-}
-
-fun ImageRequest.Builder.loadArtworkOrPlaceholder(
-    artwork: ArtworkItem,
-    serverConfig: ServerConfiguration?
-) = apply {
-    loadMaybeRelativeUrl(artwork.extractIconUrl(), serverConfig)
-    placeholder(R.drawable.ic_disc_24dp)
 }

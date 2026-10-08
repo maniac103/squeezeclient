@@ -169,6 +169,8 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.coil.okhttp)
     implementation(libs.google.material)
+    implementation(libs.koin.core)
+    implementation(libs.koin.compose)
     implementation(libs.kotlinx.coroutines.guava)
     implementation(libs.kotlinx.datetime)
     implementation(libs.kotlinx.serialization.json)

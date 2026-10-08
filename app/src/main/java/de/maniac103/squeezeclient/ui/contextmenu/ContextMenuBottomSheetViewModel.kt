@@ -1,13 +1,12 @@
 package de.maniac103.squeezeclient.ui.contextmenu
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import de.maniac103.squeezeclient.extfuncs.connectionHelper
+import de.maniac103.squeezeclient.cometd.ConnectionHelper
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.PagingParams
+import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,16 +14,15 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 class ContextMenuBottomSheetViewModel(
-    private val application: Application,
-    private val playerId: de.maniac103.squeezeclient.model.PlayerId,
+    private val connectionHelper: ConnectionHelper,
+    private val playerId: PlayerId,
     initialItems: List<SlimBrowseItemList.SlimBrowseItem>,
     val parentItem: SlimBrowseItemList.SlimBrowseItem
-) : AndroidViewModel(application) {
+) : ViewModel() {
     private val pageStackInternal =
         MutableStateFlow(listOf(Page(parentItem, initialItems)))
     private val busyItemInternal = MutableStateFlow<SlimBrowseItemList.SlimBrowseItem?>(null)
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     val pageFlow = pageStackInternal.map { it.last().items }
     val backNavTitleFlow = pageStackInternal.map { pages ->
         if (pages.size > 1) pages[pages.lastIndex].parent.title else null
@@ -33,7 +31,7 @@ class ContextMenuBottomSheetViewModel(
 
     fun pushPage(item: SlimBrowseItemList.SlimBrowseItem, fetchAction: JiveAction) {
         val job = viewModelScope.launch {
-            val newItems = application.connectionHelper.fetchItemsForAction(
+            val newItems = connectionHelper.fetchItemsForAction(
                 playerId,
                 fetchAction,
                 PagingParams.All,

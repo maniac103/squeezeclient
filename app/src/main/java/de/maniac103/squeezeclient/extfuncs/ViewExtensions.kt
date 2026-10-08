@@ -20,41 +20,16 @@ package de.maniac103.squeezeclient.extfuncs
 import android.content.DialogInterface
 import android.content.res.Configuration
 import android.view.View
-import android.widget.ImageView
 import androidx.appcompat.app.AlertDialog
-import androidx.constraintlayout.motion.widget.MotionLayout
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
-import coil3.imageLoader
-import coil3.load
-import coil3.request.ImageRequest
-import coil3.request.placeholder
-import coil3.target.ImageViewTarget
-import com.google.android.material.imageview.ShapeableImageView
-import de.maniac103.squeezeclient.R
-import de.maniac103.squeezeclient.model.ArtworkItem
-import de.maniac103.squeezeclient.model.SlideshowImage
-import de.maniac103.squeezeclient.ui.widget.AbstractMotionLayoutTransitionListener
 import kotlin.coroutines.resume
 import kotlin.time.Duration
 import kotlinx.coroutines.suspendCancellableCoroutine
 
 fun View.animateScale(scale: Float, duration: Duration) =
     animate().scaleX(scale).scaleY(scale).setDuration(duration.inWholeMilliseconds)
-
-fun ShapeableImageView.loadArtwork(
-    item: ArtworkItem?,
-    builder: ImageRequest.Builder.() -> Unit = {}
-) {
-    val imageRequest = ImageRequest.Builder(context)
-        .loadMaybeRelativeUrl(item?.extractIconUrl(), context.prefs.serverConfig)
-        .target(ImageViewTarget(this@loadArtwork))
-        .apply { builder() }
-        .build()
-
-    context.imageLoader.enqueue(imageRequest)
-}
 
 enum class ViewEdge {
     Start,
@@ -113,14 +88,6 @@ fun View.addSystemBarAndCutoutInsetsListener(edge: ViewEdge, landscapeEdge: View
         }
         windowInsets
     }
-}
-
-inline fun MotionLayout.doOnTransitionCompleted(crossinline action: (id: Int) -> Unit) {
-    addTransitionListener(object : AbstractMotionLayoutTransitionListener() {
-        override fun onTransitionCompleted(layout: MotionLayout?, currentId: Int) {
-            action.invoke(currentId)
-        }
-    })
 }
 
 suspend fun AlertDialog.await(positiveText: String, negativeText: String) =

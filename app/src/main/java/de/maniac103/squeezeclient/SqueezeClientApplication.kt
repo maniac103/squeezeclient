@@ -30,8 +30,12 @@ import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.extfuncs.serverConfig
 import de.maniac103.squeezeclient.service.DownloadWorker
 import de.maniac103.squeezeclient.service.localplayer.LocalPlaybackService
+import de.maniac103.squeezeclient.ui.viewModelModule
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
+import org.koin.android.ext.koin.androidContext
+import org.koin.android.ext.koin.androidLogger
+import org.koin.core.context.startKoin
 
 class SqueezeClientApplication :
     Application(),
@@ -64,6 +68,12 @@ class SqueezeClientApplication :
         DynamicColors.applyToActivitiesIfAvailable(this)
         super.onCreate()
         PermissionRequester.initialize(this)
+
+        startKoin {
+            androidLogger()
+            androidContext(this@SqueezeClientApplication)
+            modules(viewModelModule)
+        }
 
         // Don't use a lambda here, it might be garbage collected
         // (internally, listeners are stored in a WeakHashMap)

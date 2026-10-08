@@ -17,9 +17,6 @@
 
 package de.maniac103.squeezeclient.ui.contextmenu
 
-import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.ViewGroup
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,80 +35,13 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import de.maniac103.squeezeclient.ui.composables.ArtworkImage
-import de.maniac103.squeezeclient.extfuncs.getParcelable
-import de.maniac103.squeezeclient.extfuncs.prefs
-import de.maniac103.squeezeclient.extfuncs.requireParentAs
-import de.maniac103.squeezeclient.extfuncs.serverConfig
-import de.maniac103.squeezeclient.extfuncs.viewModelWithParams
-import de.maniac103.squeezeclient.model.DownloadRequestData
-import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.ServerConfiguration
-import de.maniac103.squeezeclient.model.SlimBrowseItemList
-import kotlin.getValue
-import kotlinx.coroutines.Job
-
-class ItemActionsMenuSheet : BottomSheetDialogFragment() {
-    interface Listener {
-        fun onActionSelected(action: JiveAction, item: SlimBrowseItemList.SlimBrowseItem): Job?
-        fun onDownloadSelected(data: DownloadRequestData): Job?
-    }
-
-    private val viewModel by viewModelWithParams {
-        val item = requireArguments().getParcelable(
-            "item",
-            SlimBrowseItemList.SlimBrowseItem::class
-        )
-        ItemActionsViewModel(requireActivity().application, item)
-    }
-    private val listener get() = requireParentAs<Listener>()
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ) = ComposeView(requireContext()).apply {
-        setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
-        setContent {
-            MaterialTheme {
-                ItemActionsSheet(
-                    viewModel,
-                    context.prefs.serverConfig
-                ) { action ->
-                    val job = if (action.download != null) {
-                        listener.onDownloadSelected(action.download)
-                    } else {
-                        listener.onActionSelected(requireNotNull(action.action), viewModel.item)
-                    }
-                    if (job != null) {
-                        viewModel.setActionBusy(action, job)
-                        job.invokeOnCompletion {
-                           if (isAdded) {
-                               dismissAllowingStateLoss()
-                           }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    companion object {
-        fun create(item: SlimBrowseItemList.SlimBrowseItem) = ItemActionsMenuSheet().apply {
-            arguments = Bundle().apply {
-                putParcelable("item", item)
-            }
-        }
-    }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

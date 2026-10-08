@@ -19,18 +19,12 @@ package de.maniac103.squeezeclient.extfuncs
 
 import android.content.Context
 import android.content.SharedPreferences
-import android.graphics.drawable.Drawable
 import android.view.View
 import android.view.animation.Interpolator
 import androidx.core.text.layoutDirection
 import androidx.preference.PreferenceManager
 import androidx.work.WorkManager
-import coil3.asDrawable
-import coil3.imageLoader
-import coil3.memory.MemoryCache
-import coil3.request.ImageRequest
 import de.maniac103.squeezeclient.SqueezeClientApplication
-import de.maniac103.squeezeclient.model.ArtworkItem
 
 val Context.connectionHelper get() =
     (applicationContext as SqueezeClientApplication).connectionHelper
@@ -45,18 +39,3 @@ val Context.backProgressInterpolator: Interpolator get() =
     (applicationContext as SqueezeClientApplication).backProgressInterpolator
 val Context.isRtl get() =
     resources.configuration.locales[0].layoutDirection == View.LAYOUT_DIRECTION_RTL
-
-fun Context.imageCacheContains(item: ArtworkItem?) = item?.extractIconUrl()
-    ?.let { prefs.serverConfig?.url?.resolve(it)?.toString() ?: it }
-    ?.let { MemoryCache.Key(it) }
-    ?.let { imageLoader.memoryCache?.keys?.contains(it) == true }
-
-suspend fun Context.loadArtwork(item: ArtworkItem?, size: Int): Drawable? {
-    val request = ImageRequest.Builder(this)
-        .loadMaybeRelativeUrl(item?.extractIconUrl(), prefs.serverConfig)
-        .size(size)
-        .build()
-    return imageLoader.execute(request)
-        .image
-        ?.asDrawable(resources)
-}

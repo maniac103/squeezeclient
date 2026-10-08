@@ -45,6 +45,7 @@ import androidx.navigation3.scene.rememberNavigationEventState
 import androidx.navigation3.scene.rememberSceneState
 import androidx.navigation3.ui.NavDisplay
 import androidx.navigationevent.NavigationEventTransitionState
+import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.model.DownloadRequestData
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlideshowImage
@@ -161,7 +162,7 @@ fun MainContent(
             infoNavEntry()
 
             contextMenuNavEntry(
-                application,
+                application.connectionHelper,
                 serverConfig,
                 onItemSelected = { item, parentItem ->
                     val downloadData = viewModel.extractDownloadDataForContextMenuItem(item)

@@ -27,6 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
+import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.extfuncs.serverConfig
@@ -40,7 +41,7 @@ import kotlin.getValue
 class PlaylistFragment : ComposeFragment() {
     private val viewModel by viewModelWithParams {
         val playerId = requireArguments().getParcelable("playerId", PlayerId::class)
-        PlaylistViewModel(requireActivity().application, playerId)
+        PlaylistViewModel(requireActivity().application.connectionHelper, playerId)
     }
 
     @Composable

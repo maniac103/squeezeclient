@@ -17,14 +17,13 @@
 
 package de.maniac103.squeezeclient.ui.nowplaying
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.InvalidatingPagingSourceFactory
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
-import de.maniac103.squeezeclient.extfuncs.connectionHelper
+import de.maniac103.squeezeclient.cometd.ConnectionHelper
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.ui.itemlist.ItemPagingSource
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -39,16 +38,16 @@ import kotlinx.coroutines.flow.update
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class PlaylistViewModel(
-    private val application: Application,
+    private val connectionHelper: ConnectionHelper,
     private val playerId: PlayerId
-) : AndroidViewModel(application) {
+) : ViewModel() {
     private var lastKnownPlaylistTimestamp: Instant? = null
     private val uiStateFlowInternal = MutableStateFlow(UiState(0, null))
     private val scrollRequestFlowInternal = MutableSharedFlow<Int>()
 
     private val pagingSourceFactory = InvalidatingPagingSourceFactory {
         ItemPagingSource { page ->
-            application.connectionHelper.fetchPlaylist(playerId, page)
+            connectionHelper.fetchPlaylist(playerId, page)
         }
     }
 
@@ -67,7 +66,7 @@ class PlaylistViewModel(
 
     init {
         viewModelScope.launch {
-            application.connectionHelper.playerState(playerId)
+            connectionHelper.playerState(playerId)
                 .flatMapLatest { it.playStatus }
                 .collect { status ->
                     val lastPlaylistTimestamp = lastKnownPlaylistTimestamp
@@ -80,7 +79,10 @@ class PlaylistViewModel(
                     }
 
                     lastKnownPlaylistTimestamp = newPlaylistTimestamp
-                    uiStateFlowInternal.value = UiState(status.playlist.currentPosition - 1, null)
+                    uiStateFlowInternal.value = UiState(
+                        status.playlist.currentPosition - 1,
+                        null
+                    )
                 }
         }
     }
@@ -91,15 +93,15 @@ class PlaylistViewModel(
 
     fun movePlaylistItem(from: Int, to: Int) = viewModelScope.launch {
         uiStateFlowInternal.update { it.copy(pendingMove = PendingMove(from, to)) }
-        application.connectionHelper.movePlaylistItem(playerId, from, to)
+        connectionHelper.movePlaylistItem(playerId, from, to)
     }
 
     fun setPlaylistPosition(position: Int) = viewModelScope.launch {
-        application.connectionHelper.advanceToPlaylistPosition(playerId, position)
+        connectionHelper.advanceToPlaylistPosition(playerId, position)
     }
 
     fun removePlaylistItem(position: Int) = viewModelScope.launch {
-        application.connectionHelper.removePlaylistItem(playerId, position)
+        connectionHelper.removePlaylistItem(playerId, position)
     }
 
     data class UiState(val currentPosition: Int, val pendingMove: PendingMove?)

@@ -48,25 +48,56 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
 import de.maniac103.squeezeclient.R
+import de.maniac103.squeezeclient.model.JiveActions
 import de.maniac103.squeezeclient.model.Playlist
 import de.maniac103.squeezeclient.model.ServerConfiguration
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flow
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
 @Composable
 fun PlaylistItemColumn(
-    viewModel: PlaylistViewModel = viewModel(),
+    viewModel: PlaylistViewModel,
     surfaceColor: Color,
     serverConfig: ServerConfiguration?,
     modifier: Modifier = Modifier
 ) {
+    PlaylistItemColumn(
+        itemsFlow = viewModel.itemsFlow,
+        uiStateFlow = viewModel.uiStateFlow,
+        scrollRequestFlow = viewModel.scrollRequestFlow,
+        surfaceColor = surfaceColor,
+        serverConfig = serverConfig,
+        onPlaylistItemSelected = viewModel::setPlaylistPosition,
+        onMovePlaylistItem = viewModel::movePlaylistItem,
+        onRemovePlaylistItem = viewModel::removePlaylistItem,
+        modifier = modifier
+    )
+}
+
+@Composable
+fun PlaylistItemColumn(
+    itemsFlow: Flow<PagingData<Playlist.PlaylistItem>>,
+    uiStateFlow: StateFlow<PlaylistViewModel.UiState>,
+    scrollRequestFlow: Flow<Int>,
+    surfaceColor: Color,
+    serverConfig: ServerConfiguration?,
+    modifier: Modifier = Modifier,
+    onPlaylistItemSelected: (position: Int) -> Unit = {},
+    onMovePlaylistItem: (from: Int, to: Int) -> Unit = { _, _ -> },
+    onRemovePlaylistItem: (position: Int) -> Unit = {}
+) {
     val lazyListState = rememberLazyListState()
-    val pagingItems = viewModel.itemsFlow.collectAsLazyPagingItems()
-    val uiState by viewModel.uiStateFlow.collectAsState()
+    val pagingItems = itemsFlow.collectAsLazyPagingItems()
+    val uiState by uiStateFlow.collectAsState()
 
     var dragStartIndex by remember {
         mutableIntStateOf(-1)
@@ -78,7 +109,7 @@ fun PlaylistItemColumn(
         mutableIntStateOf(uiState.currentPosition)
     }
 
-    LaunchedEffect(pagingItems.itemSnapshotList) {
+    LaunchedEffect(pagingItems.itemSnapshotList, uiState) {
         if (uiState.pendingMove == null) {
             items.clear()
             items.addAll(
@@ -91,7 +122,7 @@ fun PlaylistItemColumn(
     }
 
     LaunchedEffect(Unit) {
-        viewModel.scrollRequestFlow.collect { position ->
+        scrollRequestFlow.collect { position ->
             lazyListState.animateScrollToItem(position)
         }
     }
@@ -130,9 +161,7 @@ fun PlaylistItemColumn(
                         state = dismissState,
                         enableDismissFromStartToEnd = true,
                         enableDismissFromEndToStart = true,
-                        onDismiss = {
-                            viewModel.removePlaylistItem(itemPosition)
-                        },
+                        onDismiss = { onRemovePlaylistItem(itemPosition) },
                         backgroundContent = { DeleteBackground(dismissState) },
                         content = {
                             PlaylistRow(
@@ -141,7 +170,7 @@ fun PlaylistItemColumn(
                                 isSelected = itemPosition == selectedItemPosition,
                                 modifier = Modifier
                                     .clickable(
-                                        onClick = { viewModel.setPlaylistPosition(itemPosition) }
+                                        onClick = { onPlaylistItemSelected(itemPosition) }
                                     )
                                     .background(surfaceColor),
                                 dragHandleModifier = Modifier.draggableHandle(
@@ -158,9 +187,7 @@ fun PlaylistItemColumn(
 
                                         dragStartIndex
                                             .takeIf { it >= 0 }
-                                            ?.let {
-                                                viewModel.movePlaylistItem(it, items.indexOf(item))
-                                            }
+                                            ?.let { onMovePlaylistItem(it, items.indexOf(item)) }
                                         dragStartIndex = -1
                                     }
                                 )
@@ -196,4 +223,45 @@ fun DeleteBackground(
             tint = MaterialTheme.colorScheme.onErrorContainer,
         )
     }
+}
+
+@Preview(widthDp = 360, heightDp = 800)
+@Composable
+fun PlaylistItemColumnPreview() {
+    val itemsFlow = (0..4)
+        .map { index ->
+            Playlist.PlaylistItem(
+                title = "Song title $index",
+                artist = "Artist $index",
+                album = "Album $index",
+                actions = JiveActions(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                )
+            )
+        }
+        .let { PagingData.from(it) }
+        .let { MutableStateFlow(it) }
+
+    val uiStateFlow = MutableStateFlow(PlaylistViewModel.UiState(3, null))
+    val scrollRequestFlow: Flow<Int> = flow {}
+
+    PlaylistItemColumn(
+        itemsFlow = itemsFlow,
+        uiStateFlow = uiStateFlow,
+        scrollRequestFlow = scrollRequestFlow,
+        surfaceColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+        serverConfig = null
+    )
 }

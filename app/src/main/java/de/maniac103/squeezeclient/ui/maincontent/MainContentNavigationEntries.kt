@@ -17,26 +17,20 @@
 
 package de.maniac103.squeezeclient.ui.maincontent
 
-import android.app.Application
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.unit.Dp
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavEntryDecorator
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.scene.DialogSceneStrategy
-import de.maniac103.squeezeclient.cometd.ConnectionHelper
 import de.maniac103.squeezeclient.model.DownloadRequestData
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.JiveHomeMenuItem
@@ -60,6 +54,7 @@ import de.maniac103.squeezeclient.ui.itemlist.BasePagedSlimBrowseItemListViewMod
 import de.maniac103.squeezeclient.ui.itemlist.JiveHomeItemList
 import de.maniac103.squeezeclient.ui.itemlist.JiveHomeItemListViewModel
 import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseItemList
+import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseItemListMode
 import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseItemListViewModel
 import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseSubItemList
 import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseSubItemListViewModel
@@ -70,22 +65,8 @@ import de.maniac103.squeezeclient.ui.search.RadioSearchResultsItemList
 import de.maniac103.squeezeclient.ui.slideshow.GalleryGrid
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
-
-// FIXME: refactor to use Koin (navigation<>, koinEntryProvider<>)
-@Composable
-inline fun <reified VM : ViewModel, K : NavKey> navEntryViewModel(
-    key: K,
-    crossinline creator: (K) -> VM
-): VM {
-    return viewModel(
-        factory = object : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(
-                modelClass: Class<T>
-            ): T = creator(key) as T
-        }
-    )
-}
+import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 @Composable
 fun rememberAppBarScrollNavEntryDecorator(onScrollStateChanged: (Boolean) -> Unit) =
@@ -125,16 +106,14 @@ fun RefreshNavigationObserver(
 
 @Composable
 internal fun EntryProviderScope<NavKey>.jiveHomeMenuNavEntry(
-    application: Application,
     bottomPagePadding: Dp,
     onItemSelected: (JiveHomeMenuItem) -> Unit
 ) = entry<MainContentNavigation.JiveHomeMenuPage> { route ->
-    val jiveListViewModel = navEntryViewModel(route) {
-        JiveHomeItemListViewModel(application, route.playerId, route.nodeId)
+    val viewModel = koinViewModel<JiveHomeItemListViewModel> {
+        parametersOf(route.playerId, route.nodeId)
     }
-
     MainContentPage(bottomPagePadding) {
-        JiveHomeItemList(jiveListViewModel) { selectedItem ->
+        JiveHomeItemList(viewModel) { selectedItem ->
             onItemSelected(selectedItem)
         }
     }
@@ -142,25 +121,25 @@ internal fun EntryProviderScope<NavKey>.jiveHomeMenuNavEntry(
 
 @Composable
 internal fun EntryProviderScope<NavKey>.slimBrowseNavEntry(
-    application: Application,
-    serverConfig: ServerConfiguration?,
+    serverConfig: State<ServerConfiguration?>,
     backStack: List<NavKey>,
     refreshFlow: Flow<MainContentNavigation.RefreshContent>,
+    useGridIfPossible: State<Boolean>,
     bottomPagePadding: Dp,
     onItemSelected: (SlimBrowseItemList.SlimBrowseItem, JiveAction) -> Job?,
     onContextMenuItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job?
 ) = entry<MainContentNavigation.SlimBrowseItemPage> { route ->
-    val viewModel = navEntryViewModel(route) {
-        val showIcons = route.windowStyle != null && route.windowStyle != WindowStyle.TextOnlyList
-        val canUseGrid =
-            route.windowStyle == WindowStyle.IconList || route.windowStyle == WindowStyle.HomeMenu
-        SlimBrowseItemListViewModel(
-            application,
-            route.playerId,
-            route.fetchAction,
-            showIcons,
-            canUseGrid
-        )
+    val viewModel = koinViewModel<SlimBrowseItemListViewModel> {
+        parametersOf(route.playerId, route.fetchAction)
+    }
+
+    val canUseGrid = route.windowStyle == WindowStyle.IconList ||
+            route.windowStyle == WindowStyle.HomeMenu
+    val showIcons = route.windowStyle != null && route.windowStyle != WindowStyle.TextOnlyList
+    val mode = when {
+        useGridIfPossible.value && canUseGrid -> SlimBrowseItemListMode.Grid
+        showIcons -> SlimBrowseItemListMode.ListWithIcons
+        else -> SlimBrowseItemListMode.ListWithoutIcons
     }
 
     RefreshNavigationObserver(
@@ -173,7 +152,8 @@ internal fun EntryProviderScope<NavKey>.slimBrowseNavEntry(
     MainContentPage(bottomPagePadding) {
         SlimBrowseItemList(
             viewModel,
-            serverConfig,
+            serverConfig.value,
+            mode,
             itemSelectionListener = { selectedItem ->
                 onItemSelected(selectedItem, route.fetchAction)?.let { job ->
                     viewModel.setItemBusy(selectedItem, job)
@@ -190,25 +170,19 @@ internal fun EntryProviderScope<NavKey>.slimBrowseNavEntry(
 
 @Composable
 internal fun EntryProviderScope<NavKey>.slimBrowseSubItemsNavEntry(
-    application: Application,
-    serverConfig: ServerConfiguration?,
+    serverConfig: State<ServerConfiguration?>,
     bottomPagePadding: Dp,
     onItemSelected: (SlimBrowseItemList.SlimBrowseItem, JiveAction) -> Job?,
     onContextMenuItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job?
 ) = entry<MainContentNavigation.SlimBrowseSubItemPage> { route ->
-    val viewModel = navEntryViewModel(route) {
-        SlimBrowseSubItemListViewModel(
-            application,
-            route.playerId,
-            route.fetchAction,
-            route.position
-        )
+    val viewModel = koinViewModel<SlimBrowseSubItemListViewModel> {
+        parametersOf(route.playerId, route.fetchAction, route.position)
     }
 
     MainContentPage(bottomPagePadding) {
         SlimBrowseSubItemList(
             viewModel,
-            serverConfig,
+            serverConfig.value,
             itemSelectionListener = { selectedItem ->
                 onItemSelected(selectedItem, route.fetchAction)
                     ?.let { job -> viewModel.setItemBusy(selectedItem, job) }
@@ -223,12 +197,12 @@ internal fun EntryProviderScope<NavKey>.slimBrowseSubItemsNavEntry(
 
 @Composable
 internal fun EntryProviderScope<NavKey>.galleryNavEntry(
-    serverConfig: ServerConfiguration?,
+    serverConfig: State<ServerConfiguration?>,
     bottomPagePadding: Dp,
     onItemSelected: (SlideshowImage) -> Unit
 ) = entry<MainContentNavigation.GalleryPage> { route ->
     MainContentPage(bottomPagePadding) {
-        GalleryGrid(route.items, serverConfig) { item ->
+        GalleryGrid(route.items, serverConfig.value) { item ->
             onItemSelected(item)
         }
     }
@@ -236,20 +210,21 @@ internal fun EntryProviderScope<NavKey>.galleryNavEntry(
 
 @Composable
 internal fun EntryProviderScope<NavKey>.localSearchResultsNavKey(
-    application: Application,
-    serverConfig: ServerConfiguration?,
+    serverConfig: State<ServerConfiguration?>,
+    useGrid: State<Boolean>,
     bottomPagePadding: Dp,
     onItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job?,
     onContextMenuItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job?
 ) = entry<MainContentNavigation.LocalSearchResults> { route ->
-    MainContentPage(bottomPagePadding) {
-        val viewModel = navEntryViewModel(route) {
-            LibrarySearchResultsViewModel(application, route.playerId, route.searchTerm, route.mode)
-        }
+    val viewModel = koinViewModel<LibrarySearchResultsViewModel> {
+        parametersOf(route.playerId, route.searchTerm, route.mode)
+    }
 
+    MainContentPage(bottomPagePadding) {
         LibrarySearchResultsItemList(
             viewModel,
-            serverConfig,
+            serverConfig.value,
+            useGrid.value,
             itemSelectionListener = { item ->
                 onItemSelected(item)
                     ?.let { job -> viewModel.setItemBusy(item, job) }
@@ -264,20 +239,21 @@ internal fun EntryProviderScope<NavKey>.localSearchResultsNavKey(
 
 @Composable
 internal fun EntryProviderScope<NavKey>.radioSearchResultsNavKey(
-    application: Application,
-    serverConfig: ServerConfiguration?,
+    serverConfig: State<ServerConfiguration?>,
+    useGrid: State<Boolean>,
     bottomPagePadding: Dp,
     onItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job?,
     onContextMenuItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job?
 ) = entry<MainContentNavigation.RadioSearchResults> { route ->
-    MainContentPage(bottomPagePadding) {
-        val viewModel = navEntryViewModel(route) {
-            RadioSearchResultViewModel(application, route.playerId, route.searchTerm)
-        }
+    val viewModel = koinViewModel<RadioSearchResultViewModel> {
+        parametersOf(route.playerId, route.searchTerm)
+    }
 
+    MainContentPage(bottomPagePadding) {
         RadioSearchResultsItemList(
             viewModel,
-            serverConfig,
+            serverConfig.value,
+            useGrid.value,
             itemSelectionListener = { item ->
                 onItemSelected(item)
                     ?.let { job -> viewModel.setItemBusy(item, job) }
@@ -401,23 +377,17 @@ internal fun EntryProviderScope<NavKey>.infoNavEntry() = entry<MainContentNaviga
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun EntryProviderScope<NavKey>.contextMenuNavEntry(
-    connectionHelper: ConnectionHelper,
-    serverConfig: ServerConfiguration?,
+    serverConfig: State<ServerConfiguration?>,
     onItemSelected: (item: SlimBrowseItemList.SlimBrowseItem, parentItem: SlimBrowseItemList.SlimBrowseItem?) -> Job?,
     onDone: (NavKey) -> Unit
 ) = entry<MainContentNavigation.ContextMenu>(
     metadata = BottomSheetSceneStrategy.bottomSheet()
 ) { route ->
-    val viewModel = navEntryViewModel(route) {
-        ContextMenuBottomSheetViewModel(
-            connectionHelper,
-            route.playerId,
-            route.menuItems,
-            route.item
-        )
+    val viewModel = koinViewModel<ContextMenuBottomSheetViewModel> {
+        parametersOf(route.playerId, route.menuItems, route.item)
     }
 
-    ContextMenuBottomSheetContent(viewModel, serverConfig) { item ->
+    ContextMenuBottomSheetContent(viewModel, serverConfig.value) { item ->
         onItemSelected(item, route.item)
             ?.also { viewModel.setItemBusy(item, it) }
             .invokeOnDoneOrNull { onDone(route) }
@@ -426,16 +396,14 @@ internal fun EntryProviderScope<NavKey>.contextMenuNavEntry(
 
 @Composable
 internal fun EntryProviderScope<NavKey>.itemActionsNavEntry(
-    application: Application,
-    serverConfig: ServerConfiguration?,
+    serverConfig: State<ServerConfiguration?>,
     onDownloadSelected: (DownloadRequestData) -> Unit,
     onActionSelected: (JiveAction, SlimBrowseItemList.SlimBrowseItem) -> Job?,
     onDone: (NavKey) -> Unit
 ) = entry<MainContentNavigation.ItemActions> { route ->
-    val viewModel = navEntryViewModel(route) {
-        ItemActionsViewModel(application, route.item)
-    }
-    ItemActionsSheet(viewModel, serverConfig) { action ->
+    val viewModel = koinViewModel<ItemActionsViewModel> { parametersOf(route.item) }
+
+    ItemActionsSheet(viewModel, serverConfig.value) { action ->
         if (action.download != null) {
             onDownloadSelected(action.download)
         } else {

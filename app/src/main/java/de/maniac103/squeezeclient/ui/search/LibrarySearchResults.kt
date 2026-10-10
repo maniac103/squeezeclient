@@ -24,12 +24,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.collectAsLazyPagingItems
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
+import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseItemListMode
 import de.maniac103.squeezeclient.ui.itemlist.SlimBrowsePagedItemListOrGrid
 
 @Composable
 fun LibrarySearchResultsItemList(
     viewModel: LibrarySearchResultsViewModel = viewModel(),
     serverConfig: ServerConfiguration?,
+    useGrid: Boolean,
     itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {},
     contextMenuClickListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {}
 ) {
@@ -40,8 +42,7 @@ fun LibrarySearchResultsItemList(
         entries,
         busyItem,
         serverConfig,
-        viewModel.useGrid,
-        true,
+        if (useGrid) SlimBrowseItemListMode.Grid else SlimBrowseItemListMode.ListWithIcons,
         itemSelectionListener,
         contextMenuClickListener
     )

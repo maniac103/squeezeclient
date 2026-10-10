@@ -17,19 +17,16 @@
 
 package de.maniac103.squeezeclient.ui.search
 
-import android.app.Application
-import de.maniac103.squeezeclient.R
-import de.maniac103.squeezeclient.extfuncs.connectionHelper
+import de.maniac103.squeezeclient.cometd.ConnectionHelper
 import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.ui.itemlist.BasePagedSlimBrowseItemListViewModel
-import kotlinx.coroutines.flow.flowOf
 
 class RadioSearchResultViewModel(
-    private val application: Application,
+    private val connectionHelper: ConnectionHelper,
     val playerId: PlayerId,
     private val searchTerm: String
-) : BasePagedSlimBrowseItemListViewModel(application) {
+) : BasePagedSlimBrowseItemListViewModel() {
     override suspend fun fetchPage(page: PagingParams) =
-        application.connectionHelper.getRadioSearchResults(playerId, searchTerm, page)
+        connectionHelper.getRadioSearchResults(playerId, searchTerm, page)
 }

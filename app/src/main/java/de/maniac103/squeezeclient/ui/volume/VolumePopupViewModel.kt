@@ -17,10 +17,9 @@
 
 package de.maniac103.squeezeclient.ui.volume
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import de.maniac103.squeezeclient.extfuncs.connectionHelper
+import de.maniac103.squeezeclient.cometd.ConnectionHelper
 import de.maniac103.squeezeclient.model.PlayerId
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -32,9 +31,9 @@ import kotlin.math.roundToInt
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class VolumePopupViewModel(
-    private val application: Application,
+    private val connectionHelper: ConnectionHelper,
     private val playerId: PlayerId
-) : AndroidViewModel(application) {
+) : ViewModel() {
     var volumeControlSupported = false
         private set
     private val currentPlayerVolumeFlowInternal = MutableStateFlow(0F)
@@ -46,7 +45,7 @@ class VolumePopupViewModel(
 
     init {
         viewModelScope.launch {
-            application.connectionHelper.playerState(playerId)
+            connectionHelper.playerState(playerId)
                 .flatMapLatest { it.playStatus }
                 .collect { status ->
                     volumeControlSupported = status.currentVolume != null
@@ -63,7 +62,7 @@ class VolumePopupViewModel(
     fun setVolume(volume: Float) {
         currentPlayerVolumeFlowInternal.value = volume
         updateJob = viewModelScope.launch {
-            application.connectionHelper.setVolume(playerId, (volume * 100F).roundToInt())
+            connectionHelper.setVolume(playerId, (volume * 100F).roundToInt())
         }
     }
 
@@ -75,7 +74,7 @@ class VolumePopupViewModel(
     fun setMuted(muted: Boolean) {
         currentMutedFlowInternal.value = muted
         viewModelScope.launch {
-            application.connectionHelper.setMuteState(playerId, muted)
+            connectionHelper.setMuteState(playerId, muted)
         }
     }
 }

@@ -17,21 +17,16 @@
 
 package de.maniac103.squeezeclient.ui.itemlist
 
-import android.app.Application
-import de.maniac103.squeezeclient.extfuncs.connectionHelper
+import de.maniac103.squeezeclient.cometd.ConnectionHelper
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
 
 class SlimBrowseItemListViewModel(
-    private val application: Application,
+    private val connectionHelper: ConnectionHelper,
     val playerId: PlayerId,
-    val fetchAction: JiveAction,
-    val showIcons: Boolean,
-    canUseGrid: Boolean
-) : BasePagedSlimBrowseItemListViewModel(application) {
-    override val useGrid = canUseGrid && super.useGrid
-
+    val fetchAction: JiveAction
+) : BasePagedSlimBrowseItemListViewModel() {
     override suspend fun fetchPage(page: PagingParams) =
-        application.connectionHelper.fetchItemsForAction(playerId, fetchAction, page, true)
+        connectionHelper.fetchItemsForAction(playerId, fetchAction, page, true)
 }

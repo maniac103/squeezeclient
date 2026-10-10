@@ -72,9 +72,10 @@ import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.cometd.request.LibrarySearchRequest
 import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.extfuncs.requireParentAs
-import de.maniac103.squeezeclient.extfuncs.viewModelWithParams
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.ui.common.ComposeFragment
+import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.core.parameter.parametersOf
 
 class SearchFragment : ComposeFragment() {
     interface Listener {
@@ -83,9 +84,9 @@ class SearchFragment : ComposeFragment() {
         fun onOpenRadioSearchPage(searchTerm: String)
     }
 
-    private val viewModel by viewModelWithParams {
+    private val viewModel by viewModel<SearchViewModel> {
         val playerId = requireArguments().getParcelable("playerId", PlayerId::class)
-        SearchViewModel(requireActivity().application, playerId)
+        parametersOf(playerId)
     }
     private val listener get() = requireParentAs<Listener>()
 

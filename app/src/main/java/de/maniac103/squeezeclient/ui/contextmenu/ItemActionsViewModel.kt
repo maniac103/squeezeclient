@@ -1,25 +1,18 @@
 package de.maniac103.squeezeclient.ui.contextmenu
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
-import coil3.request.ImageRequest
+import androidx.lifecycle.ViewModel
 import de.maniac103.squeezeclient.R
-import de.maniac103.squeezeclient.extfuncs.loadMaybeRelativeUrl
-import de.maniac103.squeezeclient.extfuncs.prefs
-import de.maniac103.squeezeclient.extfuncs.serverConfig
 import de.maniac103.squeezeclient.model.DownloadRequestData
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 
 class ItemActionsViewModel(
-    application: Application,
     val item: SlimBrowseItemList.SlimBrowseItem
-) : AndroidViewModel(application) {
+) : ViewModel() {
     private val busyActionFlowInternal = MutableStateFlow<ActionItem?>(null)
 
     val actionsFlow = flowOf(

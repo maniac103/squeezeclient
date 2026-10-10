@@ -1,23 +1,21 @@
 package de.maniac103.squeezeclient.ui.itemlist
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import de.maniac103.squeezeclient.R
-import de.maniac103.squeezeclient.extfuncs.connectionHelper
+import de.maniac103.squeezeclient.cometd.ConnectionHelper
 import de.maniac103.squeezeclient.model.JiveHomeMenuItem
 import de.maniac103.squeezeclient.model.PlayerId
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapNotNull
 
 class JiveHomeItemListViewModel(
-    application: Application,
+    connectionHelper: ConnectionHelper,
     playerId: PlayerId,
     val nodeId: String
-) : AndroidViewModel(application) {
+) : ViewModel() {
     @OptIn(ExperimentalCoroutinesApi::class)
-    private val homeMenuFlow = application.connectionHelper
+    private val homeMenuFlow = connectionHelper
         .playerState(playerId)
         .flatMapLatest { it.homeMenu }
 

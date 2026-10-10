@@ -18,23 +18,13 @@
 package de.maniac103.squeezeclient.extfuncs
 
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
+import de.maniac103.squeezeclient.Preferences
 
 val Fragment.connectionHelper get() = requireContext().connectionHelper
 val Fragment.prefs get() = requireContext().prefs
+val Fragment.preferences get() = Preferences(prefs)
+
 inline fun <reified T> Fragment.parentAs() = parentFragment as? T ?: activity as? T
 inline fun <reified T> Fragment.requireParentAs() = parentAs<T>() ?: throw IllegalStateException(
     "Parent of fragment $this doesn't implement required interface ${T::class.java.simpleName}"
 )
-
-inline fun <reified T : ViewModel> Fragment.viewModelWithParams(
-    crossinline constructor: () -> T
-): Lazy<T> = viewModels {
-    object : ViewModelProvider.Factory {
-        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return constructor() as T
-        }
-    }
-}

@@ -17,28 +17,19 @@
 
 package de.maniac103.squeezeclient.ui.itemlist
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.InvalidatingPagingSourceFactory
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
-import de.maniac103.squeezeclient.R
-import de.maniac103.squeezeclient.extfuncs.forceGridLayout
-import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-abstract class BasePagedSlimBrowseItemListViewModel(
-    application: Application,
-) : AndroidViewModel(application) {
-    open val useGrid = application.prefs.forceGridLayout ||
-        application.resources.getBoolean(R.bool.force_grid_items_for_lists)
-
+abstract class BasePagedSlimBrowseItemListViewModel : ViewModel() {
     private val busyItemInternal = MutableStateFlow<SlimBrowseItemList.SlimBrowseItem?>(null)
     val busyItemFlow = busyItemInternal.asStateFlow()
 

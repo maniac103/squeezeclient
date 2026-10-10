@@ -17,21 +17,18 @@
 
 package de.maniac103.squeezeclient.ui.search
 
-import android.app.Application
-import de.maniac103.squeezeclient.R
+import de.maniac103.squeezeclient.cometd.ConnectionHelper
 import de.maniac103.squeezeclient.cometd.request.LibrarySearchRequest
-import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.ui.itemlist.BasePagedSlimBrowseItemListViewModel
-import kotlinx.coroutines.flow.flowOf
 
 class LibrarySearchResultsViewModel(
-    private val application: Application,
+    private val connectionHelper: ConnectionHelper,
     val playerId: PlayerId,
     private val searchTerm: String,
     private val searchType: LibrarySearchRequest.Mode
-) : BasePagedSlimBrowseItemListViewModel(application) {
+) : BasePagedSlimBrowseItemListViewModel() {
     override suspend fun fetchPage(page: PagingParams) =
-        application.connectionHelper.getLocalLibrarySearchResults(playerId, searchTerm, searchType, page)
+        connectionHelper.getLocalLibrarySearchResults(playerId, searchTerm, searchType, page)
 }

@@ -17,10 +17,9 @@
 
 package de.maniac103.squeezeclient.ui.itemlist
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import de.maniac103.squeezeclient.extfuncs.connectionHelper
+import de.maniac103.squeezeclient.cometd.ConnectionHelper
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
@@ -30,15 +29,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.shareIn
 
 class SlimBrowseSubItemListViewModel(
-    private val application: Application,
+    private val connectionHelper: ConnectionHelper,
     val playerId: PlayerId,
     private val parentFetchAction: JiveAction,
     private val parentItemPosition: Int
-) : AndroidViewModel(application) {
+) : ViewModel() {
     private val busyItemInternal = MutableStateFlow<SlimBrowseItemList.SlimBrowseItem?>(null)
     val busyItemFlow = busyItemInternal.asStateFlow()
 
@@ -54,7 +52,7 @@ class SlimBrowseSubItemListViewModel(
 
     private suspend fun loadItems(): List<SlimBrowseItemList.SlimBrowseItem> {
         val page = PagingParams(parentItemPosition, 1)
-        val parentItemList = application.connectionHelper.fetchItemsForAction(
+        val parentItemList = connectionHelper.fetchItemsForAction(
             playerId,
             parentFetchAction,
             page,

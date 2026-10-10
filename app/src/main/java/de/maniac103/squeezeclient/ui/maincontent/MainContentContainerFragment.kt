@@ -24,6 +24,7 @@ import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
@@ -35,10 +36,8 @@ import de.maniac103.squeezeclient.cometd.request.LibrarySearchRequest
 import de.maniac103.squeezeclient.extfuncs.await
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.getParcelable
-import de.maniac103.squeezeclient.extfuncs.prefs
+import de.maniac103.squeezeclient.extfuncs.preferences
 import de.maniac103.squeezeclient.extfuncs.requireParentAs
-import de.maniac103.squeezeclient.extfuncs.serverConfig
-import de.maniac103.squeezeclient.extfuncs.viewModelWithParams
 import de.maniac103.squeezeclient.model.DownloadRequestData
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.PlayerId
@@ -47,7 +46,10 @@ import de.maniac103.squeezeclient.service.DownloadWorker
 import de.maniac103.squeezeclient.ui.common.ComposeFragment
 import de.maniac103.squeezeclient.ui.slideshow.ImageViewActivity
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.core.parameter.parametersOf
 
 class MainContentContainerFragment : ComposeFragment() {
     interface Listener {
@@ -57,21 +59,28 @@ class MainContentContainerFragment : ComposeFragment() {
     }
     private val listener get() = requireParentAs<Listener>()
 
-    private val viewModel by viewModelWithParams {
+    private val viewModel by viewModel<MainContentViewModel> {
         val playerId = requireArguments().getParcelable("playerId", PlayerId::class)
-        MainContentViewModel(requireActivity().application, playerId)
+        parametersOf(playerId)
     }
+
+    private val useGridFlow = preferences.forceGridLayout
+        .asFlow()
+        .map { it || resources.getBoolean(R.bool.force_grid_items_for_lists) }
 
     @Composable
     override fun createContent() {
         MaterialTheme {
             val contentBottomPadding =
                 resources.getDimension(R.dimen.main_content_list_bottom_padding).dp
+            val serverConfigState = preferences.serverConfig.asFlow().collectAsState(null)
+            val useGridState = useGridFlow.collectAsState(false)
 
             MainContent(
-                viewModel,
-                prefs.serverConfig,
-                contentBottomPadding,
+                viewModel = viewModel,
+                serverConfig = serverConfigState,
+                useGridForSlimbrowseItems = useGridState,
+                bottomPagePadding = contentBottomPadding,
                 modifier = Modifier.fillMaxSize(),
                 onScrollStateChanged = { canScrollUp ->
                     listener.onContentScrollStateChanged(canScrollUp)

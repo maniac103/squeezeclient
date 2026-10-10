@@ -17,7 +17,6 @@
 
 package de.maniac103.squeezeclient.ui.maincontent
 
-import android.app.Application
 import android.net.Uri
 import androidx.compose.animation.togetherWith
 import androidx.compose.material3.MaterialTheme
@@ -25,10 +24,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
 import androidx.compose.ui.unit.Dp
 import androidx.core.net.toUri
@@ -45,7 +44,6 @@ import androidx.navigation3.scene.rememberNavigationEventState
 import androidx.navigation3.scene.rememberSceneState
 import androidx.navigation3.ui.NavDisplay
 import androidx.navigationevent.NavigationEventTransitionState
-import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.model.DownloadRequestData
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlideshowImage
@@ -57,7 +55,8 @@ data class BreadcrumbsState(val items: List<BreadcrumbsItem>, val backProgress: 
 @Composable
 fun MainContent(
     viewModel: MainContentViewModel,
-    serverConfig: ServerConfiguration?,
+    serverConfig: State<ServerConfiguration?>,
+    useGridForSlimbrowseItems: State<Boolean>,
     bottomPagePadding: Dp,
     modifier: Modifier = Modifier,
     onScrollStateChanged: (canScrollUp: Boolean) -> Unit = {},
@@ -68,7 +67,6 @@ fun MainContent(
     onGoToNowPlaying: () -> Unit = {}
 ) {
     val backStack = rememberNavBackStack(viewModel.initialPage)
-    val application = LocalContext.current.applicationContext as Application
     val nestedScrollInterop = rememberNestedScrollInteropConnection()
 
     val removeFromBackStack = { route: NavKey ->
@@ -87,46 +85,44 @@ fun MainContent(
         ),
         entryProvider = entryProvider {
             jiveHomeMenuNavEntry(
-                application,
-                bottomPagePadding,
-                viewModel::onHomeItemSelected
+                bottomPagePadding = bottomPagePadding,
+                onItemSelected = viewModel::onHomeItemSelected
             )
 
             slimBrowseNavEntry(
-                application,
-                serverConfig,
-                backStack,
-                refreshFlow,
-                bottomPagePadding,
+                serverConfig = serverConfig,
+                backStack = backStack,
+                refreshFlow = refreshFlow,
+                useGridIfPossible = useGridForSlimbrowseItems,
+                bottomPagePadding = bottomPagePadding,
                 onItemSelected = viewModel::onSlimBrowseItemSelected,
                 onContextMenuItemSelected = viewModel::onSlimBrowseContextMenu
             )
 
             slimBrowseSubItemsNavEntry(
-                application,
-                serverConfig,
-                bottomPagePadding,
+                serverConfig = serverConfig,
+                bottomPagePadding = bottomPagePadding,
                 onItemSelected = viewModel::onSlimBrowseItemSelected,
                 onContextMenuItemSelected = viewModel::onSlimBrowseContextMenu
             )
 
             galleryNavEntry(
-                serverConfig,
-                bottomPagePadding,
-                onGalleryItemSelected
+                serverConfig = serverConfig,
+                bottomPagePadding = bottomPagePadding,
+                onItemSelected = onGalleryItemSelected
             )
 
             localSearchResultsNavKey(
-                application,
-                serverConfig,
-                bottomPagePadding,
+                serverConfig = serverConfig,
+                useGrid = useGridForSlimbrowseItems,
+                bottomPagePadding = bottomPagePadding,
                 onItemSelected = { item -> viewModel.onSlimBrowseItemSelected(item, null) },
                 onContextMenuItemSelected = viewModel::onSlimBrowseContextMenu
             )
             radioSearchResultsNavKey(
-                application,
-                serverConfig,
-                bottomPagePadding,
+                serverConfig = serverConfig,
+                useGrid = useGridForSlimbrowseItems,
+                bottomPagePadding = bottomPagePadding,
                 onItemSelected = { item -> viewModel.onSlimBrowseItemSelected(item, null) },
                 onContextMenuItemSelected = viewModel::onSlimBrowseContextMenu
             )
@@ -162,8 +158,7 @@ fun MainContent(
             infoNavEntry()
 
             contextMenuNavEntry(
-                application.connectionHelper,
-                serverConfig,
+                serverConfig = serverConfig,
                 onItemSelected = { item, parentItem ->
                     val downloadData = viewModel.extractDownloadDataForContextMenuItem(item)
                     if (downloadData != null) {
@@ -177,8 +172,7 @@ fun MainContent(
             )
 
             itemActionsNavEntry(
-                application,
-                serverConfig,
+                serverConfig = serverConfig,
                 onDownloadSelected = onDownloadSelected,
                 onActionSelected = viewModel::onItemActionSelected,
                 onDone = removeFromBackStack

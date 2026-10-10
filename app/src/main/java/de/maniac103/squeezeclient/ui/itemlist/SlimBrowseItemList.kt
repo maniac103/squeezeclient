@@ -43,18 +43,23 @@ import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.ui.composables.LazyColumnScrollStateHelper
 import de.maniac103.squeezeclient.ui.composables.LazyGridScrollStateHelper
 
+enum class SlimBrowseItemListMode {
+    ListWithoutIcons,
+    ListWithIcons,
+    Grid
+}
+
 @Composable
 fun SlimBrowsePagedItemListOrGrid(
     entries: LazyPagingItems<SlimBrowseItemList.SlimBrowseItem>,
     busyItem: SlimBrowseItemList.SlimBrowseItem?,
     serverConfig: ServerConfiguration?,
-    useGrid: Boolean,
-    showIcons: Boolean,
+    mode: SlimBrowseItemListMode,
     itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {},
     contextMenuClickListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {}
 ) {
     if (!entries.loadState.isIdle) {
-        Box() {
+        Box {
             LinearProgressIndicator(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -65,7 +70,8 @@ fun SlimBrowsePagedItemListOrGrid(
 
     // TODO: implement fast scroll
 
-    if (useGrid) {
+    if (mode == SlimBrowseItemListMode.Grid) {
+        // FIXME: better pass value in mode
         val isLandscape =
             LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
 
@@ -103,7 +109,7 @@ fun SlimBrowsePagedItemListOrGrid(
                         SlimBrowseItemListRow(
                             item = entry,
                             serverConfig = serverConfig,
-                            showIcon = showIcons,
+                            showIcon = mode == SlimBrowseItemListMode.ListWithIcons,
                             busy = entry == busyItem,
                             modifier = Modifier.clickable(
                                 onClick = { itemSelectionListener(entry) }
@@ -117,11 +123,11 @@ fun SlimBrowsePagedItemListOrGrid(
     }
 }
 
-
 @Composable
 fun SlimBrowseItemList(
     viewModel: SlimBrowseItemListViewModel = viewModel(),
     serverConfig: ServerConfiguration?,
+    mode: SlimBrowseItemListMode,
     itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {},
     contextMenuClickListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {}
 ) {
@@ -132,8 +138,7 @@ fun SlimBrowseItemList(
         entries,
         busyItem,
         serverConfig,
-        viewModel.useGrid,
-        viewModel.showIcons,
+        mode,
         itemSelectionListener,
         contextMenuClickListener
     )

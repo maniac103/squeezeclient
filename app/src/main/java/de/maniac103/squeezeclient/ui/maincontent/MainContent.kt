@@ -19,6 +19,7 @@ package de.maniac103.squeezeclient.ui.maincontent
 
 import android.net.Uri
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -29,7 +30,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
-import androidx.compose.ui.unit.Dp
 import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavKey
@@ -47,20 +47,15 @@ import androidx.navigationevent.NavigationEventTransitionState
 import de.maniac103.squeezeclient.model.DownloadRequestData
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlideshowImage
-import de.maniac103.squeezeclient.ui.common.BottomSheetSceneStrategy
 import kotlinx.coroutines.flow.filterIsInstance
-
-data class BreadcrumbsState(val items: List<BreadcrumbsItem>, val backProgress: Float?)
 
 @Composable
 fun MainContent(
     viewModel: MainContentViewModel,
     serverConfig: State<ServerConfiguration?>,
     useGridForSlimbrowseItems: State<Boolean>,
-    bottomPagePadding: Dp,
+    pagePadding: PaddingValues,
     modifier: Modifier = Modifier,
-    onScrollStateChanged: (canScrollUp: Boolean) -> Unit = {},
-    onBreadcrumbsChanged: (BreadcrumbsState) -> Unit = {},
     onGalleryItemSelected: (SlideshowImage) -> Unit = {},
     onDownloadSelected: (DownloadRequestData) -> Unit = {},
     onWebLinkSelected: (title: String, link: Uri) -> Unit = { _, _ -> },
@@ -80,12 +75,11 @@ fun MainContent(
         backStack = backStack,
         entryDecorators = listOf(
             rememberSaveableStateHolderNavEntryDecorator(),
-            rememberViewModelStoreNavEntryDecorator(),
-            rememberAppBarScrollNavEntryDecorator(onScrollStateChanged)
+            rememberViewModelStoreNavEntryDecorator()
         ),
         entryProvider = entryProvider {
             jiveHomeMenuNavEntry(
-                bottomPagePadding = bottomPagePadding,
+                pagePadding = pagePadding,
                 onItemSelected = viewModel::onHomeItemSelected
             )
 
@@ -94,35 +88,35 @@ fun MainContent(
                 backStack = backStack,
                 refreshFlow = refreshFlow,
                 useGridIfPossible = useGridForSlimbrowseItems,
-                bottomPagePadding = bottomPagePadding,
+                pagePadding = pagePadding,
                 onItemSelected = viewModel::onSlimBrowseItemSelected,
                 onContextMenuItemSelected = viewModel::onSlimBrowseContextMenu
             )
 
             slimBrowseSubItemsNavEntry(
                 serverConfig = serverConfig,
-                bottomPagePadding = bottomPagePadding,
+                pagePadding = pagePadding,
                 onItemSelected = viewModel::onSlimBrowseItemSelected,
                 onContextMenuItemSelected = viewModel::onSlimBrowseContextMenu
             )
 
             galleryNavEntry(
                 serverConfig = serverConfig,
-                bottomPagePadding = bottomPagePadding,
+                pagePadding = pagePadding,
                 onItemSelected = onGalleryItemSelected
             )
 
             localSearchResultsNavKey(
                 serverConfig = serverConfig,
                 useGrid = useGridForSlimbrowseItems,
-                bottomPagePadding = bottomPagePadding,
+                pagePadding = pagePadding,
                 onItemSelected = { item -> viewModel.onSlimBrowseItemSelected(item, null) },
                 onContextMenuItemSelected = viewModel::onSlimBrowseContextMenu
             )
             radioSearchResultsNavKey(
                 serverConfig = serverConfig,
                 useGrid = useGridForSlimbrowseItems,
-                bottomPagePadding = bottomPagePadding,
+                pagePadding = pagePadding,
                 onItemSelected = { item -> viewModel.onSlimBrowseItemSelected(item, null) },
                 onContextMenuItemSelected = viewModel::onSlimBrowseContextMenu
             )
@@ -202,7 +196,7 @@ fun MainContent(
         isPredictiveBack -> MainContentAnimationType.PredictiveBack
         else -> MainContentAnimationType.Normal
     }
-    val animationState = MainContentAnimationState(animationType, bottomPagePadding)
+    val animationState = MainContentAnimationState(animationType, pagePadding)
 
     LaunchedEffect(Unit) {
         viewModel.navigationFlow.collect { destination ->
@@ -234,39 +228,11 @@ fun MainContent(
         }
     }
 
-    LaunchedEffect(backStack, navigationEventState) {
+    LaunchedEffect(backStack, navigationEventState.transitionState) {
         snapshotFlow {
-            val progress = when (val transition = navigationEventState.transitionState) {
-                is NavigationEventTransitionState.InProgress -> transition.latestEvent.progress
-                is NavigationEventTransitionState.Idle -> null
-            }
-
-            val relevantEntries = backStack.subList(1, backStack.size)
-            val breadcrumbs = relevantEntries.mapNotNull {
-                when (it) {
-                    is MainContentNavigation.JiveHomeMenuPage -> {
-                        BreadcrumbsItem(it.title, null, null)
-                    }
-
-                    is MainContentNavigation.SlimBrowseItemPage -> {
-                        BreadcrumbsItem(it.title, it.parentTitle, it.icon)
-                    }
-
-                    is MainContentNavigation.SlimBrowseSubItemPage -> {
-                        BreadcrumbsItem(it.title, null, null)
-                    }
-
-                    is MainContentNavigation.GalleryPage -> {
-                        BreadcrumbsItem(it.title, it.parentTitle, null)
-                    }
-
-                    else -> null
-                }
-            }
-
-            BreadcrumbsState(breadcrumbs, progress)
-        }.collect { state ->
-            onBreadcrumbsChanged(state)
+            backStack.toList() to navigationEventState.transitionState
+        }.collect { (stack, transitionState) ->
+            viewModel.onBreadcrumbsChanged(stack, transitionState)
         }
     }
 

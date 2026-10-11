@@ -17,18 +17,15 @@
 
 package de.maniac103.squeezeclient.ui.maincontent
 
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.EntryProviderScope
-import androidx.navigation3.runtime.NavEntryDecorator
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.scene.DialogSceneStrategy
 import de.maniac103.squeezeclient.model.DownloadRequestData
@@ -42,10 +39,7 @@ import de.maniac103.squeezeclient.ui.bottomsheets.ChoicesBottomSheet
 import de.maniac103.squeezeclient.ui.bottomsheets.InputBottomSheet
 import de.maniac103.squeezeclient.ui.bottomsheets.InputTimePicker
 import de.maniac103.squeezeclient.ui.bottomsheets.SliderBottomSheet
-import de.maniac103.squeezeclient.ui.common.BottomSheetSceneStrategy
-import de.maniac103.squeezeclient.ui.composables.AppBarScrollReporter
 import de.maniac103.squeezeclient.ui.composables.BottomSheetContentWrapper
-import de.maniac103.squeezeclient.ui.composables.LocalAppBarScrollReporter
 import de.maniac103.squeezeclient.ui.contextmenu.ContextMenuBottomSheetContent
 import de.maniac103.squeezeclient.ui.contextmenu.ContextMenuBottomSheetViewModel
 import de.maniac103.squeezeclient.ui.contextmenu.ItemActionsSheet
@@ -69,24 +63,6 @@ import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 @Composable
-fun rememberAppBarScrollNavEntryDecorator(onScrollStateChanged: (Boolean) -> Unit) =
-    NavEntryDecorator<NavKey>(
-        decorate = {
-            val reporter = remember {
-                object : AppBarScrollReporter {
-                    override fun setCanScrollUp(canScrollUp: Boolean) {
-                        onScrollStateChanged(canScrollUp)
-                    }
-                }
-            }
-
-            CompositionLocalProvider(LocalAppBarScrollReporter provides reporter) {
-                it.Content()
-            }
-        }
-    )
-
-@Composable
 fun RefreshNavigationObserver(
     route: NavKey,
     backStack: List<NavKey>,
@@ -106,16 +82,18 @@ fun RefreshNavigationObserver(
 
 @Composable
 internal fun EntryProviderScope<NavKey>.jiveHomeMenuNavEntry(
-    bottomPagePadding: Dp,
+    pagePadding: PaddingValues,
     onItemSelected: (JiveHomeMenuItem) -> Unit
 ) = entry<MainContentNavigation.JiveHomeMenuPage> { route ->
     val viewModel = koinViewModel<JiveHomeItemListViewModel> {
         parametersOf(route.playerId, route.nodeId)
     }
-    MainContentPage(bottomPagePadding) {
-        JiveHomeItemList(viewModel) { selectedItem ->
-            onItemSelected(selectedItem)
-        }
+    MainContentPage {
+        JiveHomeItemList(
+            viewModel = viewModel,
+            modifier = Modifier.padding(pagePadding),
+            itemSelectionListener = onItemSelected
+        )
     }
 }
 
@@ -125,7 +103,7 @@ internal fun EntryProviderScope<NavKey>.slimBrowseNavEntry(
     backStack: List<NavKey>,
     refreshFlow: Flow<MainContentNavigation.RefreshContent>,
     useGridIfPossible: State<Boolean>,
-    bottomPagePadding: Dp,
+    pagePadding: PaddingValues,
     onItemSelected: (SlimBrowseItemList.SlimBrowseItem, JiveAction) -> Job?,
     onContextMenuItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job?
 ) = entry<MainContentNavigation.SlimBrowseItemPage> { route ->
@@ -149,11 +127,12 @@ internal fun EntryProviderScope<NavKey>.slimBrowseNavEntry(
         viewModel = viewModel
     )
 
-    MainContentPage(bottomPagePadding) {
+    MainContentPage {
         SlimBrowseItemList(
-            viewModel,
-            serverConfig.value,
-            mode,
+            viewModel = viewModel,
+            serverConfig = serverConfig.value,
+            mode = mode,
+            modifier = Modifier.padding(pagePadding),
             itemSelectionListener = { selectedItem ->
                 onItemSelected(selectedItem, route.fetchAction)?.let { job ->
                     viewModel.setItemBusy(selectedItem, job)
@@ -171,7 +150,7 @@ internal fun EntryProviderScope<NavKey>.slimBrowseNavEntry(
 @Composable
 internal fun EntryProviderScope<NavKey>.slimBrowseSubItemsNavEntry(
     serverConfig: State<ServerConfiguration?>,
-    bottomPagePadding: Dp,
+    pagePadding: PaddingValues,
     onItemSelected: (SlimBrowseItemList.SlimBrowseItem, JiveAction) -> Job?,
     onContextMenuItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job?
 ) = entry<MainContentNavigation.SlimBrowseSubItemPage> { route ->
@@ -179,10 +158,11 @@ internal fun EntryProviderScope<NavKey>.slimBrowseSubItemsNavEntry(
         parametersOf(route.playerId, route.fetchAction, route.position)
     }
 
-    MainContentPage(bottomPagePadding) {
+    MainContentPage {
         SlimBrowseSubItemList(
-            viewModel,
-            serverConfig.value,
+            viewModel = viewModel,
+            serverConfig = serverConfig.value,
+            modifier = Modifier.padding(pagePadding),
             itemSelectionListener = { selectedItem ->
                 onItemSelected(selectedItem, route.fetchAction)
                     ?.let { job -> viewModel.setItemBusy(selectedItem, job) }
@@ -198,13 +178,16 @@ internal fun EntryProviderScope<NavKey>.slimBrowseSubItemsNavEntry(
 @Composable
 internal fun EntryProviderScope<NavKey>.galleryNavEntry(
     serverConfig: State<ServerConfiguration?>,
-    bottomPagePadding: Dp,
+    pagePadding: PaddingValues,
     onItemSelected: (SlideshowImage) -> Unit
 ) = entry<MainContentNavigation.GalleryPage> { route ->
-    MainContentPage(bottomPagePadding) {
-        GalleryGrid(route.items, serverConfig.value) { item ->
-            onItemSelected(item)
-        }
+    MainContentPage {
+        GalleryGrid(
+            items = route.items,
+            serverConfig = serverConfig.value,
+            modifier = Modifier.padding(pagePadding),
+            itemSelectionListener = onItemSelected
+        )
     }
 }
 
@@ -212,7 +195,7 @@ internal fun EntryProviderScope<NavKey>.galleryNavEntry(
 internal fun EntryProviderScope<NavKey>.localSearchResultsNavKey(
     serverConfig: State<ServerConfiguration?>,
     useGrid: State<Boolean>,
-    bottomPagePadding: Dp,
+    pagePadding: PaddingValues,
     onItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job?,
     onContextMenuItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job?
 ) = entry<MainContentNavigation.LocalSearchResults> { route ->
@@ -220,11 +203,12 @@ internal fun EntryProviderScope<NavKey>.localSearchResultsNavKey(
         parametersOf(route.playerId, route.searchTerm, route.mode)
     }
 
-    MainContentPage(bottomPagePadding) {
+    MainContentPage {
         LibrarySearchResultsItemList(
-            viewModel,
-            serverConfig.value,
-            useGrid.value,
+            viewModel = viewModel,
+            serverConfig = serverConfig.value,
+            useGrid = useGrid.value,
+            modifier = Modifier.padding(pagePadding),
             itemSelectionListener = { item ->
                 onItemSelected(item)
                     ?.let { job -> viewModel.setItemBusy(item, job) }
@@ -241,7 +225,7 @@ internal fun EntryProviderScope<NavKey>.localSearchResultsNavKey(
 internal fun EntryProviderScope<NavKey>.radioSearchResultsNavKey(
     serverConfig: State<ServerConfiguration?>,
     useGrid: State<Boolean>,
-    bottomPagePadding: Dp,
+    pagePadding: PaddingValues,
     onItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job?,
     onContextMenuItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job?
 ) = entry<MainContentNavigation.RadioSearchResults> { route ->
@@ -249,11 +233,12 @@ internal fun EntryProviderScope<NavKey>.radioSearchResultsNavKey(
         parametersOf(route.playerId, route.searchTerm)
     }
 
-    MainContentPage(bottomPagePadding) {
+    MainContentPage {
         RadioSearchResultsItemList(
-            viewModel,
-            serverConfig.value,
-            useGrid.value,
+            viewModel = viewModel,
+            serverConfig = serverConfig.value,
+            useGrid = useGrid.value,
+            modifier = Modifier.padding(pagePadding),
             itemSelectionListener = { item ->
                 onItemSelected(item)
                     ?.let { job -> viewModel.setItemBusy(item, job) }

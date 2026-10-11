@@ -20,6 +20,7 @@ package de.maniac103.squeezeclient.ui.search
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.collectAsLazyPagingItems
 import de.maniac103.squeezeclient.model.ServerConfiguration
@@ -32,6 +33,7 @@ fun LibrarySearchResultsItemList(
     viewModel: LibrarySearchResultsViewModel = viewModel(),
     serverConfig: ServerConfiguration?,
     useGrid: Boolean,
+    modifier: Modifier = Modifier,
     itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {},
     contextMenuClickListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {}
 ) {
@@ -39,11 +41,12 @@ fun LibrarySearchResultsItemList(
     val busyItem by viewModel.busyItemFlow.collectAsState()
 
     SlimBrowsePagedItemListOrGrid(
-        entries,
-        busyItem,
-        serverConfig,
-        if (useGrid) SlimBrowseItemListMode.Grid else SlimBrowseItemListMode.ListWithIcons,
-        itemSelectionListener,
-        contextMenuClickListener
+        entries = entries,
+        busyItem = busyItem,
+        serverConfig = serverConfig,
+        modifier = modifier,
+        mode = if (useGrid) SlimBrowseItemListMode.Grid else SlimBrowseItemListMode.ListWithIcons,
+        itemSelectionListener = itemSelectionListener,
+        contextMenuClickListener = contextMenuClickListener
     )
 }

@@ -39,6 +39,7 @@ import de.maniac103.squeezeclient.extfuncs.serverConfig
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.service.localplayer.LocalPlaybackService
 import de.maniac103.squeezeclient.ui.MainActivity
+import de.maniac103.squeezeclient.ui.theme.AppTheme
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.InetAddress
@@ -67,7 +68,7 @@ class ServerSetupActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            MaterialTheme {
+            AppTheme {
                 val results by discoveryResultsFlow.collectAsState()
                 val progress by discoveryProgressFlow.collectAsState()
 

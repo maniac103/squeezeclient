@@ -1,6 +1,6 @@
 /*
  * This file is part of Squeeze Client, an Android client for the LMS music server.
- * Copyright (c) 2024 Danny Baumann
+ * Copyright (c) 2026 Danny Baumann
  *
  * This program is free software: you can redistribute it and/or modify it under the terms of the
  * GNU General Public License as published by the Free Software Foundation,
@@ -18,221 +18,82 @@
 package de.maniac103.squeezeclient.ui
 
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.KeyEvent
-import android.view.Menu
-import android.widget.CompoundButton
-import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.browser.customtabs.CustomTabsIntent
 import androidx.compose.material3.MaterialTheme
-import androidx.core.content.edit
-import androidx.core.view.GravityCompat
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.isVisible
-import androidx.core.view.updatePadding
-import androidx.fragment.app.commit
-import androidx.fragment.app.commitNow
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.markodevcic.peko.PermissionRequester
+import com.markodevcic.peko.PermissionResult
+import de.maniac103.squeezeclient.Preferences
 import de.maniac103.squeezeclient.R
-import de.maniac103.squeezeclient.cometd.ConnectionState
-import de.maniac103.squeezeclient.cometd.request.LibrarySearchRequest
-import de.maniac103.squeezeclient.databinding.ActivityMainBinding
-import de.maniac103.squeezeclient.databinding.NavDrawerHeaderBinding
-import de.maniac103.squeezeclient.extfuncs.ViewEdge
-import de.maniac103.squeezeclient.extfuncs.addSystemBarAndCutoutInsetsListener
+import de.maniac103.squeezeclient.extfuncs.await
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
-import de.maniac103.squeezeclient.extfuncs.getParcelableOrNull
-import de.maniac103.squeezeclient.extfuncs.isRtl
-import de.maniac103.squeezeclient.extfuncs.lastSelectedPlayer
-import de.maniac103.squeezeclient.extfuncs.localPlayerEnabled
-import de.maniac103.squeezeclient.extfuncs.prefs
-import de.maniac103.squeezeclient.extfuncs.putLastSelectedPlayer
-import de.maniac103.squeezeclient.extfuncs.putLocalPlayerEnabled
-import de.maniac103.squeezeclient.extfuncs.serverConfig
-import de.maniac103.squeezeclient.extfuncs.useVolumeButtonsForPlayerVolume
-import de.maniac103.squeezeclient.model.JiveAction
-import de.maniac103.squeezeclient.model.Player
-import de.maniac103.squeezeclient.model.PlayerId
-import de.maniac103.squeezeclient.model.PlayerStatus
-import de.maniac103.squeezeclient.model.SlimBrowseItemList
+import de.maniac103.squeezeclient.model.DownloadRequestData
+import de.maniac103.squeezeclient.service.DownloadWorker
 import de.maniac103.squeezeclient.service.localplayer.LocalPlaybackService
 import de.maniac103.squeezeclient.service.mediasession.MediaService
-import de.maniac103.squeezeclient.ui.maincontent.Breadcrumbs
-import de.maniac103.squeezeclient.ui.maincontent.BreadcrumbsState
-import de.maniac103.squeezeclient.ui.maincontent.MainContentContainerFragment
-import de.maniac103.squeezeclient.ui.nowplaying.NowPlayingFragment
+import de.maniac103.squeezeclient.ui.maincontent.MainActivityState
+import de.maniac103.squeezeclient.ui.maincontent.MainActivityUi
+import de.maniac103.squeezeclient.ui.maincontent.MainActivityViewModel
 import de.maniac103.squeezeclient.ui.playermanagement.PlayerManagementActivity
 import de.maniac103.squeezeclient.ui.prefs.SettingsActivity
-import de.maniac103.squeezeclient.ui.search.SearchFragment
 import de.maniac103.squeezeclient.ui.serversetup.ServerSetupActivity
-import de.maniac103.squeezeclient.ui.volume.VolumeFragment
-import kotlin.time.Duration.Companion.seconds
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
+import de.maniac103.squeezeclient.ui.slideshow.ImageViewActivity
+import de.maniac103.squeezeclient.ui.theme.AppTheme
+import de.maniac103.squeezeclient.ui.volume.VolumePopupViewModel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.plus
+import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.core.parameter.parametersOf
+import kotlin.getValue
+import kotlin.time.Duration.Companion.seconds
 
-class MainActivity :
-    AppCompatActivity(),
-    MainContentContainerFragment.Listener,
-    NowPlayingFragment.Listener,
-    ConnectionErrorHintFragment.Listener,
-    SearchFragment.Listener {
-
-    private var currentPlayerScope: CoroutineScope? = null
-
-    private lateinit var binding: ActivityMainBinding
-    private lateinit var drawerHeaderBinding: NavDrawerHeaderBinding
-    private lateinit var localPlaybackSwitch: CompoundButton
-
-    private var allPlayers: List<Player>? = null
-    private var player: Player? = null
-    private var playerIsActive = false
-    private var consecutiveUnsuccessfulConnectAttempts = 0
-    private var breadcrumbsFlow = MutableStateFlow(BreadcrumbsState(emptyList(), 0F))
-
-    private val mainListContainer get() =
-        supportFragmentManager.findFragmentById(
-            binding.container.id
-        ) as? MainContentContainerFragment
-    private val errorFragment get() =
-        supportFragmentManager.findFragmentById(
-            binding.failHintContainer.id
-        ) as? ConnectionErrorHintFragment
-    private val nowPlayingFragment get() =
-        supportFragmentManager.findFragmentById(binding.playerContainer.id) as? NowPlayingFragment
-    private val searchFragment get() =
-        supportFragmentManager.findFragmentById(binding.searchContainer.id) as? SearchFragment
-    private val volumeFragment get() =
-        supportFragmentManager.findFragmentById(binding.volumeContainer.id) as? VolumeFragment
+class MainActivity : ComponentActivity() {
+    private val preferences: Preferences by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
-        binding.toolbar.setNavigationOnClickListener {
-            binding.drawerLayout.open()
+        if (preferences.serverConfig.value == null) {
+            val intent = ServerSetupActivity.createIntent(this, false)
+            startActivity(intent)
+            finish()
+            return
         }
-        binding.toolbar.setOnMenuItemClickListener { menuItem ->
-            when (menuItem.itemId) {
-                R.id.search -> {
-                    player?.id?.let { playerId ->
-                        supportFragmentManager.commit {
-                            add(binding.searchContainer.id, SearchFragment.create(playerId))
-                        }
+
+        setContent {
+            AppTheme {
+                MainActivityUi(
+                    onGalleryItemSelected = { image ->
+                        val intent = ImageViewActivity.createIntent(this, image)
+                        startActivity(intent)
+                    },
+                    onDownloadSelected = { download ->
+                        triggerDownload(download)
+                    },
+                    onWebLinkSelected = { _, link ->
+                        val intent = CustomTabsIntent.Builder().build()
+                        intent.launchUrl(this, link)
+                    },
+                    onOpenServerSetup = {
+                        val intent = ServerSetupActivity.createIntent(this, true)
+                        startActivity(intent)
+                    },
+                    onManagePlayers = {
+                        startActivity(Intent(this, PlayerManagementActivity::class.java))
+                    },
+                    onOpenSettings = {
+                        startActivity(Intent(this, SettingsActivity::class.java))
                     }
-                }
-            }
-            true
-        }
-
-        binding.navigationView.setNavigationItemSelectedListener { menuItem ->
-            when (menuItem.itemId) {
-                in FIRST_PLAYER_MENU_ID..LAST_PLAYER_MENU_ID -> {
-                    val playerIndex = menuItem.itemId - FIRST_PLAYER_MENU_ID
-                    allPlayers?.elementAtOrNull(playerIndex)?.let {
-                        changePlayer(it)
-                        prefs.edit {
-                            putLastSelectedPlayer(it.id)
-                        }
-                    }
-                }
-
-                R.id.manage_players -> {
-                    startActivity(Intent(this, PlayerManagementActivity::class.java))
-                    binding.drawerLayout.closeDrawer(GravityCompat.START, false)
-                }
-
-                R.id.menu_settings -> {
-                    startActivity(Intent(this, SettingsActivity::class.java))
-                    binding.drawerLayout.closeDrawer(GravityCompat.START, false)
-                }
-            }
-            binding.drawerLayout.close()
-            true
-        }
-
-        binding.breadcrumbsContainer.apply {
-            setContent {
-                MaterialTheme {
-                    Breadcrumbs(
-                        breadcrumbsFlow,
-                        prefs.serverConfig,
-                        onHomeClicked = {
-                            mainListContainer?.goToHome()
-                        },
-                        onGoBack = { levels ->
-                            mainListContainer?.goBack(levels)
-                        }
-                    )
-                }
+                )
             }
         }
-
-        drawerHeaderBinding = NavDrawerHeaderBinding.bind(binding.navigationView.getHeaderView(0))
-        drawerHeaderBinding.serverSetup.setOnClickListener { openServerSetup(true) }
-        ViewCompat.setOnApplyWindowInsetsListener(binding.navigationView) { v, windowInsets ->
-            val insets = windowInsets.getInsets(
-                WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
-            )
-            val startIsLeft = !isRtl
-            v.updatePadding(
-                left = if (startIsLeft) insets.left else 0,
-                right = if (startIsLeft) 0 else insets.right
-            )
-            windowInsets
-        }
-        ViewCompat.setOnApplyWindowInsetsListener(drawerHeaderBinding.root) { v, windowInsets ->
-            val insets = windowInsets.getInsets(
-                WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout()
-            )
-            v.updatePadding(top = insets.top)
-            windowInsets
-        }
-
-        localPlaybackSwitch =
-            binding.navigationView.menu.findItem(R.id.local_playback)?.actionView as CompoundButton
-        localPlaybackSwitch.isChecked = prefs.localPlayerEnabled
-        localPlaybackSwitch.setOnCheckedChangeListener { _, checked ->
-            prefs.edit {
-                putLocalPlayerEnabled(checked)
-            }
-        }
-
-        binding.appbarContainer.setLiftable(false)
-        binding.appbarContainer.addSystemBarAndCutoutInsetsListener(
-            ViewEdge.Top,
-            ViewEdge.TopStart
-        )
-
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                prefs.serverConfig?.let { drawerHeaderBinding.serverName.text = it.name }
-                connectionHelper.state.collect { state -> updateContentForConnectionState(state) }
-            }
-        }
-
-        savedInstanceState?.let {
-            player = savedInstanceState.getParcelableOrNull("player", Player::class)
-        }
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        player?.let { outState.putParcelable("player", it) }
-        super.onSaveInstanceState(outState)
     }
 
     override fun onStart() {
@@ -241,316 +102,84 @@ class MainActivity :
     }
 
     override fun onStop() {
-        val activePlayerId = if (playerIsActive) player?.id else null
+        val mainViewModel by viewModel<MainActivityViewModel>()
+        val connectedState = mainViewModel.stateFlow.value as? MainActivityState.Connected
+        val activePlayerId = connectedState?.selectedPlayer?.id
         if (activePlayerId != null && !isChangingConfigurations) {
             MediaService.start(this, activePlayerId, true)
         }
-        currentPlayerScope?.cancel()
-        currentPlayerScope = null
         super.onStop()
     }
 
+
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-        @Suppress("ktlint:standard:blank-line-between-when-conditions")
-        val volumeFragment = when {
-            nowPlayingFragment?.isVisible != true -> null // don't forward key in disconnected state
-            prefs.useVolumeButtonsForPlayerVolume -> volumeFragment
-            else -> null
+        val useVolumeKeys = preferences.useVolumeButtonsForPlayerVolume.value
+        return when (keyCode) {
+            KeyEvent.KEYCODE_VOLUME_UP if useVolumeKeys -> {
+                adjustVolume(1)
+                true
+            }
+
+            KeyEvent.KEYCODE_VOLUME_DOWN if useVolumeKeys -> {
+                adjustVolume(-1)
+                true
+            }
+
+            else -> super.onKeyDown(keyCode, event)
         }
-        if (volumeFragment?.handleKeyDown(keyCode) == true) {
+    }
+
+    private fun adjustVolume(direction: Int) {
+        val mainViewModel by viewModel<MainActivityViewModel>()
+        val connectedState = mainViewModel.stateFlow.value as? MainActivityState.Connected
+            ?: return
+        val stepSize = preferences.volumeStepSize.value * 0.01F
+        val volumeViewModel by viewModel<VolumePopupViewModel> {
+            parametersOf(connectedState.selectedPlayer.id)
+        }
+        volumeViewModel.adjustVolume(direction * stepSize)
+        volumeViewModel.show(2.seconds)
+    }
+
+
+    private fun triggerDownload(data: DownloadRequestData) = lifecycleScope.launch {
+        if (!requestNotificationPermissionForDownload()) {
+            return@launch
+        }
+        val items = connectionHelper.fetchSongInfosForDownload(data)
+        DownloadWorker.enqueue(this@MainActivity, items)
+    }
+
+    private suspend fun requestNotificationPermissionForDownload(): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            // Don't need runtime permission in that case
             return true
         }
-        return super.onKeyDown(keyCode, event)
-    }
-
-    override fun onKeyUp(keyCode: Int, event: KeyEvent?): Boolean {
-        @Suppress("ktlint:standard:blank-line-between-when-conditions")
-        val volumeFragment = when {
-            nowPlayingFragment?.isVisible != true -> null // don't forward key in disconnected state
-            prefs.useVolumeButtonsForPlayerVolume -> volumeFragment
-            else -> null
-        }
-        if (volumeFragment?.handleKeyUp(keyCode) == true) {
+        val requester = PermissionRequester.instance()
+        if (requester.isAnyGranted(android.Manifest.permission.POST_NOTIFICATIONS)) {
+            // Permission already granted
             return true
         }
-        return super.onKeyUp(keyCode, event)
-    }
 
-    // MainListHolderFragment.Listener implementation
-
-    override fun onContentScrollStateChanged(canScrollUp: Boolean) {
-        binding.appbarContainer.isLifted = canScrollUp
-    }
-
-    override fun onBreadcrumbsChanged(state: BreadcrumbsState) {
-        breadcrumbsFlow.value = state
-    }
-
-    override fun openNowPlayingIfNeeded() {
-        nowPlayingFragment?.expandIfNeeded()
-    }
-
-    // NowPlayingFragment.Listener implementation
-
-    override fun showVolumePopup() {
-        volumeFragment?.showIfNeeded(5.seconds)
-    }
-
-    override fun onContextMenuAction(
-        action: JiveAction,
-        parentItem: SlimBrowseItemList.SlimBrowseItem,
-        contextItem: SlimBrowseItemList.SlimBrowseItem
-    ) = mainListContainer?.run {
-        goToHome()
-        onNowPlayingContextMenuAction(action, contextItem, parentItem)
-    }
-
-    // ConnectionErrorHintFragment.Listener implementation
-
-    override fun onActionInvoked(tag: String?) = when (tag) {
-        ACTION_TAG_RECONNECT -> connectionHelper.connect()
-        ACTION_TAG_SERVER_SETUP -> openServerSetup(true)
-        else -> {}
-    }
-
-    // SearchFragment.Listener implementation
-
-    override fun onCloseSearch() {
-        searchFragment?.let {
-            supportFragmentManager.commit { remove(it) }
+        when (requester.request(android.Manifest.permission.POST_NOTIFICATIONS).first()) {
+            is PermissionResult.Denied.NeedsRationale -> {}
+            is PermissionResult.Denied.DeniedPermanently -> return false
+            is PermissionResult.Cancelled -> return false
+            is PermissionResult.Granted -> return true
         }
-    }
-
-    override fun onOpenLocalSearchPage(searchTerm: String, type: LibrarySearchRequest.Mode) {
-        onCloseSearch()
-        mainListContainer?.openLocalSearchResults(searchTerm, type)
-    }
-
-    override fun onOpenRadioSearchPage(searchTerm: String) {
-        onCloseSearch()
-        mainListContainer?.openRadioSearchResults(searchTerm)
-    }
-
-    // internal implementation details
-
-    private fun updatePlayerList(players: List<Player>) {
-        binding.navigationView.menu.apply {
-            removeGroup(R.id.menu_players)
-            players.forEachIndexed { index, player ->
-                // FIXME: update name from player state
-                add(R.id.menu_players, FIRST_PLAYER_MENU_ID + index, Menu.NONE, player.name).apply {
-                    setIcon(R.drawable.ic_player_16dp)
-                }
-            }
-            setGroupCheckable(R.id.menu_players, true, true)
-        }
-        this.allPlayers = players
-    }
-
-    private fun changePlayer(player: Player) {
-        allPlayers
-            ?.indexOfFirst { it.id == player.id }
-            ?.let { index ->
-                binding.navigationView.menu.findItem(FIRST_PLAYER_MENU_ID + index)?.isChecked = true
-            }
-
-        if (player.id != this.player?.id) {
-            currentPlayerScope?.cancel()
-            currentPlayerScope = null
-            this.player = player
-            supportFragmentManager.commitNow {
-                val mainListHolder = MainContentContainerFragment.create(player.id)
-                replace(binding.container.id, mainListHolder)
-                setPrimaryNavigationFragment(mainListHolder)
-
-                replace(binding.playerContainer.id, NowPlayingFragment.create(player.id))
-
-                val volumeFragment = VolumeFragment.create(player.id)
-                replace(binding.volumeContainer.id, volumeFragment)
-                hide(volumeFragment)
-
-                val statusFragment = DisplayStatusFragment.create(player.id)
-                replace(binding.statusContainer.id, statusFragment)
-                hide(statusFragment)
-            }
-        }
-
-        updatePlayerDependentMenuItems()
-        if (currentPlayerScope == null) {
-            val scope = lifecycleScope + Job()
-            currentPlayerScope = scope
-            updatePlayerStateSubscriptions(player.id, scope)
-        }
-    }
-
-    private fun resetCurrentPlayer() {
-        currentPlayerScope?.cancel()
-        currentPlayerScope = null
-        player = null
-        playerIsActive = false
-    }
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private fun updatePlayerStateSubscriptions(playerId: PlayerId, scope: CoroutineScope) {
-        connectionHelper.playerState(playerId)
-            .flatMapLatest { it.playStatus }
-            .onEach { status ->
-                binding.toolbar.subtitle = status.playerName
-                playerIsActive = status.powered &&
-                    status.playbackState == PlayerStatus.PlayState.Playing
-            }
-            .launchIn(scope)
-    }
-
-    private fun updateContentForConnectionState(state: ConnectionState) = when (state) {
-        is ConnectionState.Disconnected -> {
-            hideContentAndShowLoadingIndicator()
-            resetCurrentPlayer()
-            if (prefs.serverConfig == null) {
-                openServerSetup(false)
-            } else if (++consecutiveUnsuccessfulConnectAttempts < 3) {
-                connectionHelper.connect()
-            } else {
-                val f = ConnectionErrorHintFragment.create(
-                    R.drawable.ic_cloud_question_24dp,
-                    R.string.connection_error_text_no_connection,
-                    buttons = listOf(
-                        ActionButtonSpec(
-                            R.string.connection_error_action_retry,
-                            ACTION_TAG_RECONNECT
-                        ),
-                        ActionButtonSpec(
-                            R.string.connection_error_action_setup_server,
-                            ACTION_TAG_SERVER_SETUP
-                        )
-                    )
-                )
-                showConnectionErrorHint(f)
-            }
-        }
-
-        is ConnectionState.Connecting -> {
-            hideContentAndShowLoadingIndicator()
-        }
-
-        is ConnectionState.Connected -> {
-            consecutiveUnsuccessfulConnectAttempts = 0
-            val presentPlayers = state.players.filter { it.connected }
-            updatePlayerList(presentPlayers)
-            val lastActivePlayer = prefs.lastSelectedPlayer
-            val activePlayer = lastActivePlayer
-                .let { active -> presentPlayers.find { it.id == active } }
-                ?: presentPlayers.firstOrNull()
-            if (activePlayer != null) {
-                showContentAndHideLoadingIndicator()
-                if (lastActivePlayer == null) {
-                    prefs.edit {
-                        putLastSelectedPlayer(activePlayer.id)
-                    }
-                }
-                changePlayer(activePlayer)
-            } else {
-                val f = ConnectionErrorHintFragment.create(
-                    R.drawable.ic_player_16dp,
-                    R.string.connection_error_text_no_player
-                )
-                showConnectionErrorHint(f)
-            }
-        }
-
-        is ConnectionState.ConnectionFailure -> {
-            Log.w(TAG, "Connection failed", state.cause)
-            hideContentAndShowLoadingIndicator()
-            resetCurrentPlayer()
-            val f = ConnectionErrorHintFragment.create(
-                R.drawable.ic_cloud_question_24dp,
-                R.string.connection_error_text_connection_failure,
-                subtext = state.cause.message,
-                buttons = listOf(
-                    ActionButtonSpec(
-                        R.string.connection_error_action_retry,
-                        ACTION_TAG_RECONNECT
-                    )
-                )
+        // When we're here, we need to show a rationale dialog
+        val dialogResult = MaterialAlertDialogBuilder(this)
+            .setTitle(R.string.permission_rationale_title)
+            .setMessage(R.string.download_permission_rationale_message)
+            .create()
+            .await(
+                positiveText = getString(R.string.permission_rationale_allow),
+                negativeText = getString(R.string.download_permission_rationale_cancel)
             )
-            showConnectionErrorHint(f)
+        if (!dialogResult) {
+            return false
         }
-    }
-
-    private fun updatePlayerDependentMenuItems() {
-        val isInLoadingOrErrorState = binding.loadingIndicator.isVisible || errorFragment != null
-
-        binding.toolbar.menu.findItem(R.id.search)?.let {
-            it.isVisible = player != null && !isInLoadingOrErrorState
-        }
-        binding.navigationView.menu.findItem(R.id.manage_players)?.let {
-            val players = allPlayers
-            it.isVisible = players != null && players.size > 1 && !isInLoadingOrErrorState
-        }
-        binding.navigationView.menu.findItem(R.id.local_playback)?.let {
-            it.isVisible = !isInLoadingOrErrorState
-        }
-    }
-
-    private fun showContentAndHideLoadingIndicator() {
-        supportFragmentManager.commitNow {
-            mainListContainer?.let {
-                show(it)
-                setPrimaryNavigationFragment(it)
-            }
-            errorFragment?.let { remove(it) }
-            nowPlayingFragment?.let { show(it) }
-            searchFragment?.let { show(it) }
-        }
-        binding.nowplayingPlaceholder?.isVisible = true
-        binding.breadcrumbsContainer.isVisible = true
-        binding.loadingIndicator.isVisible = false
-        binding.toolbar.subtitle = player?.name
-        updatePlayerDependentMenuItems()
-    }
-
-    private fun hideContentAndShowLoadingIndicator() {
-        supportFragmentManager.commitNow {
-            mainListContainer?.let { hide(it) }
-            errorFragment?.let { hide(it) }
-            nowPlayingFragment?.let { hide(it) }
-            searchFragment?.let { hide(it) }
-            setPrimaryNavigationFragment(null)
-        }
-        binding.nowplayingPlaceholder?.isVisible = false
-        binding.breadcrumbsContainer.isVisible = false
-        binding.loadingIndicator.isVisible = true
-        binding.toolbar.subtitle = null
-        binding.navigationView.menu.removeGroup(R.id.menu_players)
-        updatePlayerDependentMenuItems()
-    }
-
-    private fun showConnectionErrorHint(f: ConnectionErrorHintFragment) {
-        supportFragmentManager.commitNow {
-            replace(binding.failHintContainer.id, f)
-            mainListContainer?.let { hide(it) }
-            nowPlayingFragment?.let { hide(it) }
-            searchFragment?.let { hide(it) }
-        }
-        binding.nowplayingPlaceholder?.isVisible = false
-        binding.breadcrumbsContainer.isVisible = false
-        binding.loadingIndicator.isVisible = false
-        binding.toolbar.subtitle = null
-        binding.navigationView.menu.removeGroup(R.id.menu_players)
-        updatePlayerDependentMenuItems()
-    }
-
-    private fun openServerSetup(allowBack: Boolean) {
-        val intent = ServerSetupActivity.createIntent(this, allowBack)
-        startActivity(intent)
-    }
-
-    companion object {
-        private const val TAG = "MainActivity"
-        private const val FIRST_PLAYER_MENU_ID = 1000
-        private const val LAST_PLAYER_MENU_ID = 1100
-
-        private const val ACTION_TAG_RECONNECT = "reconnect"
-        private const val ACTION_TAG_SERVER_SETUP = "serversetup"
+        return requester.request(android.Manifest.permission.POST_NOTIFICATIONS)
+            .first() is PermissionResult.Granted
     }
 }

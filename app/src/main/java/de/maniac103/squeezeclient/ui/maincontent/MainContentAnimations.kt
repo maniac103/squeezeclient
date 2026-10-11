@@ -25,9 +25,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.staticCompositionLocalOf
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import kotlin.math.PI
 import kotlin.math.cos
 
@@ -38,11 +37,11 @@ internal enum class MainContentAnimationType {
 
 internal data class MainContentAnimationState(
     val animType: MainContentAnimationType,
-    val bottomPagePadding: Dp
+    val pagePadding: PaddingValues
 )
 
 internal val LocalMainContentAnimationState = staticCompositionLocalOf {
-    MainContentAnimationState(MainContentAnimationType.Normal, 0.dp)
+    MainContentAnimationState(MainContentAnimationType.Normal, PaddingValues())
 }
 
 internal val AccelerateDecelerateEasing =

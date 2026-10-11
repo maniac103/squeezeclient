@@ -23,11 +23,13 @@ import de.maniac103.squeezeclient.cometd.ConnectionHelper
 import de.maniac103.squeezeclient.model.PlayerId
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
+import kotlin.time.Duration
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class VolumePopupViewModel(
@@ -38,10 +40,11 @@ class VolumePopupViewModel(
         private set
     private val currentPlayerVolumeFlowInternal = MutableStateFlow(0F)
     private val currentMutedFlowInternal = MutableStateFlow(false)
-    private var updateJob: Job? = null
+    private val visibleFlowInternal = MutableStateFlow(false)
 
     val volumeFlow = currentPlayerVolumeFlowInternal.asStateFlow()
     val mutedFlow = currentMutedFlowInternal.asStateFlow()
+    val visibleFlow = visibleFlowInternal.asStateFlow()
 
     init {
         viewModelScope.launch {
@@ -59,11 +62,16 @@ class VolumePopupViewModel(
         }
     }
 
-    fun setVolume(volume: Float) {
-        currentPlayerVolumeFlowInternal.value = volume
-        updateJob = viewModelScope.launch {
-            connectionHelper.setVolume(playerId, (volume * 100F).roundToInt())
-        }
+    // FIXME: handle already showing
+    fun show(duration: Duration) = viewModelScope.launch {
+        visibleFlowInternal.emit(true)
+        delay(duration)
+        visibleFlowInternal.emit(false)
+    }
+
+    fun setVolume(volume: Float) = viewModelScope.launch {
+        currentPlayerVolumeFlowInternal.emit(volume)
+        connectionHelper.setVolume(playerId, (volume * 100F).roundToInt())
     }
 
     fun adjustVolume(delta: Float) {
@@ -71,10 +79,8 @@ class VolumePopupViewModel(
         setVolume(newVolume)
     }
 
-    fun setMuted(muted: Boolean) {
-        currentMutedFlowInternal.value = muted
-        viewModelScope.launch {
-            connectionHelper.setMuteState(playerId, muted)
-        }
+    fun setMuted(muted: Boolean) = viewModelScope.launch {
+        currentMutedFlowInternal.emit(muted)
+        connectionHelper.setMuteState(playerId, muted)
     }
 }

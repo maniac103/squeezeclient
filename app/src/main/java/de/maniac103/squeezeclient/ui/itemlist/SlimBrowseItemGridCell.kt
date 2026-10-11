@@ -50,7 +50,7 @@ import de.maniac103.squeezeclient.ui.composables.ArtworkImage
 import de.maniac103.squeezeclient.model.ArtworkItem
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
-import de.maniac103.squeezeclient.ui.Theme
+import de.maniac103.squeezeclient.ui.theme.AppTheme
 
 @Composable
 fun SlimBrowseItemGridCell(
@@ -106,7 +106,7 @@ fun SlimBrowseItemGridCell(
                     text = title,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    style = Theme.TextStyles.listItemPrimary,
+                    style = AppTheme.TextStyles.listItemPrimary,
                     modifier = Modifier
                         .align(Alignment.CenterHorizontally)
                 )
@@ -116,7 +116,7 @@ fun SlimBrowseItemGridCell(
                         text = subtext,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
-                        style = Theme.TextStyles.listItemSecondary,
+                        style = AppTheme.TextStyles.listItemSecondary,
                         modifier = Modifier
                             .align(Alignment.CenterHorizontally)
                     )
@@ -137,7 +137,7 @@ fun SlimBrowseItemGridCell(
                 trailingWidget is SlimBrowseItemTrailingWidget.Choice -> {
                     Text(
                         text = trailingWidget.label,
-                        style = Theme.TextStyles.listItemSecondary,
+                        style = AppTheme.TextStyles.listItemSecondary,
                         modifier = extraModifier
                     )
                 }

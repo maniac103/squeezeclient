@@ -205,6 +205,7 @@ class LocalPlaybackService :
         sentBufferReady = false
         if (streamEnded) {
             sendStatus(SlimprotoSocket.StatusType.DecoderUnderrun)
+            sendStatus(SlimprotoSocket.StatusType.AudioUnderrun)
         }
     }
 

@@ -18,10 +18,7 @@
 package de.maniac103.squeezeclient.ui.search
 
 import android.annotation.SuppressLint
-import android.os.Bundle
-import android.view.View
-import androidx.activity.BackEventCompat
-import androidx.activity.OnBackPressedCallback
+import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -42,7 +39,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -70,84 +66,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.cometd.request.LibrarySearchRequest
-import de.maniac103.squeezeclient.extfuncs.getParcelable
-import de.maniac103.squeezeclient.extfuncs.requireParentAs
-import de.maniac103.squeezeclient.model.PlayerId
-import de.maniac103.squeezeclient.ui.common.ComposeFragment
-import org.koin.androidx.viewmodel.ext.android.viewModel
-import org.koin.core.parameter.parametersOf
-
-class SearchFragment : ComposeFragment() {
-    interface Listener {
-        fun onCloseSearch()
-        fun onOpenLocalSearchPage(searchTerm: String, type: LibrarySearchRequest.Mode)
-        fun onOpenRadioSearchPage(searchTerm: String)
-    }
-
-    private val viewModel by viewModel<SearchViewModel> {
-        val playerId = requireArguments().getParcelable("playerId", PlayerId::class)
-        parametersOf(playerId)
-    }
-    private val listener get() = requireParentAs<Listener>()
-
-    private val onBackPressedCallback = object : OnBackPressedCallback(true) {
-        override fun handleOnBackPressed() {
-            listener.onCloseSearch()
-        }
-
-        override fun handleOnBackProgressed(backEvent: BackEventCompat) {
-            viewModel.setBackProgress(backEvent.progress)
-        }
-
-        override fun handleOnBackCancelled() {
-            viewModel.setBackProgress(0F)
-        }
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        requireActivity().onBackPressedDispatcher.addCallback(
-            viewLifecycleOwner,
-            onBackPressedCallback
-        )
-    }
-
-    @Composable
-    override fun createContent() {
-        Scaffold(containerColor = Color.Transparent) { innerPadding ->
-            SearchBox(
-                viewModel,
-                pillModifier = Modifier
-                    .padding(innerPadding),
-                onCloseListener = { listener.onCloseSearch() },
-                onOpenResultsListener = { query, type ->
-                    if (type != null) {
-                        listener.onOpenLocalSearchPage(query, type)
-                    } else {
-                        listener.onOpenRadioSearchPage(query)
-                    }
-                }
-            )
-        }
-    }
-
-    override fun onHiddenChanged(hidden: Boolean) {
-        super.onHiddenChanged(hidden)
-        // MainActivity hides this screen while there is no connection; cancel pending
-        // searches in that case, so that no requests are published without a connection.
-        if (hidden) {
-            viewModel.updateQuery("")
-        }
-    }
-
-    companion object {
-        fun create(playerId: PlayerId) = SearchFragment().apply {
-            arguments = Bundle().apply {
-                putParcelable("playerId", playerId)
-            }
-        }
-    }
-}
+import kotlin.coroutines.cancellation.CancellationException
 
 @Composable
 fun SearchBox(
@@ -159,6 +78,22 @@ fun SearchBox(
     val queryState by viewModel.queryFlow.collectAsState()
     val categories by viewModel.categoriesFlow.collectAsState(emptyList())
     val backProgress by viewModel.backProgressFlow.collectAsState()
+    val isVisible by viewModel.visibleFlow.collectAsState()
+
+    if (!isVisible) {
+        return
+    }
+
+    PredictiveBackHandler { progressFlow ->
+        try {
+            progressFlow.collect { backEvent ->
+                viewModel.setBackProgress(backEvent.progress)
+            }
+            viewModel.close()
+        } catch (_: CancellationException) {
+            viewModel.setBackProgress(0F)
+        }
+    }
 
     SearchBox(
         queryText = queryState.text,

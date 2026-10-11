@@ -15,7 +15,7 @@
  *
  */
 
-package de.maniac103.squeezeclient.ui.common
+package de.maniac103.squeezeclient.ui.maincontent
 
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet

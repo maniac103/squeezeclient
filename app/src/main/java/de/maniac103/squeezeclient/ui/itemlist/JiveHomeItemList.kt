@@ -10,9 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -27,8 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.model.JiveHomeMenuItem
-import de.maniac103.squeezeclient.ui.Theme
-import de.maniac103.squeezeclient.ui.composables.LazyColumnScrollStateHelper
+import de.maniac103.squeezeclient.ui.theme.AppTheme
 
 @Composable
 fun JiveHomeItemListEntry(
@@ -68,7 +65,7 @@ fun JiveHomeItemListEntry(
                 text = title,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                style = Theme.TextStyles.listItemPrimary
+                style = AppTheme.TextStyles.listItemPrimary
             )
 
             if (!subtext.isNullOrEmpty()) {
@@ -76,7 +73,7 @@ fun JiveHomeItemListEntry(
                     text = subtext,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    style = Theme.TextStyles.listItemSecondary
+                    style = AppTheme.TextStyles.listItemSecondary
                 )
             }
         }
@@ -84,7 +81,7 @@ fun JiveHomeItemListEntry(
         if (!choiceLabel.isNullOrEmpty()) {
             Text(
                 text = choiceLabel,
-                style = Theme.TextStyles.listItemSecondary,
+                style = AppTheme.TextStyles.listItemSecondary,
                 modifier = Modifier
                     .align(Alignment.CenterVertically)
                     .padding(end = 16.dp)
@@ -97,24 +94,22 @@ fun JiveHomeItemListEntry(
 @Composable
 fun JiveHomeItemList(
     viewModel: JiveHomeItemListViewModel = viewModel(),
+    modifier: Modifier = Modifier,
     itemSelectionListener: (JiveHomeMenuItem) -> Unit = {}
 ) {
     val menuEntries by viewModel.homeMenuItemsFlow.collectAsState(emptyList())
 
-    LazyColumnScrollStateHelper { state ->
-        LazyColumn(
-            state = state,
-            modifier = Modifier.padding(bottom = 16.dp)
-        ) {
-            items(menuEntries) { entry ->
-                JiveHomeItemListEntry(
-                    title = entry.title,
-                    subtext = entry.subText,
-                    choiceLabel = entry.choiceLabel,
-                    iconResourceId = entry.iconResourceId,
-                    modifier = Modifier.clickable { itemSelectionListener(entry.source) }
-                )
-            }
+    LazyColumn(
+        modifier = modifier
+    ) {
+        items(menuEntries) { entry ->
+            JiveHomeItemListEntry(
+                title = entry.title,
+                subtext = entry.subText,
+                choiceLabel = entry.choiceLabel,
+                iconResourceId = entry.iconResourceId,
+                modifier = Modifier.clickable { itemSelectionListener(entry.source) }
+            )
         }
     }
 }

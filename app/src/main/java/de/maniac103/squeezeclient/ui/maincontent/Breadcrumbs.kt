@@ -32,7 +32,8 @@ fun Breadcrumbs(
     stateFlow: StateFlow<BreadcrumbsState>,
     serverConfig: ServerConfiguration?,
     onHomeClicked: () -> Unit = {},
-    onGoBack: (levels: Int) -> Unit = {}
+    onGoBack: (levels: Int) -> Unit = {},
+    modifier: Modifier = Modifier
 ) {
     val state by stateFlow.collectAsState()
     val items = state.items
@@ -43,7 +44,7 @@ fun Breadcrumbs(
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(8.dp)
+        modifier = modifier.padding(8.dp)
     ) {
         Image(
             imageVector = ImageVector.vectorResource(R.drawable.ic_home_24dp),

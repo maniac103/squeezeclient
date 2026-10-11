@@ -20,6 +20,11 @@ package de.maniac103.squeezeclient.ui.maincontent
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.scene.SceneInfo
+import androidx.navigationevent.NavigationEventTransitionState
+import androidx.navigationevent.compose.NavigationEventState
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.cometd.request.LibrarySearchRequest
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
@@ -33,11 +38,14 @@ import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlin.math.max
 
 data class BreadcrumbsItem(val title: String, val parentTitle: String?, val icon: ArtworkItem?)
+data class BreadcrumbsState(val items: List<BreadcrumbsItem>, val backProgress: Float?)
 
 class MainContentViewModel(
     private val application: Application,
@@ -45,10 +53,13 @@ class MainContentViewModel(
 ) : AndroidViewModel(application) {
     private val connectionHelper = application.connectionHelper
     private val navigationFlowInternal = MutableSharedFlow<MainContentNavigation>()
+    private val breadcrumbsFlowInternal = MutableStateFlow(BreadcrumbsState(emptyList(), null))
+
     private var pendingNavigation: Job? = null
 
     val initialPage get() = MainContentNavigation.JiveHomeMenuPage(playerId, "home", "")
     val navigationFlow = navigationFlowInternal.asSharedFlow()
+    val breadcrumbsFlow = breadcrumbsFlowInternal.asStateFlow()
 
     fun goToHome() = viewModelScope.launch {
         navigationFlowInternal.emit(MainContentNavigation.Home)
@@ -225,6 +236,41 @@ class MainContentViewModel(
 
     fun onItemActionSelected(action: JiveAction, item: SlimBrowseItemList.SlimBrowseItem) =
         onHandleDoOrGoAction(action, false, item, null)
+
+    fun onBreadcrumbsChanged(
+        backStack: List<NavKey>,
+        transition: NavigationEventTransitionState
+    ) = viewModelScope.launch {
+        val progress = when (transition) {
+            is NavigationEventTransitionState.InProgress -> transition.latestEvent.progress
+            is NavigationEventTransitionState.Idle -> null
+        }
+
+        val relevantEntries = backStack.subList(1, backStack.size)
+        val breadcrumbs = relevantEntries.mapNotNull {
+            when (it) {
+                is MainContentNavigation.JiveHomeMenuPage -> {
+                    BreadcrumbsItem(it.title, null, null)
+                }
+
+                is MainContentNavigation.SlimBrowseItemPage -> {
+                    BreadcrumbsItem(it.title, it.parentTitle, it.icon)
+                }
+
+                is MainContentNavigation.SlimBrowseSubItemPage -> {
+                    BreadcrumbsItem(it.title, null, null)
+                }
+
+                is MainContentNavigation.GalleryPage -> {
+                    BreadcrumbsItem(it.title, it.parentTitle, null)
+                }
+
+                else -> null
+            }
+        }
+
+        breadcrumbsFlowInternal.emit(BreadcrumbsState(breadcrumbs, progress))
+    }
 
     private suspend fun loadContextMenuItems(
         action: JiveAction,

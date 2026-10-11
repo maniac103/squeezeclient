@@ -40,29 +40,28 @@ import coil3.request.ImageRequest
 import de.maniac103.squeezeclient.extfuncs.loadMaybeRelativeUrl
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlideshowImage
-import de.maniac103.squeezeclient.ui.composables.LazyGridScrollStateHelper
 
 @Composable
 fun GalleryGrid(
     items: List<SlideshowImage>,
     serverConfig: ServerConfiguration?,
+    modifier: Modifier = Modifier,
     itemSelectionListener: (SlideshowImage) -> Unit = {}
-) = LazyGridScrollStateHelper { state ->
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(2)
-    ) {
-        items(items) { item ->
-            val imageRequest = ImageRequest.Builder(LocalContext.current)
-                .loadMaybeRelativeUrl(item.imageUrl, serverConfig)
-                .build()
+) = LazyVerticalGrid(
+    columns = GridCells.Fixed(2),
+    modifier = modifier
+) {
+    items(items) { item ->
+        val imageRequest = ImageRequest.Builder(LocalContext.current)
+            .loadMaybeRelativeUrl(item.imageUrl, serverConfig)
+            .build()
 
-            GalleryGridItem(
-                imageRequest = imageRequest,
-                caption = item.caption,
-                modifier = Modifier
-                    .clickable(onClick = { itemSelectionListener(item) })
-            )
-        }
+        GalleryGridItem(
+            imageRequest = imageRequest,
+            caption = item.caption,
+            modifier = Modifier
+                .clickable(onClick = { itemSelectionListener(item) })
+        )
     }
 }
 

@@ -15,12 +15,8 @@
  *
  */
 
-package de.maniac103.squeezeclient.ui
+package de.maniac103.squeezeclient.ui.maincontent
 
-import android.os.Bundle
-import android.os.Parcelable
-import androidx.annotation.DrawableRes
-import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -34,7 +30,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -45,59 +40,15 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import de.maniac103.squeezeclient.R
-import de.maniac103.squeezeclient.extfuncs.getParcelableList
-import de.maniac103.squeezeclient.extfuncs.requireParentAs
-import de.maniac103.squeezeclient.ui.common.ComposeFragment
-import kotlinx.parcelize.Parcelize
 
-class ConnectionErrorHintFragment : ComposeFragment() {
-    fun interface Listener {
-        fun onActionInvoked(tag: String?)
-    }
-
-    @Composable
-    override fun createContent() {
-        val args = requireArguments()
-
-        Scaffold { innerPadding ->
-            ErrorHintContent(
-                iconResId = args.getInt("icon"),
-                textResId = args.getInt("text"),
-                subtext = args.getString("subtext"),
-                buttons = args.getParcelableList("buttons", ActionButtonSpec::class),
-                buttonClickListener = { tag -> requireParentAs<Listener>().onActionInvoked(tag) },
-                modifier = Modifier.padding(innerPadding)
-            )
-        }
-    }
-
-    companion object {
-        fun create(
-            @DrawableRes iconResId: Int,
-            @StringRes textResId: Int,
-            subtext: String? = null,
-            buttons: List<ActionButtonSpec> = emptyList(),
-        ) = ConnectionErrorHintFragment().apply {
-            arguments = Bundle().apply {
-                putInt("icon", iconResId)
-                putInt("text", textResId)
-                putString("subtext", subtext)
-                putParcelableArrayList("buttons", ArrayList(buttons))
-            }
-        }
-    }
-}
-
-@Parcelize
-data class ActionButtonSpec(val labelResId: Int, val tag: String) : Parcelable
+data class ActionButtonSpec(val labelResId: Int, val onClick: () -> Unit)
 
 @Composable
-internal fun ErrorHintContent(
+fun ErrorHintContent(
     iconResId: Int,
     textResId: Int,
     subtext: String?,
     buttons: List<ActionButtonSpec>,
-    buttonClickListener: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
     BoxWithConstraints(
@@ -109,8 +60,7 @@ internal fun ErrorHintContent(
                     iconResId,
                     textResId,
                     subtext,
-                    buttons,
-                    buttonClickListener
+                    buttons
                 )
 
             maxWidth > maxHeight ->
@@ -118,8 +68,7 @@ internal fun ErrorHintContent(
                     iconResId,
                     textResId,
                     subtext,
-                    buttons,
-                    buttonClickListener
+                    buttons
                 )
 
             else ->
@@ -127,8 +76,7 @@ internal fun ErrorHintContent(
                     iconResId,
                     textResId,
                     subtext,
-                    buttons,
-                    buttonClickListener
+                    buttons
                 )
         }
     }
@@ -139,8 +87,7 @@ internal fun PortraitErrorHintContent(
     iconResId: Int,
     textResId: Int,
     subtext: String?,
-    buttons: List<ActionButtonSpec>,
-    buttonClickListener: (String) -> Unit
+    buttons: List<ActionButtonSpec>
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -159,7 +106,7 @@ internal fun PortraitErrorHintContent(
         )
 
         buttons.forEach { button ->
-            ActionButton(button, buttonClickListener)
+            ActionButton(button)
         }
     }
 }
@@ -169,8 +116,7 @@ internal fun LandscapePhoneErrorHintContent(
     iconResId: Int,
     textResId: Int,
     subtext: String?,
-    buttons: List<ActionButtonSpec>,
-    buttonClickListener: (String) -> Unit
+    buttons: List<ActionButtonSpec>
 ) {
     Column {
         Row(
@@ -207,7 +153,7 @@ internal fun LandscapePhoneErrorHintContent(
                 .padding(16.dp)
         ) {
             buttons.forEach { button ->
-                ActionButton(button, buttonClickListener)
+                ActionButton(button)
             }
         }
     }
@@ -218,8 +164,7 @@ internal fun LandscapeTabletErrorHintContent(
     iconResId: Int,
     textResId: Int,
     subtext: String?,
-    buttons: List<ActionButtonSpec>,
-    buttonClickListener: (String) -> Unit
+    buttons: List<ActionButtonSpec>
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -249,7 +194,7 @@ internal fun LandscapeTabletErrorHintContent(
                 .weight(1F)
         ) {
             buttons.forEach { button ->
-                ActionButton(button, buttonClickListener)
+                ActionButton(button)
             }
         }
     }
@@ -281,10 +226,9 @@ internal fun HintSubText(subtext: String?, modifier: Modifier = Modifier) = subt
 
 @Composable
 internal fun ActionButton(
-    button: ActionButtonSpec,
-    buttonClickListener: (String) -> Unit
+    button: ActionButtonSpec
 ) = Button(
-    onClick = { buttonClickListener(button.tag) },
+    onClick = button.onClick,
     shapes = ButtonDefaults.shapes()
 ) {
     Text(stringResource(button.labelResId))
@@ -298,9 +242,8 @@ fun ErrorHintContentPreview() {
         R.string.connection_error_text_connection_failure,
         "Something happened",
         listOf(
-            ActionButtonSpec(R.string.connection_error_action_retry, "first"),
-            ActionButtonSpec(R.string.connection_error_action_setup_server, "second")
-        ),
-        buttonClickListener = {}
+            ActionButtonSpec(R.string.connection_error_action_retry, {}),
+            ActionButtonSpec(R.string.connection_error_action_setup_server, {})
+        )
     )
 }

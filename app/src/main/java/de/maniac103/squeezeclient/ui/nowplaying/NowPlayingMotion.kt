@@ -99,9 +99,7 @@ internal class NowPlayingMotionState(
 }
 
 @Composable
-internal fun rememberNowPlayingMotionState(
-    initiallyExpanded: Boolean = true,
-) = remember {
+internal fun rememberNowPlayingMotionState(initiallyExpanded: Boolean) = remember {
     NowPlayingMotionState(
         initialNowPlayingState =
             if (initiallyExpanded) MotionAnchor.Expanded else MotionAnchor.Collapsed,

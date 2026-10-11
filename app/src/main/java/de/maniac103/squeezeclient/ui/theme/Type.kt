@@ -1,6 +1,6 @@
 /*
  * This file is part of Squeeze Client, an Android client for the LMS music server.
- * Copyright (c) 2024 Danny Baumann
+ * Copyright (c) 2026 Danny Baumann
  *
  * This program is free software: you can redistribute it and/or modify it under the terms of the
  * GNU General Public License as published by the Free Software Foundation,
@@ -15,17 +15,12 @@
  *
  */
 
-package de.maniac103.squeezeclient.extfuncs
+package de.maniac103.squeezeclient.ui.theme
 
-import android.os.Bundle
-import androidx.core.os.BundleCompat
-import kotlin.reflect.KClass
+import androidx.compose.material3.Typography
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 
-inline fun <reified T : Any> Bundle.getParcelable(key: String, clazz: KClass<T>) =
-    BundleCompat.getParcelable(this, key, clazz.java)!!
-
-inline fun <reified T : Any> Bundle.getParcelableOrNull(key: String, clazz: KClass<T>): T? =
-    BundleCompat.getParcelable(this, key, clazz.java)
-
-inline fun <reified T : Any> Bundle.getParcelableList(key: String, clazz: KClass<T>) =
-    BundleCompat.getParcelableArrayList(this, key, clazz.java)!!
+val AppTypography = Typography()

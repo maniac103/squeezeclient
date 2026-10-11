@@ -8,7 +8,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
@@ -18,13 +17,7 @@ import androidx.compose.ui.unit.isSpecified
 import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
-import de.maniac103.squeezeclient.R
-
-private enum class NowPlayingLayout {
-    Portrait,
-    Landscape,
-    LargeLandscape
-}
+import de.maniac103.squeezeclient.ui.maincontent.MainLayout
 
 @Immutable
 internal data class Bounds(
@@ -110,8 +103,7 @@ internal data class PlayerGeometry(
 
 @Composable
 internal fun calculatePlayerGeometry(
-    width: Dp,
-    height: Dp,
+    layout: MainLayout,
     insets: PaddingValues,
     hasArtist: Boolean,
     hasAlbum: Boolean,
@@ -120,26 +112,17 @@ internal fun calculatePlayerGeometry(
     val density = LocalDensity.current
     val layoutDirection = LocalLayoutDirection.current
 
-    val layout = when {
-        width < height -> NowPlayingLayout.Portrait
-        height >= 480.dp -> NowPlayingLayout.LargeLandscape
-        else -> NowPlayingLayout.Landscape
-    }
-
     val topInset = insets.calculateTopPadding()
     val bottomInset = insets.calculateBottomPadding()
     val startInset = insets.calculateStartPadding(layoutDirection)
     val endInset = insets.calculateEndPadding(layoutDirection)
 
-    val paneWidth = dimensionResource(R.dimen.landscape_nowplaying_pane_width)
-    val playlistPeekHeight = dimensionResource(R.dimen.playlist_sheet_peek_height)
-
     return when (layout) {
-        NowPlayingLayout.Portrait ->
+        is MainLayout.Portrait ->
             calculatePortraitGeometry(
                 density = density,
-                width = width,
-                height = height,
+                width = layout.containerSize.width,
+                height = layout.containerSize.height,
                 topInset = topInset,
                 bottomInset = bottomInset,
                 startInset = startInset,
@@ -147,48 +130,31 @@ internal fun calculatePlayerGeometry(
                 progress = progress,
                 hasAlbum = hasAlbum,
                 hasArtist = hasArtist,
-                playlistPeekHeight = playlistPeekHeight
+                collapsedContentHeight = layout.collapsedNowPlayingHeight,
+                playlistPeekHeight = 32.dp
             )
 
-        NowPlayingLayout.Landscape ->
+        is MainLayout.Landscape -> {
+            val isLarge = layout.containerSize.height >= 480.dp
             calculateLandscapeGeometry(
                 density = density,
-                width = width,
-                height = height,
+                width = layout.containerSize.width,
+                height = layout.containerSize.height,
                 topInset = topInset,
                 bottomInset = bottomInset,
                 startInset = startInset,
                 endInset = endInset,
                 progress = progress,
-                paneWidth = paneWidth,
+                paneWidth = layout.collapsedNowPlayingWidth,
                 collapsedTitleSize = 16.sp,
-                expandedTitleSize = 18.sp,
+                expandedTitleSize = if (isLarge) 20.sp else 18.sp,
                 secondaryTextSize = 16.sp,
-                collapsedArtworkHeightFraction = 0.3F,
-                expandedArtworkHeightFraction = 0.3F,
-                collapsedPlaylistHeightFraction = 0.0F,
-                expandedPlaylistWidthFraction = 0.4F
+                collapsedArtworkHeightFraction = if (isLarge) 0.2F else 0.3F,
+                expandedArtworkHeightFraction = if (isLarge) 0.5F else 0.3F,
+                collapsedPlaylistHeightFraction = if (isLarge) 0.5F else 0.0F,
+                expandedPlaylistWidthFraction = if (isLarge) 0.3F else 0.4F
             )
-
-        NowPlayingLayout.LargeLandscape ->
-            calculateLandscapeGeometry(
-                density = density,
-                width = width,
-                height = height,
-                topInset = topInset,
-                bottomInset = bottomInset,
-                startInset = startInset,
-                endInset = endInset,
-                progress = progress,
-                paneWidth = paneWidth,
-                collapsedTitleSize = 16.sp,
-                expandedTitleSize = 20.sp,
-                secondaryTextSize = 16.sp,
-                collapsedArtworkHeightFraction = 0.2F,
-                expandedArtworkHeightFraction = 0.5F,
-                collapsedPlaylistHeightFraction = 0.5F,
-                expandedPlaylistWidthFraction = 0.3F
-            )
+        }
     }
 }
 
@@ -203,10 +169,10 @@ private fun calculatePortraitGeometry(
     progress: Float,
     hasAlbum: Boolean,
     hasArtist: Boolean,
+    collapsedContentHeight: Dp,
     playlistPeekHeight: Dp,
 ): PlayerGeometry {
     // Constants
-    val collapsedContentHeight = 64.dp
     val collapsedArtworkSize = 48.dp
     val toolbarHeight = 64.dp
     val miniProgressHeight = 4.dp

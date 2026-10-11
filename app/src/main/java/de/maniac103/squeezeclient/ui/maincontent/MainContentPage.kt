@@ -23,6 +23,7 @@ import androidx.compose.animation.core.Transition
 import androidx.compose.animation.core.animateDp
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
@@ -97,10 +98,9 @@ private fun Transition<EnterExitState>.animateDpForPredictiveBack(
 
 @Composable
 fun MainContentPage(
-    bottomPadding: Dp,
     content: @Composable () -> Unit
 ) {
-    val bottomPadding = LocalMainContentAnimationState.current.bottomPagePadding
+    val bottomPadding = LocalMainContentAnimationState.current.pagePadding.calculateBottomPadding()
     val transition = LocalNavAnimatedContentScope.current.transition
 
     val scale by transition.animateFloatForPredictiveBack(
@@ -160,7 +160,7 @@ fun MainContentPage(
                 }
                 translationY = -0.5f * compensationPx * scale
             }
-            .padding(bottom = bottomPadding),
+            .padding(bottom = animatedBottomPlaceholderCompensation),
         shape = RoundedCornerShape(cornerRadius),
         shadowElevation = elevation,
     ) {

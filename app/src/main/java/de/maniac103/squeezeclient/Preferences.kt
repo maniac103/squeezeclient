@@ -34,7 +34,7 @@ class Preferences(private val prefs: SharedPreferences) {
         }
 
         return object : Preference<ServerConfiguration?> {
-            override val value = mapper(
+            override val value get() = mapper(
                 namePref.value,
                 hostNameAndPortPref.value,
                 userNamePref.value,

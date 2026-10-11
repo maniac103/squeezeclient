@@ -42,30 +42,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.ui.composables.ArtworkImage
-import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import kotlin.collections.emptyList
-import org.koin.androidx.compose.koinViewModel
-import org.koin.core.parameter.parametersOf
-
-@Composable
-fun ContextMenuBottomSheetContent(
-    playerId: PlayerId,
-    initialItems: List<SlimBrowseItemList.SlimBrowseItem>,
-    parentItem: SlimBrowseItemList.SlimBrowseItem,
-    serverConfig: ServerConfiguration?,
-    itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {}
-) {
-    val viewModel = koinViewModel<ContextMenuBottomSheetViewModel> {
-        parametersOf(playerId, initialItems, parentItem)
-    }
-    ContextMenuBottomSheetContent(
-        viewModel = viewModel,
-        serverConfig = serverConfig,
-        itemSelectionListener = itemSelectionListener
-    )
-}
 
 @Composable
 fun ContextMenuBottomSheetContent(
@@ -73,20 +52,47 @@ fun ContextMenuBottomSheetContent(
     serverConfig: ServerConfiguration?,
     itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {}
 ) {
-    val parent = viewModel.parentItem
     val items by viewModel.pageFlow.collectAsState(emptyList())
     val busyItem by viewModel.busyItemFlow.collectAsState()
     val backNavTitle by viewModel.backNavTitleFlow.collectAsState(null)
 
+    ContextMenuBottomSheetContent(
+        items = items,
+        busyItem = busyItem,
+        parentItem = viewModel.parentItem,
+        serverConfig = serverConfig,
+        backNavTitle = backNavTitle,
+        onBackNavClick = viewModel::popPage,
+        itemSelectionListener = { item ->
+            val goAction = item.actions?.goAction
+            if (goAction?.isContextMenu == true) {
+                viewModel.pushPage(item, goAction)
+            } else {
+                itemSelectionListener(item)
+            }
+        }
+    )
+}
+
+@Composable
+fun ContextMenuBottomSheetContent(
+    items: List<SlimBrowseItemList.SlimBrowseItem>,
+    busyItem: SlimBrowseItemList.SlimBrowseItem?,
+    parentItem: SlimBrowseItemList.SlimBrowseItem,
+    backNavTitle: String?,
+    serverConfig: ServerConfiguration?,
+    itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {},
+    onBackNavClick: () -> Unit = {}
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .animateContentSize()
     ) {
         Row {
-            parent.extractIconUrl()?.let {
+            parentItem.extractIconUrl()?.let {
                 ArtworkImage(
-                    artwork = parent,
+                    artwork = parentItem,
                     serverConfig = serverConfig,
                     usePlaceholder = false,
                     modifier = Modifier
@@ -99,12 +105,12 @@ fun ContextMenuBottomSheetContent(
                 modifier = Modifier.align(Alignment.CenterVertically)
             ) {
                 Text(
-                    text = parent.title,
+                    text = parentItem.title,
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.SemiBold
                     )
                 )
-                parent.subText?.let { subText ->
+                parentItem.subText?.let { subText ->
                     Text(
                         text = subText,
                         maxLines = 2,
@@ -117,7 +123,7 @@ fun ContextMenuBottomSheetContent(
         backNavTitle?.let { backNavTitle ->
             Row {
                 IconButton(
-                    onClick = { viewModel.popPage() },
+                    onClick = onBackNavClick,
                     modifier = Modifier.align(Alignment.CenterVertically)
                 ) {
                     Icon(
@@ -131,30 +137,17 @@ fun ContextMenuBottomSheetContent(
                 )
             }
         }
-        ContextMenuItemList(
-            items = items,
-            busyItem = busyItem,
-            itemSelectionListener = itemSelectionListener
-        )
-    }
-}
 
-@Composable
-fun ContextMenuItemList(
-    items: List<SlimBrowseItemList.SlimBrowseItem>,
-    busyItem: SlimBrowseItemList.SlimBrowseItem?,
-    itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit,
-    modifier: Modifier = Modifier
-) = LazyColumn(
-    modifier = modifier
-) {
-    items(items) { item ->
-        ContextMenuListRow(
-            title = item.title,
-            busy = item == busyItem,
-            selectable = item.actions?.goAction != null,
-            modifier = Modifier
-                .clickable(onClick = { itemSelectionListener(item) })
-        )
+        LazyColumn {
+            items(items) { item ->
+                ContextMenuListRow(
+                    title = item.title,
+                    busy = item == busyItem,
+                    selectable = item.actions?.goAction != null,
+                    modifier = Modifier
+                        .clickable(onClick = { itemSelectionListener(item) })
+                )
+            }
+        }
     }
 }

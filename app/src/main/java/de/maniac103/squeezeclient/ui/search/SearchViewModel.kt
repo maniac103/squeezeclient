@@ -39,9 +39,10 @@ class SearchViewModel(
     private val application: Application,
     private val playerId: PlayerId
 ) : AndroidViewModel(application) {
-    private val localResultsFlow = MutableStateFlow<List<Category>>(createLocalCategories(null))
-    private val radioResultsFLow = MutableStateFlow<Category>(createRadioCategory(null))
-    private val queryTextFlow = MutableStateFlow<QueryState>(QueryState("", false))
+    private val visibleFlowInternal = MutableStateFlow(false)
+    private val localResultsFlow = MutableStateFlow(createLocalCategories(null))
+    private val radioResultsFLow = MutableStateFlow(createRadioCategory(null))
+    private val queryTextFlow = MutableStateFlow(QueryState("", false))
     private val backProgressFlowInternal = MutableStateFlow(0F)
 
     private var submitJob: Job? = null
@@ -52,7 +53,18 @@ class SearchViewModel(
     }
     val queryFlow = queryTextFlow.asStateFlow()
     val backProgressFlow = backProgressFlowInternal.asStateFlow()
+    val visibleFlow = visibleFlowInternal.asStateFlow()
 
+    fun open() = viewModelScope.launch {
+        visibleFlowInternal.emit(true)
+    }
+
+    fun close() = viewModelScope.launch {
+        updateQuery("")
+        visibleFlowInternal.emit(false)
+    }
+
+    // FIXME: keep this in SearchBox?
     fun setBackProgress(progress: Float) {
         backProgressFlowInternal.value =
             0.3F * application.backProgressInterpolator.getInterpolation(progress)

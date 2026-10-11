@@ -17,16 +17,20 @@
 
 package de.maniac103.squeezeclient.ui
 
+import de.maniac103.squeezeclient.Preferences
 import de.maniac103.squeezeclient.SqueezeClientApplication
 import de.maniac103.squeezeclient.cometd.request.LibrarySearchRequest
+import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.ui.contextmenu.ContextMenuBottomSheetViewModel
 import de.maniac103.squeezeclient.ui.contextmenu.ItemActionsViewModel
+import de.maniac103.squeezeclient.ui.displaystatus.DisplayStatusViewModel
 import de.maniac103.squeezeclient.ui.itemlist.JiveHomeItemListViewModel
 import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseItemListViewModel
 import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseSubItemListViewModel
+import de.maniac103.squeezeclient.ui.maincontent.MainActivityViewModel
 import de.maniac103.squeezeclient.ui.maincontent.MainContentViewModel
 import de.maniac103.squeezeclient.ui.nowplaying.NowPlayingViewModel
 import de.maniac103.squeezeclient.ui.nowplaying.PlaylistViewModel
@@ -41,6 +45,17 @@ import org.koin.dsl.module
 val viewModelModule = module {
     single {
         (androidApplication() as SqueezeClientApplication).connectionHelper
+    }
+
+    single {
+        Preferences((androidApplication() as SqueezeClientApplication).prefs)
+    }
+
+    viewModel {
+        MainActivityViewModel(
+            connectionHelper = get(),
+            preferences = get()
+        )
     }
 
     viewModel { params ->
@@ -99,6 +114,12 @@ val viewModelModule = module {
     }
     viewModel { params ->
         VolumePopupViewModel(
+            connectionHelper = get(),
+            playerId = params.get<PlayerId>()
+        )
+    }
+    viewModel { params ->
+        DisplayStatusViewModel(
             connectionHelper = get(),
             playerId = params.get<PlayerId>()
         )

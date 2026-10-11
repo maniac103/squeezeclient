@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -40,8 +39,6 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
-import de.maniac103.squeezeclient.ui.composables.LazyColumnScrollStateHelper
-import de.maniac103.squeezeclient.ui.composables.LazyGridScrollStateHelper
 
 enum class SlimBrowseItemListMode {
     ListWithoutIcons,
@@ -55,13 +52,14 @@ fun SlimBrowsePagedItemListOrGrid(
     busyItem: SlimBrowseItemList.SlimBrowseItem?,
     serverConfig: ServerConfiguration?,
     mode: SlimBrowseItemListMode,
+    modifier: Modifier = Modifier,
     itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {},
     contextMenuClickListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {}
 ) {
     if (!entries.loadState.isIdle) {
         Box {
             LinearProgressIndicator(
-                modifier = Modifier
+                modifier = modifier
                     .fillMaxWidth()
             )
         }
@@ -75,48 +73,43 @@ fun SlimBrowsePagedItemListOrGrid(
         val isLandscape =
             LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
 
-        LazyGridScrollStateHelper { state ->
-            LazyVerticalGrid(
-                columns = GridCells.Adaptive(if (isLandscape) 160.dp else 120.dp),
-                state = state,
-                contentPadding = PaddingValues(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                items(entries.itemCount) { index ->
-                    entries[index]?.let { entry ->
-                        SlimBrowseItemGridCell(
-                            item = entry,
-                            serverConfig = serverConfig,
-                            busy = entry == busyItem,
-                            modifier = Modifier.clickable(
-                                onClick = { itemSelectionListener(entry) }
-                            ),
-                            contextMenuClickListener = contextMenuClickListener
-                        )
-                    }
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(if (isLandscape) 160.dp else 120.dp),
+            contentPadding = PaddingValues(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = modifier
+        ) {
+            items(entries.itemCount) { index ->
+                entries[index]?.let { entry ->
+                    SlimBrowseItemGridCell(
+                        item = entry,
+                        serverConfig = serverConfig,
+                        busy = entry == busyItem,
+                        modifier = Modifier.clickable(
+                            onClick = { itemSelectionListener(entry) }
+                        ),
+                        contextMenuClickListener = contextMenuClickListener
+                    )
                 }
             }
         }
     } else {
-        LazyColumnScrollStateHelper { state ->
-            LazyColumn(
-                state = state,
-                modifier = Modifier.padding(bottom = 16.dp)
-            ) {
-                items(entries.itemCount) { index ->
-                    entries[index]?.let { entry ->
-                        SlimBrowseItemListRow(
-                            item = entry,
-                            serverConfig = serverConfig,
-                            showIcon = mode == SlimBrowseItemListMode.ListWithIcons,
-                            busy = entry == busyItem,
-                            modifier = Modifier.clickable(
-                                onClick = { itemSelectionListener(entry) }
-                            ),
-                            contextMenuClickListener = contextMenuClickListener
-                        )
-                    }
+        LazyColumn(
+            modifier = modifier
+        ) {
+            items(entries.itemCount) { index ->
+                entries[index]?.let { entry ->
+                    SlimBrowseItemListRow(
+                        item = entry,
+                        serverConfig = serverConfig,
+                        showIcon = mode == SlimBrowseItemListMode.ListWithIcons,
+                        busy = entry == busyItem,
+                        modifier = Modifier.clickable(
+                            onClick = { itemSelectionListener(entry) }
+                        ),
+                        contextMenuClickListener = contextMenuClickListener
+                    )
                 }
             }
         }
@@ -128,6 +121,7 @@ fun SlimBrowseItemList(
     viewModel: SlimBrowseItemListViewModel = viewModel(),
     serverConfig: ServerConfiguration?,
     mode: SlimBrowseItemListMode,
+    modifier: Modifier = Modifier,
     itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {},
     contextMenuClickListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {}
 ) {
@@ -139,6 +133,7 @@ fun SlimBrowseItemList(
         busyItem,
         serverConfig,
         mode,
+        modifier,
         itemSelectionListener,
         contextMenuClickListener
     )
@@ -148,29 +143,27 @@ fun SlimBrowseItemList(
 fun SlimBrowseSubItemList(
     viewModel: SlimBrowseSubItemListViewModel = viewModel(),
     serverConfig: ServerConfiguration?,
+    modifier: Modifier = Modifier,
     itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {},
     contextMenuClickListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {}
 ) {
     val entries by viewModel.itemsFlow.collectAsState(emptyList())
     val busyItem = viewModel.busyItemFlow.collectAsState()
 
-    LazyColumnScrollStateHelper { state ->
-        LazyColumn(
-            state = state,
-            modifier = Modifier.padding(bottom = 16.dp)
-        ) {
-            items(entries) { entry ->
-                SlimBrowseItemListRow(
-                    item = entry,
-                    serverConfig = serverConfig,
-                    showIcon = false,
-                    busy = entry == busyItem,
-                    modifier = Modifier.clickable(
-                        onClick = { itemSelectionListener(entry) }
-                    ),
-                    contextMenuClickListener = contextMenuClickListener
-                )
-            }
+    LazyColumn(
+        modifier = modifier
+    ) {
+        items(entries) { entry ->
+            SlimBrowseItemListRow(
+                item = entry,
+                serverConfig = serverConfig,
+                showIcon = false,
+                busy = entry == busyItem,
+                modifier = Modifier.clickable(
+                    onClick = { itemSelectionListener(entry) }
+                ),
+                contextMenuClickListener = contextMenuClickListener
+            )
         }
     }
 }

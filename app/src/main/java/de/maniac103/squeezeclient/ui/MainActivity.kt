@@ -68,7 +68,7 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            AppTheme {
+            AppTheme(preferences.appTheme) {
                 MainActivityUi(
                     onGalleryItemSelected = { image ->
                         val intent = ImageViewActivity.createIntent(this, image)

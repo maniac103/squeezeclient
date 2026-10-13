@@ -31,6 +31,7 @@ import androidx.core.content.edit
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import de.maniac103.squeezeclient.Preferences
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.prefs
@@ -57,8 +58,11 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 import kotlinx.coroutines.withContext
+import org.koin.android.ext.android.inject
+import kotlin.getValue
 
 class ServerSetupActivity : AppCompatActivity() {
+    private val preferences: Preferences by inject()
     private var discoveryScope: CoroutineScope? = null
     private val discoveryResultsFlow = MutableStateFlow<List<ServerDiscoveryResult>?>(null)
     private val discoveryProgressFlow = MutableStateFlow(0F)
@@ -68,7 +72,7 @@ class ServerSetupActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            AppTheme {
+            AppTheme(preferences.appTheme) {
                 val results by discoveryResultsFlow.collectAsState()
                 val progress by discoveryProgressFlow.collectAsState()
 

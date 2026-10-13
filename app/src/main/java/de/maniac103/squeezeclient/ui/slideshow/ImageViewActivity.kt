@@ -62,15 +62,19 @@ import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
 import coil3.imageLoader
 import coil3.request.ImageRequest
+import de.maniac103.squeezeclient.Preferences
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.extfuncs.addServerCredentialsIfNeeded
 import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.extfuncs.serverConfig
 import de.maniac103.squeezeclient.model.SlideshowImage
 import de.maniac103.squeezeclient.ui.theme.AppTheme
+import org.koin.android.ext.android.inject
+import kotlin.getValue
 import kotlin.io.path.createTempFile
 
 class ImageViewActivity : AppCompatActivity() {
+    private val preferences: Preferences by inject()
     private val item get() =
         IntentCompat.getParcelableExtra(intent, EXTRA_ITEM, SlideshowImage::class.java)!!
 
@@ -91,6 +95,7 @@ class ImageViewActivity : AppCompatActivity() {
                 .build()
 
             AppTheme(
+                themePreference = preferences.appTheme,
                 forceDarkTheme = true
             ) {
                 Box(

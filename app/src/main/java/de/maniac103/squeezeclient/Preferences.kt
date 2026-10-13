@@ -17,6 +17,18 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
 class Preferences(private val prefs: SharedPreferences) {
+    enum class AppThemeMode(val prefValue: String) {
+        Light("light"),
+        Dark("dark"),
+        SystemDefault("system")
+    }
+
+    val appTheme: Preference<AppThemeMode> get() = TransformingPreferenceImpl(
+        base = stringPreference("app_theme", AppThemeMode.SystemDefault.prefValue),
+        transformGet = { value -> AppThemeMode.entries.first { value == it.prefValue } },
+        transformWrite = { value -> value.prefValue }
+    )
+
     val forceGridLayout: Preference<Boolean> get() = booleanPreference("force_list_grid", false)
 
     val serverConfig: Preference<ServerConfiguration?> get() {
@@ -80,8 +92,11 @@ class Preferences(private val prefs: SharedPreferences) {
         transformWrite = { value -> value?.id }
     )
 
+    val fadeInDurationInSeconds: Preference<Int> get() =
+        intPreference("fade_in_duration", 0)
+
     val fadeInDuration: Preference<Duration> get() = TransformingPreferenceImpl(
-        intPreference("fade_in_duration", 0),
+        fadeInDurationInSeconds,
         transformGet = { value -> value.toDuration(DurationUnit.SECONDS) },
         transformWrite = { value -> value.inWholeSeconds.toInt() }
     )

@@ -26,8 +26,11 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import de.maniac103.squeezeclient.Preferences
 
 private val lightScheme = lightColorScheme(
     primary = primaryLight,
@@ -271,10 +274,20 @@ val unspecified_scheme = ColorFamily(
 
 @Composable
 fun AppTheme(
+    themePreference: Preferences.Preference<Preferences.AppThemeMode>,
     forceDarkTheme: Boolean = false,
     content: @Composable() () -> Unit
 ) {
-    val darkTheme = forceDarkTheme || isSystemInDarkTheme()
+    val themeSetting by themePreference.asFlow()
+        .collectAsStateWithLifecycle(themePreference.value)
+
+    val darkTheme = when {
+        forceDarkTheme -> true
+        themeSetting == Preferences.AppThemeMode.Dark -> true
+        themeSetting == Preferences.AppThemeMode.Light -> false
+        else -> isSystemInDarkTheme()
+    }
+
     val colorScheme = when {
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current

@@ -27,10 +27,6 @@
         <item name="cornerSize">10%</item>
     </style>
 
-    <style name="Preference.MaterialSwitchPreference" parent="Preference.SwitchPreferenceCompat.Material">
-        <item name="android:widgetLayout">@layout/preference_switch</item>
-    </style>
-
     <style name="ModalBottomSheetDialog" parent="Widget.Material3.BottomSheet.Modal">
         <item name="behavior_peekHeight">300dp</item>
     </style>

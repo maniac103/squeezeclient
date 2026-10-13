@@ -67,7 +67,6 @@
         <item name="colorSurfaceContainerHigh">@color/md_theme_surfaceContainerHigh</item>
         <item name="colorSurfaceContainerHighest">@color/md_theme_surfaceContainerHighest</item>
         <item name="colorDraggedItemBackground">@color/dragged_item_background</item>
-        <item name="switchPreferenceCompatStyle">@style/Preference.MaterialSwitchPreference</item>
     </style>
 
     <style name="ThemeOverlay.SqueezeClient.MediumContrast" parent="Theme.Material3.Light.NoActionBar">

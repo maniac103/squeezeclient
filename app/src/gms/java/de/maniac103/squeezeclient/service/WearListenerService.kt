@@ -17,18 +17,15 @@
 package de.maniac103.squeezeclient.service
 
 import android.content.Intent
-import androidx.core.content.edit
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ServiceLifecycleDispatcher
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.wearable.WearableListenerService
+import de.maniac103.squeezeclient.Preferences
+import de.maniac103.squeezeclient.cometd.ConnectionHelper
 import de.maniac103.squeezeclient.cometd.ConnectionState
-import de.maniac103.squeezeclient.extfuncs.connectionHelper
-import de.maniac103.squeezeclient.extfuncs.lastSelectedPlayer
-import de.maniac103.squeezeclient.extfuncs.prefs
-import de.maniac103.squeezeclient.extfuncs.putLastSelectedPlayer
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.PlayerStatus
 import de.maniac103.squeezeclient.service.mediasession.MediaService
@@ -51,11 +48,14 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.tasks.asTask
 import kotlinx.coroutines.withTimeoutOrNull
+import org.koin.android.ext.android.inject
 
 class WearListenerService :
     WearableListenerService(),
     LifecycleOwner {
     private val dispatcher = ServiceLifecycleDispatcher(this)
+    private val connectionHelper: ConnectionHelper by inject()
+    private val preferences: Preferences by inject()
     override val lifecycle: Lifecycle get() = dispatcher.lifecycle
 
     override fun onCreate() {
@@ -136,7 +136,7 @@ class WearListenerService :
         return if (playerInfos == null) {
             ListPlayersRequest.Response(false, emptyList(), null)
         } else {
-            val activePlayerId = prefs.lastSelectedPlayer?.id
+            val activePlayerId = preferences.lastSelectedPlayer.value?.id
             ListPlayersRequest.Response(true, playerInfos, activePlayerId)
         }
     }
@@ -175,9 +175,7 @@ class WearListenerService :
                 .first()
             val playerIsKnown = connectedState.players.any { it.id == playerId }
             if (playerIsKnown) {
-                prefs.edit {
-                    putLastSelectedPlayer(playerId)
-                }
+                preferences.lastSelectedPlayer.update(playerId)
                 connectionHelper.changePlaybackState(playerId, PlayerStatus.PlayState.Playing)
             }
             playerIsKnown

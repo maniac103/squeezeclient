@@ -18,24 +18,8 @@
 package de.maniac103.squeezeclient.extfuncs
 
 import android.content.Context
-import android.content.SharedPreferences
 import android.view.View
-import android.view.animation.Interpolator
 import androidx.core.text.layoutDirection
-import androidx.preference.PreferenceManager
-import androidx.work.WorkManager
-import de.maniac103.squeezeclient.SqueezeClientApplication
 
-val Context.connectionHelper get() =
-    (applicationContext as SqueezeClientApplication).connectionHelper
-val Context.jsonParser get() =
-    (applicationContext as SqueezeClientApplication).json
-val Context.httpClient get() =
-    (applicationContext as SqueezeClientApplication).httpClient
-val Context.workManager get() = WorkManager.getInstance(this)
-val Context.prefs: SharedPreferences get() =
-    PreferenceManager.getDefaultSharedPreferences(this)
-val Context.backProgressInterpolator: Interpolator get() =
-    (applicationContext as SqueezeClientApplication).backProgressInterpolator
 val Context.isRtl get() =
     resources.configuration.locales[0].layoutDirection == View.LAYOUT_DIRECTION_RTL

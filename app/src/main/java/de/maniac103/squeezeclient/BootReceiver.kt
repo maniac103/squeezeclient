@@ -20,15 +20,17 @@ package de.maniac103.squeezeclient
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import de.maniac103.squeezeclient.extfuncs.localPlayerEnabled
-import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.service.localplayer.LocalPlaybackService
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
-class BootReceiver : BroadcastReceiver() {
+class BootReceiver : BroadcastReceiver(), KoinComponent {
+    private val preferences: Preferences by inject()
+
     override fun onReceive(context: Context?, intent: Intent?) {
         if (intent?.action == Intent.ACTION_BOOT_COMPLETED) {
-            if (context?.prefs?.localPlayerEnabled == true) {
-                LocalPlaybackService.triggerStartOrStop(context)
+            if (preferences.localPlayerEnabled.value) {
+                context?.let { LocalPlaybackService.triggerStartOrStop(it) }
             }
         }
     }

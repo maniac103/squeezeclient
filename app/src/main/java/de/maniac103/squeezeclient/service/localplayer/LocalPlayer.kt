@@ -48,16 +48,16 @@ import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.exoplayer.util.EventLogger
 import androidx.media3.extractor.DefaultExtractorsFactory
 import de.maniac103.squeezeclient.BuildConfig
-import de.maniac103.squeezeclient.extfuncs.LocalPlayerVolumeMode
-import de.maniac103.squeezeclient.extfuncs.httpClient
-import de.maniac103.squeezeclient.extfuncs.localPlayerVolumeMode
-import de.maniac103.squeezeclient.extfuncs.prefs
+import de.maniac103.squeezeclient.Preferences
+import okhttp3.OkHttpClient
 import kotlin.math.roundToInt
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 import okhttp3.Response
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.get
 
 class LocalPlayer(
     context: Context,
@@ -71,8 +71,9 @@ class LocalPlayer(
     onAudioStreamFlushed: () -> Unit = {},
     private val onHeadersReceived: (response: Response) -> Unit = {},
     private val onMetadataReceived: (title: CharSequence, artworkUri: Uri?) -> Unit = { _, _ -> }
-) : Player.Listener {
-    private val prefs = context.prefs
+) : Player.Listener, KoinComponent {
+    private val preferences = get<Preferences>()
+    private val httpClient = get<OkHttpClient>()
     private val dataSourceFactory: HttpDataSource.Factory
     private val player: ExoPlayer
     private var lastPlaybackState = Player.STATE_IDLE
@@ -121,13 +122,13 @@ class LocalPlayer(
     private val playbackPositionTimestamp = AudioTimestamp()
 
     init {
-        dataSourceFactory = initDataSourceFactory(context)
+        dataSourceFactory = initDataSourceFactory()
         player = initPlayer(context)
     }
 
     @OptIn(UnstableApi::class)
-    private fun initDataSourceFactory(context: Context): HttpDataSource.Factory {
-        val client = context.httpClient.newBuilder()
+    private fun initDataSourceFactory(): HttpDataSource.Factory {
+        val client = httpClient.newBuilder()
             .addInterceptor { chain ->
                 val response = chain.proceed(chain.request())
                 onHeadersReceived(response)
@@ -162,9 +163,8 @@ class LocalPlayer(
         // The server sends the next track's stream command while the current track is still
         // playing. Pre-buffer it so it's ready once playback reaches the playlist item,
         // which is required for gapless track transitions.
-        player.setPreloadConfiguration(
+        player.preloadConfiguration =
             ExoPlayer.PreloadConfiguration(30.seconds.inWholeMicroseconds)
-        )
         player.addListener(this)
         if (BuildConfig.DEBUG) {
             player.addAnalyticsListener(EventLogger())
@@ -324,18 +324,18 @@ class LocalPlayer(
         // instead of restoring the saved system volume; the saved volume is only restored
         // once playback actually stops or pauses.
         val playbackOngoing = readyForPlaybackOrBuffering && !paused
-        val mode = prefs.localPlayerVolumeMode
+        val mode = preferences.localPlayerVolumeMode.value
         when {
-            isSetVolume && mode == LocalPlayerVolumeMode.PlayerOnly -> {
+            isSetVolume && mode == Preferences.LocalPlayerVolumeMode.PlayerOnly -> {
                 playerInternalVolume = volume
                 player.volume = volume * currentReplayGain
             }
 
-            isSetVolume && mode == LocalPlayerVolumeMode.Device -> {
+            isSetVolume && mode == Preferences.LocalPlayerVolumeMode.Device -> {
                 applyVolumeAsDeviceVolume(volume)
             }
 
-            playbackOngoing && mode == LocalPlayerVolumeMode.DeviceWhilePlaying -> {
+            playbackOngoing && mode == Preferences.LocalPlayerVolumeMode.DeviceWhilePlaying -> {
                 if (player.deviceInfo.maxVolume > 0) {
                     if (lastSavedDeviceVolume == null) {
                         lastSavedDeviceVolume = player.deviceVolume

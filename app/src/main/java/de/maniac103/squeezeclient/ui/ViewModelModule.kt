@@ -17,10 +17,7 @@
 
 package de.maniac103.squeezeclient.ui
 
-import de.maniac103.squeezeclient.Preferences
-import de.maniac103.squeezeclient.SqueezeClientApplication
 import de.maniac103.squeezeclient.cometd.request.LibrarySearchRequest
-import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
@@ -43,14 +40,6 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 val viewModelModule = module {
-    single {
-        (androidApplication() as SqueezeClientApplication).connectionHelper
-    }
-
-    single {
-        Preferences((androidApplication() as SqueezeClientApplication).prefs)
-    }
-
     viewModel {
         MainActivityViewModel(
             connectionHelper = get(),
@@ -127,12 +116,14 @@ val viewModelModule = module {
     viewModel { params ->
         SearchViewModel(
             application = androidApplication(),
+            connectionHelper = get(),
             playerId = params.get<PlayerId>()
         )
     }
     viewModel { params ->
         MainContentViewModel(
             application = androidApplication(),
+            connectionHelper = get(),
             playerId = params.get<PlayerId>()
         )
     }

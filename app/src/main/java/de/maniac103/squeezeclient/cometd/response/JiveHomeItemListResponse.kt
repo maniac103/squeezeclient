@@ -19,7 +19,6 @@ package de.maniac103.squeezeclient.cometd.response
 
 import android.content.Context
 import de.maniac103.squeezeclient.R
-import de.maniac103.squeezeclient.extfuncs.jsonParser
 import de.maniac103.squeezeclient.model.JiveActions
 import de.maniac103.squeezeclient.model.JiveHomeMenuItem
 import de.maniac103.squeezeclient.model.JiveWindow
@@ -63,8 +62,8 @@ data class JiveHomeItemListResponse(
         }
     }
 
-    fun asModelItems(context: Context): List<JiveHomeMenuItem> {
-        val result = items.map { context.jsonParser.parseToJiveHomeMenuItem(it) }.toMutableList()
+    fun asModelItems(json: Json, context: Context): List<JiveHomeMenuItem> {
+        val result = items.map { json.parseToJiveHomeMenuItem(it) }.toMutableList()
         result.addAll(
             FIXED_ITEMS
                 .filter { info ->

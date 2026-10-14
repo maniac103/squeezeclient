@@ -28,11 +28,11 @@ import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import de.maniac103.squeezeclient.R
+import de.maniac103.squeezeclient.cometd.ConnectionHelper
 import de.maniac103.squeezeclient.cometd.ConnectionState
 import de.maniac103.squeezeclient.databinding.ActivityPlayerManagementBinding
 import de.maniac103.squeezeclient.extfuncs.ViewEdge
 import de.maniac103.squeezeclient.extfuncs.addSystemBarAndCutoutInsetsListener
-import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.PlayerStatus
 import kotlin.time.Duration.Companion.milliseconds
@@ -50,8 +50,10 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
+import org.koin.android.ext.android.inject
 
 class PlayerManagementActivity : AppCompatActivity() {
+    private val connectionHelper: ConnectionHelper by inject()
     private lateinit var binding: ActivityPlayerManagementBinding
     private lateinit var dragTargetAdapter: DragTargetAdapter
     private var disconnectFinishJob: Job? = null

@@ -41,12 +41,10 @@ import androidx.media3.session.MediaSessionService
 import androidx.media3.session.SessionCommand
 import androidx.media3.session.SessionResult
 import com.google.common.util.concurrent.ListenableFuture
+import de.maniac103.squeezeclient.Preferences
 import de.maniac103.squeezeclient.R
+import de.maniac103.squeezeclient.cometd.ConnectionHelper
 import de.maniac103.squeezeclient.cometd.ConnectionState
-import de.maniac103.squeezeclient.extfuncs.connectionHelper
-import de.maniac103.squeezeclient.extfuncs.httpClient
-import de.maniac103.squeezeclient.extfuncs.lastSelectedPlayer
-import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.service.NotificationIds
 import de.maniac103.squeezeclient.ui.MainActivity
@@ -60,12 +58,17 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.guava.future
 import kotlinx.coroutines.launch
+import okhttp3.OkHttpClient
+import org.koin.android.ext.android.inject
 
 @OptIn(UnstableApi::class, ExperimentalTime::class)
 class MediaService :
     MediaSessionService(),
     Player.Listener,
     MediaSession.Callback {
+    private val connectionHelper: ConnectionHelper by inject()
+    private val preferences: Preferences by inject()
+    private val httpClient: OkHttpClient by inject()
     private lateinit var player: SqueezeboxMediaPlayer
     private lateinit var mediaSession: MediaSession
     private var lastDisconnectionTime: Instant? = null
@@ -76,7 +79,7 @@ class MediaService :
     @OptIn(UnstableApi::class)
     override fun onCreate() {
         super.onCreate()
-        player = SqueezeboxMediaPlayer(applicationContext, connectionHelper, lifecycle).apply {
+        player = SqueezeboxMediaPlayer(preferences, connectionHelper, lifecycle).apply {
             addListener(this@MediaService)
         }
 
@@ -102,7 +105,7 @@ class MediaService :
             }
         }
 
-        player.currentPlayer = prefs.lastSelectedPlayer
+        player.currentPlayer = preferences.lastSelectedPlayer.value
 
         val powerButton = CommandButton.Builder(CommandButton.ICON_UNDEFINED)
             .setDisplayName(getString(R.string.notif_action_player_power))

@@ -29,7 +29,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
                 DownloadWorker.handleRetryAction(context, intent)
 
             DownloadWorker.NOTIFICATION_ACTION_DISMISS_FAILED ->
-                DownloadWorker.handleDismissAction(context)
+                DownloadWorker.handleDismissAction()
         }
     }
 }

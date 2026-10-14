@@ -17,8 +17,9 @@
 
 package de.maniac103.squeezeclient.cometd
 
+import android.app.Application
 import android.util.Log
-import de.maniac103.squeezeclient.SqueezeClientApplication
+import de.maniac103.squeezeclient.Preferences
 import de.maniac103.squeezeclient.cometd.request.ChangePlaybackStateRequest
 import de.maniac103.squeezeclient.cometd.request.ClearPlaylistRequest
 import de.maniac103.squeezeclient.cometd.request.ExecuteActionRequest
@@ -60,11 +61,8 @@ import de.maniac103.squeezeclient.cometd.response.TrackInfoListResponse
 import de.maniac103.squeezeclient.cometd.response.parseToJiveHomeMenuItem
 import de.maniac103.squeezeclient.extfuncs.extractSlimBrowseAlbumIdForAlbumListResponse
 import de.maniac103.squeezeclient.extfuncs.extractSlimBrowseTrackIdForTrackListResponse
-import de.maniac103.squeezeclient.extfuncs.fadeInDuration
 import de.maniac103.squeezeclient.extfuncs.fetchesAlbumList
 import de.maniac103.squeezeclient.extfuncs.fetchesAlbumTrackList
-import de.maniac103.squeezeclient.extfuncs.prefs
-import de.maniac103.squeezeclient.extfuncs.serverConfig
 import de.maniac103.squeezeclient.model.DisplayMessage
 import de.maniac103.squeezeclient.model.DownloadRequestData
 import de.maniac103.squeezeclient.model.JiveAction
@@ -106,6 +104,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.yield
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.decodeFromJsonElement
@@ -113,9 +112,15 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
+import okhttp3.OkHttpClient
+import org.koin.core.component.KoinComponent
 
-class ConnectionHelper(private val appContext: SqueezeClientApplication) {
-    private val json = appContext.json
+class ConnectionHelper(
+    private val appContext: Application,
+    private val preferences: Preferences,
+    private val json: Json,
+    private val httpClient: OkHttpClient
+) : KoinComponent {
     private var client: CometdClient? = null
     private val stateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected)
     val state = stateFlow.asStateFlow()
@@ -131,8 +136,7 @@ class ConnectionHelper(private val appContext: SqueezeClientApplication) {
             // already connected
             return
         }
-        val prefs = appContext.prefs
-        val client = prefs.serverConfig?.let { CometdClient(appContext.httpClient, json, it) }
+        val client = preferences.serverConfig.value?.let { CometdClient(httpClient, json, it) }
             ?: return
 
         this.client = client
@@ -266,7 +270,7 @@ class ConnectionHelper(private val appContext: SqueezeClientApplication) {
 
     suspend fun advanceToPlaylistPosition(playerId: PlayerId, position: Int) =
         publishOneShotRequest(
-            SetPlaylistPositionRequest(playerId, position, appContext.prefs.fadeInDuration)
+            SetPlaylistPositionRequest(playerId, position, preferences.fadeInDuration.value)
         )
 
     suspend fun clearCurrentPlaylist(playerId: PlayerId) =
@@ -294,9 +298,9 @@ class ConnectionHelper(private val appContext: SqueezeClientApplication) {
             }
 
             PlayerStatus.PlayState.Playing -> if (currentState == PlayerStatus.PlayState.Paused) {
-                ChangePlaybackStateRequest.Unpause(playerId, appContext.prefs.fadeInDuration)
+                ChangePlaybackStateRequest.Unpause(playerId, preferences.fadeInDuration.value)
             } else {
-                ChangePlaybackStateRequest.Play(playerId, appContext.prefs.fadeInDuration)
+                ChangePlaybackStateRequest.Play(playerId, preferences.fadeInDuration.value)
             }
         } ?: return
         publishOneShotRequest(request)
@@ -363,7 +367,7 @@ class ConnectionHelper(private val appContext: SqueezeClientApplication) {
     private suspend fun fetchHomeMenu(playerId: PlayerId) =
         doRequestWithResult<JiveHomeItemListResponse>(
             FetchHomeMenuRequest(playerId)
-        ).asModelItems(appContext).associateBy { it.id }
+        ).asModelItems(json, appContext).associateBy { it.id }
 
     private suspend inline fun <reified T> doRequestWithResult(request: Request): T {
         val jsonData = publishOneShotRequest(request)

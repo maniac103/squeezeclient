@@ -24,15 +24,14 @@ import android.view.KeyEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.browser.customtabs.CustomTabsIntent
-import androidx.compose.material3.MaterialTheme
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.markodevcic.peko.PermissionRequester
 import com.markodevcic.peko.PermissionResult
 import de.maniac103.squeezeclient.Preferences
 import de.maniac103.squeezeclient.R
+import de.maniac103.squeezeclient.cometd.ConnectionHelper
 import de.maniac103.squeezeclient.extfuncs.await
-import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.model.DownloadRequestData
 import de.maniac103.squeezeclient.service.DownloadWorker
 import de.maniac103.squeezeclient.service.localplayer.LocalPlaybackService
@@ -48,6 +47,7 @@ import de.maniac103.squeezeclient.ui.theme.AppTheme
 import de.maniac103.squeezeclient.ui.volume.VolumePopupViewModel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
@@ -146,8 +146,9 @@ class MainActivity : ComponentActivity() {
         if (!requestNotificationPermissionForDownload()) {
             return@launch
         }
+        val connectionHelper: ConnectionHelper = get()
         val items = connectionHelper.fetchSongInfosForDownload(data)
-        DownloadWorker.enqueue(this@MainActivity, items)
+        DownloadWorker.enqueue(items)
     }
 
     private suspend fun requestNotificationPermissionForDownload(): Boolean {

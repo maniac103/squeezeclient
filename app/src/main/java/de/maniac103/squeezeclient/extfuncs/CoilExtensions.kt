@@ -23,9 +23,6 @@ import coil3.network.httpHeaders
 import coil3.request.ImageRequest
 import de.maniac103.squeezeclient.model.ServerConfiguration
 
-fun ImageRequest.Builder.addServerCredentialsIfNeeded(context: Context) =
-    addServerCredentialsIfNeeded(context.prefs.serverConfig)
-
 fun ImageRequest.Builder.addServerCredentialsIfNeeded(serverConfig: ServerConfiguration?) = apply {
     serverConfig?.credentialsAsAuthorizationHeader?.let {
         val headers = NetworkHeaders.Builder()

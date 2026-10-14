@@ -21,9 +21,8 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import de.maniac103.squeezeclient.R
+import de.maniac103.squeezeclient.cometd.ConnectionHelper
 import de.maniac103.squeezeclient.cometd.request.LibrarySearchRequest
-import de.maniac103.squeezeclient.extfuncs.backProgressInterpolator
-import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.model.LocalLibrarySearchResultCounts
 import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
@@ -37,6 +36,7 @@ import kotlinx.coroutines.launch
 
 class SearchViewModel(
     private val application: Application,
+    private val connectionHelper: ConnectionHelper,
     private val playerId: PlayerId
 ) : AndroidViewModel(application) {
     private val visibleFlowInternal = MutableStateFlow(false)
@@ -66,8 +66,10 @@ class SearchViewModel(
 
     // FIXME: keep this in SearchBox?
     fun setBackProgress(progress: Float) {
-        backProgressFlowInternal.value =
-            0.3F * application.backProgressInterpolator.getInterpolation(progress)
+        val decelerateQuint = { fraction: Float ->
+            1f - (1f - fraction).let { it * it * it * it * it }
+        }
+        backProgressFlowInternal.value = 0.3F * decelerateQuint(progress)
     }
 
     fun updateQuery(query: String) {
@@ -98,11 +100,11 @@ class SearchViewModel(
     private fun submitQuery(query: String) = viewModelScope.launch {
         launch {
             val results =
-                application.connectionHelper.getLocalLibrarySearchResultCounts(query)
+                connectionHelper.getLocalLibrarySearchResultCounts(query)
             localResultsFlow.value = createLocalCategories(results)
         }
         launch {
-            val results = application.connectionHelper.getRadioSearchResults(
+            val results = connectionHelper.getRadioSearchResults(
                 playerId,
                 query,
                 PagingParams.CountOnly

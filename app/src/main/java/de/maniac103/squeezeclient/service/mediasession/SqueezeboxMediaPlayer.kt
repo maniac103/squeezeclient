@@ -17,7 +17,6 @@
 
 package de.maniac103.squeezeclient.service.mediasession
 
-import android.content.Context
 import android.os.Looper
 import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
@@ -30,11 +29,9 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
 import androidx.media3.common.SimpleBasePlayer
 import androidx.media3.common.util.UnstableApi
+import de.maniac103.squeezeclient.Preferences
 import de.maniac103.squeezeclient.cometd.ConnectionHelper
 import de.maniac103.squeezeclient.cometd.request.PlaybackButtonRequest
-import de.maniac103.squeezeclient.extfuncs.prefs
-import de.maniac103.squeezeclient.extfuncs.serverConfig
-import de.maniac103.squeezeclient.extfuncs.volumeStepSize
 import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.PlayerStatus
@@ -53,7 +50,7 @@ import kotlinx.coroutines.launch
 
 @UnstableApi
 class SqueezeboxMediaPlayer(
-    private val appContext: Context,
+    private val preferences: Preferences,
     private val connectionHelper: ConnectionHelper,
     private val lifecycle: Lifecycle
 ) : SimpleBasePlayer(Looper.getMainLooper()),
@@ -96,14 +93,14 @@ class SqueezeboxMediaPlayer(
     override fun handleIncreaseDeviceVolume(flags: Int) = future {
         val playerId = currentPlayer ?: return@future
         val currentVolume = playerState?.currentVolume ?: return@future
-        val stepSize = appContext.prefs.volumeStepSize
+        val stepSize = preferences.volumeStepSize.value
         connectionHelper.setVolume(playerId, currentVolume + stepSize)
     }
 
     override fun handleDecreaseDeviceVolume(flags: Int) = future {
         val playerId = currentPlayer ?: return@future
         val currentVolume = playerState?.currentVolume ?: return@future
-        val stepSize = appContext.prefs.volumeStepSize
+        val stepSize = preferences.volumeStepSize.value
         connectionHelper.setVolume(playerId, currentVolume - stepSize)
     }
 
@@ -410,7 +407,7 @@ class SqueezeboxMediaPlayer(
 
     private fun Playlist.PlaylistItem.toMediaItemDataBuilder(position: Int): MediaItemData.Builder {
         val artworkUri = extractIconUrl()
-            ?.let { appContext.prefs.serverConfig?.url?.resolve(it)?.toString() ?: it }
+            ?.let { preferences.serverConfig.value?.url?.resolve(it)?.toString() ?: it }
             ?.toUri()
         val metadata = MediaMetadata.Builder()
             .setTitle(title)

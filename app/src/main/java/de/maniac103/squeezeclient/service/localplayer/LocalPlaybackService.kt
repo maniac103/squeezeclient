@@ -30,7 +30,6 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.PendingIntentCompat
 import androidx.core.app.ServiceCompat
-import androidx.core.content.edit
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ServiceLifecycleDispatcher
@@ -41,13 +40,10 @@ import androidx.work.Constraints
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
+import androidx.work.WorkManager
+import de.maniac103.squeezeclient.Preferences
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.extfuncs.getOrCreateNotificationChannel
-import de.maniac103.squeezeclient.extfuncs.localPlayerEnabled
-import de.maniac103.squeezeclient.extfuncs.localPlayerName
-import de.maniac103.squeezeclient.extfuncs.prefs
-import de.maniac103.squeezeclient.extfuncs.putLocalPlayerName
-import de.maniac103.squeezeclient.extfuncs.workManager
 import de.maniac103.squeezeclient.service.NotificationIds
 import de.maniac103.squeezeclient.service.mediasession.MediaService
 import de.maniac103.squeezeclient.ui.MainActivity
@@ -68,12 +64,16 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import okhttp3.Response
+import org.koin.android.ext.android.inject
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.get
 
 @OptIn(ExperimentalTime::class)
 class LocalPlaybackService :
     Service(),
     LifecycleOwner {
     private val dispatcher = ServiceLifecycleDispatcher(this)
+    private val preferences: Preferences by inject()
     private lateinit var slimproto: SlimprotoSocket
     private lateinit var player: LocalPlayer
 
@@ -92,7 +92,7 @@ class LocalPlaybackService :
     override fun onCreate() {
         dispatcher.onServicePreSuperOnCreate()
         super.onCreate()
-        slimproto = SlimprotoSocket(prefs)
+        slimproto = SlimprotoSocket(preferences)
         player = LocalPlayer(
             this,
             onPlaybackReady = { buffering -> onPlaybackReady(buffering) },
@@ -418,7 +418,7 @@ class LocalPlaybackService :
                 if (command.type == SlimprotoSocket.SettingType.PlayerName) {
                     // Trim \0 characters from saved setting that were written before
                     // the trimming code below was added
-                    val name = prefs.localPlayerName?.trim('\u0000')
+                    val name = preferences.localPlayerName.value?.trim('\u0000')
                         ?: "SqueezeClient - ${Build.MODEL}"
                     slimproto.sendSetSetting(command.type, name.toByteArray(Charsets.US_ASCII))
                 }
@@ -429,9 +429,7 @@ class LocalPlaybackService :
                     // The server sends the name 0 terminated; remove the termination before saving
                     val name = String(command.data).trim('\u0000')
                     Log.d(TAG, "Changing local player name to $name")
-                    prefs.edit {
-                        putLocalPlayerName(name)
-                    }
+                    preferences.localPlayerName.update(name)
                 }
             }
 
@@ -447,13 +445,15 @@ class LocalPlaybackService :
         data class PlayingOrPaused(val title: CharSequence?, val paused: Boolean) : SlimprotoState()
     }
 
-    companion object {
+    companion object : KoinComponent {
         private const val TAG = "LocalPlaybackService"
 
         fun triggerStartOrStop(context: Context) {
+            val preferences: Preferences = get()
+            val workManager: WorkManager = get()
             val serviceIntent = Intent(context, LocalPlaybackService::class.java)
             when {
-                !context.prefs.localPlayerEnabled -> {
+                !preferences.localPlayerEnabled.value -> {
                     // Local player disabled -> service not needed
                     context.stopService(serviceIntent)
                 }
@@ -484,7 +484,7 @@ class LocalPlaybackService :
                                 .build()
                         )
                         .build()
-                    context.workManager.enqueue(request)
+                    workManager.enqueue(request)
                 }
             }
         }

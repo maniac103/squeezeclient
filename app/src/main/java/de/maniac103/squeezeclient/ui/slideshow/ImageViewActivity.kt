@@ -65,8 +65,6 @@ import coil3.request.ImageRequest
 import de.maniac103.squeezeclient.Preferences
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.extfuncs.addServerCredentialsIfNeeded
-import de.maniac103.squeezeclient.extfuncs.prefs
-import de.maniac103.squeezeclient.extfuncs.serverConfig
 import de.maniac103.squeezeclient.model.SlideshowImage
 import de.maniac103.squeezeclient.ui.theme.AppTheme
 import org.koin.android.ext.android.inject
@@ -85,13 +83,14 @@ class ImageViewActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
+            val serverConfig = preferences.serverConfig.value
             val imageUrl = item.imageUrl.let { url ->
-                prefs.serverConfig?.url?.resolve(url)?.toString() ?: url
+                serverConfig?.url?.resolve(url)?.toString() ?: url
             }
 
             val imageRequest = ImageRequest.Builder(this)
                 .data(imageUrl)
-                .addServerCredentialsIfNeeded(this)
+                .addServerCredentialsIfNeeded(serverConfig)
                 .build()
 
             AppTheme(

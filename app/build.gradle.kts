@@ -171,6 +171,7 @@ dependencies {
     implementation(libs.google.material)
     implementation(libs.koin.core)
     implementation(libs.koin.compose)
+    implementation(libs.koin.workmanager)
     implementation(libs.kotlinx.coroutines.guava)
     implementation(libs.kotlinx.datetime)
     implementation(libs.kotlinx.serialization.json)

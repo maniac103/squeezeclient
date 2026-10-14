@@ -18,51 +18,27 @@
 package de.maniac103.squeezeclient
 
 import android.app.Application
-import android.content.SharedPreferences
 import android.os.Build
-import android.view.animation.AnimationUtils
-import android.view.animation.Interpolator
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.work.WorkManager
 import com.google.android.material.color.DynamicColors
 import com.markodevcic.peko.PermissionRequester
-import de.maniac103.squeezeclient.cometd.ConnectionHelper
-import de.maniac103.squeezeclient.extfuncs.prefs
-import de.maniac103.squeezeclient.extfuncs.serverConfig
 import de.maniac103.squeezeclient.service.DownloadWorker
 import de.maniac103.squeezeclient.service.localplayer.LocalPlaybackService
 import de.maniac103.squeezeclient.ui.viewModelModule
-import kotlinx.serialization.json.Json
-import okhttp3.OkHttpClient
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import org.koin.android.ext.android.inject
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
+import org.koin.androidx.workmanager.koin.workManagerFactory
 import org.koin.core.context.startKoin
 
-class SqueezeClientApplication :
-    Application(),
-    SharedPreferences.OnSharedPreferenceChangeListener {
-    val json = Json {
-        coerceInputValues = true
-        ignoreUnknownKeys = true
-    }
-    val httpClient = OkHttpClient.Builder()
-        .addInterceptor { chain ->
-            val request = chain.request()
-            val serverConfig = prefs.serverConfig
-            val authHeader = serverConfig?.credentialsAsAuthorizationHeader
-            val actualRequest = when {
-                request.url.host == serverConfig?.url?.host && authHeader != null ->
-                    request.newBuilder().addHeader("Authorization", authHeader).build()
-
-                else -> request
-            }
-            chain.proceed(actualRequest)
-        }
-        .followRedirects(true)
-        .build()
-    val connectionHelper = ConnectionHelper(this)
-    val backProgressInterpolator: Interpolator by lazy {
-        AnimationUtils.loadInterpolator(this, android.R.interpolator.decelerate_quint)!!
-    }
+class SqueezeClientApplication : Application() {
+    private val applicationScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
     override fun onCreate() {
         DynamicColors.applyToActivitiesIfAvailable(this)
@@ -72,31 +48,38 @@ class SqueezeClientApplication :
         startKoin {
             androidLogger()
             androidContext(this@SqueezeClientApplication)
-            modules(viewModelModule)
+            workManagerFactory()
+            modules(globalModule, viewModelModule)
         }
 
-        // Don't use a lambda here, it might be garbage collected
-        // (internally, listeners are stored in a WeakHashMap)
-        prefs.registerOnSharedPreferenceChangeListener(this)
-        updateDefaultNightMode()
+        val preferences: Preferences by inject()
+
+        applicationScope.launch {
+            preferences.appTheme.asFlow().collect { themeSetting ->
+                updateDefaultNightMode(themeSetting)
+            }
+        }
+        applicationScope.launch {
+            preferences.localPlayerEnabled.asFlow().collect {
+                LocalPlaybackService.triggerStartOrStop(this@SqueezeClientApplication)
+            }
+        }
 
         DownloadWorker.startObservingStatus(this)
     }
 
-    override fun onSharedPreferenceChanged(prefs: SharedPreferences?, key: String?) {
-        when (key) {
-            "app_theme" -> updateDefaultNightMode()
-            "local_player_enabled" -> LocalPlaybackService.triggerStartOrStop(this)
-        }
+    override fun onTerminate() {
+        applicationScope.cancel()
+        super.onTerminate()
     }
 
-    private fun updateDefaultNightMode() {
-        val mode = when (prefs.getString("app_theme", null)) {
-            "light" -> AppCompatDelegate.MODE_NIGHT_NO
+    private fun updateDefaultNightMode(setting: Preferences.AppThemeMode) {
+        val mode = when (setting) {
+            Preferences.AppThemeMode.Light -> AppCompatDelegate.MODE_NIGHT_NO
 
-            "dark" -> AppCompatDelegate.MODE_NIGHT_YES
+            Preferences.AppThemeMode.Dark -> AppCompatDelegate.MODE_NIGHT_YES
 
-            else -> when {
+            Preferences.AppThemeMode.SystemDefault -> when {
                 Build.VERSION.SDK_INT < Build.VERSION_CODES.Q ->
                     AppCompatDelegate.MODE_NIGHT_AUTO_BATTERY
 

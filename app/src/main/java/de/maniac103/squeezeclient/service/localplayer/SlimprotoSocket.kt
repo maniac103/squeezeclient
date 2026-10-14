@@ -17,15 +17,13 @@
 
 package de.maniac103.squeezeclient.service.localplayer
 
-import android.content.SharedPreferences
 import android.net.Uri
 import android.util.Log
 import androidx.core.net.toUri
-import de.maniac103.squeezeclient.extfuncs.getOrCreateDeviceIdentifier
+import de.maniac103.squeezeclient.Preferences
 import de.maniac103.squeezeclient.extfuncs.putAsAscii
 import de.maniac103.squeezeclient.extfuncs.readRemainderAsArray
 import de.maniac103.squeezeclient.extfuncs.readString
-import de.maniac103.squeezeclient.extfuncs.serverConfig
 import de.maniac103.squeezeclient.extfuncs.skip
 import de.maniac103.squeezeclient.model.PlayerId
 import java.io.Closeable
@@ -44,9 +42,9 @@ import okio.buffer
 import okio.sink
 import okio.source
 
-class SlimprotoSocket(prefs: SharedPreferences) {
-    val host: String? = prefs.serverConfig?.url?.host
-    private val deviceIdentifier: UUID = prefs.getOrCreateDeviceIdentifier()
+class SlimprotoSocket(preferences: Preferences) {
+    val host: String? = preferences.serverConfig.value?.url?.host
+    private val deviceIdentifier: UUID = preferences.getOrCreateDeviceIdentifier()
     private var socket: SocketHolder? = null
 
     private val playerMac get() = ByteArray(6) { i ->

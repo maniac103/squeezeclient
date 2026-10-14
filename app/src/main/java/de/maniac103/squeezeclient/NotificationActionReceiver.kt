@@ -32,13 +32,13 @@ class NotificationActionReceiver : BroadcastReceiver() {
             try {
                 when (intent?.action) {
                     DownloadWorker.NOTIFICATION_ACTION_RETRY_DOWNLOAD ->
-                        DownloadWorker.handleRetryAction(context)
+                        DownloadWorker.handleRetryAction()
 
                     DownloadWorker.NOTIFICATION_ACTION_CANCEL_DOWNLOAD ->
-                        DownloadWorker.handleCancelAction(context)
+                        DownloadWorker.handleCancelAction()
 
                     DownloadWorker.NOTIFICATION_ACTION_DISMISS_FAILED ->
-                        DownloadWorker.handleDismissAction(context)
+                        DownloadWorker.handleDismissAction()
                 }
             } finally {
                 pending.finish()

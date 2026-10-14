@@ -38,21 +38,17 @@ import androidx.work.ForegroundInfo
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
+import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import de.maniac103.squeezeclient.BuildConfig
 import de.maniac103.squeezeclient.NotificationActionReceiver
+import de.maniac103.squeezeclient.Preferences
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.database.DownloadEntity
 import de.maniac103.squeezeclient.database.DownloadState
-import de.maniac103.squeezeclient.extfuncs.DownloadFolderStructure
-import de.maniac103.squeezeclient.extfuncs.database
-import de.maniac103.squeezeclient.extfuncs.downloadFolderStructure
+import de.maniac103.squeezeclient.database.SqueezeClientDatabase
 import de.maniac103.squeezeclient.extfuncs.getOrCreateNotificationChannel
-import de.maniac103.squeezeclient.extfuncs.httpClient
-import de.maniac103.squeezeclient.extfuncs.prefs
-import de.maniac103.squeezeclient.extfuncs.serverConfig
-import de.maniac103.squeezeclient.extfuncs.workManager
 import de.maniac103.squeezeclient.model.DownloadSongInfo
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import kotlin.time.Clock
@@ -60,6 +56,7 @@ import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.ResponseBody
 import okio.Buffer
@@ -67,16 +64,23 @@ import okio.ForwardingSource
 import okio.buffer
 import okio.sink
 import okio.use
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.get
 
-class DownloadWorker(context: Context, params: WorkerParameters) :
-    CoroutineWorker(context, params) {
+class DownloadWorker(
+    context: Context,
+    params: WorkerParameters,
+    private val preferences: Preferences,
+    private val httpClient: OkHttpClient,
+    private val database: SqueezeClientDatabase
+) : CoroutineWorker(context, params) {
     private var progress = Data.EMPTY
 
     override suspend fun doWork(): Result {
-        val serverConfig = applicationContext.prefs.serverConfig
+        val serverConfig = preferences.serverConfig.value
             ?: return Result.failure()
-        val dao = applicationContext.database.downloadDao()
-        val folderStructure = applicationContext.prefs.downloadFolderStructure
+        val dao = database.downloadDao()
+        val folderStructure = preferences.downloadFolderStructure.value
 
         dao.resetInProgress()
 
@@ -102,11 +106,10 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
     private suspend fun downloadOneFile(
         item: DownloadSongInfo,
         serverConfig: ServerConfiguration,
-        folderStructure: DownloadFolderStructure,
+        folderStructure: Preferences.DownloadFolderStructure,
         index: Int,
         totalCount: Int
     ) {
-        val client = applicationContext.httpClient
         val resolver = applicationContext.contentResolver
 
         updateProgress(item, 0, null, index, totalCount)
@@ -124,7 +127,7 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
             .build()
 
         withContext(Dispatchers.IO) {
-            val responseBody = client.newCall(request)
+            val responseBody = httpClient.newCall(request)
                 .execute()
                 .body
 
@@ -229,21 +232,21 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
 
     private fun DownloadSongInfo.insertIntoMediaProvider(
         mimeType: String?,
-        folderStructure: DownloadFolderStructure
+        folderStructure: Preferences.DownloadFolderStructure
     ): Uri? {
         val pathSegments = relativeStoragePath.toUri().pathSegments
         val artistForFolder = albumArtist ?: artist
 
         val relativePath = when (folderStructure) {
-            DownloadFolderStructure.Artist -> artistForFolder
+            Preferences.DownloadFolderStructure.Artist -> artistForFolder
 
-            DownloadFolderStructure.Album -> album
+            Preferences.DownloadFolderStructure.Album -> album
 
-            DownloadFolderStructure.ArtistAlbum -> "$artistForFolder - $album"
+            Preferences.DownloadFolderStructure.ArtistAlbum -> "$artistForFolder - $album"
 
-            DownloadFolderStructure.AlbumUnderArtist -> "$artistForFolder/$album"
+            Preferences.DownloadFolderStructure.AlbumUnderArtist -> "$artistForFolder/$album"
 
-            DownloadFolderStructure.AsOnServer -> {
+            Preferences.DownloadFolderStructure.AsOnServer -> {
                 pathSegments.dropLast(1).joinToString(separator = "/")
             }
         }
@@ -282,7 +285,7 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
         const val CURRENT_ITEM = "current_item"
     }
 
-    companion object {
+    companion object : KoinComponent {
         private const val TAG = "DownloadWorker"
         private const val WORK_NAME = "song_download"
 
@@ -293,17 +296,17 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
         const val NOTIFICATION_ACTION_CANCEL_DOWNLOAD =
             BuildConfig.APPLICATION_ID + ".action.CANCEL_DOWNLOAD"
 
-        suspend fun enqueue(context: Context, items: List<DownloadSongInfo>) {
-            val dao = context.database.downloadDao()
-            dao.insertAll(items.map { DownloadEntity(it) })
-            enqueueWorker(context)
+        suspend fun enqueue(items: List<DownloadSongInfo>) {
+            val database = get<SqueezeClientDatabase>()
+            database.downloadDao().insertAll(items.map { DownloadEntity(it) })
+            enqueueWorker()
         }
 
         suspend fun observeStatus(context: Context) {
             val notifManager = NotificationManagerCompat.from(context)
-            val dao = context.database.downloadDao()
+            val database = get<SqueezeClientDatabase>()
 
-            dao.observeFailedCount().collect { count ->
+            database.downloadDao().observeFailedCount().collect { count ->
                 val notificationId = NotificationIds.DOWNLOAD_FAILURE
                 val channel = context.getOrCreateDownloadWorkerNotificationChannel()
                 if (count > 0) {
@@ -317,29 +320,31 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
             }
         }
 
-        suspend fun handleRetryAction(context: Context) {
-            val dao = context.database.downloadDao()
-            dao.retryFailed()
-            enqueueWorker(context)
+        suspend fun handleRetryAction() {
+            val database = get<SqueezeClientDatabase>()
+            database.downloadDao().retryFailed()
+            enqueueWorker()
         }
 
-        suspend fun handleDismissAction(context: Context) {
-            val dao = context.database.downloadDao()
-            dao.deleteFailed()
+        suspend fun handleDismissAction() {
+            val database = get<SqueezeClientDatabase>()
+            database.downloadDao().deleteFailed()
         }
 
-        suspend fun handleCancelAction(context: Context) {
-            val dao = context.database.downloadDao()
-            dao.deleteUnfinished()
-            context.workManager.cancelUniqueWork(WORK_NAME)
+        suspend fun handleCancelAction() {
+            val database = get<SqueezeClientDatabase>()
+            val workManager = get<WorkManager>()
+            database.downloadDao().deleteUnfinished()
+            workManager.cancelUniqueWork(WORK_NAME)
         }
 
-        private fun enqueueWorker(context: Context) {
+        private fun enqueueWorker() {
+            val workManager = get<WorkManager>()
             val request = OneTimeWorkRequestBuilder<DownloadWorker>()
                 .setConstraints(Constraints(requiredNetworkType = NetworkType.CONNECTED))
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .build()
-            context.workManager.enqueueUniqueWork(
+            workManager.enqueueUniqueWork(
                 uniqueWorkName = WORK_NAME,
                 existingWorkPolicy = ExistingWorkPolicy.APPEND_OR_REPLACE,
                 request = request

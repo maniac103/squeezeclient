@@ -20,14 +20,11 @@ package de.maniac103.squeezeclient.ui.maincontent
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
-import androidx.navigation3.scene.SceneInfo
 import androidx.navigationevent.NavigationEventTransitionState
-import androidx.navigationevent.compose.NavigationEventState
 import de.maniac103.squeezeclient.R
+import de.maniac103.squeezeclient.cometd.ConnectionHelper
 import de.maniac103.squeezeclient.cometd.request.LibrarySearchRequest
-import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.serverMightCacheResults
 import de.maniac103.squeezeclient.model.ArtworkItem
 import de.maniac103.squeezeclient.model.JiveAction
@@ -49,9 +46,9 @@ data class BreadcrumbsState(val items: List<BreadcrumbsItem>, val backProgress: 
 
 class MainContentViewModel(
     private val application: Application,
+    private val connectionHelper: ConnectionHelper,
     private val playerId: PlayerId
 ) : AndroidViewModel(application) {
-    private val connectionHelper = application.connectionHelper
     private val navigationFlowInternal = MutableSharedFlow<MainContentNavigation>()
     private val breadcrumbsFlowInternal = MutableStateFlow(BreadcrumbsState(emptyList(), null))
 

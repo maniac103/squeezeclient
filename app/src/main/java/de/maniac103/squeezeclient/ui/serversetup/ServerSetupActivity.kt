@@ -24,19 +24,14 @@ import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.core.content.edit
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import de.maniac103.squeezeclient.Preferences
 import de.maniac103.squeezeclient.R
-import de.maniac103.squeezeclient.extfuncs.connectionHelper
-import de.maniac103.squeezeclient.extfuncs.prefs
-import de.maniac103.squeezeclient.extfuncs.putServerConfig
-import de.maniac103.squeezeclient.extfuncs.serverConfig
+import de.maniac103.squeezeclient.cometd.ConnectionHelper
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.service.localplayer.LocalPlaybackService
 import de.maniac103.squeezeclient.ui.MainActivity
@@ -62,6 +57,7 @@ import org.koin.android.ext.android.inject
 import kotlin.getValue
 
 class ServerSetupActivity : AppCompatActivity() {
+    private val connectionHelper: ConnectionHelper by inject()
     private val preferences: Preferences by inject()
     private var discoveryScope: CoroutineScope? = null
     private val discoveryResultsFlow = MutableStateFlow<List<ServerDiscoveryResult>?>(null)
@@ -79,7 +75,7 @@ class ServerSetupActivity : AppCompatActivity() {
                 ServerSetupScreen(
                     discoveredServers = results,
                     discoveryProgress = progress,
-                    currentServerConfig = prefs.serverConfig,
+                    currentServerConfig = preferences.serverConfig.value,
                     onConnectClicked = { config -> connect(config) },
                     onStartDiscovery = { startDiscovery() },
                     onGoBack = if (intent.getBooleanExtra(EXTRA_ALLOW_BACK, false)) {
@@ -98,26 +94,24 @@ class ServerSetupActivity : AppCompatActivity() {
         }
     }
 
-    private fun connect(config: ServerConfiguration) {
-        prefs.edit {
-            putServerConfig(config)
+    private fun connect(config: ServerConfiguration) = lifecycleScope.launch {
+        preferences.serverConfig.update(config)
 
-            connectionHelper.disconnect()
+        connectionHelper.disconnect()
 
-            val playerIntent = Intent(
-                this@ServerSetupActivity,
-                LocalPlaybackService::class.java
-            )
-            stopService(playerIntent)
+        val playerIntent = Intent(
+            this@ServerSetupActivity,
+            LocalPlaybackService::class.java
+        )
+        stopService(playerIntent)
 
-            val intent = Intent(this@ServerSetupActivity, MainActivity::class.java).apply {
-                addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
-            startActivity(intent)
-
-            finish()
+        val intent = Intent(this@ServerSetupActivity, MainActivity::class.java).apply {
+            addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
+        startActivity(intent)
+
+        finish()
     }
 
     private fun startDiscovery() {

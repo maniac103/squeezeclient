@@ -41,19 +41,14 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkInfo
+import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import de.maniac103.squeezeclient.BuildConfig
 import de.maniac103.squeezeclient.NotificationActionReceiver
+import de.maniac103.squeezeclient.Preferences
 import de.maniac103.squeezeclient.R
-import de.maniac103.squeezeclient.extfuncs.DownloadFolderStructure
-import de.maniac103.squeezeclient.extfuncs.downloadFolderStructure
 import de.maniac103.squeezeclient.extfuncs.getOrCreateNotificationChannel
-import de.maniac103.squeezeclient.extfuncs.httpClient
-import de.maniac103.squeezeclient.extfuncs.jsonParser
-import de.maniac103.squeezeclient.extfuncs.prefs
-import de.maniac103.squeezeclient.extfuncs.serverConfig
-import de.maniac103.squeezeclient.extfuncs.workManager
 import de.maniac103.squeezeclient.model.DownloadSongInfo
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
@@ -61,6 +56,8 @@ import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
+import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.ResponseBody
 import okio.Buffer
@@ -68,21 +65,28 @@ import okio.ForwardingSource
 import okio.buffer
 import okio.sink
 import okio.use
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.get
 
-class DownloadWorker(context: Context, params: WorkerParameters) :
-    CoroutineWorker(context, params) {
+class DownloadWorker(
+    context: Context,
+    params: WorkerParameters,
+    private val json: Json,
+    private val preferences: Preferences,
+    private val httpClient: OkHttpClient,
+    private val workManager: WorkManager
+) : CoroutineWorker(context, params) {
     private var progress = Data.EMPTY
 
     override suspend fun doWork(): Result {
         val items = inputData.getNullableStringArray(InputDataKeys.ITEMS)
-            ?.toSongInfos(applicationContext)
+            ?.toSongInfos(json)
             ?: return Result.success()
-        val serverConfig = applicationContext.prefs.serverConfig
+        val serverConfig = preferences.serverConfig.value
             ?: return Result.failure()
         val baseUrl = serverConfig.url
-        val client = applicationContext.httpClient
         val resolver = applicationContext.contentResolver
-        val folderStructure = applicationContext.prefs.downloadFolderStructure
+        val folderStructure = preferences.downloadFolderStructure.value
 
         Log.d(TAG, "Starting download of ${items.size} items")
 
@@ -103,7 +107,7 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
 
             try {
                 withContext(Dispatchers.IO) {
-                    val responseBody = client.newCall(request)
+                    val responseBody = httpClient.newCall(request)
                         .execute()
                         .body
 
@@ -148,7 +152,7 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
         return if (failed.isNotEmpty()) {
             resultDataBuilder.putStringArray(
                 OutputDataKeys.FAILED_ITEMS,
-                failed.map { applicationContext.jsonParser.encodeToString(it.item) }.toTypedArray()
+                failed.map { json.encodeToString(it.item) }.toTypedArray()
             )
             Result.failure(resultDataBuilder.build())
         } else {
@@ -158,7 +162,7 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
 
     override suspend fun getForegroundInfo(): ForegroundInfo {
         val context = applicationContext
-        val cancelIntent = context.workManager.createCancelPendingIntent(id)
+        val cancelIntent = workManager.createCancelPendingIntent(id)
         val cancelActionText = context.getString(R.string.download_notification_action_cancel)
         val finishedItems = progress.getInt(ProgressKeys.ITEMS_DONE, 0)
         val totalItems = progress.getInt(ProgressKeys.ITEMS_TOTAL, -1)
@@ -227,21 +231,21 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
 
     private fun DownloadSongInfo.insertIntoMediaProvider(
         mimeType: String?,
-        folderStructure: DownloadFolderStructure
+        folderStructure: Preferences.DownloadFolderStructure
     ): Uri? {
         val pathSegments = relativeStoragePath.toUri().pathSegments
         val artistForFolder = albumArtist ?: artist
 
         val relativePath = when (folderStructure) {
-            DownloadFolderStructure.Artist -> artistForFolder
+            Preferences.DownloadFolderStructure.Artist -> artistForFolder
 
-            DownloadFolderStructure.Album -> album
+            Preferences.DownloadFolderStructure.Album -> album
 
-            DownloadFolderStructure.ArtistAlbum -> "$artistForFolder - $album"
+            Preferences.DownloadFolderStructure.ArtistAlbum -> "$artistForFolder - $album"
 
-            DownloadFolderStructure.AlbumUnderArtist -> "$artistForFolder/$album"
+            Preferences.DownloadFolderStructure.AlbumUnderArtist -> "$artistForFolder/$album"
 
-            DownloadFolderStructure.AsOnServer -> {
+            Preferences.DownloadFolderStructure.AsOnServer -> {
                 pathSegments.dropLast(1).joinToString(separator = "/")
             }
         }
@@ -296,7 +300,7 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
         class Failure(item: DownloadSongInfo) : DownloadResult(item)
     }
 
-    companion object {
+    companion object : KoinComponent {
         private const val TAG = "DownloadWorker"
         private const val WORK_TAG = "song_download"
 
@@ -307,14 +311,16 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
         private const val RETRY_DOWNLOAD_EXTRA_NOTIFICATION_ID = "notification_id"
         private const val RETRY_DOWNLOAD_EXTRA_ITEMS = "items"
 
-        private fun List<DownloadSongInfo>.toDataValue(context: Context): Array<String?> =
-            map { context.jsonParser.encodeToString(it) }.toTypedArray()
-        private fun Array<String?>.toSongInfos(context: Context) = filterNotNull()
-            .map { context.jsonParser.decodeFromString<DownloadSongInfo>(it) }
+        private fun List<DownloadSongInfo>.toDataValue(json: Json): Array<String?> =
+            map { json.encodeToString(it) }.toTypedArray()
+        private fun Array<String?>.toSongInfos(json: Json) = filterNotNull()
+            .map { json.decodeFromString<DownloadSongInfo>(it) }
 
-        fun enqueue(context: Context, items: List<DownloadSongInfo>) {
+        fun enqueue(items: List<DownloadSongInfo>) {
+            val json: Json = get()
+            val workManager: WorkManager = get()
             val inputData = Data.Builder()
-                .putStringArray(InputDataKeys.ITEMS, items.toDataValue(context))
+                .putStringArray(InputDataKeys.ITEMS, items.toDataValue(json))
                 .build()
             val request = OneTimeWorkRequestBuilder<DownloadWorker>()
                 .setConstraints(Constraints(requiredNetworkType = NetworkType.CONNECTED))
@@ -322,12 +328,12 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .addTag(WORK_TAG)
                 .build()
-            context.workManager.enqueue(request)
+            workManager.enqueue(request)
         }
 
         fun startObservingStatus(context: Context) {
+            val workManager: WorkManager = get()
             val notifManager = NotificationManagerCompat.from(context)
-            val workManager = context.workManager
 
             workManager.getWorkInfosByTagLiveData(WORK_TAG).observeForever { workInfos ->
                 val failedEntries = workInfos.filter { it.state == WorkInfo.State.FAILED }
@@ -353,17 +359,21 @@ class DownloadWorker(context: Context, params: WorkerParameters) :
         }
 
         fun handleRetryAction(context: Context, intent: Intent) {
+            val json: Json = get()
+            val workManager: WorkManager = get()
+
             intent.getStringArrayExtra(RETRY_DOWNLOAD_EXTRA_ITEMS)
-                ?.toSongInfos(context)
-                ?.let { infos -> enqueue(context, infos) }
+                ?.toSongInfos(json)
+                ?.let { infos -> enqueue(infos) }
             // Since we re-enqueued the failed downloads,we can now safely remove the old entries
-            context.workManager.pruneWork()
+            workManager.pruneWork()
             val nm = context.getSystemService<NotificationManager>()
             nm?.cancel(intent.getIntExtra(RETRY_DOWNLOAD_EXTRA_NOTIFICATION_ID, 0))
         }
 
-        fun handleDismissAction(context: Context) {
-            context.workManager.pruneWork()
+        fun handleDismissAction() {
+            val workManager: WorkManager = get()
+            workManager.pruneWork()
         }
 
         private fun createDownloadRetryNotification(

@@ -77,6 +77,15 @@ internal data class ContentLayoutSpec(
 )
 
 @Immutable
+internal data class ControlsLayoutSpec(
+    val repeat: ControlLayoutSpec,
+    val prevTrack: ControlLayoutSpec,
+    val playPause: ControlLayoutSpec,
+    val nextTrack: ControlLayoutSpec,
+    val shuffle: ControlLayoutSpec
+)
+
+@Immutable
 internal data class PlayerGeometry(
     val content: ContentLayoutSpec,
     val playlist: PlaylistLayoutSpec,
@@ -84,21 +93,12 @@ internal data class PlayerGeometry(
     val toolbar: ControlLayoutSpec,
 
     val artwork: Bounds,
+    val controls: ControlsLayoutSpec,
 
     val title: TextLayoutSpec,
     val artist: TextLayoutSpec,
     val album: TextLayoutSpec,
-
-    val textAlignmentProgress: Float,
-
-
-
-
-
-    val controlsCenter: DpOffset,
-
-    val repeatAlpha: Float,
-    val shuffleAlpha: Float
+    val textAlignmentProgress: Float
 )
 
 @Composable
@@ -146,6 +146,8 @@ internal fun calculatePlayerGeometry(
                 endInset = endInset,
                 progress = progress,
                 paneWidth = layout.collapsedNowPlayingWidth,
+                hasAlbum = hasAlbum,
+                hasArtist = hasArtist,
                 collapsedTitleSize = 16.sp,
                 expandedTitleSize = if (isLarge) 20.sp else 18.sp,
                 secondaryTextSize = 16.sp,
@@ -222,14 +224,41 @@ private fun calculatePortraitGeometry(
     )
 
     val collapsedControlsWidth = collapsedControlSize * 3 // prev, play/pause, next
-    val collapsedControls = Bounds(
-        left = collapsedContent.width - 8.dp - collapsedControlsWidth,
-        top = (collapsedContentHeight - collapsedControlSize) / 2,
-        width = collapsedControlsWidth,
+    val collapsedControlsLeft = collapsedContent.width - 8.dp - collapsedControlsWidth
+    val collapsedControlsTop = (collapsedContentHeight - collapsedControlSize) / 2
+
+    val collapsedRepeat = Bounds(
+        left = collapsedControlsLeft,
+        top = collapsedControlsTop,
+        width = 0.dp,
+        height = collapsedControlSize
+    )
+    val collapsedPrevTrack = Bounds(
+        left = collapsedControlsLeft,
+        top = collapsedControlsTop,
+        width = collapsedControlSize,
+        height = collapsedControlSize
+    )
+    val collapsedPlayPause = Bounds(
+        left = collapsedPrevTrack.right,
+        top = collapsedControlsTop,
+        width = collapsedControlSize,
+        height = collapsedControlSize
+    )
+    val collapsedNextTrack = Bounds(
+        left = collapsedPlayPause.right,
+        top = collapsedControlsTop,
+        width = collapsedControlSize,
+        height = collapsedControlSize
+    )
+    val collapsedShuffle = Bounds(
+        left = collapsedNextTrack.right,
+        top = collapsedControlsTop,
+        width = 0.dp,
         height = collapsedControlSize
     )
 
-    val collapsedTextWidth = collapsedControls.left - collapsedArtwork.right - 16.dp
+    val collapsedTextWidth = collapsedControlsLeft - collapsedArtwork.right - 16.dp
     val collapsedTextLeft = collapsedArtwork.right + 8.dp
     val collapsedTitleHeight = collapsedTitleSize.estimateLayoutHeight(density)
     val collapsedSecondaryHeight = collapsedSecondarySize.estimateLayoutHeight(density)
@@ -349,10 +378,39 @@ private fun calculatePortraitGeometry(
         height = expandedProgressSize
     )
 
-    val expandedControls = Bounds(
-        left = 16.dp,
-        top = expandedFullProgress.bottom + expandedVerticalSpacing,
-        width = expandedContent.width - 32.dp,
+    val expandedControlsPadding = 16.dp
+    val expandedControlsTop = expandedFullProgress.bottom + expandedVerticalSpacing
+    val expandedControlsWidth = expandedContent.width - expandedControlsPadding * 2
+    val expandedControlsSpacing = (expandedControlsWidth - expandedControlsSize * 5) / 4
+
+    val expandedRepeat = Bounds(
+        left = expandedControlsPadding,
+        top = expandedControlsTop,
+        width = expandedControlsSize,
+        height = expandedControlsSize
+    )
+    val expandedPrevTrack = Bounds(
+        left = expandedRepeat.right + expandedControlsSpacing,
+        top = expandedControlsTop,
+        width = expandedControlsSize,
+        height = expandedControlsSize
+    )
+    val expandedPlayPause = Bounds(
+        left = expandedPrevTrack.right + expandedControlsSpacing,
+        top = expandedControlsTop,
+        width = expandedControlsSize,
+        height = expandedControlsSize
+    )
+    val expandedNextTrack = Bounds(
+        left = expandedPlayPause.right + expandedControlsSpacing,
+        top = expandedControlsTop,
+        width = expandedControlsSize,
+        height = expandedControlsSize
+    )
+    val expandedShuffle = Bounds(
+        left = expandedNextTrack.right + expandedControlsSpacing,
+        top = expandedControlsTop,
+        width = expandedControlsSize,
         height = expandedControlsSize
     )
 
@@ -420,14 +478,32 @@ private fun calculatePortraitGeometry(
             fontSize = lerp(0.sp, expandedSecondarySize, progress),
             alpha = fadeInWindow(progress, 0.5F, 0.8F)
         ),
-
-        artwork = lerp(collapsedArtwork, expandedArtwork, progress),
-        controlsCenter = lerp(collapsedControls.center, expandedControls.center, progress),
-
         textAlignmentProgress = lerp(0F, 0.5F, progress),
 
-        repeatAlpha = fadeInWindow(progress, 0.5F, 0.8F),
-        shuffleAlpha = fadeInWindow(progress, 0.5F, 0.8F)
+        artwork = lerp(collapsedArtwork, expandedArtwork, progress),
+
+        controls = ControlsLayoutSpec(
+            repeat = ControlLayoutSpec(
+                bounds = lerp(collapsedRepeat, expandedRepeat, progress),
+                alpha = fadeInWindow(progress, 0.5F, 0.8F)
+            ),
+            prevTrack = ControlLayoutSpec(
+                bounds = lerp(collapsedPrevTrack, expandedPrevTrack, progress),
+                alpha = 1F
+            ),
+            playPause = ControlLayoutSpec(
+                bounds = lerp(collapsedPlayPause, expandedPlayPause, progress),
+                alpha = 1F
+            ),
+            nextTrack = ControlLayoutSpec(
+                bounds = lerp(collapsedNextTrack, expandedNextTrack, progress),
+                alpha = 1F
+            ),
+            shuffle = ControlLayoutSpec(
+                bounds = lerp(collapsedShuffle, expandedShuffle, progress),
+                alpha = fadeInWindow(progress, 0.5F, 0.8F)
+            )
+        )
     )
 }
 
@@ -441,6 +517,8 @@ private fun calculateLandscapeGeometry(
     endInset: Dp,
     progress: Float,
     paneWidth: Dp,
+    hasAlbum: Boolean,
+    hasArtist: Boolean,
     collapsedTitleSize: TextUnit,
     expandedTitleSize: TextUnit,
     secondaryTextSize: TextUnit,
@@ -449,12 +527,15 @@ private fun calculateLandscapeGeometry(
     collapsedPlaylistHeightFraction: Float,
     expandedPlaylistWidthFraction: Float
 ): PlayerGeometry {
-    val expandedBackground = Bounds(
-        left = 0.dp,
-        top = 0.dp,
-        width = width,
-        height = height
-    )
+    // Constants
+    val toolbarHeight = 64.dp
+    val collapsedControlSize = 48.dp
+    val collapsedProgressHeight = 8.dp
+    val expandedControlsSize = 72.dp
+    val expandedProgressHeight = 64.dp
+    val expandedArtworkControlsPadding = 16.dp
+
+    // Collapsed state
     val collapsedBackground = Bounds(
         left = width - paneWidth,
         top = 0.dp,
@@ -468,12 +549,6 @@ private fun calculateLandscapeGeometry(
         width = paneWidth,
         height = height * collapsedPlaylistHeightFraction
     )
-    val expandedPlaylist = Bounds(
-        left = width * (1F - expandedPlaylistWidthFraction),
-        top = 0.dp,
-        width = width * expandedPlaylistWidthFraction,
-        height = height
-    )
 
     val collapsedContent = Bounds(
         left = 0.dp,
@@ -481,21 +556,112 @@ private fun calculateLandscapeGeometry(
         width = paneWidth - endInset,
         height = height * (1F - collapsedPlaylistHeightFraction) - topInset - bottomInset
     )
+
+    val collapsedTitleHeight = collapsedTitleSize.estimateLayoutHeight(density)
+    val secondaryTextHeight = secondaryTextSize.estimateLayoutHeight(density)
+    val albumHeight = if (hasAlbum) secondaryTextHeight else 0.dp
+    val artistHeight = if (hasArtist) secondaryTextHeight else 0.dp
+    val collapsedTextHeight = collapsedTitleHeight + albumHeight + artistHeight
+
+    val collapsedArtworkSize = collapsedContent.height * collapsedArtworkHeightFraction
+    val collapsedItemVertSpacing = (
+            collapsedContent.height -
+                    collapsedArtworkSize -
+                    collapsedTextHeight -
+                    collapsedControlSize -
+                    collapsedProgressHeight
+            ) / 4
+
+    val collapsedArtwork = Bounds(
+        left = (collapsedContent.width - collapsedArtworkSize) / 2F,
+        top = collapsedContent.top + collapsedItemVertSpacing,
+        width = collapsedArtworkSize,
+        height = collapsedArtworkSize
+    )
+
+    val collapsedProgress = Bounds(
+        left = collapsedContent.left,
+        top = collapsedContent.bottom - 16.dp,
+        width = collapsedContent.width,
+        height = collapsedProgressHeight
+    )
+
+    val collapsedTextLeft = collapsedContent.left
+    val collapsedTextWidth = collapsedContent.width
+
+    val collapsedTitle = Bounds(
+        left = collapsedTextLeft,
+        top = collapsedArtwork.bottom + collapsedItemVertSpacing,
+        width = collapsedTextWidth,
+        height = collapsedTitleHeight
+    )
+    val collapsedArtist = Bounds(
+        left = collapsedTextLeft,
+        top = collapsedTitle.bottom,
+        width = collapsedTextWidth,
+        height = artistHeight
+    )
+    val collapsedAlbum = Bounds(
+        left = collapsedTextLeft,
+        top = collapsedArtist.bottom,
+        width = collapsedTextWidth,
+        height = albumHeight
+    )
+
+    val collapsedControlsPadding = (collapsedContent.width - collapsedControlSize * 5) / 2
+    val collapsedControlsTop = collapsedAlbum.bottom + collapsedItemVertSpacing
+
+    val collapsedRepeat = Bounds(
+        left = collapsedContent.left + collapsedControlsPadding,
+        top = collapsedControlsTop,
+        width = collapsedControlSize,
+        height = collapsedControlSize
+    )
+    val collapsedPrevTrack = Bounds(
+        left = collapsedRepeat.right,
+        top = collapsedControlsTop,
+        width = collapsedControlSize,
+        height = collapsedControlSize
+    )
+    val collapsedPlayPause = Bounds(
+        left = collapsedPrevTrack.right,
+        top = collapsedControlsTop,
+        width = collapsedControlSize,
+        height = collapsedControlSize
+    )
+    val collapsedNextTrack = Bounds(
+        left = collapsedPlayPause.right,
+        top = collapsedControlsTop,
+        width = collapsedControlSize,
+        height = collapsedControlSize
+    )
+    val collapsedShuffle = Bounds(
+        left = collapsedNextTrack.right,
+        top = collapsedControlsTop,
+        width = collapsedControlSize,
+        height = collapsedControlSize
+    )
+
+    // Expanded state
+    val expandedBackground = Bounds(
+        left = 0.dp,
+        top = 0.dp,
+        width = width,
+        height = height
+    )
+
+    val expandedPlaylist = Bounds(
+        left = width * (1F - expandedPlaylistWidthFraction),
+        top = 0.dp,
+        width = width * expandedPlaylistWidthFraction,
+        height = height
+    )
+
     val expandedContent = Bounds(
         left = startInset,
         top = topInset,
         width = width - expandedPlaylist.width - startInset,
         height = height - topInset - bottomInset,
-    )
-
-    val toolbarHeight = 64.dp
-
-    val collapsedArtworkSize = collapsedContent.height * collapsedArtworkHeightFraction
-    val collapsedArtwork = Bounds(
-        left = (collapsedContent.width - collapsedArtworkSize) / 2F,
-        top = topInset,
-        width = collapsedArtworkSize,
-        height = collapsedArtworkSize
     )
 
     val expandedArtworkSize = expandedContent.height * expandedArtworkHeightFraction
@@ -506,73 +672,59 @@ private fun calculateLandscapeGeometry(
         height = expandedArtworkSize
     )
 
-    val expandedControlsHeight = 72.dp
-    val expandedProgressHeight = 64.dp
-    val expandedArtworkControlsPadding = 16.dp
     val heightAvailableForExpandedControls =
         height - expandedArtwork.bottom - bottomInset - expandedArtworkControlsPadding - 16.dp
-    val expandedControlsSpacing =
-        (heightAvailableForExpandedControls - expandedControlsHeight - expandedProgressHeight) / 3
+    val expandedControlsVertSpacing =
+        (heightAvailableForExpandedControls - expandedControlsSize - expandedProgressHeight) / 3
 
-    val collapsedProgress = Bounds(
-        left = collapsedContent.left,
-        top = collapsedContent.bottom - 16.dp,
-        width = collapsedContent.width,
-        height = 8.dp
-    )
     val expandedProgress = Bounds(
         left = expandedContent.left + 8.dp,
-        top = expandedArtwork.bottom + expandedArtworkControlsPadding + expandedControlsSpacing,
+        top = expandedArtwork.bottom + expandedArtworkControlsPadding + expandedControlsVertSpacing,
         width = expandedContent.width - 16.dp,
         height = expandedProgressHeight
     )
 
-    val collapsedControls = Bounds(
-        left = collapsedContent.left,
-        top = collapsedProgress.top - 64.dp,
-        width = collapsedContent.width,
-        height = 48.dp
+    val expandedControlsPadding = 16.dp
+    val expandedControlsWidth = expandedContent.width - expandedControlsPadding * 2
+    val expandedControlsTop = expandedProgress.bottom + expandedControlsVertSpacing
+    val expandedControlsHorzSpacing = (expandedControlsWidth - expandedControlsSize * 5) / 4
+
+    val expandedRepeat = Bounds(
+        left = expandedContent.left + expandedControlsPadding,
+        top = expandedControlsTop,
+        width = expandedControlsSize,
+        height = expandedControlsSize
     )
-    val expandedControls = Bounds(
-        left = expandedContent.left + 16.dp,
-        top = expandedProgress.bottom + expandedControlsSpacing,
-        width = expandedContent.width - 32.dp,
-        height = expandedControlsHeight
+    val expandedPrevTrack = Bounds(
+        left = expandedRepeat.right + expandedControlsHorzSpacing,
+        top = expandedControlsTop,
+        width = expandedControlsSize,
+        height = expandedControlsSize
+    )
+    val expandedPlayPause = Bounds(
+        left = expandedPrevTrack.right + expandedControlsHorzSpacing,
+        top = expandedControlsTop,
+        width = expandedControlsSize,
+        height = expandedControlsSize
+    )
+    val expandedNextTrack = Bounds(
+        left = expandedPlayPause.right + expandedControlsHorzSpacing,
+        top = expandedControlsTop,
+        width = expandedControlsSize,
+        height = expandedControlsSize
+    )
+    val expandedShuffle = Bounds(
+        left = expandedNextTrack.right + expandedControlsHorzSpacing,
+        top = expandedControlsTop,
+        width = expandedControlsSize,
+        height = expandedControlsSize
     )
 
-    val collapsedTitleHeight = collapsedTitleSize.estimateLayoutHeight(density)
     val expandedTitleHeight = expandedTitleSize.estimateLayoutHeight(density)
-    val secondaryTextHeight = secondaryTextSize.estimateLayoutHeight(density)
-
-    val collapsedTextHeight = collapsedTitleHeight + secondaryTextHeight * 2
-    val collapsedTextSpacing =
-        (collapsedControls.top - collapsedArtwork.bottom - collapsedTextHeight) / 2
-    val expandedTextHeight = expandedTitleHeight + secondaryTextHeight * 2
+    val expandedTextHeight = expandedTitleHeight + albumHeight + artistHeight
     val expandedTextSpacing = (expandedArtwork.height - expandedTextHeight) / 2
-
-    val collapsedTextLeft = collapsedContent.left
-    val collapsedTextWidth = collapsedContent.width
     val expandedTextLeft = expandedArtwork.right + 8.dp
     val expandedTextWidth = expandedContent.width - expandedTextLeft - 8.dp
-
-    val collapsedTitle = Bounds(
-        left = collapsedTextLeft,
-        top = collapsedArtwork.bottom + collapsedTextSpacing,
-        width = collapsedTextWidth,
-        height = collapsedTitleHeight
-    )
-    val collapsedArtist = Bounds(
-        left = collapsedTextLeft,
-        top = collapsedTitle.bottom,
-        width = collapsedTextWidth,
-        height = secondaryTextHeight
-    )
-    val collapsedAlbum = Bounds(
-        left = collapsedTextLeft,
-        top = collapsedArtist.bottom,
-        width = collapsedTextWidth,
-        height = secondaryTextHeight
-    )
 
     val expandedTitle = Bounds(
         left = expandedTextLeft,
@@ -584,13 +736,13 @@ private fun calculateLandscapeGeometry(
         left = expandedTextLeft,
         top = expandedTitle.bottom,
         width = expandedTextWidth,
-        height = secondaryTextHeight
+        height = artistHeight
     )
     val expandedAlbum = Bounds(
         left = expandedTextLeft,
         top = expandedArtist.bottom,
         width = expandedTextWidth,
-        height = secondaryTextHeight
+        height = albumHeight
     )
 
     val contentCornerRadius = lerp(16.dp, 0.dp, progress)
@@ -659,9 +811,28 @@ private fun calculateLandscapeGeometry(
 
         textAlignmentProgress = 0.5F, // always center aligned
 
-        controlsCenter = lerp(collapsedControls.center, expandedControls.center, progress),
-        repeatAlpha = 1f,
-        shuffleAlpha = 1f
+        controls = ControlsLayoutSpec(
+            repeat = ControlLayoutSpec(
+                bounds = lerp(collapsedRepeat, expandedRepeat, progress),
+                alpha = 1F
+            ),
+            prevTrack = ControlLayoutSpec(
+                bounds = lerp(collapsedPrevTrack, expandedPrevTrack, progress),
+                alpha = 1F
+            ),
+            playPause = ControlLayoutSpec(
+                bounds = lerp(collapsedPlayPause, expandedPlayPause, progress),
+                alpha = 1F
+            ),
+            nextTrack = ControlLayoutSpec(
+                bounds = lerp(collapsedNextTrack, expandedNextTrack, progress),
+                alpha = 1F
+            ),
+            shuffle = ControlLayoutSpec(
+                bounds = lerp(collapsedShuffle, expandedShuffle, progress),
+                alpha = 1F
+            )
+        )
     )
 }
 

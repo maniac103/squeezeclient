@@ -80,7 +80,7 @@ class NowPlayingViewModel(
     }
 
     fun setPlayPauseState(play: Boolean) = viewModelScope.launch {
-        val newState = if (play) PlayState.Paused else PlayState.Playing
+        val newState = if (play) PlayState.Playing else PlayState.Paused
         connectionHelper.changePlaybackState(playerId, newState)
     }
 
@@ -164,7 +164,6 @@ class NowPlayingViewModel(
         isPlaying = status.playbackState == PlayState.Playing,
         isPowered = status.powered,
         playPauseEnabled = status.playlist.nowPlaying != null,
-        playPauseActive = status.playbackState == PlayState.Playing,
         playPauseIconResId = when (status.playbackState) {
             PlayState.Playing -> R.drawable.ic_pause_24dp
             else -> R.drawable.ic_play_24dp
@@ -225,7 +224,6 @@ data class NowPlayingUiState(
     val isPlaying: Boolean,
     val isPowered: Boolean,
     val playPauseEnabled: Boolean,
-    val playPauseActive: Boolean,
     val playPauseIconResId: Int,
     val repeatIconResId: Int,
     val shuffleIconResId: Int,

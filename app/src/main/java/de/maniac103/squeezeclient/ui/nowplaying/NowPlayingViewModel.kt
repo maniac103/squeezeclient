@@ -20,7 +20,6 @@ import androidx.lifecycle.viewModelScope
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.cometd.ConnectionHelper
 import de.maniac103.squeezeclient.cometd.request.PlaybackButtonRequest
-import de.maniac103.squeezeclient.model.ArtworkItem
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
@@ -54,7 +53,7 @@ class NowPlayingViewModel(
     val uiStateFlow = connectionHelper
         .playerState(playerId)
         .flatMapLatest { it.playStatus }
-        .map { convertToUiState(it) }
+        .map { NowPlayingUiState(it) }
         .stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5_000),
@@ -146,46 +145,6 @@ class NowPlayingViewModel(
     fun onContextMenuDismissed() = viewModelScope.launch {
         contextMenuFlowInternal.emit(NowPlayingContextMenuState.Idle)
     }
-
-    private fun convertToUiState(status: PlayerStatus) = NowPlayingUiState(
-        title = status.playlist.nowPlaying?.title?.let { TextResource.Raw(it) }
-            ?: TextResource.StringRes(R.string.nowplaying_empty_playlist),
-        artist = status.playlist.nowPlaying?.artist?.takeIf { it.isNotEmpty() },
-        album = status.playlist.nowPlaying?.album?.takeIf { it.isNotEmpty() },
-        artwork = status.playlist.nowPlaying,
-        positionSeconds = status.currentPlayPosition
-            ?.toDouble(DurationUnit.SECONDS)
-            ?.toFloat()
-            ?: 0F,
-        durationSeconds = status.currentSongDuration
-            ?.toDouble(DurationUnit.SECONDS)
-            ?.toFloat()
-            ?: 0.1F,
-        isPlaying = status.playbackState == PlayState.Playing,
-        isPowered = status.powered,
-        playPauseEnabled = status.playlist.nowPlaying != null,
-        playPauseIconResId = when (status.playbackState) {
-            PlayState.Playing -> R.drawable.ic_pause_24dp
-            else -> R.drawable.ic_play_24dp
-        },
-        repeatIconResId = when (status.repeatState) {
-            RepeatState.RepeatTitle -> R.drawable.ic_repeat_one_24dp
-            RepeatState.RepeatAll -> R.drawable.ic_repeat_24dp
-            RepeatState.Off -> R.drawable.ic_repeat_off_24dp
-        },
-        shuffleIconResId = when (status.shuffleState) {
-            ShuffleState.ShuffleAlbum -> R.drawable.ic_shuffle_album_24dp
-            ShuffleState.ShuffleSong -> R.drawable.ic_shuffle_song_24dp
-            ShuffleState.Off -> R.drawable.ic_shuffle_off_24dp
-        },
-        canSeek = status.playbackState != PlayState.Stopped && status.currentSongDuration != null,
-        playlistPosition = status.playlist.currentPosition,
-        playlistLength = status.playlist.trackCount,
-        playerName = status.playerName,
-        contextMenuData = status.playlist.nowPlaying?.actions?.moreAction?.let { action ->
-            NowPlayingContextMenuData(status.playlist.nowPlaying.asSlimbrowseItem(), action)
-        }
-    )
 }
 
 sealed interface ContextMenuItemResult {
@@ -214,25 +173,46 @@ data class NowPlayingContextMenuData(
     val action: JiveAction
 )
 
-data class NowPlayingUiState(
-    val title: TextResource,
-    val artist: String?,
-    val album: String?,
-    val artwork: ArtworkItem?,
-    val positionSeconds: Float,
-    val durationSeconds: Float,
-    val isPlaying: Boolean,
-    val isPowered: Boolean,
-    val playPauseEnabled: Boolean,
-    val playPauseIconResId: Int,
-    val repeatIconResId: Int,
-    val shuffleIconResId: Int,
-    val canSeek: Boolean,
-    val playlistPosition: Int,
-    val playlistLength: Int,
-    val playerName: String,
-    val contextMenuData: NowPlayingContextMenuData?
-) {
+class NowPlayingUiState(private val status: PlayerStatus) {
+    val title get() = status.playlist.nowPlaying?.title?.let { TextResource.Raw(it) }
+        ?: TextResource.StringRes(R.string.nowplaying_empty_playlist)
+    val artist get() = status.playlist.nowPlaying?.artist?.takeIf { it.isNotEmpty() }
+    val album get() = status.playlist.nowPlaying?.album?.takeIf { it.isNotEmpty() }
+    val artwork get() = status.playlist.nowPlaying
+    val positionSeconds get() = status.currentPlayPosition
+        ?.toDouble(DurationUnit.SECONDS)
+        ?.toFloat()
+        ?: 0F
+    val durationSeconds get() = status.currentSongDuration
+        ?.toDouble(DurationUnit.SECONDS)
+        ?.toFloat()
+        ?: 0.1F
+    val isPlaying get() = status.playbackState == PlayState.Playing
+    val isPowered get() = status.powered
+    val playPauseEnabled get() = status.playlist.nowPlaying != null
+    val playPauseIconResId get() = when (status.playbackState) {
+        PlayState.Playing -> R.drawable.ic_pause_24dp
+        else -> R.drawable.ic_play_24dp
+    }
+    val repeatIconResId get() = when (status.repeatState) {
+        RepeatState.RepeatTitle -> R.drawable.ic_repeat_one_24dp
+        RepeatState.RepeatAll -> R.drawable.ic_repeat_24dp
+        RepeatState.Off -> R.drawable.ic_repeat_off_24dp
+    }
+    val shuffleIconResId get() = when (status.shuffleState) {
+        ShuffleState.ShuffleAlbum -> R.drawable.ic_shuffle_album_24dp
+        ShuffleState.ShuffleSong -> R.drawable.ic_shuffle_song_24dp
+        ShuffleState.Off -> R.drawable.ic_shuffle_off_24dp
+    }
+    val canSeek get() =
+        status.playbackState != PlayState.Stopped && status.currentSongDuration != null
+    val playlistPosition get() = status.playlist.currentPosition
+    val playlistLength get() = status.playlist.trackCount
+    val playerName get() = status.playerName
+    val contextMenuData get() = status.playlist.nowPlaying?.actions?.moreAction?.let { action ->
+        NowPlayingContextMenuData(status.playlist.nowPlaying.asSlimbrowseItem(), action)
+    }
+
     val toolbarSubtitle get() = TextResource.StringRes(
         R.string.nowplaying_subtitle, playerName, playlistPosition, playlistLength
     )

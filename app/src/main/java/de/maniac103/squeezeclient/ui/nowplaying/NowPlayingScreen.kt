@@ -74,6 +74,8 @@ import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.JiveActions
 import de.maniac103.squeezeclient.model.PlayerId
+import de.maniac103.squeezeclient.model.PlayerStatus
+import de.maniac103.squeezeclient.model.PlayerStatus.PlayState
 import de.maniac103.squeezeclient.model.Playlist
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
@@ -81,7 +83,6 @@ import de.maniac103.squeezeclient.ui.maincontent.MainLayout
 import de.maniac103.squeezeclient.ui.bottomsheets.InputSheetContent
 import de.maniac103.squeezeclient.ui.composables.ArtworkImage
 import de.maniac103.squeezeclient.ui.composables.BottomSheetContentWrapper
-import de.maniac103.squeezeclient.ui.composables.TextResource
 import de.maniac103.squeezeclient.ui.contextmenu.ContextMenuBottomSheetContent
 import de.maniac103.squeezeclient.ui.contextmenu.ContextMenuBottomSheetViewModel
 import kotlin.math.roundToInt
@@ -96,6 +97,10 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
+import kotlin.Int
+import kotlin.String
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.minutes
 
 @Composable
 internal fun NowPlayingScreen(
@@ -651,7 +656,7 @@ private fun ProgressControls(
         trackRange = 0F..state.durationSeconds
     )
 
-    LaunchedEffect(state.isPlaying, state.positionSeconds) {
+    LaunchedEffect(state.isPlaying) {
         while (state.isPlaying) {
             sliderState.value = state.positionSeconds
             delay(1.seconds)
@@ -881,24 +886,31 @@ internal fun Modifier.dragHandle(
 @Preview(widthDp = 360, heightDp = 800)
 @Composable
 fun NowPlayingPreview() {
-    val uiState = NowPlayingUiState(
-        title = TextResource.Raw("Song title"),
-        artist = "Artist",
-        album = "Album",
-        artwork = null,
-        positionSeconds = 67F,
-        durationSeconds = 270F,
-        isPlaying = true,
-        isPowered = true,
-        canSeek = true,
-        playPauseEnabled = true,
-        playPauseIconResId = R.drawable.ic_play_24dp,
-        repeatIconResId = R.drawable.ic_repeat_off_24dp,
-        shuffleIconResId = R.drawable.ic_shuffle_off_24dp,
-        playlistPosition = 8,
-        playlistLength = 17,
+    val status = PlayerStatus(
+        playbackState = PlayState.Playing,
+        playlist = PlayerStatus.PlaylistInfo(
+            nowPlaying = Playlist.PlaylistItem(
+                title = "Some title",
+                artist = "Artist",
+                album = "Album",
+                actions = JiveActions.EMPTY
+            ),
+            currentPosition = 7,
+            trackCount = 15,
+            lastChange = Clock.System.now()
+        ),
+        currentSongDuration = 4.minutes,
+        playPosition = 35F,
+        repeatState = PlayerStatus.RepeatState.Off,
+        shuffleState = PlayerStatus.ShuffleState.Off,
         playerName = "Some player",
-        contextMenuData = null
+        connected = true,
+        powered = true,
+        currentVolume = 70,
+        muted = false,
+        syncMaster = null,
+        syncSlaves = null,
+        timestamp = Clock.System.now()
     )
 
     val playlistItemData = (0..4)
@@ -928,7 +940,7 @@ fun NowPlayingPreview() {
             NowPlayingScreen(
                 playerId = PlayerId("11:22:33:44:55:66"),
                 layout = layout,
-                stateFlow = MutableStateFlow(uiState),
+                stateFlow = MutableStateFlow(NowPlayingUiState(status)),
                 infoMenuFlow = MutableStateFlow(NowPlayingContextMenuState.Idle),
                 playlistSaveInputStateFlow = MutableStateFlow(PlaylistSaveEditorState.Idle),
                 motionState = motionState,

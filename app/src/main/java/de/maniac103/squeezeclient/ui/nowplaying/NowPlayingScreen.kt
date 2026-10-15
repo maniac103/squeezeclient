@@ -3,7 +3,6 @@ package de.maniac103.squeezeclient.ui.nowplaying
 import android.text.format.DateUtils
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.anchoredDraggable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -150,7 +149,7 @@ internal fun NowPlayingScreen(
         onNextTrack = viewModel::next,
         onToggleRepeat = viewModel::toggleRepeat,
         onToggleShuffle = viewModel::toggleShuffle,
-        onsetPlayingOrPaused = viewModel::setPlayPauseState,
+        onSetPlayingOrPaused = viewModel::setPlayPauseState,
         onStop = viewModel::stop,
         onSeek = viewModel::seekTo,
         onShowInfoMenu = viewModel::loadContextMenu,
@@ -195,7 +194,7 @@ internal fun NowPlayingScreen(
     onNextTrack: () -> Unit = {},
     onToggleRepeat: () -> Unit = {},
     onToggleShuffle: () -> Unit = {},
-    onsetPlayingOrPaused: (play: Boolean) -> Unit = {},
+    onSetPlayingOrPaused: (play: Boolean) -> Unit = {},
     onStop: () -> Unit = {},
     onSeek: (position: Int) -> Unit = {},
     onShowInfoMenu: (NowPlayingContextMenuData) -> Unit = {},
@@ -298,7 +297,7 @@ internal fun NowPlayingScreen(
             onNext = onNextTrack,
             onToggleRepeat = onToggleRepeat,
             onToggleShuffle = onToggleShuffle,
-            onTogglePlayPause = { onsetPlayingOrPaused(!uiState.isPlaying) },
+            onSetPlayingOrPaused = onSetPlayingOrPaused,
             onStop = onStop,
             onSeek = onSeek,
             onShowInfoMenu = onShowInfoMenu,
@@ -337,7 +336,7 @@ private fun PlayerSurface(
     onNext: () -> Unit,
     onToggleRepeat: () -> Unit,
     onToggleShuffle: () -> Unit,
-    onTogglePlayPause: () -> Unit,
+    onSetPlayingOrPaused: (play: Boolean) -> Unit,
     onStop: () -> Unit,
     onSeek: (Int) -> Unit,
     onShowInfoMenu: (NowPlayingContextMenuData) -> Unit,
@@ -382,7 +381,7 @@ private fun PlayerSurface(
             onNext = onNext,
             onToggleRepeat = onToggleRepeat,
             onToggleShuffle = onToggleShuffle,
-            onTogglePlayPause = onTogglePlayPause,
+            onSetPlayingOrPaused = onSetPlayingOrPaused,
             onStop = onStop
         )
 
@@ -567,12 +566,12 @@ private fun PlayerInformation(
 private fun PlaybackControls(
     state: NowPlayingUiState,
     layoutSpec: ControlsLayoutSpec,
+    onSetPlayingOrPaused: (play: Boolean) -> Unit,
     onPrevious: () -> Unit,
     onNext: () -> Unit,
     onToggleRepeat: () -> Unit,
     onToggleShuffle: () -> Unit,
-    onTogglePlayPause: () -> Unit,
-    onStop: () -> Unit,
+    onStop: () -> Unit
 ) {
     PlaybackButton(
         icon = state.repeatIconResId,
@@ -588,18 +587,15 @@ private fun PlaybackControls(
         onClick = onPrevious
     )
 
+    // TODO: onStop by long press
     FilledIconToggleButton(
-        checked = state.playPauseActive,
-        onCheckedChange = {},
+        checked = state.isPlaying,
+        onCheckedChange = onSetPlayingOrPaused,
         enabled = state.playPauseEnabled,
         shapes = IconButtonDefaults.toggleableShapes(),
         modifier = Modifier
             .bounds(layoutSpec.playPause.bounds)
             .alpha(layoutSpec.playPause.alpha)
-            .combinedClickable(
-                onClick = onTogglePlayPause,
-                onLongClick = onStop
-            )
     ) {
         Icon(
             imageVector = ImageVector.vectorResource(state.playPauseIconResId),
@@ -896,7 +892,6 @@ fun NowPlayingPreview() {
         isPowered = true,
         canSeek = true,
         playPauseEnabled = true,
-        playPauseActive = false,
         playPauseIconResId = R.drawable.ic_play_24dp,
         repeatIconResId = R.drawable.ic_repeat_off_24dp,
         shuffleIconResId = R.drawable.ic_shuffle_off_24dp,

@@ -41,7 +41,7 @@ class DisplayStatusViewModel(
     @OptIn(ExperimentalCoroutinesApi::class)
     private val backendMessageFlow = connectionHelper.playerState(playerId)
         .flatMapLatest { it.displayStatus }
-        .filter { it.type != DisplayMessage.MessageType.PopupPlay }
+        .filter { it.type == DisplayMessage.MessageType.PopupPlay }
 
     val messageFlow = uiMessageFlowInternal.asStateFlow()
 

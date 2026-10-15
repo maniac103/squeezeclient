@@ -345,7 +345,9 @@ private fun MainActivityDrawerContent(
                     )
                 }
 
-                HorizontalDivider()
+                HorizontalDivider(
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
 
                 MainDrawerItem(
                     label = stringResource(R.string.settings_category_local_player),

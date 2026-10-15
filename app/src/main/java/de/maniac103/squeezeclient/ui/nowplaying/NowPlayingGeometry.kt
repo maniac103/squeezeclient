@@ -349,8 +349,8 @@ private fun calculatePortraitGeometry(
             expandedProgressSize
         ) / 4
 
-    val expandedTextLeft = 0.dp
-    val expandedTextWidth = expandedContent.width
+    val expandedTextLeft = 8.dp
+    val expandedTextWidth = expandedContent.width - 16.dp
 
     val expandedTitle = Bounds(
         left = expandedTextLeft,

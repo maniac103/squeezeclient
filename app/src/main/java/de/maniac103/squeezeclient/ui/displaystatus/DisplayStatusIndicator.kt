@@ -50,10 +50,9 @@ import org.koin.core.parameter.parametersOf
 
 @Composable
 fun DisplayStatusIndicator(
-    playerId: PlayerId,
     serverConfig: ServerConfiguration?
 ) {
-    val viewModel = koinViewModel<DisplayStatusViewModel> { parametersOf(playerId) }
+    val viewModel = koinViewModel<DisplayStatusViewModel>()
     DisplayStatusIndicator(
         messageFlow = viewModel.messageFlow,
         serverConfig = serverConfig

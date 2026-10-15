@@ -54,7 +54,7 @@ class MainContentViewModel(
 
     private var pendingNavigation: Job? = null
 
-    val initialPage get() = MainContentNavigation.JiveHomeMenuPage(playerId, "home", "")
+    val initialPage get() = MainContentNavigation.JiveHomeMenuPage("home", "")
     val navigationFlow = navigationFlowInternal.asSharedFlow()
     val breadcrumbsFlow = breadcrumbsFlowInternal.asStateFlow()
 
@@ -72,13 +72,13 @@ class MainContentViewModel(
     ) = viewModelScope.launch {
         navigationFlowInternal.emit(MainContentNavigation.Home)
         navigationFlowInternal.emit(
-            MainContentNavigation.LocalSearchResults(playerId, searchTerm, type)
+            MainContentNavigation.LocalSearchResults(searchTerm, type)
         )
     }
 
     fun openRadioSearchResults(searchTerm: String) = viewModelScope.launch {
         navigationFlowInternal.emit(MainContentNavigation.Home)
-        navigationFlowInternal.emit(MainContentNavigation.RadioSearchResults(playerId, searchTerm))
+        navigationFlowInternal.emit(MainContentNavigation.RadioSearchResults(searchTerm))
     }
 
     fun onNowPlayingContextMenuAction(
@@ -112,7 +112,7 @@ class MainContentViewModel(
             }
 
             else -> {
-                navigationFlowInternal.emit(MainContentNavigation.JiveHomeMenuPage(playerId, item.id, item.title))
+                navigationFlowInternal.emit(MainContentNavigation.JiveHomeMenuPage(item.id, item.title))
             }
         }
     }
@@ -168,7 +168,6 @@ class MainContentViewModel(
                     viewModelScope.launch {
                         navigationFlowInternal.emit(
                             MainContentNavigation.SlimBrowseSubItemPage(
-                                playerId,
                                 item.title,
                                 fetchAction,
                                 item.listPosition
@@ -189,7 +188,7 @@ class MainContentViewModel(
         when {
             actions.moreAction != null -> viewModelScope.launch {
                 val itemList = loadContextMenuItems(actions.moreAction, actions)
-                navigationFlowInternal.emit(MainContentNavigation.ContextMenu(playerId, item, itemList))
+                navigationFlowInternal.emit(MainContentNavigation.ContextMenu(item, itemList))
             }
 
             actions.hasContextMenu -> viewModelScope.launch {
@@ -447,7 +446,6 @@ class MainContentViewModel(
 
                 else -> {
                     MainContentNavigation.SlimBrowseItemPage(
-                        playerId,
                         title,
                         parentItem?.title,
                         parentItem ?: item,

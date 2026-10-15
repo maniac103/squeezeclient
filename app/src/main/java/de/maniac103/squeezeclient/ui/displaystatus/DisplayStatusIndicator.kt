@@ -18,6 +18,10 @@
 package de.maniac103.squeezeclient.ui.displaystatus
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -41,12 +45,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.maniac103.squeezeclient.ui.composables.ArtworkImage
 import de.maniac103.squeezeclient.model.ArtworkItem
-import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import org.koin.androidx.compose.koinViewModel
-import org.koin.core.parameter.parametersOf
 
 @Composable
 fun DisplayStatusIndicator(
@@ -67,7 +69,9 @@ fun DisplayStatusIndicator(
     val message by messageFlow.collectAsStateWithLifecycle(null)
 
     AnimatedVisibility(
-        visible = message != null
+        visible = message != null,
+        enter = slideInVertically { it } + fadeIn(),
+        exit = slideOutVertically { it } + fadeOut()
     ) {
         Scaffold(
             containerColor = Color.Transparent,

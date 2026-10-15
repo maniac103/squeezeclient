@@ -39,6 +39,8 @@ import org.koin.android.ext.koin.androidApplication
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
+    object ActivePlayerScope
+
 val viewModelModule = module {
     viewModel {
         MainActivityViewModel(
@@ -47,84 +49,87 @@ val viewModelModule = module {
         )
     }
 
-    viewModel { params ->
-        NowPlayingViewModel(playerId = params.get<PlayerId>(), connectionHelper = get())
+    scope<ActivePlayerScope> {
+        viewModel {
+            NowPlayingViewModel(playerId = get<PlayerId>(), connectionHelper = get())
+        }
+        viewModel {
+            PlaylistViewModel(playerId = get<PlayerId>(), connectionHelper = get())
+        }
+        viewModel { params ->
+            ContextMenuBottomSheetViewModel(
+                connectionHelper = get(),
+                playerId = params.get<PlayerId>(),
+                initialItems = params.get<List<SlimBrowseItemList.SlimBrowseItem>>(),
+                parentItem = params.get<SlimBrowseItemList.SlimBrowseItem>()
+            )
+        }
+        viewModel { params ->
+            JiveHomeItemListViewModel(
+                connectionHelper = get(),
+                playerId = get<PlayerId>(),
+                nodeId = params.get<String>()
+            )
+        }
+        viewModel { params ->
+            SlimBrowseItemListViewModel(
+                connectionHelper = get(),
+                playerId = get<PlayerId>(),
+                fetchAction = params.get<JiveAction>()
+            )
+        }
+        viewModel { params ->
+            SlimBrowseSubItemListViewModel(
+                connectionHelper = get(),
+                playerId = get<PlayerId>(),
+                parentFetchAction = params.get<JiveAction>(),
+                parentItemPosition = params.get<Int>()
+            )
+        }
+        viewModel { params ->
+            LibrarySearchResultsViewModel(
+                connectionHelper = get(),
+                playerId = get<PlayerId>(),
+                searchTerm = params.get<String>(),
+                searchType = params.get<LibrarySearchRequest.Mode>()
+            )
+        }
+        viewModel { params ->
+            RadioSearchResultViewModel(
+                connectionHelper = get(),
+                playerId = get<PlayerId>(),
+                searchTerm = params.get<String>()
+            )
+        }
+        viewModel {
+            VolumePopupViewModel(
+                connectionHelper = get(),
+                playerId = get<PlayerId>()
+            )
+        }
+        viewModel {
+            DisplayStatusViewModel(
+                connectionHelper = get(),
+                playerId = get<PlayerId>()
+            )
+        }
+        viewModel {
+            SearchViewModel(
+                application = androidApplication(),
+                connectionHelper = get(),
+                playerId = get<PlayerId>()
+            )
+        }
+        viewModel {
+            MainContentViewModel(
+                application = androidApplication(),
+                connectionHelper = get(),
+                playerId = get<PlayerId>()
+            )
+        }
     }
-    viewModel { params ->
-        PlaylistViewModel(playerId = params.get<PlayerId>(), connectionHelper = get())
-    }
-    viewModel { params ->
-        ContextMenuBottomSheetViewModel(
-            connectionHelper = get(),
-            playerId = params.get<PlayerId>(),
-            initialItems = params.get<List<SlimBrowseItemList.SlimBrowseItem>>(),
-            parentItem = params.get<SlimBrowseItemList.SlimBrowseItem>()
-        )
-    }
+
     viewModel { params ->
         ItemActionsViewModel(item = params.get<SlimBrowseItemList.SlimBrowseItem>())
-    }
-    viewModel { params ->
-        JiveHomeItemListViewModel(
-            connectionHelper = get(),
-            playerId = params.get<PlayerId>(),
-            nodeId = params.get<String>()
-        )
-    }
-    viewModel { params ->
-        SlimBrowseItemListViewModel(
-            connectionHelper = get(),
-            playerId = params.get<PlayerId>(),
-            fetchAction = params.get<JiveAction>()
-        )
-    }
-    viewModel { params ->
-        SlimBrowseSubItemListViewModel(
-            connectionHelper = get(),
-            playerId = params.get<PlayerId>(),
-            parentFetchAction = params.get<JiveAction>(),
-            parentItemPosition = params.get<Int>()
-        )
-    }
-    viewModel { params ->
-        LibrarySearchResultsViewModel(
-            connectionHelper = get(),
-            playerId = params.get<PlayerId>(),
-            searchTerm = params.get<String>(),
-            searchType = params.get<LibrarySearchRequest.Mode>()
-        )
-    }
-    viewModel { params ->
-        RadioSearchResultViewModel(
-            connectionHelper = get(),
-            playerId = params.get<PlayerId>(),
-            searchTerm = params.get<String>()
-        )
-    }
-    viewModel { params ->
-        VolumePopupViewModel(
-            connectionHelper = get(),
-            playerId = params.get<PlayerId>()
-        )
-    }
-    viewModel { params ->
-        DisplayStatusViewModel(
-            connectionHelper = get(),
-            playerId = params.get<PlayerId>()
-        )
-    }
-    viewModel { params ->
-        SearchViewModel(
-            application = androidApplication(),
-            connectionHelper = get(),
-            playerId = params.get<PlayerId>()
-        )
-    }
-    viewModel { params ->
-        MainContentViewModel(
-            application = androidApplication(),
-            connectionHelper = get(),
-            playerId = params.get<PlayerId>()
-        )
     }
 }

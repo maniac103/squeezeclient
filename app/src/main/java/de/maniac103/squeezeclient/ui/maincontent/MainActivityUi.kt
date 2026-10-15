@@ -61,11 +61,13 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -81,12 +83,15 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import androidx.lifecycle.viewmodel.compose.rememberViewModelStoreOwner
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.model.DownloadRequestData
 import de.maniac103.squeezeclient.model.Player
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlideshowImage
+import de.maniac103.squeezeclient.ui.ActivePlayerScope
 import de.maniac103.squeezeclient.ui.displaystatus.DisplayStatusIndicator
 import de.maniac103.squeezeclient.ui.nowplaying.NowPlayingScreen
 import de.maniac103.squeezeclient.ui.nowplaying.rememberNowPlayingMotionState
@@ -100,6 +105,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.LocalKoinScope
+import org.koin.compose.LocalKoinScopeContext
+import org.koin.compose.scope.KoinScope
+import org.koin.core.annotation.KoinExperimentalAPI
 import org.koin.core.parameter.parametersOf
 import kotlin.time.Duration.Companion.seconds
 
@@ -409,6 +418,7 @@ fun MainDrawerItem(
     )
 }
 
+@OptIn(KoinExperimentalAPI::class)
 @Composable
 private fun MainActivityConnected(
     drawerState: DrawerState,
@@ -416,114 +426,124 @@ private fun MainActivityConnected(
     insets: PaddingValues,
     serverConfigState: State<ServerConfiguration?>,
     forceGridForSlimBrowseItemsState: State<Boolean>,
-    onGalleryItemSelected: (SlideshowImage) -> Unit,
     onDownloadSelected: (DownloadRequestData) -> Unit,
+    onGalleryItemSelected: (SlideshowImage) -> Unit,
     onWebLinkSelected: (title: String, link: Uri) -> Unit
-) {
-    val mainContentViewModel =
-        koinViewModel<MainContentViewModel> { parametersOf(selectedPlayer.id) }
-    val searchViewModel = koinViewModel<SearchViewModel> { parametersOf(selectedPlayer.id) }
-    val volumeViewModel = koinViewModel<VolumePopupViewModel> { parametersOf(selectedPlayer.id) }
-    val nowPlayingMotionState = rememberNowPlayingMotionState(false)
-    val scope = rememberCoroutineScope()
+) = key(selectedPlayer.id) {
+    val owner = rememberViewModelStoreOwner()
 
-    BoxWithConstraints {
-        val layout = determineMainLayout(
-            containerSize = DpSize(maxWidth, maxHeight),
-            insets = insets,
-            layoutDirection = LocalLayoutDirection.current
-        )
-
-        val useGridForSlimBrowseItemsState = remember {
-            derivedStateOf {
-                forceGridForSlimBrowseItemsState.value || layout.useGridForSlimBrowseItems
+    CompositionLocalProvider(LocalViewModelStoreOwner provides owner) {
+        KoinScope(
+            scopeDefinition = {
+                getOrCreateScope<ActivePlayerScope>(scopeId = selectedPlayer.id.id).apply {
+                    declare(selectedPlayer.id)
+                }
             }
-        }
+        ) {
+            val mainContentViewModel = koinViewModel<MainContentViewModel>()
+            val searchViewModel = koinViewModel<SearchViewModel> { parametersOf(selectedPlayer.id) }
+            val volumeViewModel = koinViewModel<VolumePopupViewModel> { parametersOf(selectedPlayer.id) }
+            val nowPlayingMotionState = rememberNowPlayingMotionState(false)
+            val scope = rememberCoroutineScope()
 
-        Column {
-            val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
-            val appBarColors = TopAppBarDefaults.topAppBarColors()
-            val appBarColor by remember(appBarColors, scrollBehavior) {
-                derivedStateOf {
-                    val overlappingFraction = scrollBehavior.state.overlappedFraction
-                    lerp(
-                        start = appBarColors.containerColor,
-                        stop = appBarColors.scrolledContainerColor,
-                        fraction = FastOutLinearInEasing.transform(overlappingFraction)
+            BoxWithConstraints {
+                val layout = determineMainLayout(
+                    containerSize = DpSize(maxWidth, maxHeight),
+                    insets = insets,
+                    layoutDirection = LocalLayoutDirection.current
+                )
+
+                val useGridForSlimBrowseItemsState = remember {
+                    derivedStateOf {
+                        forceGridForSlimBrowseItemsState.value || layout.useGridForSlimBrowseItems
+                    }
+                }
+
+                Column {
+                    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+                    val appBarColors = TopAppBarDefaults.topAppBarColors()
+                    val appBarColor by remember(appBarColors, scrollBehavior) {
+                        derivedStateOf {
+                            val overlappingFraction = scrollBehavior.state.overlappedFraction
+                            lerp(
+                                start = appBarColors.containerColor,
+                                stop = appBarColors.scrolledContainerColor,
+                                fraction = FastOutLinearInEasing.transform(overlappingFraction)
+                            )
+                        }
+                    }
+
+                    MainActivityAppBar(
+                        drawerState = drawerState,
+                        scrollBehavior = scrollBehavior,
+                        selectedPlayer = selectedPlayer,
+                        colors = appBarColors.copy(
+                            containerColor = appBarColor,
+                            scrolledContainerColor = appBarColor
+                        ),
+                        onOpenSearch = searchViewModel::open
+                    )
+                    Breadcrumbs(
+                        mainContentViewModel.breadcrumbsFlow,
+                        serverConfig = serverConfigState.value,
+                        onHomeClicked = mainContentViewModel::goToHome,
+                        onGoBack = mainContentViewModel::goBack,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(appBarColor)
+                    )
+                    MainContent(
+                        viewModel = mainContentViewModel,
+                        serverConfig = serverConfigState,
+                        useGridForSlimbrowseItems = useGridForSlimBrowseItemsState,
+                        pagePadding = layout.mainContentPagePadding,
+                        onGalleryItemSelected = onGalleryItemSelected,
+                        onDownloadSelected = onDownloadSelected,
+                        onWebLinkSelected = onWebLinkSelected,
+                        onGoToNowPlaying = {
+                            scope.launch {
+                                nowPlayingMotionState.nowPlaying.expand()
+                            }
+                        },
+                        modifier = Modifier
+                            .weight(1F)
+                            .padding(layout.mainContentPadding)
+                            .nestedScroll(scrollBehavior.nestedScrollConnection)
                     )
                 }
-            }
 
-            MainActivityAppBar(
-                drawerState = drawerState,
-                scrollBehavior = scrollBehavior,
-                selectedPlayer = selectedPlayer,
-                colors = appBarColors.copy(
-                    containerColor = appBarColor,
-                    scrolledContainerColor = appBarColor
-                ),
-                onOpenSearch = searchViewModel::open
-            )
-            Breadcrumbs(
-                mainContentViewModel.breadcrumbsFlow,
-                serverConfig = serverConfigState.value,
-                onHomeClicked = mainContentViewModel::goToHome,
-                onGoBack = mainContentViewModel::goBack,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(appBarColor)
-            )
-            MainContent(
-                viewModel = mainContentViewModel,
-                serverConfig = serverConfigState,
-                useGridForSlimbrowseItems = useGridForSlimBrowseItemsState,
-                pagePadding = layout.mainContentPagePadding,
-                onGalleryItemSelected = onGalleryItemSelected,
-                onDownloadSelected = onDownloadSelected,
-                onWebLinkSelected = onWebLinkSelected,
-                onGoToNowPlaying = {
-                    scope.launch {
-                        nowPlayingMotionState.nowPlaying.expand()
+                NowPlayingScreen(
+                    playerId = selectedPlayer.id,
+                    layout = layout,
+                    motionState = nowPlayingMotionState,
+                    serverConfig = serverConfigState.value,
+                    insets = insets,
+                    onShowVolumePopup = { volumeViewModel.show(5.seconds) },
+                    onInfoMenuItemGoAction = { action, parentItem, contextItem ->
+                        mainContentViewModel.goToHome()
+                        mainContentViewModel.onNowPlayingContextMenuAction(action, contextItem, parentItem)
                     }
-                },
-                modifier = Modifier
-                    .weight(1F)
-                    .padding(layout.mainContentPadding)
-                    .nestedScroll(scrollBehavior.nestedScrollConnection)
-            )
+                )
+                SearchBox(
+                    viewModel = searchViewModel,
+                    pillModifier = Modifier.padding(insets),
+                    onCloseListener = searchViewModel::close,
+                    onOpenResultsListener = { query, type ->
+                        if (type == null) {
+                            mainContentViewModel.openRadioSearchResults(query)
+                        } else {
+                            mainContentViewModel.openLocalSearchResults(query, type)
+                        }
+                    }
+                )
+                VolumeControlPopup(
+                    viewModel = volumeViewModel
+                )
+                DisplayStatusIndicator(
+                    serverConfig = serverConfigState.value
+                )
+            }
         }
-
-        NowPlayingScreen(
-            playerId = selectedPlayer.id,
-            layout = layout,
-            motionState = nowPlayingMotionState,
-            serverConfig = serverConfigState.value,
-            insets = insets,
-            onShowVolumePopup = { volumeViewModel.show(5.seconds) },
-            onInfoMenuItemGoAction = { action, parentItem, contextItem ->
-                mainContentViewModel.goToHome()
-                mainContentViewModel.onNowPlayingContextMenuAction(action, contextItem, parentItem)
-            }
-        )
-        SearchBox(
-            viewModel = searchViewModel,
-            pillModifier = Modifier.padding(insets),
-            onCloseListener = searchViewModel::close,
-            onOpenResultsListener = { query, type ->
-                if (type == null) {
-                    mainContentViewModel.openRadioSearchResults(query)
-                } else {
-                    mainContentViewModel.openLocalSearchResults(query, type)
-                }
-            }
-        )
-        VolumeControlPopup(
-            viewModel = volumeViewModel
-        )
-        DisplayStatusIndicator(
-            playerId = selectedPlayer.id,
-            serverConfig = serverConfigState.value
-        )
     }
 }
 

@@ -85,9 +85,7 @@ internal fun EntryProviderScope<NavKey>.jiveHomeMenuNavEntry(
     pagePadding: PaddingValues,
     onItemSelected: (JiveHomeMenuItem) -> Unit
 ) = entry<MainContentNavigation.JiveHomeMenuPage> { route ->
-    val viewModel = koinViewModel<JiveHomeItemListViewModel> {
-        parametersOf(route.playerId, route.nodeId)
-    }
+    val viewModel = koinViewModel<JiveHomeItemListViewModel> { parametersOf(route.nodeId) }
     MainContentPage {
         JiveHomeItemList(
             viewModel = viewModel,
@@ -107,10 +105,7 @@ internal fun EntryProviderScope<NavKey>.slimBrowseNavEntry(
     onItemSelected: (SlimBrowseItemList.SlimBrowseItem, JiveAction) -> Job?,
     onContextMenuItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job?
 ) = entry<MainContentNavigation.SlimBrowseItemPage> { route ->
-    val viewModel = koinViewModel<SlimBrowseItemListViewModel> {
-        parametersOf(route.playerId, route.fetchAction)
-    }
-
+    val viewModel = koinViewModel<SlimBrowseItemListViewModel> { parametersOf(route.fetchAction) }
     val canUseGrid = route.windowStyle == WindowStyle.IconList ||
             route.windowStyle == WindowStyle.HomeMenu
     val showIcons = route.windowStyle != null && route.windowStyle != WindowStyle.TextOnlyList
@@ -155,7 +150,7 @@ internal fun EntryProviderScope<NavKey>.slimBrowseSubItemsNavEntry(
     onContextMenuItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job?
 ) = entry<MainContentNavigation.SlimBrowseSubItemPage> { route ->
     val viewModel = koinViewModel<SlimBrowseSubItemListViewModel> {
-        parametersOf(route.playerId, route.fetchAction, route.position)
+        parametersOf(route.fetchAction, route.position)
     }
 
     MainContentPage {
@@ -200,7 +195,7 @@ internal fun EntryProviderScope<NavKey>.localSearchResultsNavKey(
     onContextMenuItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job?
 ) = entry<MainContentNavigation.LocalSearchResults> { route ->
     val viewModel = koinViewModel<LibrarySearchResultsViewModel> {
-        parametersOf(route.playerId, route.searchTerm, route.mode)
+        parametersOf(route.searchTerm, route.mode)
     }
 
     MainContentPage {
@@ -230,7 +225,7 @@ internal fun EntryProviderScope<NavKey>.radioSearchResultsNavKey(
     onContextMenuItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job?
 ) = entry<MainContentNavigation.RadioSearchResults> { route ->
     val viewModel = koinViewModel<RadioSearchResultViewModel> {
-        parametersOf(route.playerId, route.searchTerm)
+        parametersOf(route.searchTerm)
     }
 
     MainContentPage {
@@ -369,7 +364,7 @@ internal fun EntryProviderScope<NavKey>.contextMenuNavEntry(
     metadata = BottomSheetSceneStrategy.bottomSheet()
 ) { route ->
     val viewModel = koinViewModel<ContextMenuBottomSheetViewModel> {
-        parametersOf(route.playerId, route.menuItems, route.item)
+        parametersOf(route.menuItems, route.item)
     }
 
     ContextMenuBottomSheetContent(viewModel, serverConfig.value) { item ->

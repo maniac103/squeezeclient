@@ -7,7 +7,6 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.anchoredDraggable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -18,14 +17,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledIconToggleButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -378,7 +377,7 @@ private fun PlayerSurface(
 
         PlaybackControls(
             state = state,
-            geometry = geometry,
+            layoutSpec = geometry.controls,
             onPrevious = onPrevious,
             onNext = onNext,
             onToggleRepeat = onToggleRepeat,
@@ -567,7 +566,7 @@ private fun PlayerInformation(
 @Composable
 private fun PlaybackControls(
     state: NowPlayingUiState,
-    geometry: PlayerGeometry,
+    layoutSpec: ControlsLayoutSpec,
     onPrevious: () -> Unit,
     onNext: () -> Unit,
     onToggleRepeat: () -> Unit,
@@ -575,77 +574,58 @@ private fun PlaybackControls(
     onTogglePlayPause: () -> Unit,
     onStop: () -> Unit,
 ) {
-    Row(
+    PlaybackButton(
+        icon = state.repeatIconResId,
+        layoutSpec = layoutSpec.repeat,
+        enabled = state.isPowered,
+        onClick = onToggleRepeat
+    )
+
+    PlaybackButton(
+        icon = R.drawable.ic_prev_24dp,
+        layoutSpec = layoutSpec.prevTrack,
+        enabled = state.playlistPosition > 1,
+        onClick = onPrevious
+    )
+
+    FilledIconToggleButton(
+        checked = state.playPauseActive,
+        onCheckedChange = {},
+        enabled = state.playPauseEnabled,
+        shapes = IconButtonDefaults.toggleableShapes(),
         modifier = Modifier
-            .offset {
-                IntOffset(
-                    (geometry.controlsCenter.x - 120.dp).roundToPx(),
-                    (geometry.controlsCenter.y - 24.dp).roundToPx(),
-                )
-            }
-            .width(240.dp),
-        horizontalArrangement =
-            Arrangement.spacedBy(
-                0.dp,
-                Alignment.CenterHorizontally,
-            ),
-        verticalAlignment = Alignment.CenterVertically,
+            .bounds(layoutSpec.playPause.bounds)
+            .alpha(layoutSpec.playPause.alpha)
+            .combinedClickable(
+                onClick = onTogglePlayPause,
+                onLongClick = onStop
+            )
     ) {
-        PlaybackButton(
-            icon = state.repeatIconResId,
-            enabled = state.isPowered,
-            onClick = onToggleRepeat,
-            modifier = Modifier.alpha(alpha = geometry.repeatAlpha)
-        )
-
-        PlaybackButton(
-            icon = R.drawable.ic_prev_24dp,
-            enabled = state.playlistPosition > 1,
-            onClick = onPrevious
-        )
-
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .size(48.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.primaryContainer)
-        ) {
-            IconButton(
-                onClick = { },
-                enabled = state.playPauseEnabled,
-                modifier = Modifier
-                    .size(48.dp)
-                    .combinedClickable(
-                        onClick = onTogglePlayPause,
-                        onLongClick = onStop
-                    )
-            ) {
-                Icon(
-                    imageVector = ImageVector.vectorResource(state.playPauseIconResId),
-                    contentDescription = null,
-                )
-            }
-        }
-
-        PlaybackButton(
-            icon = R.drawable.ic_next_24dp,
-            enabled = state.playlistPosition < state.playlistLength,
-            onClick = onNext
-        )
-
-        PlaybackButton(
-            icon = state.shuffleIconResId,
-            enabled = state.isPowered,
-            onClick = onToggleShuffle,
-            modifier = Modifier.alpha(alpha = geometry.shuffleAlpha)
+        Icon(
+            imageVector = ImageVector.vectorResource(state.playPauseIconResId),
+            contentDescription = null // FIXME
         )
     }
+
+    PlaybackButton(
+        icon = R.drawable.ic_next_24dp,
+        layoutSpec = layoutSpec.nextTrack,
+        enabled = state.playlistPosition < state.playlistLength,
+        onClick = onNext
+    )
+
+    PlaybackButton(
+        icon = state.shuffleIconResId,
+        layoutSpec = layoutSpec.shuffle,
+        enabled = state.isPowered,
+        onClick = onToggleShuffle
+    )
 }
 
 @Composable
 private fun PlaybackButton(
     icon: Int,
+    layoutSpec: ControlLayoutSpec,
     enabled: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -653,7 +633,9 @@ private fun PlaybackButton(
     IconButton(
         onClick = onClick,
         enabled = enabled,
-        modifier = modifier.size(48.dp)
+        modifier = modifier
+            .bounds(layoutSpec.bounds)
+            .alpha(layoutSpec.alpha)
     ) {
         Icon(
             imageVector = ImageVector.vectorResource(icon),
@@ -914,6 +896,7 @@ fun NowPlayingPreview() {
         isPowered = true,
         canSeek = true,
         playPauseEnabled = true,
+        playPauseActive = false,
         playPauseIconResId = R.drawable.ic_play_24dp,
         repeatIconResId = R.drawable.ic_repeat_off_24dp,
         shuffleIconResId = R.drawable.ic_shuffle_off_24dp,
@@ -935,7 +918,7 @@ fun NowPlayingPreview() {
         .let { PagingData.from(it) }
     val playlistUiState = PlaylistViewModel.UiState(3, null)
 
-    val motionState = rememberNowPlayingMotionState(initiallyExpanded = true)
+    val motionState = rememberNowPlayingMotionState(initiallyExpanded = false)
 
     BoxWithConstraints {
         Scaffold { innerPadding ->

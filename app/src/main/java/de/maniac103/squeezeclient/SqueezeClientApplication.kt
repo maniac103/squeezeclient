@@ -20,7 +20,6 @@ package de.maniac103.squeezeclient
 import android.app.Application
 import android.os.Build
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.work.WorkManager
 import com.google.android.material.color.DynamicColors
 import com.markodevcic.peko.PermissionRequester
 import de.maniac103.squeezeclient.service.DownloadWorker

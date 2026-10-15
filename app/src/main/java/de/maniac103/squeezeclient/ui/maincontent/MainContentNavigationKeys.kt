@@ -31,11 +31,10 @@ import kotlinx.serialization.Serializable
 @Serializable
 sealed class MainContentNavigation : NavKey {
     @Serializable
-    open class JiveHomeMenuPage(val playerId: PlayerId, val nodeId: String, val title: String) : MainContentNavigation()
+    open class JiveHomeMenuPage(val nodeId: String, val title: String) : MainContentNavigation()
 
     @Serializable
     class SlimBrowseItemPage(
-        val playerId: PlayerId,
         val title: String,
         val parentTitle: String?,
         val icon: ParcelableArtworkItem?,
@@ -44,16 +43,16 @@ sealed class MainContentNavigation : NavKey {
     ) : MainContentNavigation()
 
     @Serializable
-    class SlimBrowseSubItemPage(val playerId: PlayerId, val title: String, val fetchAction: JiveAction, val position: Int) : MainContentNavigation()
+    class SlimBrowseSubItemPage(val title: String, val fetchAction: JiveAction, val position: Int) : MainContentNavigation()
 
     @Serializable
     class GalleryPage(val items: List<SlideshowImage>, val title: String, val parentTitle: String?) : MainContentNavigation()
 
     @Serializable
-    class LocalSearchResults(val playerId: PlayerId, val searchTerm: String, val mode: LibrarySearchRequest.Mode) : MainContentNavigation()
+    class LocalSearchResults(val searchTerm: String, val mode: LibrarySearchRequest.Mode) : MainContentNavigation()
 
     @Serializable
-    class RadioSearchResults(val playerId: PlayerId, val searchTerm: String) : MainContentNavigation()
+    class RadioSearchResults(val searchTerm: String) : MainContentNavigation()
 
     @Serializable
     class HomeMenuInput(val title: String, val input: JiveActions.Input) : MainContentNavigation()
@@ -80,7 +79,7 @@ sealed class MainContentNavigation : NavKey {
     class Info(val title: String, val info: String) : MainContentNavigation()
 
     @Serializable
-    class ContextMenu(val playerId: PlayerId, val item: SlimBrowseItemList.SlimBrowseItem, val menuItems: List<SlimBrowseItemList.SlimBrowseItem>) : MainContentNavigation()
+    class ContextMenu(val item: SlimBrowseItemList.SlimBrowseItem, val menuItems: List<SlimBrowseItemList.SlimBrowseItem>) : MainContentNavigation()
 
     @Serializable
     class ItemActions(val item: SlimBrowseItemList.SlimBrowseItem) : MainContentNavigation()

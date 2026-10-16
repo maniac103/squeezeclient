@@ -44,18 +44,17 @@ import de.maniac103.squeezeclient.ui.prefs.SettingsActivity
 import de.maniac103.squeezeclient.ui.serversetup.ServerSetupActivity
 import de.maniac103.squeezeclient.ui.slideshow.ImageViewActivity
 import de.maniac103.squeezeclient.ui.theme.AppTheme
-import de.maniac103.squeezeclient.ui.volume.VolumePopupViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import org.koin.core.parameter.parametersOf
 import kotlin.getValue
-import kotlin.time.Duration.Companion.seconds
 
 class MainActivity : ComponentActivity() {
     private val preferences: Preferences by inject()
+    private val volumeChangeRequestFlow = MutableSharedFlow<Float>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -70,6 +69,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             AppTheme(preferences.appTheme) {
                 MainActivityUi(
+                    volumeChangeRequestFlow = volumeChangeRequestFlow,
                     onGalleryItemSelected = { image ->
                         val intent = ImageViewActivity.createIntent(this, image)
                         startActivity(intent)
@@ -129,18 +129,10 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun adjustVolume(direction: Int) {
-        val mainViewModel by viewModel<MainActivityViewModel>()
-        val connectedState = mainViewModel.stateFlow.value as? MainActivityState.Connected
-            ?: return
+    private fun adjustVolume(direction: Int) = lifecycleScope.launch {
         val stepSize = preferences.volumeStepSize.value * 0.01F
-        val volumeViewModel by viewModel<VolumePopupViewModel> {
-            parametersOf(connectedState.selectedPlayer.id)
-        }
-        volumeViewModel.adjustVolume(direction * stepSize)
-        volumeViewModel.show(2.seconds)
+        volumeChangeRequestFlow.emit(direction * stepSize)
     }
-
 
     private fun triggerDownload(data: DownloadRequestData) = lifecycleScope.launch {
         if (!requestNotificationPermissionForDownload()) {

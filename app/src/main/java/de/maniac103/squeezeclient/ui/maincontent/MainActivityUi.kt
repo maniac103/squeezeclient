@@ -62,6 +62,7 @@ import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
@@ -100,13 +101,13 @@ import de.maniac103.squeezeclient.ui.search.SearchViewModel
 import de.maniac103.squeezeclient.ui.volume.VolumeControlPopup
 import de.maniac103.squeezeclient.ui.volume.VolumePopupViewModel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
-import org.koin.compose.LocalKoinScope
-import org.koin.compose.LocalKoinScopeContext
 import org.koin.compose.scope.KoinScope
 import org.koin.core.annotation.KoinExperimentalAPI
 import org.koin.core.parameter.parametersOf
@@ -142,6 +143,7 @@ sealed interface MainLayout {
 
 @Composable
 fun MainActivityUi(
+    volumeChangeRequestFlow: SharedFlow<Float>,
     onGalleryItemSelected: (SlideshowImage) -> Unit,
     onDownloadSelected: (DownloadRequestData) -> Unit,
     onWebLinkSelected: (title: String, link: Uri) -> Unit,
@@ -155,6 +157,7 @@ fun MainActivityUi(
         serverConfigFlow = viewModel.serverConfigFlow,
         forceGridForSlimBrowseItemsFlow = viewModel.forceGridForSlimBrowseItemsFlow,
         localPlaybackEnabledFlow = viewModel.localPlaybackEnabledFlow,
+        volumeChangeRequestFlow = volumeChangeRequestFlow,
         onGalleryItemSelected = onGalleryItemSelected,
         onDownloadSelected = onDownloadSelected,
         onWebLinkSelected = onWebLinkSelected,
@@ -173,6 +176,7 @@ fun MainActivityUi(
     serverConfigFlow: Flow<ServerConfiguration?>,
     forceGridForSlimBrowseItemsFlow: Flow<Boolean>,
     localPlaybackEnabledFlow: Flow<Boolean>,
+    volumeChangeRequestFlow: SharedFlow<Float>,
     onGalleryItemSelected: (SlideshowImage) -> Unit = {},
     onDownloadSelected: (DownloadRequestData) -> Unit = {},
     onWebLinkSelected: (title: String, link: Uri) -> Unit = { _, _ -> },
@@ -253,6 +257,7 @@ fun MainActivityUi(
                         insets = innerPadding,
                         serverConfigState = serverConfigState,
                         forceGridForSlimBrowseItemsState = forceGridForSlimBrowseItemsState,
+                        volumeChangeRequestFlow = volumeChangeRequestFlow,
                         onGalleryItemSelected = onGalleryItemSelected,
                         onDownloadSelected = onDownloadSelected,
                         onWebLinkSelected = onWebLinkSelected
@@ -428,6 +433,7 @@ private fun MainActivityConnected(
     insets: PaddingValues,
     serverConfigState: State<ServerConfiguration?>,
     forceGridForSlimBrowseItemsState: State<Boolean>,
+    volumeChangeRequestFlow: SharedFlow<Float>,
     onDownloadSelected: (DownloadRequestData) -> Unit,
     onGalleryItemSelected: (SlideshowImage) -> Unit,
     onWebLinkSelected: (title: String, link: Uri) -> Unit
@@ -447,6 +453,13 @@ private fun MainActivityConnected(
             val volumeViewModel = koinViewModel<VolumePopupViewModel> { parametersOf(selectedPlayer.id) }
             val nowPlayingMotionState = rememberNowPlayingMotionState(false)
             val scope = rememberCoroutineScope()
+
+            LaunchedEffect(volumeChangeRequestFlow, volumeViewModel) {
+                volumeChangeRequestFlow.collect { amount ->
+                    volumeViewModel.adjustVolume(amount)
+                    volumeViewModel.show(2.seconds)
+                }
+            }
 
             BoxWithConstraints {
                 val layout = determineMainLayout(
@@ -694,6 +707,7 @@ fun MainActivityUiPreview() {
         stateFlow = MutableStateFlow(MainActivityState.Connected(players, players[1])),
         serverConfigFlow = flowOf(null),
         forceGridForSlimBrowseItemsFlow = flowOf(false),
-        localPlaybackEnabledFlow = flowOf(false)
+        localPlaybackEnabledFlow = flowOf(false),
+        volumeChangeRequestFlow = MutableSharedFlow<Float>()
     )
 }

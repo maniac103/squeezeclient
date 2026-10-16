@@ -31,6 +31,7 @@ import de.maniac103.squeezeclient.ui.maincontent.MainActivityViewModel
 import de.maniac103.squeezeclient.ui.maincontent.MainContentViewModel
 import de.maniac103.squeezeclient.ui.nowplaying.NowPlayingViewModel
 import de.maniac103.squeezeclient.ui.nowplaying.PlaylistViewModel
+import de.maniac103.squeezeclient.ui.playermanagement.PlayerManagementViewModel
 import de.maniac103.squeezeclient.ui.search.LibrarySearchResultsViewModel
 import de.maniac103.squeezeclient.ui.search.RadioSearchResultViewModel
 import de.maniac103.squeezeclient.ui.search.SearchViewModel
@@ -46,6 +47,12 @@ val viewModelModule = module {
         MainActivityViewModel(
             connectionHelper = get(),
             preferences = get()
+        )
+    }
+
+    viewModel {
+        PlayerManagementViewModel(
+            connectionHelper = get()
         )
     }
 

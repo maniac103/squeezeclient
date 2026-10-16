@@ -20,11 +20,12 @@ package de.maniac103.squeezeclient.ui.playermanagement
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.PlayerStatus
 import de.maniac103.squeezeclient.model.Playlist
+import de.maniac103.squeezeclient.ui.composables.TextResource
 
 data class PlayerData(
     val playerId: PlayerId,
     val name: String,
-    val modelName: String,
+    val modelName: TextResource,
     val canPowerOff: Boolean,
     val nowPlayingInfo: Playlist.PlaylistItem?,
     val playbackState: PlayerStatus.PlayState?,

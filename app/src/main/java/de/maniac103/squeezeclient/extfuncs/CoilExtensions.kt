@@ -31,14 +31,12 @@ fun ImageRequest.Builder.addServerCredentialsIfNeeded(serverConfig: ServerConfig
     }
 }
 
-fun ImageRequest.Builder.loadMaybeRelativeUrl(
-    url: String?,
-    serverConfig: ServerConfiguration?
-) = apply {
-    val absoluteUrl = url?.let {
-        serverConfig?.url?.resolve(url)?.toString() ?: url
-    }
+fun ImageRequest.Builder.loadMaybeRelativeUrl(url: String?, serverConfig: ServerConfiguration?) =
+    apply {
+        val absoluteUrl = url?.let {
+            serverConfig?.url?.resolve(url)?.toString() ?: url
+        }
 
-    data(absoluteUrl)
-    addServerCredentialsIfNeeded(serverConfig)
-}
+        data(absoluteUrl)
+        addServerCredentialsIfNeeded(serverConfig)
+    }

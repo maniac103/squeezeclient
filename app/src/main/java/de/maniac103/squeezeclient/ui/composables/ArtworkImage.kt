@@ -68,7 +68,7 @@ fun ArtworkImage(
                     currentAspectRatio?.let { Modifier.aspectRatio(it) }
                         ?: Modifier
                 )
-                .clip(RoundedCornerShape(20 /* percent */))
+                .clip(RoundedCornerShape(percent = 20))
         )
     }
 }

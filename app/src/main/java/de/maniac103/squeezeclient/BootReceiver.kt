@@ -24,7 +24,9 @@ import de.maniac103.squeezeclient.service.localplayer.LocalPlaybackService
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 
-class BootReceiver : BroadcastReceiver(), KoinComponent {
+class BootReceiver :
+    BroadcastReceiver(),
+    KoinComponent {
     private val preferences: Preferences by inject()
 
     override fun onReceive(context: Context?, intent: Intent?) {

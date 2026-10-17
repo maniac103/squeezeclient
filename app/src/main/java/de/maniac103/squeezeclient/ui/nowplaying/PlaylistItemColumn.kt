@@ -201,9 +201,7 @@ fun PlaylistItemColumn(
 }
 
 @Composable
-fun DeleteBackground(
-    dismissState: SwipeToDismissBoxState
-) {
+fun DeleteBackground(dismissState: SwipeToDismissBoxState) {
     val direction = dismissState.dismissDirection
 
     Box(
@@ -220,7 +218,7 @@ fun DeleteBackground(
         Icon(
             imageVector = ImageVector.vectorResource(R.drawable.ic_delete_24dp),
             contentDescription = null, // FIXME
-            tint = MaterialTheme.colorScheme.onErrorContainer,
+            tint = MaterialTheme.colorScheme.onErrorContainer
         )
     }
 }

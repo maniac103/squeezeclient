@@ -60,14 +60,11 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import de.maniac103.squeezeclient.Preferences
 import de.maniac103.squeezeclient.R
+import kotlin.enums.enumEntries
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
-import kotlin.enums.enumEntries
 
-data class GroupEntryPosition(
-    val index: Int,
-    val size: Int,
-) {
+data class GroupEntryPosition(val index: Int, val size: Int) {
     val isFirst get() = index == 0
     val isLast get() = index == size - 1
 }
@@ -81,10 +78,7 @@ class PreferenceGroupScope {
 }
 
 @Composable
-fun PreferenceGroup(
-    title: String,
-    content: PreferenceGroupScope.() -> Unit
-) = Column(
+fun PreferenceGroup(title: String, content: PreferenceGroupScope.() -> Unit) = Column(
     verticalArrangement = Arrangement.spacedBy(2.dp),
     modifier = Modifier.padding(horizontal = 16.dp)
 ) {
@@ -131,11 +125,7 @@ fun PreferenceCard(
 }
 
 @Composable
-fun PreferenceText(
-    title: String,
-    summary: String?,
-    modifier: Modifier = Modifier
-) = Column(
+fun PreferenceText(title: String, summary: String?, modifier: Modifier = Modifier) = Column(
     modifier = modifier
 ) {
     Text(
@@ -179,7 +169,6 @@ fun SwitchPreference(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
-
             PreferenceText(
                 title = title,
                 summary = summaryProvider(checked),
@@ -352,7 +341,9 @@ fun WidgetPreview() {
             SliderPreference(
                 position = position,
                 title = "Slider title",
-                summaryProvider = { value -> "Some description text for the slider widget: $value" },
+                summaryProvider = { value ->
+                    "Some description text for the slider widget: $value"
+                },
                 minValue = 1,
                 maxValue = 5,
                 preference = intPref
@@ -368,7 +359,10 @@ fun WidgetPreview() {
             SwitchPreference(
                 position = position,
                 title = "Switch title",
-                summaryProvider = { value -> "Some description text for the switch widget: $value. This is a very long text that requires wrap around." },
+                summaryProvider = { value ->
+                    "Some description text for the switch widget: $value. " +
+                        "This is a very long text that requires wrap around."
+                },
                 preference = booleanPref
             )
         }

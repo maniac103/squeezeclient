@@ -42,13 +42,19 @@ sealed class MainContentNavigation : NavKey {
     ) : MainContentNavigation()
 
     @Serializable
-    class SlimBrowseSubItemPage(val title: String, val fetchAction: JiveAction, val position: Int) : MainContentNavigation()
+    class SlimBrowseSubItemPage(val title: String, val fetchAction: JiveAction, val position: Int) :
+        MainContentNavigation()
 
     @Serializable
-    class GalleryPage(val items: List<SlideshowImage>, val title: String, val parentTitle: String?) : MainContentNavigation()
+    class GalleryPage(
+        val items: List<SlideshowImage>,
+        val title: String,
+        val parentTitle: String?
+    ) : MainContentNavigation()
 
     @Serializable
-    class LocalSearchResults(val searchTerm: String, val mode: LibrarySearchRequest.Mode) : MainContentNavigation()
+    class LocalSearchResults(val searchTerm: String, val mode: LibrarySearchRequest.Mode) :
+        MainContentNavigation()
 
     @Serializable
     class RadioSearchResults(val searchTerm: String) : MainContentNavigation()
@@ -57,28 +63,42 @@ sealed class MainContentNavigation : NavKey {
     class HomeMenuInput(val title: String, val input: JiveActions.Input) : MainContentNavigation()
 
     @Serializable
-    class HomeMenuTimePicker(val title: String, val input: JiveActions.Input) : MainContentNavigation()
+    class HomeMenuTimePicker(val title: String, val input: JiveActions.Input) :
+        MainContentNavigation()
 
     @Serializable
-    class SlimBrowseInput(val item : SlimBrowseItemList.SlimBrowseItem, val input: JiveActions.Input) : MainContentNavigation()
+    class SlimBrowseInput(
+        val item: SlimBrowseItemList.SlimBrowseItem,
+        val input: JiveActions.Input
+    ) : MainContentNavigation()
 
     @Serializable
-    class SlimBrowseTimePicker(val item : SlimBrowseItemList.SlimBrowseItem, val input: JiveActions.Input) : MainContentNavigation()
+    class SlimBrowseTimePicker(
+        val item: SlimBrowseItemList.SlimBrowseItem,
+        val input: JiveActions.Input
+    ) : MainContentNavigation()
 
     @Serializable
     class SliderInput(val title: String, val slider: JiveActions.Slider) : MainContentNavigation()
 
     @Serializable
-    class HomeMenuChoices(val parentTitle: String, val choices: JiveActions.Choices) : MainContentNavigation()
+    class HomeMenuChoices(val parentTitle: String, val choices: JiveActions.Choices) :
+        MainContentNavigation()
 
     @Serializable
-    class SlimBrowseChoices(val item: SlimBrowseItemList.SlimBrowseItem, val choices: JiveActions.Choices) : MainContentNavigation()
+    class SlimBrowseChoices(
+        val item: SlimBrowseItemList.SlimBrowseItem,
+        val choices: JiveActions.Choices
+    ) : MainContentNavigation()
 
     @Serializable
     class Info(val title: String, val info: String) : MainContentNavigation()
 
     @Serializable
-    class ContextMenu(val item: SlimBrowseItemList.SlimBrowseItem, val menuItems: List<SlimBrowseItemList.SlimBrowseItem>) : MainContentNavigation()
+    class ContextMenu(
+        val item: SlimBrowseItemList.SlimBrowseItem,
+        val menuItems: List<SlimBrowseItemList.SlimBrowseItem>
+    ) : MainContentNavigation()
 
     @Serializable
     class ItemActions(val item: SlimBrowseItemList.SlimBrowseItem) : MainContentNavigation()

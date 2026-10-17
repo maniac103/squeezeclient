@@ -23,6 +23,7 @@ import de.maniac103.squeezeclient.cometd.ConnectionHelper
 import de.maniac103.squeezeclient.model.ArtworkItem
 import de.maniac103.squeezeclient.model.DisplayMessage
 import de.maniac103.squeezeclient.model.PlayerId
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,13 +32,10 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
-import kotlin.time.Duration.Companion.seconds
 
-class DisplayStatusViewModel(
-    connectionHelper: ConnectionHelper,
-    playerId: PlayerId
-) : ViewModel() {
+class DisplayStatusViewModel(connectionHelper: ConnectionHelper, playerId: PlayerId) : ViewModel() {
     private val uiMessageFlowInternal = MutableStateFlow<DisplayStatusMessage?>(null)
+
     @OptIn(ExperimentalCoroutinesApi::class)
     private val backendMessageFlow = connectionHelper.playerState(playerId)
         .flatMapLatest { it.displayStatus }

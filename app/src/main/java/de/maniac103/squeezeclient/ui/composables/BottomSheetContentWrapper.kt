@@ -35,11 +35,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun BottomSheetContentWrapper(
-    title: String,
-    busy: Boolean,
-    content: @Composable () -> Unit
-) {
+fun BottomSheetContentWrapper(title: String, busy: Boolean, content: @Composable () -> Unit) {
     Column {
         Row {
             Text(

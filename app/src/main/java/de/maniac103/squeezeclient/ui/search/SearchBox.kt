@@ -217,29 +217,27 @@ fun SearchBox(
 }
 
 @Composable
-fun SearchResultCountRow(
-    category: SearchViewModel.Category,
-    modifier: Modifier = Modifier
-) = ListItem(
-    colors = ListItemDefaults.colors(
-        containerColor = Color.Transparent
-    ),
-    trailingContent = {
-        if (category.busy) {
-            CircularProgressIndicator(
-                strokeWidth = 2.dp,
-                modifier = Modifier.size(16.dp)
-            )
-        } else {
-            Text(
-                text = category.resultCount.toString()
-            )
-        }
-    },
-    modifier = modifier
-) {
-    Text(text = category.title)
-}
+fun SearchResultCountRow(category: SearchViewModel.Category, modifier: Modifier = Modifier) =
+    ListItem(
+        colors = ListItemDefaults.colors(
+            containerColor = Color.Transparent
+        ),
+        trailingContent = {
+            if (category.busy) {
+                CircularProgressIndicator(
+                    strokeWidth = 2.dp,
+                    modifier = Modifier.size(16.dp)
+                )
+            } else {
+                Text(
+                    text = category.resultCount.toString()
+                )
+            }
+        },
+        modifier = modifier
+    ) {
+        Text(text = category.title)
+    }
 
 @Preview
 @Composable

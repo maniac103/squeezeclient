@@ -29,7 +29,7 @@ import de.maniac103.squeezeclient.ui.itemlist.SlimBrowsePagedItemListOrGrid
 
 @Composable
 fun RadioSearchResultsItemList(
-    viewModel: RadioSearchResultViewModel,
+    viewModel: RadioSearchResultsViewModel,
     serverConfig: ServerConfiguration?,
     useGrid: Boolean,
     modifier: Modifier = Modifier,

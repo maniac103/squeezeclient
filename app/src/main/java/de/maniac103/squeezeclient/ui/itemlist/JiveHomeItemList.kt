@@ -3,6 +3,7 @@ package de.maniac103.squeezeclient.ui.itemlist
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
@@ -92,13 +93,15 @@ fun JiveHomeItemListEntry(
 @Composable
 fun JiveHomeItemList(
     viewModel: JiveHomeItemListViewModel,
+    contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
     itemSelectionListener: (JiveHomeMenuItem) -> Unit = {}
 ) {
     val menuEntries by viewModel.homeMenuItemsFlow.collectAsState(emptyList())
 
     LazyColumn(
-        modifier = modifier
+        modifier = modifier,
+        contentPadding = contentPadding
     ) {
         items(menuEntries) { entry ->
             JiveHomeItemListEntry(

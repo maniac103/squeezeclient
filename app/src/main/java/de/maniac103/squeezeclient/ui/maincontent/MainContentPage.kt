@@ -96,9 +96,7 @@ private fun Transition<EnterExitState>.animateDpForPredictiveBack(
 }
 
 @Composable
-fun MainContentPage(
-    content: @Composable () -> Unit
-) {
+fun MainContentPage(content: @Composable () -> Unit) {
     val bottomPadding = LocalMainContentAnimationState.current.pagePadding.calculateBottomPadding()
     val transition = LocalNavAnimatedContentScope.current.transition
 
@@ -108,9 +106,9 @@ fun MainContentPage(
         animation = tween(
             durationMillis = 100,
             delayMillis = 300,
-            easing = DecelerateQuintEasing,
+            easing = DecelerateQuintEasing
         ),
-        label = "main-content-scale",
+        label = "main-content-scale"
     )
 
     val cornerRadius by transition.animateDpForPredictiveBack(
@@ -119,9 +117,9 @@ fun MainContentPage(
         animation = tween(
             durationMillis = 100,
             delayMillis = 300,
-            easing = DecelerateQuintEasing,
+            easing = DecelerateQuintEasing
         ),
-        label = "main-content-corner-radius",
+        label = "main-content-corner-radius"
     )
 
     val animatedBottomPlaceholderCompensation by transition.animateDpForPredictiveBack(
@@ -130,9 +128,9 @@ fun MainContentPage(
         animation = tween(
             durationMillis = 100,
             delayMillis = 300,
-            easing = DecelerateQuintEasing,
+            easing = DecelerateQuintEasing
         ),
-        label = "main-content-bottom-compensation",
+        label = "main-content-bottom-compensation"
     )
 
     val elevation by transition.animateDpForPredictiveBack(
@@ -141,9 +139,9 @@ fun MainContentPage(
         settledValue = 0.dp,
         animation = tween(
             durationMillis = 100,
-            delayMillis = 300,
+            delayMillis = 300
         ),
-        label = "main-content-elevation",
+        label = "main-content-elevation"
     )
 
     Surface(
@@ -161,7 +159,7 @@ fun MainContentPage(
             }
             .padding(bottom = animatedBottomPlaceholderCompensation),
         shape = RoundedCornerShape(cornerRadius),
-        shadowElevation = elevation,
+        shadowElevation = elevation
     ) {
         content()
     }

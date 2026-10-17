@@ -29,6 +29,7 @@ import de.maniac103.squeezeclient.model.PlayerStatus.RepeatState
 import de.maniac103.squeezeclient.model.PlayerStatus.ShuffleState
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.ui.composables.TextResource
+import kotlin.time.DurationUnit
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,13 +39,9 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlin.String
-import kotlin.time.DurationUnit
 
-class NowPlayingViewModel(
-    private val connectionHelper: ConnectionHelper,
-    val playerId: PlayerId,
-) : ViewModel() {
+class NowPlayingViewModel(private val connectionHelper: ConnectionHelper, val playerId: PlayerId) :
+    ViewModel() {
     val contextMenuFlowInternal =
         MutableStateFlow<NowPlayingContextMenuState>(NowPlayingContextMenuState.Idle)
     val playlistSaveInputStateFlowInternal = MutableStateFlow(PlaylistSaveEditorState.Idle)
@@ -57,7 +54,7 @@ class NowPlayingViewModel(
         .stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5_000),
-            null,
+            null
         )
     val contextMenuFlow = contextMenuFlowInternal.asStateFlow()
     val playlistSaveInputStateFlow = playlistSaveInputStateFlowInternal.asStateFlow()
@@ -214,6 +211,9 @@ class NowPlayingUiState(private val status: PlayerStatus) {
     }
 
     val toolbarSubtitle get() = TextResource.StringRes(
-        R.string.nowplaying_subtitle, playerName, playlistPosition, playlistLength
+        R.string.nowplaying_subtitle,
+        playerName,
+        playlistPosition,
+        playlistLength
     )
 }

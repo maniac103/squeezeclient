@@ -26,10 +26,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import de.maniac103.squeezeclient.R
-import de.maniac103.squeezeclient.ui.composables.ArtworkImage
 import de.maniac103.squeezeclient.model.ArtworkItem
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
+import de.maniac103.squeezeclient.ui.composables.ArtworkImage
 import de.maniac103.squeezeclient.ui.theme.AppTheme
 
 @Composable
@@ -169,9 +169,37 @@ fun SlimBrowseItemListRowPreview() {
         SlimBrowseItemListRow("No Subtext", null, null, dummyArtwork, null, false)
         SlimBrowseItemListRow("No icon", null, null, null, null, false)
         SlimBrowseItemListRow("Busy", "Subtext", null, dummyArtwork, null, true)
-        SlimBrowseItemListRow("Menu", "Subtext", SlimBrowseItemTrailingWidget.ContextMenu {}, dummyArtwork, null, false)
-        SlimBrowseItemListRow("Choice", "Subtext", SlimBrowseItemTrailingWidget.Choice("On"), dummyArtwork, null, false)
-        SlimBrowseItemListRow("Radio", "Subtext", SlimBrowseItemTrailingWidget.Radio(true), dummyArtwork, null, false)
-        SlimBrowseItemListRow("Checkbox", "Subtext", SlimBrowseItemTrailingWidget.Checkbox(true), dummyArtwork, null, false)
+        SlimBrowseItemListRow(
+            "Menu",
+            "Subtext",
+            SlimBrowseItemTrailingWidget.ContextMenu {},
+            dummyArtwork,
+            null,
+            false
+        )
+        SlimBrowseItemListRow(
+            "Choice",
+            "Subtext",
+            SlimBrowseItemTrailingWidget.Choice("On"),
+            dummyArtwork,
+            null,
+            false
+        )
+        SlimBrowseItemListRow(
+            "Radio",
+            "Subtext",
+            SlimBrowseItemTrailingWidget.Radio(true),
+            dummyArtwork,
+            null,
+            false
+        )
+        SlimBrowseItemListRow(
+            "Checkbox",
+            "Subtext",
+            SlimBrowseItemTrailingWidget.Checkbox(true),
+            dummyArtwork,
+            null,
+            false
+        )
     }
 }

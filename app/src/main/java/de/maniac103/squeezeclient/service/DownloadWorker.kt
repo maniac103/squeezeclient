@@ -342,7 +342,9 @@ class DownloadWorker(
 
                 val notificationId = NotificationIds.forDownloadWork(failedEntries.first().id)
                 val failedItems = failedEntries
-                    .mapNotNull { it.outputData.getNullableStringArray(OutputDataKeys.FAILED_ITEMS) }
+                    .mapNotNull {
+                        it.outputData.getNullableStringArray(OutputDataKeys.FAILED_ITEMS)
+                    }
                     .toTypedArray()
                     .flatten()
                     .filterNotNull()

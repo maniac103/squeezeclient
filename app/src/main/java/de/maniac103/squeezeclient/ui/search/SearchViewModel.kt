@@ -134,27 +134,22 @@ class SearchViewModel(
             R.string.search_category_tracks,
             LibrarySearchRequest.Mode.Tracks(),
             counts?.tracks
-        ),
+        )
     )
 
     private fun createRadioCategory(count: Int?) =
         createCategory(R.string.search_category_radio, null, count)
 
-    private fun createCategory(
-        titleResId: Int,
-        type: LibrarySearchRequest.Mode?,
-        count: Int?
-    ) = Category(
-        application.getString(titleResId),
-        type,
-        count ?: 0,
-        count == null
-    )
+    private fun createCategory(titleResId: Int, type: LibrarySearchRequest.Mode?, count: Int?) =
+        Category(
+            application.getString(titleResId),
+            type,
+            count ?: 0,
+            count == null
+        )
 
-    data class QueryState(
-        val text: String,
-        val submitted: Boolean
-    )
+    data class QueryState(val text: String, val submitted: Boolean)
+
     data class Category(
         val title: String,
         val type: LibrarySearchRequest.Mode?,

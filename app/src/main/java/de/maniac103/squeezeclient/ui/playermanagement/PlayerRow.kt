@@ -294,10 +294,7 @@ internal fun PlayerRow(
 }
 
 @Composable
-internal fun DragTargetRow(
-    state: RowState,
-    modifier: Modifier = Modifier
-) = DragDropAwareRow(
+internal fun DragTargetRow(state: RowState, modifier: Modifier = Modifier) = DragDropAwareRow(
     state = state,
     position = RowPosition.Single,
     horizontalArrangement = Arrangement.Center,

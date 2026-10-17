@@ -66,11 +66,7 @@ fun GalleryGrid(
 }
 
 @Composable
-fun GalleryGridItem(
-    imageRequest: ImageRequest,
-    caption: String,
-    modifier: Modifier = Modifier
-) {
+fun GalleryGridItem(imageRequest: ImageRequest, caption: String, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .padding(8.dp)
@@ -86,7 +82,7 @@ fun GalleryGridItem(
                 )
             },
             modifier = Modifier
-                .clip(RoundedCornerShape(10 /* percent */))
+                .clip(RoundedCornerShape(percent = 10))
                 .align(Alignment.CenterHorizontally)
         )
         Text(

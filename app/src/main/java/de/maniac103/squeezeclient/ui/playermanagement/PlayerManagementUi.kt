@@ -38,10 +38,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.maniac103.squeezeclient.R
 
 @Composable
-fun PlayerManagementUi(
-    viewModel: PlayerManagementViewModel,
-    onGoBack: () -> Unit
-) = Scaffold(
+fun PlayerManagementUi(viewModel: PlayerManagementViewModel, onGoBack: () -> Unit) = Scaffold(
     topBar = {
         TopAppBar(
             title = { Text(stringResource(R.string.app_name)) },

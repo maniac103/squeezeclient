@@ -43,17 +43,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import de.maniac103.squeezeclient.ui.composables.ArtworkImage
 import de.maniac103.squeezeclient.model.ArtworkItem
 import de.maniac103.squeezeclient.model.ServerConfiguration
+import de.maniac103.squeezeclient.ui.composables.ArtworkImage
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun DisplayStatusIndicator(
-    serverConfig: ServerConfiguration?
-) {
+fun DisplayStatusIndicator(serverConfig: ServerConfiguration?) {
     val viewModel = koinViewModel<DisplayStatusViewModel>()
     DisplayStatusIndicator(
         messageFlow = viewModel.messageFlow,

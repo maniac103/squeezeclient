@@ -190,7 +190,7 @@ fun MainContent(
 
     val isPredictiveBack = navigationEventState.transitionState.let { state ->
         state is NavigationEventTransitionState.InProgress &&
-                state.direction == NavigationEventTransitionState.TRANSITIONING_BACK
+            state.direction == NavigationEventTransitionState.TRANSITIONING_BACK
     }
     val animationType = when {
         isPredictiveBack -> MainContentAnimationType.PredictiveBack

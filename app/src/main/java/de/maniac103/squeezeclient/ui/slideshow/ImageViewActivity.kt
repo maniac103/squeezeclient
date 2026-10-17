@@ -67,9 +67,9 @@ import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.extfuncs.addServerCredentialsIfNeeded
 import de.maniac103.squeezeclient.model.SlideshowImage
 import de.maniac103.squeezeclient.ui.theme.AppTheme
-import org.koin.android.ext.android.inject
 import kotlin.getValue
 import kotlin.io.path.createTempFile
+import org.koin.android.ext.android.inject
 
 class ImageViewActivity : AppCompatActivity() {
     private val preferences: Preferences by inject()
@@ -113,7 +113,9 @@ class ImageViewActivity : AppCompatActivity() {
                                         onClick = { finishAfterTransition() }
                                     ) {
                                         Icon(
-                                            ImageVector.vectorResource(R.drawable.ic_arrow_left_24dp),
+                                            imageVector = ImageVector.vectorResource(
+                                                R.drawable.ic_arrow_left_24dp
+                                            ),
                                             contentDescription = null // FIXME
                                         )
                                     }
@@ -124,11 +126,12 @@ class ImageViewActivity : AppCompatActivity() {
                                             onClick = { share(imageUrl) }
                                         ) {
                                             Icon(
-                                                ImageVector.vectorResource(R.drawable.ic_share_24dp),
+                                                imageVector = ImageVector.vectorResource(
+                                                    R.drawable.ic_share_24dp
+                                                ),
                                                 contentDescription = null // FIXME
                                             )
                                         }
-
                                     }
                                 },
                                 modifier = Modifier.background(
@@ -224,8 +227,10 @@ fun ZoomableAsyncImage(
                 }
             }
             .graphicsLayer(
-                scaleX = scale, scaleY = scale,
-                translationX = offset.x, translationY = offset.y
+                scaleX = scale,
+                scaleY = scale,
+                translationX = offset.x,
+                translationY = offset.y
             )
     )
 }

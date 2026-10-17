@@ -25,6 +25,7 @@ import de.maniac103.squeezeclient.cometd.ConnectionState
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.PlayerStatus
 import de.maniac103.squeezeclient.ui.composables.TextResource
+import kotlin.collections.get
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -37,7 +38,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
-import kotlin.collections.get
 
 sealed class PlayerManagementUiState {
     data object Disconnected : PlayerManagementUiState()
@@ -49,9 +49,7 @@ sealed class PlayerManagementUiState {
 }
 
 @OptIn(ExperimentalStdlibApi::class)
-class PlayerManagementViewModel(
-    private val connectionHelper: ConnectionHelper
-) : ViewModel() {
+class PlayerManagementViewModel(private val connectionHelper: ConnectionHelper) : ViewModel() {
     private val uiStateFlowInternal = MutableStateFlow<PlayerManagementUiState>(
         PlayerManagementUiState.Loading
     )
@@ -77,7 +75,10 @@ class PlayerManagementViewModel(
                     val playbackState = if (master == null) status.playbackState else null
                     val modelName = PLAYER_NAME_MAP[playerData.model]
                         ?.let { TextResource.Raw(it) }
-                        ?: TextResource.StringRes(R.string.player_name_software_player, playerData.model)
+                        ?: TextResource.StringRes(
+                            R.string.player_name_software_player,
+                            playerData.model
+                        )
                     PlayerData(
                         playerId,
                         status.playerName,
@@ -172,12 +173,10 @@ class PlayerManagementViewModel(
         connectionHelper.togglePower(playerId)
     }
 
-    fun setPlayerPlayState(
-        playerId: PlayerId,
-        newState: PlayerStatus.PlayState
-    ) = viewModelScope.launch {
-        connectionHelper.changePlaybackState(playerId, newState)
-    }
+    fun setPlayerPlayState(playerId: PlayerId, newState: PlayerStatus.PlayState) =
+        viewModelScope.launch {
+            connectionHelper.changePlaybackState(playerId, newState)
+        }
 
     fun setPlayerVolume(playerId: PlayerId, newVolume: Int) = viewModelScope.launch {
         connectionHelper.setVolume(playerId, newVolume)

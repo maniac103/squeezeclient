@@ -36,7 +36,6 @@ object BooleanAsIntSerializer : KSerializer<Boolean> {
     }
 }
 
-@OptIn(ExperimentalTime::class)
 object TimestampAsInstantSerializer : KSerializer<Instant> {
     override val descriptor: SerialDescriptor get() =
         PrimitiveSerialDescriptor("TimestampAsInstant", PrimitiveKind.DOUBLE)

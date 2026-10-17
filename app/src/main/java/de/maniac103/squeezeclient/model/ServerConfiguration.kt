@@ -38,7 +38,6 @@ data class ServerConfiguration(
         }
     }
 
-    @OptIn(ExperimentalEncodingApi::class)
     val credentialsAsAuthorizationHeader
         get() = if (username.isNullOrEmpty() || password.isNullOrEmpty()) {
             null

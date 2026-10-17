@@ -242,8 +242,8 @@ fun ErrorHintContentPreview() {
         R.string.connection_error_text_connection_failure,
         "Something happened",
         listOf(
-            ActionButtonSpec(R.string.connection_error_action_retry, {}),
-            ActionButtonSpec(R.string.connection_error_action_setup_server, {})
+            ActionButtonSpec(R.string.connection_error_action_retry) {},
+            ActionButtonSpec(R.string.connection_error_action_setup_server) {}
         )
     )
 }

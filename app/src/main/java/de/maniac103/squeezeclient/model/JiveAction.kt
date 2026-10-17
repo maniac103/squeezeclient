@@ -51,8 +51,4 @@ data class JiveAction(
         }
         return JiveAction(newCmd, newParams, nextWindow, windowIsContextMenu)
     }
-
-    companion object {
-        fun createEmptyForInput() = JiveAction(emptyList(), mapOf("" to "__INPUT__"), null, null)
-    }
 }

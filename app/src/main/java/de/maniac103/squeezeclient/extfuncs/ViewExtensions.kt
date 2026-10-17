@@ -18,77 +18,9 @@
 package de.maniac103.squeezeclient.extfuncs
 
 import android.content.DialogInterface
-import android.content.res.Configuration
-import android.view.View
 import androidx.appcompat.app.AlertDialog
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.updatePadding
 import kotlin.coroutines.resume
-import kotlin.time.Duration
 import kotlinx.coroutines.suspendCancellableCoroutine
-
-fun View.animateScale(scale: Float, duration: Duration) =
-    animate().scaleX(scale).scaleY(scale).setDuration(duration.inWholeMilliseconds)
-
-enum class ViewEdge {
-    Start,
-    End,
-    Top,
-    TopStart,
-    TopEnd,
-    Bottom,
-    BottomStart,
-    BottomEnd,
-    Center
-}
-
-fun View.addSystemBarAndCutoutInsetsListener(edge: ViewEdge, landscapeEdge: ViewEdge = edge) {
-    ViewCompat.setOnApplyWindowInsetsListener(this) { v, windowInsets ->
-        val isLandscape =
-            v.resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-        val actualEdge = if (isLandscape) landscapeEdge else edge
-
-        val barInsets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
-        val cutoutInsets = windowInsets.getInsets(WindowInsetsCompat.Type.displayCutout())
-
-        val startIsLeft = !v.context.isRtl
-        val viewIsLeft = when (actualEdge) {
-            ViewEdge.Top, ViewEdge.Bottom -> true
-            ViewEdge.Start, ViewEdge.TopStart, ViewEdge.BottomStart, ViewEdge.Center -> startIsLeft
-            else -> !startIsLeft
-        }
-        val viewIsRight = when (actualEdge) {
-            ViewEdge.Top, ViewEdge.Bottom -> true
-            ViewEdge.End, ViewEdge.TopEnd, ViewEdge.BottomEnd, ViewEdge.Center -> startIsLeft
-            else -> !startIsLeft
-        }
-        val viewIsTop = when (actualEdge) {
-            ViewEdge.Top, ViewEdge.TopStart, ViewEdge.TopEnd -> true
-            ViewEdge.Start, ViewEdge.End -> true
-            else -> false
-        }
-        val viewIsBottom = when (actualEdge) {
-            ViewEdge.Bottom, ViewEdge.BottomStart, ViewEdge.BottomEnd -> true
-            ViewEdge.Start, ViewEdge.End -> true
-            else -> false
-        }
-
-        if (viewIsLeft) {
-            v.updatePadding(left = barInsets.left + cutoutInsets.left)
-        }
-        if (viewIsRight) {
-            v.updatePadding(right = barInsets.right + cutoutInsets.right)
-        }
-        if (viewIsTop) {
-            v.updatePadding(top = barInsets.top)
-        }
-        if (viewIsBottom) {
-            v.updatePadding(bottom = barInsets.bottom)
-        }
-        windowInsets
-    }
-}
 
 suspend fun AlertDialog.await(positiveText: String, negativeText: String) =
     suspendCancellableCoroutine { cont ->

@@ -50,6 +50,7 @@ fun SlimBrowsePagedItemListOrGrid(
     entries: LazyPagingItems<SlimBrowseItemList.SlimBrowseItem>,
     busyItem: SlimBrowseItemList.SlimBrowseItem?,
     serverConfig: ServerConfiguration?,
+    contentPadding: PaddingValues,
     mode: SlimBrowseItemListMode,
     modifier: Modifier = Modifier,
     itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {},
@@ -74,7 +75,7 @@ fun SlimBrowsePagedItemListOrGrid(
 
         LazyVerticalGrid(
             columns = GridCells.Adaptive(if (isLandscape) 160.dp else 120.dp),
-            contentPadding = PaddingValues(8.dp),
+            contentPadding = contentPadding,
             verticalArrangement = Arrangement.spacedBy(8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = modifier
@@ -95,6 +96,7 @@ fun SlimBrowsePagedItemListOrGrid(
         }
     } else {
         LazyColumn(
+            contentPadding = contentPadding,
             modifier = modifier
         ) {
             items(entries.itemCount) { index ->
@@ -119,6 +121,7 @@ fun SlimBrowsePagedItemListOrGrid(
 fun SlimBrowseItemList(
     viewModel: SlimBrowseItemListViewModel,
     serverConfig: ServerConfiguration?,
+    contentPadding: PaddingValues,
     mode: SlimBrowseItemListMode,
     modifier: Modifier = Modifier,
     itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {},
@@ -131,6 +134,7 @@ fun SlimBrowseItemList(
         entries,
         busyItem,
         serverConfig,
+        contentPadding,
         mode,
         modifier,
         itemSelectionListener,
@@ -142,6 +146,7 @@ fun SlimBrowseItemList(
 fun SlimBrowseSubItemList(
     viewModel: SlimBrowseSubItemListViewModel,
     serverConfig: ServerConfiguration?,
+    contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
     itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {},
     contextMenuClickListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {}
@@ -150,6 +155,7 @@ fun SlimBrowseSubItemList(
     val busyItem = viewModel.busyItemFlow.collectAsState()
 
     LazyColumn(
+        contentPadding = contentPadding,
         modifier = modifier
     ) {
         items(entries) { entry ->

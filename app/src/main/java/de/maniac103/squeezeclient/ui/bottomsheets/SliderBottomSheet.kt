@@ -42,15 +42,11 @@ import kotlinx.coroutines.Job
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SliderBottomSheet(
-    title: String,
-    slider: JiveActions.Slider,
-    onValueSet: (JiveAction) -> Job?
-) {
+fun SliderBottomSheet(title: String, slider: JiveActions.Slider, onValueSet: (JiveAction) -> Job?) {
     var busy by remember { mutableStateOf(false) }
     val sliderState = rememberSliderState(
         value = slider.initialValue.toFloat(),
-        trackRange = slider.min.toFloat() .. slider.max.toFloat()
+        trackRange = slider.min.toFloat()..slider.max.toFloat()
     )
     val interactionSource = remember { MutableInteractionSource() }
 

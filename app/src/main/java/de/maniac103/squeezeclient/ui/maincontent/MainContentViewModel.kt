@@ -33,13 +33,13 @@ import de.maniac103.squeezeclient.model.JiveHomeMenuItem
 import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
+import kotlin.math.max
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlin.math.max
 
 data class BreadcrumbsItem(val title: String, val parentTitle: String?, val icon: ArtworkItem?)
 data class BreadcrumbsState(val items: List<BreadcrumbsItem>, val backProgress: Float?)
@@ -66,15 +66,13 @@ class MainContentViewModel(
         navigationFlowInternal.emit(MainContentNavigation.GoBack(levels))
     }
 
-    fun openLocalSearchResults(
-        searchTerm: String,
-        type: LibrarySearchRequest.Mode
-    ) = viewModelScope.launch {
-        navigationFlowInternal.emit(MainContentNavigation.Home)
-        navigationFlowInternal.emit(
-            MainContentNavigation.LocalSearchResults(searchTerm, type)
-        )
-    }
+    fun openLocalSearchResults(searchTerm: String, type: LibrarySearchRequest.Mode) =
+        viewModelScope.launch {
+            navigationFlowInternal.emit(MainContentNavigation.Home)
+            navigationFlowInternal.emit(
+                MainContentNavigation.LocalSearchResults(searchTerm, type)
+            )
+        }
 
     fun openRadioSearchResults(searchTerm: String) = viewModelScope.launch {
         navigationFlowInternal.emit(MainContentNavigation.Home)
@@ -100,7 +98,12 @@ class MainContentViewModel(
             }
 
             item.choices != null -> {
-                navigationFlowInternal.emit(MainContentNavigation.HomeMenuChoices(item.title, item.choices))
+                navigationFlowInternal.emit(
+                    MainContentNavigation.HomeMenuChoices(
+                        item.title,
+                        item.choices
+                    )
+                )
             }
 
             item.doAction != null -> viewModelScope.launch {
@@ -112,7 +115,12 @@ class MainContentViewModel(
             }
 
             else -> {
-                navigationFlowInternal.emit(MainContentNavigation.JiveHomeMenuPage(item.id, item.title))
+                navigationFlowInternal.emit(
+                    MainContentNavigation.JiveHomeMenuPage(
+                        item.id,
+                        item.title
+                    )
+                )
             }
         }
     }
@@ -130,74 +138,87 @@ class MainContentViewModel(
         connectionHelper.executeAction(playerId, choice)
     }
 
-    fun onSlimBrowseItemSelected(item: SlimBrowseItemList.SlimBrowseItem, subItemFetchAction: JiveAction?) =
-        item.actions?.let { actions ->
-            when {
-                actions.input != null -> viewModelScope.launch {
-                    val route = when (actions.input.type) {
-                        JiveActions.Input.Type.Time ->
-                            MainContentNavigation.SlimBrowseTimePicker(item, actions.input)
-
-                        else -> MainContentNavigation.SlimBrowseInput(item, actions.input)
-                    }
-                    navigationFlowInternal.emit(route)
-                }
-
-                actions.choices != null -> viewModelScope.launch {
-                    navigationFlowInternal.emit(MainContentNavigation.SlimBrowseChoices(item, actions.choices))
-                }
-
-                actions.checkbox != null -> {
-                    val action = if (actions.checkbox.state) {
-                        actions.checkbox.offAction
-                    } else {
-                        actions.checkbox.onAction
-                    }
-                    onHandleDoOrGoAction(action, false, item, null)
-                }
-
-                actions.radio != null -> {
-                    onHandleDoOrGoAction(actions.radio.action, false, item, null)
-                }
-
-                item.webLink != null -> viewModelScope.launch {
-                    navigationFlowInternal.emit(MainContentNavigation.WebLink(item.title, item.webLink))
-                }
-
-                item.subItems != null -> subItemFetchAction?.let { fetchAction ->
-                    viewModelScope.launch {
-                        navigationFlowInternal.emit(
-                            MainContentNavigation.SlimBrowseSubItemPage(
-                                item.title,
-                                fetchAction,
-                                item.listPosition
-                            )
-                        )
-                    }
-                }
-
-                actions.goAction != null -> {
-                    onHandleDoOrGoAction(actions.goAction, true, item, null)
-                }
-
-                else -> null
-            }
-        }
-
-    fun onSlimBrowseContextMenu(item: SlimBrowseItemList.SlimBrowseItem) = item.actions?.let { actions ->
+    fun onSlimBrowseItemSelected(
+        item: SlimBrowseItemList.SlimBrowseItem,
+        subItemFetchAction: JiveAction?
+    ) = item.actions?.let { actions ->
         when {
-            actions.moreAction != null -> viewModelScope.launch {
-                val itemList = loadContextMenuItems(actions.moreAction, actions)
-                navigationFlowInternal.emit(MainContentNavigation.ContextMenu(item, itemList))
+            actions.input != null -> viewModelScope.launch {
+                val route = when (actions.input.type) {
+                    JiveActions.Input.Type.Time ->
+                        MainContentNavigation.SlimBrowseTimePicker(item, actions.input)
+
+                    else -> MainContentNavigation.SlimBrowseInput(item, actions.input)
+                }
+                navigationFlowInternal.emit(route)
             }
 
-            actions.hasContextMenu -> viewModelScope.launch {
-                navigationFlowInternal.emit(MainContentNavigation.ItemActions(item))
+            actions.choices != null -> viewModelScope.launch {
+                navigationFlowInternal.emit(
+                    MainContentNavigation.SlimBrowseChoices(
+                        item,
+                        actions.choices
+                    )
+                )
+            }
+
+            actions.checkbox != null -> {
+                val action = if (actions.checkbox.state) {
+                    actions.checkbox.offAction
+                } else {
+                    actions.checkbox.onAction
+                }
+                onHandleDoOrGoAction(action, false, item, null)
+            }
+
+            actions.radio != null -> {
+                onHandleDoOrGoAction(actions.radio.action, false, item, null)
+            }
+
+            item.webLink != null -> viewModelScope.launch {
+                navigationFlowInternal.emit(
+                    MainContentNavigation.WebLink(
+                        item.title,
+                        item.webLink
+                    )
+                )
+            }
+
+            item.subItems != null -> subItemFetchAction?.let { fetchAction ->
+                viewModelScope.launch {
+                    navigationFlowInternal.emit(
+                        MainContentNavigation.SlimBrowseSubItemPage(
+                            item.title,
+                            fetchAction,
+                            item.listPosition
+                        )
+                    )
+                }
+            }
+
+            actions.goAction != null -> {
+                onHandleDoOrGoAction(actions.goAction, true, item, null)
             }
 
             else -> null
         }
     }
+
+    fun onSlimBrowseContextMenu(item: SlimBrowseItemList.SlimBrowseItem) =
+        item.actions?.let { actions ->
+            when {
+                actions.moreAction != null -> viewModelScope.launch {
+                    val itemList = loadContextMenuItems(actions.moreAction, actions)
+                    navigationFlowInternal.emit(MainContentNavigation.ContextMenu(item, itemList))
+                }
+
+                actions.hasContextMenu -> viewModelScope.launch {
+                    navigationFlowInternal.emit(MainContentNavigation.ItemActions(item))
+                }
+
+                else -> null
+            }
+        }
 
     fun onSlimBrowseInputSubmitted(
         item: SlimBrowseItemList.SlimBrowseItem,
@@ -233,40 +254,38 @@ class MainContentViewModel(
     fun onItemActionSelected(action: JiveAction, item: SlimBrowseItemList.SlimBrowseItem) =
         onHandleDoOrGoAction(action, false, item, null)
 
-    fun onBreadcrumbsChanged(
-        backStack: List<NavKey>,
-        transition: NavigationEventTransitionState
-    ) = viewModelScope.launch {
-        val progress = when (transition) {
-            is NavigationEventTransitionState.InProgress -> transition.latestEvent.progress
-            is NavigationEventTransitionState.Idle -> null
-        }
-
-        val relevantEntries = backStack.subList(1, backStack.size)
-        val breadcrumbs = relevantEntries.mapNotNull {
-            when (it) {
-                is MainContentNavigation.JiveHomeMenuPage -> {
-                    BreadcrumbsItem(it.title, null, null)
-                }
-
-                is MainContentNavigation.SlimBrowseItemPage -> {
-                    BreadcrumbsItem(it.title, it.parentTitle, it.icon)
-                }
-
-                is MainContentNavigation.SlimBrowseSubItemPage -> {
-                    BreadcrumbsItem(it.title, null, null)
-                }
-
-                is MainContentNavigation.GalleryPage -> {
-                    BreadcrumbsItem(it.title, it.parentTitle, null)
-                }
-
-                else -> null
+    fun onBreadcrumbsChanged(backStack: List<NavKey>, transition: NavigationEventTransitionState) =
+        viewModelScope.launch {
+            val progress = when (transition) {
+                is NavigationEventTransitionState.InProgress -> transition.latestEvent.progress
+                is NavigationEventTransitionState.Idle -> null
             }
-        }
 
-        breadcrumbsFlowInternal.emit(BreadcrumbsState(breadcrumbs, progress))
-    }
+            val relevantEntries = backStack.subList(1, backStack.size)
+            val breadcrumbs = relevantEntries.mapNotNull {
+                when (it) {
+                    is MainContentNavigation.JiveHomeMenuPage -> {
+                        BreadcrumbsItem(it.title, null, null)
+                    }
+
+                    is MainContentNavigation.SlimBrowseItemPage -> {
+                        BreadcrumbsItem(it.title, it.parentTitle, it.icon)
+                    }
+
+                    is MainContentNavigation.SlimBrowseSubItemPage -> {
+                        BreadcrumbsItem(it.title, null, null)
+                    }
+
+                    is MainContentNavigation.GalleryPage -> {
+                        BreadcrumbsItem(it.title, it.parentTitle, null)
+                    }
+
+                    else -> null
+                }
+            }
+
+            breadcrumbsFlowInternal.emit(BreadcrumbsState(breadcrumbs, progress))
+        }
 
     private suspend fun loadContextMenuItems(
         action: JiveAction,
@@ -420,7 +439,13 @@ class MainContentViewModel(
         pendingNavigation = viewModelScope.launch {
             if (action.isSlideshow) {
                 val items = connectionHelper.fetchSlideshowImages(playerId, action)
-                navigationFlowInternal.emit(MainContentNavigation.GalleryPage(items, title, parentItem?.title))
+                navigationFlowInternal.emit(
+                    MainContentNavigation.GalleryPage(
+                        items,
+                        title,
+                        parentItem?.title
+                    )
+                )
                 return@launch
             }
             // Fetch first item of page to check whether we're dealing with a slider or a

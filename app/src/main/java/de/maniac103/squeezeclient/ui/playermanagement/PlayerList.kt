@@ -127,8 +127,8 @@ internal fun PlayerList(
                 val positionInSlaveList = slaveListForPlayerMaster?.indexOf(player.playerId)
 
                 val position = when {
-                    positionInSlaveList != null && positionInSlaveList == slaveListForPlayerMaster.size - 1 ->
-                        RowPosition.Last
+                    positionInSlaveList != null &&
+                        positionInSlaveList == slaveListForPlayerMaster.size - 1 -> RowPosition.Last
 
                     positionInSlaveList != null -> RowPosition.Middle
 
@@ -147,7 +147,7 @@ internal fun PlayerList(
                     modifier = Modifier
                         .animateItem()
                         .alpha(if (isDragged) 0f else 1f),
-                    dragHandleModifier = with (dragState) {
+                    dragHandleModifier = with(dragState) {
                         Modifier.dragHandleModifier(player.playerId.listKey)
                     },
                     onChangePlaybackState = onChangePlaybackState,

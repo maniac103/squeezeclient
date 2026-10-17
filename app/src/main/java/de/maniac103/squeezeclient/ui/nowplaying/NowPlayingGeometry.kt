@@ -20,12 +20,7 @@ import androidx.compose.ui.util.lerp
 import de.maniac103.squeezeclient.ui.maincontent.MainLayout
 
 @Immutable
-internal data class Bounds(
-    val left: Dp,
-    val top: Dp,
-    val width: Dp,
-    val height: Dp,
-) {
+internal data class Bounds(val left: Dp, val top: Dp, val width: Dp, val height: Dp) {
     val right get() = left + width
     val bottom get() = top + height
     val center get() = DpOffset(left + width / 2, top + height / 2)
@@ -42,10 +37,7 @@ internal data class PlaylistLayoutSpec(
 }
 
 @Immutable
-internal data class ControlLayoutSpec(
-    val bounds: Bounds,
-    val alpha: Float
-)
+internal data class ControlLayoutSpec(val bounds: Bounds, val alpha: Float)
 
 @Immutable
 internal data class TextLayoutSpec(
@@ -55,10 +47,7 @@ internal data class TextLayoutSpec(
 )
 
 @Immutable
-internal data class ProgressLayoutSpec(
-    val mini: ControlLayoutSpec,
-    val full: ControlLayoutSpec
-)
+internal data class ProgressLayoutSpec(val mini: ControlLayoutSpec, val full: ControlLayoutSpec)
 
 @Immutable
 internal data class CornerSizes(
@@ -172,7 +161,7 @@ private fun calculatePortraitGeometry(
     hasAlbum: Boolean,
     hasArtist: Boolean,
     collapsedContentHeight: Dp,
-    playlistPeekHeight: Dp,
+    playlistPeekHeight: Dp
 ): PlayerGeometry {
     // Constants
     val collapsedArtworkSize = 48.dp
@@ -460,7 +449,7 @@ private fun calculatePortraitGeometry(
                 left = startInset,
                 top = 0.dp,
                 width = width,
-                height = 64.dp + topInset,
+                height = 64.dp + topInset
             ),
             alpha = fadeInWindow(progress, .50f, .70f)
         ),
@@ -565,12 +554,12 @@ private fun calculateLandscapeGeometry(
 
     val collapsedArtworkSize = collapsedContent.height * collapsedArtworkHeightFraction
     val collapsedItemVertSpacing = (
-            collapsedContent.height -
-                    collapsedArtworkSize -
-                    collapsedTextHeight -
-                    collapsedControlSize -
-                    collapsedProgressHeight
-            ) / 4
+        collapsedContent.height -
+            collapsedArtworkSize -
+            collapsedTextHeight -
+            collapsedControlSize -
+            collapsedProgressHeight
+        ) / 4
 
     val collapsedArtwork = Bounds(
         left = (collapsedContent.width - collapsedArtworkSize) / 2F,
@@ -661,7 +650,7 @@ private fun calculateLandscapeGeometry(
         left = startInset,
         top = topInset,
         width = width - expandedPlaylist.width - startInset,
-        height = height - topInset - bottomInset,
+        height = height - topInset - bottomInset
     )
 
     val expandedArtworkSize = expandedContent.height * expandedArtworkHeightFraction
@@ -770,7 +759,11 @@ private fun calculateLandscapeGeometry(
                 end = endInset,
                 bottom = bottomInset
             ),
-            alpha = if (collapsedPlaylistHeightFraction > 0) 1F else fadeInWindow(progress, 0.5F, 1F)
+            alpha = if (collapsedPlaylistHeightFraction > 0) {
+                1F
+            } else {
+                fadeInWindow(progress, 0.5F, 1F)
+            }
         ),
 
         progress = ProgressLayoutSpec(
@@ -791,7 +784,7 @@ private fun calculateLandscapeGeometry(
                 width = width,
                 height = 64.dp + topInset
             ),
-            alpha = fadeInWindow(progress, .50f, .70f),
+            alpha = fadeInWindow(progress, .50f, .70f)
         ),
 
         artwork = lerp(collapsedArtwork, expandedArtwork, progress),

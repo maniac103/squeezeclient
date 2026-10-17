@@ -39,16 +39,16 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import de.maniac103.squeezeclient.ui.composables.ArtworkImage
 import de.maniac103.squeezeclient.model.ServerConfiguration
+import de.maniac103.squeezeclient.ui.composables.ArtworkImage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ItemActionsSheet(
-    viewModel: ItemActionsViewModel = viewModel(),
+    viewModel: ItemActionsViewModel,
     serverConfig: ServerConfiguration?,
-    actionSelectedListener: (ItemActionsViewModel.ActionItem) -> Unit // FIXME: sealed class
+    // FIXME: sealed class for selection listener param
+    actionSelectedListener: (ItemActionsViewModel.ActionItem) -> Unit
 ) {
     val item = viewModel.item
     val actions by viewModel.actionsFlow.collectAsState(emptyList())
@@ -92,7 +92,7 @@ fun ItemActionsSheet(
                             text = item.subText,
                             maxLines = 2,
                             overflow = TextOverflow.Ellipsis,
-                            style = MaterialTheme.typography.titleSmall,
+                            style = MaterialTheme.typography.titleSmall
                         )
                     }
                 }

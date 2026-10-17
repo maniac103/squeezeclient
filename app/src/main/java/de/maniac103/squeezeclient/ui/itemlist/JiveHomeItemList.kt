@@ -89,7 +89,6 @@ fun JiveHomeItemListEntry(
     }
 }
 
-
 @Composable
 fun JiveHomeItemList(
     viewModel: JiveHomeItemListViewModel,

@@ -26,7 +26,6 @@ import kotlin.time.toDuration
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-@OptIn(ExperimentalTime::class)
 data class PlayerStatus(
     val playbackState: PlayState,
     val playlist: PlaylistInfo,

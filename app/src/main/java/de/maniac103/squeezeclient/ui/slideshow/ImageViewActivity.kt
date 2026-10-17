@@ -76,7 +76,6 @@ class ImageViewActivity : AppCompatActivity() {
     private val item get() =
         IntentCompat.getParcelableExtra(intent, EXTRA_ITEM, SlideshowImage::class.java)!!
 
-    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         delegate.localNightMode = AppCompatDelegate.MODE_NIGHT_YES
         enableEdgeToEdge()
@@ -165,7 +164,6 @@ class ImageViewActivity : AppCompatActivity() {
         }
     }
 
-    @OptIn(ExperimentalCoilApi::class)
     private fun share(imageUrl: String) {
         val extension = MimeTypeMap.getFileExtensionFromUrl(imageUrl)
         val uri = imageLoader.diskCache?.openSnapshot(imageUrl)?.use { snapshot ->

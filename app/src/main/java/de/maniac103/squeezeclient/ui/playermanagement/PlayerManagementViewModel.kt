@@ -156,7 +156,7 @@ class PlayerManagementViewModel(
                 playerData.forEach { player ->
                     if (player.master != null) {
                         slavesByMaster
-                            .getOrPutIfMissing(player.master, { mutableListOf() })
+                            .getOrPutIfMissing(player.master) { mutableListOf() }
                             .add(player.playerId)
                     }
                 }

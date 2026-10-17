@@ -59,7 +59,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.DpRect
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -115,8 +114,7 @@ internal fun NowPlayingScreen(
         parentItem: SlimBrowseItemList.SlimBrowseItem,
         contextItem: SlimBrowseItemList.SlimBrowseItem
     ) -> Job?,
-    onContentBoundsChanged: (DpRect) -> Unit = {}, // FIXME: remove
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
 ) {
     val viewModel = koinViewModel<NowPlayingViewModel> {
         parametersOf(playerId)
@@ -178,7 +176,6 @@ internal fun NowPlayingScreen(
         onSavePlaylistDismissed = viewModel::onPlaylistSaveInputDismissed,
         onClearPlaylist = viewModel::clearPlaylist,
         onShowVolumePopup = onShowVolumePopup,
-        onContentBoundsChanged = onContentBoundsChanged,
         modifier = modifier
     )
 }
@@ -195,6 +192,7 @@ internal fun NowPlayingScreen(
     insets: PaddingValues,
     motionState: NowPlayingMotionState,
     playlistContent: @Composable (Color, Modifier) -> Unit,
+    modifier: Modifier = Modifier,
     onPreviousTrack: () -> Unit = {},
     onNextTrack: () -> Unit = {},
     onToggleRepeat: () -> Unit = {},
@@ -212,9 +210,7 @@ internal fun NowPlayingScreen(
     onSavePlaylistNameEntered: (String) -> Unit = {},
     onSavePlaylistDismissed: () -> Unit = {},
     onClearPlaylist: () -> Unit = {},
-    onShowVolumePopup: () -> Unit = {},
-    onContentBoundsChanged: (DpRect) -> Unit = {},
-    modifier: Modifier = Modifier
+    onShowVolumePopup: () -> Unit = {}
 ) {
     val statusState = stateFlow.collectAsStateWithLifecycle()
     val infoMenu by infoMenuFlow.collectAsStateWithLifecycle()
@@ -273,11 +269,6 @@ internal fun NowPlayingScreen(
             hasAlbum = uiState.album != null,
             progress = motionState.nowPlaying.value
         )
-
-        LaunchedEffect(geometry.content.bounds) {
-            val bounds = geometry.content.bounds
-            onContentBoundsChanged(DpRect(bounds.left, bounds.top, bounds.right, bounds.bottom))
-        }
 
         PlayerSurface(
             state = uiState,
@@ -955,8 +946,7 @@ fun NowPlayingPreview() {
                         serverConfig = null,
                         modifier = modifier
                     )
-                },
-                onContentBoundsChanged = {}
+                }
             )
         }
     }

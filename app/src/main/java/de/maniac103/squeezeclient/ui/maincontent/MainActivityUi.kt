@@ -708,6 +708,6 @@ fun MainActivityUiPreview() {
         serverConfigFlow = flowOf(null),
         forceGridForSlimBrowseItemsFlow = flowOf(false),
         localPlaybackEnabledFlow = flowOf(false),
-        volumeChangeRequestFlow = MutableSharedFlow<Float>()
+        volumeChangeRequestFlow = MutableSharedFlow()
     )
 }

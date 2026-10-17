@@ -89,7 +89,7 @@ internal fun EntryProviderScope<NavKey>.jiveHomeMenuNavEntry(
     MainContentPage {
         JiveHomeItemList(
             viewModel = viewModel,
-            modifier = Modifier.padding(pagePadding),
+            contentPadding = pagePadding,
             itemSelectionListener = onItemSelected
         )
     }
@@ -127,7 +127,7 @@ internal fun EntryProviderScope<NavKey>.slimBrowseNavEntry(
             viewModel = viewModel,
             serverConfig = serverConfig.value,
             mode = mode,
-            modifier = Modifier.padding(pagePadding),
+            contentPadding = pagePadding,
             itemSelectionListener = { selectedItem ->
                 onItemSelected(selectedItem, route.fetchAction)?.let { job ->
                     viewModel.setItemBusy(selectedItem, job)
@@ -157,7 +157,7 @@ internal fun EntryProviderScope<NavKey>.slimBrowseSubItemsNavEntry(
         SlimBrowseSubItemList(
             viewModel = viewModel,
             serverConfig = serverConfig.value,
-            modifier = Modifier.padding(pagePadding),
+            contentPadding = pagePadding,
             itemSelectionListener = { selectedItem ->
                 onItemSelected(selectedItem, route.fetchAction)
                     ?.let { job -> viewModel.setItemBusy(selectedItem, job) }
@@ -180,7 +180,7 @@ internal fun EntryProviderScope<NavKey>.galleryNavEntry(
         GalleryGrid(
             items = route.items,
             serverConfig = serverConfig.value,
-            modifier = Modifier.padding(pagePadding),
+            contentPadding = pagePadding,
             itemSelectionListener = onItemSelected
         )
     }
@@ -203,7 +203,7 @@ internal fun EntryProviderScope<NavKey>.localSearchResultsNavKey(
             viewModel = viewModel,
             serverConfig = serverConfig.value,
             useGrid = useGrid.value,
-            modifier = Modifier.padding(pagePadding),
+            contentPadding = pagePadding,
             itemSelectionListener = { item ->
                 onItemSelected(item)
                     ?.let { job -> viewModel.setItemBusy(item, job) }
@@ -233,7 +233,7 @@ internal fun EntryProviderScope<NavKey>.radioSearchResultsNavKey(
             viewModel = viewModel,
             serverConfig = serverConfig.value,
             useGrid = useGrid.value,
-            modifier = Modifier.padding(pagePadding),
+            contentPadding = pagePadding,
             itemSelectionListener = { item ->
                 onItemSelected(item)
                     ?.let { job -> viewModel.setItemBusy(item, job) }

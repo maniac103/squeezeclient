@@ -22,7 +22,6 @@ import de.maniac103.squeezeclient.cometd.request.LibrarySearchRequest
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.JiveActions
 import de.maniac103.squeezeclient.model.ParcelableArtworkItem
-import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.SlideshowImage
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.model.WindowStyle

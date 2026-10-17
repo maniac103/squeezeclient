@@ -31,9 +31,9 @@ import kotlinx.coroutines.flow.StateFlow
 fun Breadcrumbs(
     stateFlow: StateFlow<BreadcrumbsState>,
     serverConfig: ServerConfiguration?,
+    modifier: Modifier = Modifier,
     onHomeClicked: () -> Unit = {},
-    onGoBack: (levels: Int) -> Unit = {},
-    modifier: Modifier = Modifier
+    onGoBack: (levels: Int) -> Unit = {}
 ) {
     val state by stateFlow.collectAsState()
     val items = state.items

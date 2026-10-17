@@ -17,7 +17,6 @@
   -->
 
 <resources>
-    <color name="playlist_swipe_delete_background">#A0B00000</color>
     <color name="seed">#00b670</color>
     <color name="md_theme_primary">#2A6A47</color>
     <color name="md_theme_onPrimary">#FFFFFF</color>

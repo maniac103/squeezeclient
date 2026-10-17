@@ -21,7 +21,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.collectAsLazyPagingItems
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
@@ -30,7 +29,7 @@ import de.maniac103.squeezeclient.ui.itemlist.SlimBrowsePagedItemListOrGrid
 
 @Composable
 fun RadioSearchResultsItemList(
-    viewModel: RadioSearchResultViewModel = viewModel(),
+    viewModel: RadioSearchResultViewModel,
     serverConfig: ServerConfiguration?,
     useGrid: Boolean,
     modifier: Modifier = Modifier,

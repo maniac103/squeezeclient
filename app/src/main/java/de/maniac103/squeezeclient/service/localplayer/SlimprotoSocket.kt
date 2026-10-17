@@ -126,7 +126,6 @@ class SlimprotoSocket(preferences: Preferences) {
 
         data class TriggerGetSetting(val type: SettingType) : CommandPacket()
         class SetSetting(val type: SettingType, val data: ByteArray) : CommandPacket() {
-            @OptIn(ExperimentalStdlibApi::class)
             override fun toString() = "${javaClass.name}(type=$type, data=${data.toHexString()})"
         }
 

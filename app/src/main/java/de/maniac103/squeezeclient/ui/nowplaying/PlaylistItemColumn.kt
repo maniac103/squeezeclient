@@ -54,38 +54,15 @@ import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.model.JiveActions
-import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.Playlist
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flow
-import org.koin.androidx.compose.koinViewModel
-import org.koin.core.parameter.parametersOf
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
-@Composable
-fun PlaylistItemColumn(
-    playerId: PlayerId,
-    surfaceColor: Color,
-    serverConfig: ServerConfiguration?,
-    modifier: Modifier = Modifier
-) {
-    val viewModel = koinViewModel<PlaylistViewModel> {
-        parametersOf(playerId)
-    }
-
-    PlaylistItemColumn(
-        viewModel = viewModel,
-        surfaceColor = surfaceColor,
-        serverConfig = serverConfig,
-        modifier = modifier
-    )
-}
-
-// FIXME: remove this when removing PlaylistFragment
 @Composable
 fun PlaylistItemColumn(
     viewModel: PlaylistViewModel,
@@ -197,7 +174,7 @@ fun PlaylistItemColumn(
                                     )
                                     .background(surfaceColor),
                                 dragHandleModifier = Modifier.draggableHandle(
-                                    onDragStarted = { offset ->
+                                    onDragStarted = {
                                         dragStartIndex = itemPosition
                                         hapticFeedback.performHapticFeedback(
                                             HapticFeedbackType.GestureThresholdActivate

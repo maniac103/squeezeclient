@@ -19,6 +19,7 @@ package de.maniac103.squeezeclient.ui.slideshow
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -45,10 +46,12 @@ import de.maniac103.squeezeclient.model.SlideshowImage
 fun GalleryGrid(
     items: List<SlideshowImage>,
     serverConfig: ServerConfiguration?,
+    contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
     itemSelectionListener: (SlideshowImage) -> Unit = {}
 ) = LazyVerticalGrid(
     columns = GridCells.Fixed(2),
+    contentPadding = contentPadding,
     modifier = modifier
 ) {
     items(items) { item ->

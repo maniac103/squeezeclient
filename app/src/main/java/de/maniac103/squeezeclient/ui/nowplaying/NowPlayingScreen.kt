@@ -818,10 +818,8 @@ private fun SongInfoText(
                 platformStyle = PlatformTextStyle(includeFontPadding = false)
             ),
             onTextLayout = { result ->
-                textWidth =
-                    result.multiParagraph
-                        .getLineRight(0)
-                        .roundToInt()
+                textWidth = (result.getLineRight(0) - result.getLineLeft(0))
+                    .roundToInt()
             },
             modifier = Modifier.offset {
                 IntOffset(
@@ -835,7 +833,7 @@ private fun SongInfoText(
 
 @Composable
 internal fun Modifier.bounds(bounds: Bounds) = this
-    .offset { IntOffset(bounds.left.roundToPx(), bounds.top.roundToPx()) }
+    .offset { IntOffset(bounds.start.roundToPx(), bounds.top.roundToPx()) }
     .size(bounds.width, bounds.height)
 
 @Composable

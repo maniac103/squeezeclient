@@ -244,7 +244,7 @@ class CometdClient(
                         cancel("EOF while reading event stream")
                         return@withContext
                     }
-                    builder.append(buf, 0, readCharCount)
+                    builder.appendRange(buf, 0, readCharCount)
                     when (builder.takeLast(2)) {
                         "[]" -> {
                             // empty message array

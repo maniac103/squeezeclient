@@ -207,7 +207,6 @@ class DownloadWorker(
         setForeground(getForegroundInfo())
     }
 
-    @OptIn(ExperimentalTime::class)
     class ProgressReportingSource(
         body: ResponseBody,
         private val progressConsumer: (bytesRead: Long, totalLength: Long) -> Unit

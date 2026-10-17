@@ -280,7 +280,7 @@ val unspecified_scheme = ColorFamily(
 fun AppTheme(
     themePreference: Preferences.Preference<Preferences.AppThemeMode>,
     forceDarkTheme: Boolean = false,
-    content: @Composable() () -> Unit
+    content: @Composable () -> Unit
 ) {
     val themeSetting by themePreference.asFlow()
         .collectAsStateWithLifecycle(themePreference.value)

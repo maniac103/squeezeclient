@@ -46,9 +46,8 @@ class MainActivityViewModel(
         viewModelScope.launch {
             val stateAndSelectedPlayerFlow = combine(
                 connectionHelper.state,
-                selectedPlayerFlowInternal,
-                { state, selectedId -> state to selectedId }
-            )
+                selectedPlayerFlowInternal
+            ) { state, selectedId -> state to selectedId }
             stateAndSelectedPlayerFlow.collect { (state, selectedId) ->
                 when (state) {
                     is ConnectionState.Disconnected -> {

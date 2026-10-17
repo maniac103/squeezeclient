@@ -374,7 +374,6 @@ class ConnectionHelper(
         return json.decodeFromJsonElement<T>(jsonData)
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     private suspend fun publishOneShotRequest(request: Request): JsonElement {
         val client = client
         val clientId = client?.clientId ?: throw IllegalStateException()

@@ -41,7 +41,6 @@ import kotlinx.serialization.json.decodeFromJsonElement
 
 // offset and item_loop are not returned when fetching non-existing pages
 @Serializable
-@OptIn(ExperimentalTime::class)
 data class PlayerStatusResponse(
     @SerialName("mode")
     val state: PlayerStatus.PlayState,

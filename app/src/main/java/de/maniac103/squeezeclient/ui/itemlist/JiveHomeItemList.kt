@@ -22,7 +22,6 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.model.JiveHomeMenuItem
 import de.maniac103.squeezeclient.ui.theme.AppTheme
@@ -93,7 +92,7 @@ fun JiveHomeItemListEntry(
 
 @Composable
 fun JiveHomeItemList(
-    viewModel: JiveHomeItemListViewModel = viewModel(),
+    viewModel: JiveHomeItemListViewModel,
     modifier: Modifier = Modifier,
     itemSelectionListener: (JiveHomeMenuItem) -> Unit = {}
 ) {

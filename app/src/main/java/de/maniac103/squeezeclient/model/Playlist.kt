@@ -21,7 +21,6 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import kotlinx.parcelize.Parcelize
 
-@OptIn(ExperimentalTime::class)
 data class Playlist(
     override val items: List<PlaylistItem>,
     override val offset: Int,

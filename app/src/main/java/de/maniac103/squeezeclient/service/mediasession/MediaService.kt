@@ -60,7 +60,6 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.guava.future
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
-import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
 
 @OptIn(UnstableApi::class, ExperimentalTime::class)

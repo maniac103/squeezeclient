@@ -17,6 +17,7 @@
 
 package de.maniac103.squeezeclient.ui.search
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -31,6 +32,7 @@ import de.maniac103.squeezeclient.ui.itemlist.SlimBrowsePagedItemListOrGrid
 fun LibrarySearchResultsItemList(
     viewModel: LibrarySearchResultsViewModel,
     serverConfig: ServerConfiguration?,
+    contentPadding: PaddingValues,
     useGrid: Boolean,
     modifier: Modifier = Modifier,
     itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {},
@@ -43,6 +45,7 @@ fun LibrarySearchResultsItemList(
         entries = entries,
         busyItem = busyItem,
         serverConfig = serverConfig,
+        contentPadding = contentPadding,
         modifier = modifier,
         mode = if (useGrid) SlimBrowseItemListMode.Grid else SlimBrowseItemListMode.ListWithIcons,
         itemSelectionListener = itemSelectionListener,

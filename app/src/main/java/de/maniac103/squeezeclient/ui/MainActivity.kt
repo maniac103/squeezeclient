@@ -44,13 +44,13 @@ import de.maniac103.squeezeclient.ui.prefs.SettingsActivity
 import de.maniac103.squeezeclient.ui.serversetup.ServerSetupActivity
 import de.maniac103.squeezeclient.ui.slideshow.ImageViewActivity
 import de.maniac103.squeezeclient.ui.theme.AppTheme
+import kotlin.getValue
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import kotlin.getValue
 
 class MainActivity : ComponentActivity() {
     private val preferences: Preferences by inject()
@@ -110,7 +110,6 @@ class MainActivity : ComponentActivity() {
         }
         super.onStop()
     }
-
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         val useVolumeKeys = preferences.useVolumeButtonsForPlayerVolume.value

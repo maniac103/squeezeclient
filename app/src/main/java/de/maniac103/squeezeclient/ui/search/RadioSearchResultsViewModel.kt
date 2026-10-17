@@ -22,7 +22,7 @@ import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.ui.itemlist.BasePagedSlimBrowseItemListViewModel
 
-class RadioSearchResultViewModel(
+class RadioSearchResultsViewModel(
     private val connectionHelper: ConnectionHelper,
     val playerId: PlayerId,
     private val searchTerm: String

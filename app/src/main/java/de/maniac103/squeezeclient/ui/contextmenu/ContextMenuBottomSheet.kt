@@ -41,9 +41,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import de.maniac103.squeezeclient.R
-import de.maniac103.squeezeclient.ui.composables.ArtworkImage
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
+import de.maniac103.squeezeclient.ui.composables.ArtworkImage
 import kotlin.collections.emptyList
 
 @Composable

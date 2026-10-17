@@ -26,7 +26,7 @@ class JiveHomeItemListViewModel(
             .map { mapItem(it) }
     }
 
-    private fun mapItem(item: JiveHomeMenuItem) : HomeListItem {
+    private fun mapItem(item: JiveHomeMenuItem): HomeListItem {
         val iconResourceId = ICON_MAPPING[item.id]
         val choiceLabel = item.choices?.let { it.items[it.selectedIndex].title }
         return HomeListItem(item.title, item.subText, iconResourceId, choiceLabel, item)

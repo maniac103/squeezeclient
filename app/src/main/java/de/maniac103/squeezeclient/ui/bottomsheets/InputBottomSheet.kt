@@ -102,6 +102,7 @@ internal fun InputSheetContent(
                 val message = when (error) {
                     is InputError.TooShort ->
                         pluralStringResource(R.plurals.input_length_error_message, error.minLength)
+
                     is InputError.InvalidCharacters ->
                         stringResource(R.string.input_character_error_message, error.allowedChars)
                 }
@@ -170,9 +171,9 @@ fun InputTimePicker(
                             job.invokeOnCompletion { onClose() }
                         }
                     }
-                },
+                }
             ) {
-                Text("Ok")
+                Text(stringResource(android.R.string.ok))
             }
         },
         dismissButton = {

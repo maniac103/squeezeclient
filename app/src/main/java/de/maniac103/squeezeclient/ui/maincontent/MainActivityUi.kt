@@ -63,13 +63,13 @@ import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
@@ -100,6 +100,7 @@ import de.maniac103.squeezeclient.ui.search.SearchBox
 import de.maniac103.squeezeclient.ui.search.SearchViewModel
 import de.maniac103.squeezeclient.ui.volume.VolumeControlPopup
 import de.maniac103.squeezeclient.ui.volume.VolumePopupViewModel
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -111,7 +112,6 @@ import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.scope.KoinScope
 import org.koin.core.annotation.KoinExperimentalAPI
 import org.koin.core.parameter.parametersOf
-import kotlin.time.Duration.Companion.seconds
 
 sealed interface MainLayout {
     val containerSize: DpSize
@@ -224,8 +224,14 @@ fun MainActivityUi(
                         textResId = R.string.connection_error_text_no_connection,
                         subtext = null,
                         buttons = listOf(
-                            ActionButtonSpec(R.string.connection_error_action_retry, onRetryConnection),
-                            ActionButtonSpec(R.string.connection_error_action_setup_server, onOpenServerSetup)
+                            ActionButtonSpec(
+                                labelResId = R.string.connection_error_action_retry,
+                                onClick = onRetryConnection
+                            ),
+                            ActionButtonSpec(
+                                labelResId = R.string.connection_error_action_setup_server,
+                                onClick = onOpenServerSetup
+                            )
                         )
                     )
                 }
@@ -236,7 +242,10 @@ fun MainActivityUi(
                         textResId = R.string.connection_error_text_connection_failure,
                         subtext = state.cause.message,
                         buttons = listOf(
-                            ActionButtonSpec(R.string.connection_error_action_retry, onRetryConnection)
+                            ActionButtonSpec(
+                                labelResId = R.string.connection_error_action_retry,
+                                onClick = onRetryConnection
+                            )
                         )
                     )
                 }
@@ -449,8 +458,8 @@ private fun MainActivityConnected(
             }
         ) {
             val mainContentViewModel = koinViewModel<MainContentViewModel>()
-            val searchViewModel = koinViewModel<SearchViewModel> { parametersOf(selectedPlayer.id) }
-            val volumeViewModel = koinViewModel<VolumePopupViewModel> { parametersOf(selectedPlayer.id) }
+            val searchViewModel = koinViewModel<SearchViewModel>()
+            val volumeViewModel = koinViewModel<VolumePopupViewModel>()
             val nowPlayingMotionState = rememberNowPlayingMotionState(false)
             val scope = rememberCoroutineScope()
 
@@ -536,7 +545,11 @@ private fun MainActivityConnected(
                     onShowVolumePopup = { volumeViewModel.show(5.seconds) },
                     onInfoMenuItemGoAction = { action, parentItem, contextItem ->
                         mainContentViewModel.goToHome()
-                        mainContentViewModel.onNowPlayingContextMenuAction(action, contextItem, parentItem)
+                        mainContentViewModel.onNowPlayingContextMenuAction(
+                            action,
+                            contextItem,
+                            parentItem
+                        )
                     }
                 )
                 SearchBox(
@@ -610,9 +623,7 @@ private fun MainActivityAppBar(
 }
 
 @Composable
-private fun MainActivityLoadingIndicator(
-    drawerState: DrawerState
-) = Column(
+private fun MainActivityLoadingIndicator(drawerState: DrawerState) = Column(
     modifier = Modifier.fillMaxSize()
 ) {
     MainActivityAppBar(
@@ -644,7 +655,7 @@ private fun determineMainLayout(
             val collapsedNowPlayingHeight = 64.dp
             val mainContentPadding = PaddingValues(
                 bottom = insets.calculateBottomPadding() +
-                        collapsedNowPlayingHeight - nowPlayingCornerSize
+                    collapsedNowPlayingHeight - nowPlayingCornerSize
             )
             val mainContentPagePadding = PaddingValues(
                 start = insets.calculateStartPadding(layoutDirection),
@@ -663,7 +674,7 @@ private fun determineMainLayout(
         else -> {
             val collapsedNowPlayingWidth = 320.dp
             val mainContentPadding = PaddingValues(
-                end = collapsedNowPlayingWidth + insets.calculateEndPadding(layoutDirection),
+                end = collapsedNowPlayingWidth + insets.calculateEndPadding(layoutDirection)
             )
             val mainContentPagePadding = PaddingValues(
                 start = insets.calculateStartPadding(layoutDirection),
@@ -677,7 +688,6 @@ private fun determineMainLayout(
                 collapsedNowPlayingWidth = collapsedNowPlayingWidth,
                 nowPlayingCornerSize = nowPlayingCornerSize
             )
-
         }
     }
 }

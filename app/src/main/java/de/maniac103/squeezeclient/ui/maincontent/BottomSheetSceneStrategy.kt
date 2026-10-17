@@ -40,7 +40,7 @@ internal data class BottomSheetScene<T : Any>(
     override val overlaidEntries: List<NavEntry<T>>,
     private val entry: NavEntry<T>,
     private val modalBottomSheetProperties: ModalBottomSheetProperties,
-    private val onBack: () -> Unit,
+    private val onBack: () -> Unit
 ) : OverlayScene<T> {
 
     override val entries: List<NavEntry<T>> = listOf(entry)
@@ -49,7 +49,7 @@ internal data class BottomSheetScene<T : Any>(
         val lifecycleOwner = rememberLifecycleOwner()
         ModalBottomSheet(
             onDismissRequest = onBack,
-            properties = modalBottomSheetProperties,
+            properties = modalBottomSheetProperties
         ) {
             CompositionLocalProvider(LocalLifecycleOwner provides lifecycleOwner) {
                 entry.Content()
@@ -86,10 +86,11 @@ class BottomSheetSceneStrategy<T : Any> : SceneStrategy<T> {
          * @param modalBottomSheetProperties properties that should be passed to the containing
          * [ModalBottomSheet].
          */
-        fun bottomSheet(modalBottomSheetProperties: ModalBottomSheetProperties = ModalBottomSheetProperties()) =
-            metadata {
-                put(BottomSheetKey, modalBottomSheetProperties)
-            }
+        fun bottomSheet(
+            modalBottomSheetProperties: ModalBottomSheetProperties = ModalBottomSheetProperties()
+        ) = metadata {
+            put(BottomSheetKey, modalBottomSheetProperties)
+        }
 
         object BottomSheetKey : NavMetadataKey<ModalBottomSheetProperties>
     }

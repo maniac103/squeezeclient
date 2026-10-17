@@ -46,9 +46,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.maniac103.squeezeclient.R
 
 @Composable
-fun VolumeControlPopup(
-    viewModel: VolumePopupViewModel
-) {
+fun VolumeControlPopup(viewModel: VolumePopupViewModel) {
     val volume by viewModel.volumeFlow.collectAsStateWithLifecycle()
     val muted by viewModel.mutedFlow.collectAsStateWithLifecycle()
     val visible by viewModel.visibleFlow.collectAsStateWithLifecycle()
@@ -86,7 +84,7 @@ fun VolumeControlPopup(
         ) {
             Surface(
                 shape = RoundedCornerShape(24.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.8F),
+                color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.8F)
             ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -119,7 +117,8 @@ fun VolumeControlPopup(
                         modifier = Modifier.padding(bottom = 8.dp)
                     ) {
                         Icon(
-                            imageVector = ImageVector.vectorResource(R.drawable.ic_volume_muted_24dp),
+                            imageVector =
+                                ImageVector.vectorResource(R.drawable.ic_volume_muted_24dp),
                             contentDescription = null // FIXME
                         )
                     }

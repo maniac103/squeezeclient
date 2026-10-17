@@ -10,9 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flowOf
 
-class ItemActionsViewModel(
-    val item: SlimBrowseItemList.SlimBrowseItem
-) : ViewModel() {
+class ItemActionsViewModel(val item: SlimBrowseItemList.SlimBrowseItem) : ViewModel() {
     private val busyActionFlowInternal = MutableStateFlow<ActionItem?>(null)
 
     val actionsFlow = flowOf(

@@ -37,11 +37,10 @@ abstract class BasePagedSlimBrowseItemListViewModel : ViewModel() {
         ItemPagingSource { page -> fetchPage(page) }
     }
 
-    val itemsFlow =
-        Pager(
-            PagingConfig(pageSize = 200, initialLoadSize = 200),
-            pagingSourceFactory = pagingSourceFactory
-        )
+    val itemsFlow = Pager(
+        PagingConfig(pageSize = 200, initialLoadSize = 200),
+        pagingSourceFactory = pagingSourceFactory
+    )
         .flow
         .cachedIn(viewModelScope)
 

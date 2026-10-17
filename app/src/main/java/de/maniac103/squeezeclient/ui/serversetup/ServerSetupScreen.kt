@@ -112,7 +112,9 @@ fun ServerSetupScreen(
                             onClick = onGoBack
                         ) {
                             Icon(
-                                imageVector = ImageVector.vectorResource(R.drawable.ic_arrow_left_24dp),
+                                imageVector = ImageVector.vectorResource(
+                                    R.drawable.ic_arrow_left_24dp
+                                ),
                                 contentDescription = null // FIXME
                             )
                         }
@@ -142,8 +144,11 @@ fun ServerSetupScreen(
                         selectedServer = entry
                         serverAddressState.setTextAndPlaceCursorAtEnd(
                             when {
-                                entry.hostName.isEmpty() -> currentServerConfig?.hostnameAndPort ?: ""
+                                entry.hostName.isEmpty() ->
+                                    currentServerConfig?.hostnameAndPort ?: ""
+
                                 entry.port == null -> entry.hostName
+
                                 else -> "${entry.hostName}:${entry.port}"
                             }
                         )

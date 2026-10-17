@@ -54,8 +54,8 @@ import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseSubItemList
 import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseSubItemListViewModel
 import de.maniac103.squeezeclient.ui.search.LibrarySearchResultsItemList
 import de.maniac103.squeezeclient.ui.search.LibrarySearchResultsViewModel
-import de.maniac103.squeezeclient.ui.search.RadioSearchResultViewModel
 import de.maniac103.squeezeclient.ui.search.RadioSearchResultsItemList
+import de.maniac103.squeezeclient.ui.search.RadioSearchResultsViewModel
 import de.maniac103.squeezeclient.ui.slideshow.GalleryGrid
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
@@ -106,8 +106,8 @@ internal fun EntryProviderScope<NavKey>.slimBrowseNavEntry(
     onContextMenuItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job?
 ) = entry<MainContentNavigation.SlimBrowseItemPage> { route ->
     val viewModel = koinViewModel<SlimBrowseItemListViewModel> { parametersOf(route.fetchAction) }
-    val canUseGrid = route.windowStyle == WindowStyle.IconList ||
-            route.windowStyle == WindowStyle.HomeMenu
+    val canUseGrid =
+        route.windowStyle == WindowStyle.IconList || route.windowStyle == WindowStyle.HomeMenu
     val showIcons = route.windowStyle != null && route.windowStyle != WindowStyle.TextOnlyList
     val mode = when {
         useGridIfPossible.value && canUseGrid -> SlimBrowseItemListMode.Grid
@@ -224,7 +224,7 @@ internal fun EntryProviderScope<NavKey>.radioSearchResultsNavKey(
     onItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job?,
     onContextMenuItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job?
 ) = entry<MainContentNavigation.RadioSearchResults> { route ->
-    val viewModel = koinViewModel<RadioSearchResultViewModel> {
+    val viewModel = koinViewModel<RadioSearchResultsViewModel> {
         parametersOf(route.searchTerm)
     }
 
@@ -270,7 +270,9 @@ internal fun EntryProviderScope<NavKey>.homeMenuTimePickerNavEntry(
     InputTimePicker(
         route.title,
         route.input,
-        onInputSubmitted = { action -> onInputSubmitted(route.title, action, route.input.actionHasTarget) },
+        onInputSubmitted = { action ->
+            onInputSubmitted(route.title, action, route.input.actionHasTarget)
+        },
         onClose = { onDone(route) }
     )
 }
@@ -278,7 +280,11 @@ internal fun EntryProviderScope<NavKey>.homeMenuTimePickerNavEntry(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun EntryProviderScope<NavKey>.slimBrowseInputNavEntry(
-    onInputSubmitted: (item: SlimBrowseItemList.SlimBrowseItem, action: JiveAction, isGoAction: Boolean) -> Job?,
+    onInputSubmitted: (
+        item: SlimBrowseItemList.SlimBrowseItem,
+        action: JiveAction,
+        isGoAction: Boolean
+    ) -> Job?,
     onDone: (NavKey) -> Unit
 ) = entry<MainContentNavigation.SlimBrowseInput>(
     metadata = BottomSheetSceneStrategy.bottomSheet()
@@ -291,7 +297,11 @@ internal fun EntryProviderScope<NavKey>.slimBrowseInputNavEntry(
 
 @Composable
 internal fun EntryProviderScope<NavKey>.slimBrowseTimePickerNavEntry(
-    onInputSubmitted: (item: SlimBrowseItemList.SlimBrowseItem, action: JiveAction, isGoAction: Boolean) -> Job?,
+    onInputSubmitted: (
+        item: SlimBrowseItemList.SlimBrowseItem,
+        action: JiveAction,
+        isGoAction: Boolean
+    ) -> Job?,
     onDone: (NavKey) -> Unit
 ) = entry<MainContentNavigation.SlimBrowseTimePicker>(
     metadata = DialogSceneStrategy.dialog()
@@ -299,7 +309,9 @@ internal fun EntryProviderScope<NavKey>.slimBrowseTimePickerNavEntry(
     InputTimePicker(
         route.item.title,
         route.input,
-        onInputSubmitted = { action -> onInputSubmitted(route.item, action, route.input.actionHasTarget) },
+        onInputSubmitted = { action ->
+            onInputSubmitted(route.item, action, route.input.actionHasTarget)
+        },
         onClose = { onDone(route) }
     )
 }
@@ -327,8 +339,8 @@ internal fun EntryProviderScope<NavKey>.homeMenuChoicesNavEntry(
     metadata = BottomSheetSceneStrategy.bottomSheet()
 ) { route ->
     ChoicesBottomSheet(route.parentTitle, route.choices) { action ->
-        onChoiceSelected(action)
-            .also { it.invokeOnDoneOrNull { onDone(route) }
+        onChoiceSelected(action).also {
+            it.invokeOnDoneOrNull { onDone(route) }
         }
     }
 }
@@ -358,7 +370,10 @@ internal fun EntryProviderScope<NavKey>.infoNavEntry() = entry<MainContentNaviga
 @Composable
 internal fun EntryProviderScope<NavKey>.contextMenuNavEntry(
     serverConfig: State<ServerConfiguration?>,
-    onItemSelected: (item: SlimBrowseItemList.SlimBrowseItem, parentItem: SlimBrowseItemList.SlimBrowseItem?) -> Job?,
+    onItemSelected: (
+        item: SlimBrowseItemList.SlimBrowseItem,
+        parentItem: SlimBrowseItemList.SlimBrowseItem?
+    ) -> Job?,
     onDone: (NavKey) -> Unit
 ) = entry<MainContentNavigation.ContextMenu>(
     metadata = BottomSheetSceneStrategy.bottomSheet()

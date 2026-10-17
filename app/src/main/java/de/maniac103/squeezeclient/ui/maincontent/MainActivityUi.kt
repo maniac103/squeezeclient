@@ -117,6 +117,7 @@ sealed interface MainLayout {
     val containerSize: DpSize
     val mainContentPadding: PaddingValues
     val mainContentPagePadding: PaddingValues
+    val searchBoxPadding: PaddingValues
     val nowPlayingCornerSize: Dp
     val useGridForSlimBrowseItems: Boolean
 
@@ -124,6 +125,7 @@ sealed interface MainLayout {
         override val containerSize: DpSize,
         override val mainContentPadding: PaddingValues,
         override val mainContentPagePadding: PaddingValues,
+        override val searchBoxPadding: PaddingValues,
         val collapsedNowPlayingHeight: Dp,
         override val nowPlayingCornerSize: Dp
     ) : MainLayout {
@@ -134,6 +136,7 @@ sealed interface MainLayout {
         override val containerSize: DpSize,
         override val mainContentPadding: PaddingValues,
         override val mainContentPagePadding: PaddingValues,
+        override val searchBoxPadding: PaddingValues,
         val collapsedNowPlayingWidth: Dp,
         override val nowPlayingCornerSize: Dp
     ) : MainLayout {
@@ -483,7 +486,9 @@ private fun MainActivityConnected(
                     }
                 }
 
-                Column {
+                Column(
+                    modifier = Modifier.padding(layout.mainContentPadding)
+                ) {
                     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
                     val appBarColors = TopAppBarDefaults.topAppBarColors()
                     val appBarColor by remember(appBarColors, scrollBehavior) {
@@ -531,7 +536,6 @@ private fun MainActivityConnected(
                         },
                         modifier = Modifier
                             .weight(1F)
-                            .padding(layout.mainContentPadding)
                             .nestedScroll(scrollBehavior.nestedScrollConnection)
                     )
                 }
@@ -554,7 +558,7 @@ private fun MainActivityConnected(
                 )
                 SearchBox(
                     viewModel = searchViewModel,
-                    pillModifier = Modifier.padding(insets),
+                    pillModifier = Modifier.padding(layout.searchBoxPadding),
                     onCloseListener = searchViewModel::close,
                     onOpenResultsListener = { query, type ->
                         if (type == null) {
@@ -662,10 +666,16 @@ private fun determineMainLayout(
                 end = insets.calculateEndPadding(layoutDirection),
                 bottom = nowPlayingCornerSize
             )
+            val searchBoxPadding = PaddingValues(
+                top = insets.calculateTopPadding(),
+                start = insets.calculateStartPadding(layoutDirection),
+                end = insets.calculateEndPadding(layoutDirection)
+            )
             MainLayout.Portrait(
                 containerSize = containerSize,
                 mainContentPadding = mainContentPadding,
                 mainContentPagePadding = mainContentPagePadding,
+                searchBoxPadding = searchBoxPadding,
                 collapsedNowPlayingHeight = collapsedNowPlayingHeight,
                 nowPlayingCornerSize = nowPlayingCornerSize
             )
@@ -681,10 +691,16 @@ private fun determineMainLayout(
                 end = nowPlayingCornerSize,
                 bottom = insets.calculateBottomPadding()
             )
+            val searchBoxPadding = PaddingValues(
+                top = insets.calculateTopPadding(),
+                start = insets.calculateStartPadding(layoutDirection),
+                end = collapsedNowPlayingWidth + insets.calculateEndPadding(layoutDirection)
+            )
             MainLayout.Landscape(
                 containerSize = containerSize,
                 mainContentPadding = mainContentPadding,
                 mainContentPagePadding = mainContentPagePadding,
+                searchBoxPadding = searchBoxPadding,
                 collapsedNowPlayingWidth = collapsedNowPlayingWidth,
                 nowPlayingCornerSize = nowPlayingCornerSize
             )

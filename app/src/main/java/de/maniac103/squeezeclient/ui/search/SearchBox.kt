@@ -63,14 +63,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.cometd.request.LibrarySearchRequest
 import kotlin.coroutines.cancellation.CancellationException
 
 @Composable
 fun SearchBox(
-    viewModel: SearchViewModel = viewModel(),
+    viewModel: SearchViewModel,
     @SuppressLint("ModifierParameter") pillModifier: Modifier = Modifier,
     onCloseListener: () -> Unit,
     onOpenResultsListener: (query: String, type: LibrarySearchRequest.Mode?) -> Unit
@@ -154,7 +153,9 @@ fun SearchBox(
                     .clip(RoundedCornerShape(24.dp))
             ) {
                 Column {
-                    Row {
+                    Row(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
                         IconButton(
                             onClick = { onClose() },
                             modifier = Modifier.align(Alignment.CenterVertically)
@@ -176,6 +177,7 @@ fun SearchBox(
                             ),
                             singleLine = true,
                             modifier = Modifier
+                                .weight(1F)
                                 .onKeyEvent { event ->
                                     if (event.key == Key.Enter) {
                                         onSubmitQuery()

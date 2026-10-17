@@ -143,7 +143,6 @@ internal fun LandscapePhoneErrorHintContent(
                         modifier = Modifier.padding(horizontal = 16.dp)
                     )
                 }
-
             }
         }
         Row(
@@ -225,9 +224,7 @@ internal fun HintSubText(subtext: String?, modifier: Modifier = Modifier) = subt
 }
 
 @Composable
-internal fun ActionButton(
-    button: ActionButtonSpec
-) = Button(
+internal fun ActionButton(button: ActionButtonSpec) = Button(
     onClick = button.onClick,
     shapes = ButtonDefaults.shapes()
 ) {
@@ -238,7 +235,7 @@ internal fun ActionButton(
 @Composable
 fun ErrorHintContentPreview() {
     ErrorHintContent(
-       R.drawable.ic_home_24dp,
+        R.drawable.ic_home_24dp,
         R.string.connection_error_text_connection_failure,
         "Something happened",
         listOf(

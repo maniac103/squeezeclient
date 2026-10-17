@@ -6,11 +6,11 @@ import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.ServerConfiguration
-import kotlinx.coroutines.Dispatchers
 import java.util.UUID
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -41,9 +41,9 @@ class Preferences(appContext: Application) {
         val userNamePref = stringPreference("user", null)
         val passwordPref = stringPreference("password", null)
 
-        val mapper = { name: String?, hostNameAndPort: String?, userName: String?, password: String? ->
-            if (name != null && hostNameAndPort != null) {
-                ServerConfiguration(name, hostNameAndPort, userName, password)
+        val mapper = { name: String?, hostName: String?, userName: String?, password: String? ->
+            if (name != null && hostName != null) {
+                ServerConfiguration(name, hostName, userName, password)
             } else {
                 null
             }
@@ -57,15 +57,13 @@ class Preferences(appContext: Application) {
                 passwordPref.value
             )
 
-            override fun asFlow(): Flow<ServerConfiguration?> {
-                return combine(
-                    namePref.asFlow(),
-                    hostNameAndPortPref.asFlow(),
-                    userNamePref.asFlow(),
-                    passwordPref.asFlow()
-                ) { name, hostNameAndPort, userName, password ->
-                    mapper(name, hostNameAndPort, userName, password)
-                }
+            override fun asFlow() = combine(
+                namePref.asFlow(),
+                hostNameAndPortPref.asFlow(),
+                userNamePref.asFlow(),
+                passwordPref.asFlow()
+            ) { name, hostNameAndPort, userName, password ->
+                mapper(name, hostNameAndPort, userName, password)
             }
 
             override suspend fun update(newValue: ServerConfiguration?) {
@@ -78,7 +76,7 @@ class Preferences(appContext: Application) {
                             remove("password")
                         } else {
                             val hasCreds = !newValue.username.isNullOrEmpty() &&
-                                    !newValue.password.isNullOrEmpty()
+                                !newValue.password.isNullOrEmpty()
                             putString("server_url", newValue.hostnameAndPort)
                             putString("server_name", newValue.name)
                             putString("user", if (hasCreds) newValue.username else null)
@@ -119,7 +117,9 @@ class Preferences(appContext: Application) {
                 "download_path_structure",
                 DownloadFolderStructure.AlbumUnderArtist.prefValue
             ),
-            transformGet = { value -> DownloadFolderStructure.entries.first { value == it.prefValue } },
+            transformGet = { value ->
+                DownloadFolderStructure.entries.first { value == it.prefValue }
+            },
             transformWrite = { value -> value.prefValue }
         )
 
@@ -128,7 +128,8 @@ class Preferences(appContext: Application) {
 
     val volumeStepSize: Preference<Int> get() = intPreference("volume_step_size", 5)
 
-    val localPlayerEnabled: Preference<Boolean> get() = booleanPreference("local_player_enabled", false)
+    val localPlayerEnabled: Preference<Boolean> get() =
+        booleanPreference("local_player_enabled", false)
 
     val localPlayerName: Preference<String?> get() = stringPreference("local_player_name", null)
 

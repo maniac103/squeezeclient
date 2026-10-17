@@ -127,8 +127,8 @@ internal fun PlayerList(
                 val positionInSlaveList = slaveListForPlayerMaster?.indexOf(player.playerId)
 
                 val position = when {
-                    positionInSlaveList != null && positionInSlaveList == slaveListForPlayerMaster.size - 1 ->
-                        RowPosition.Last
+                    positionInSlaveList != null &&
+                        positionInSlaveList == slaveListForPlayerMaster.size - 1 -> RowPosition.Last
 
                     positionInSlaveList != null -> RowPosition.Middle
 
@@ -147,7 +147,7 @@ internal fun PlayerList(
                     modifier = Modifier
                         .animateItem()
                         .alpha(if (isDragged) 0f else 1f),
-                    dragHandleModifier = with (dragState) {
+                    dragHandleModifier = with(dragState) {
                         Modifier.dragHandleModifier(player.playerId.listKey)
                     },
                     onChangePlaybackState = onChangePlaybackState,
@@ -184,23 +184,23 @@ internal fun PlayerList(
 
             if (dragState.hovered is DropTarget.Player) {
                 val height = dragState.determineItemHeight(draggedPlayer.playerId.listKey)
-                    AnimatedVisibility(visible = height != null) {
-                        Box(
+                AnimatedVisibility(visible = height != null) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(height ?: 0.dp)
+                            .offset { IntOffset(0, dragState.previewTop.roundToInt()) }
+                    ) {
+                        Icon(
+                            imageVector = ImageVector.vectorResource(R.drawable.ic_link_24dp),
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .height(height ?: 0.dp)
-                                .offset { IntOffset(0, dragState.previewTop.roundToInt()) }
-                        ) {
-                            Icon(
-                                imageVector = ImageVector.vectorResource(R.drawable.ic_link_24dp),
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier
-                                    .size(64.dp)
-                                    .align(Alignment.Center)
-                            )
-                        }
+                                .size(64.dp)
+                                .align(Alignment.Center)
+                        )
                     }
+                }
             }
         }
     }

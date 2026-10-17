@@ -44,99 +44,73 @@ internal val LocalMainContentAnimationState = staticCompositionLocalOf {
     MainContentAnimationState(MainContentAnimationType.Normal, PaddingValues())
 }
 
-internal val AccelerateDecelerateEasing =
-    Easing { fraction ->
-        ((cos((fraction + 1f) * PI) / 2.0) + 0.5).toFloat()
-    }
-
-internal val DecelerateCubicEasing =
-    Easing { fraction ->
-        1f - (1f - fraction).let { it * it * it }
-    }
-
-internal val DecelerateQuintEasing =
-    Easing { fraction ->
-        val x = 1f - fraction
-        1f - x * x * x * x * x
-    }
-
-private const val ForwardDuration = 300
-private const val PopEnterDuration = 300
-
-internal fun mainContentEnter(): EnterTransition {
-    return (
-        slideInHorizontally(
-            initialOffsetX = { width -> width },
-            animationSpec = tween(
-                durationMillis = ForwardDuration,
-                easing = AccelerateDecelerateEasing,
-            ),
-        ) +
-            fadeIn(
-                initialAlpha = 0.5f,
-                animationSpec = tween(
-                    durationMillis = ForwardDuration,
-                    easing = DecelerateCubicEasing,
-                ),
-            )
-        )
+internal val AccelerateDecelerateEasing = Easing { fraction ->
+    ((cos((fraction + 1f) * PI) / 2.0) + 0.5).toFloat()
 }
 
-internal fun mainContentExit(): ExitTransition {
-    return (
-        slideOutHorizontally(
-            targetOffsetX = { width -> -width },
-            animationSpec = tween(
-                durationMillis = ForwardDuration,
-                easing = AccelerateDecelerateEasing,
-            ),
-        ) +
-            fadeOut(
-                targetAlpha = 0.5f,
-                animationSpec = tween(
-                    durationMillis = ForwardDuration,
-                    easing = DecelerateCubicEasing,
-                ),
-            )
-        )
+internal val DecelerateCubicEasing = Easing { fraction ->
+    1f - (1f - fraction).let { it * it * it }
 }
 
-internal fun mainContentPopEnter(): EnterTransition {
-    return (
-        slideInHorizontally(
-            initialOffsetX = { width -> -width },
-            animationSpec = tween(
-                durationMillis = PopEnterDuration,
-                easing = AccelerateDecelerateEasing,
-            ),
-        ) +
-            fadeIn(
-                initialAlpha = 0.5f,
-                animationSpec = tween(
-                    durationMillis = PopEnterDuration,
-                    easing = DecelerateCubicEasing,
-                ),
-            )
-        )
+internal val DecelerateQuintEasing = Easing { fraction ->
+    val x = 1f - fraction
+    1f - x * x * x * x * x
 }
 
-internal fun mainContentPopExit(): ExitTransition {
-    return (
-        slideOutHorizontally(
-            targetOffsetX = { width -> width },
-            animationSpec = tween(
-                durationMillis = 300,
-                delayMillis = 101,
-                easing = AccelerateDecelerateEasing,
-            )
-        ) +
-            fadeOut(
-                targetAlpha = 0.5f,
-                animationSpec = tween(
-                    durationMillis = 200,
-                    delayMillis = 201,
-                    easing = DecelerateCubicEasing,
-                ),
-            )
-        )
-}
+internal fun mainContentEnter() = slideInHorizontally(
+    initialOffsetX = { it },
+    animationSpec = tween(
+        durationMillis = 300,
+        easing = AccelerateDecelerateEasing
+    )
+) + fadeIn(
+    initialAlpha = 0.5f,
+    animationSpec = tween(
+        durationMillis = 300,
+        easing = DecelerateCubicEasing
+    )
+)
+
+internal fun mainContentExit() = slideOutHorizontally(
+    targetOffsetX = { -it },
+    animationSpec = tween(
+        durationMillis = 300,
+        easing = AccelerateDecelerateEasing
+    )
+) + fadeOut(
+    targetAlpha = 0.5f,
+    animationSpec = tween(
+        durationMillis = 300,
+        easing = DecelerateCubicEasing
+    )
+)
+
+internal fun mainContentPopEnter() = slideInHorizontally(
+    initialOffsetX = { -it },
+    animationSpec = tween(
+        durationMillis = 300,
+        easing = AccelerateDecelerateEasing
+    )
+) + fadeIn(
+    initialAlpha = 0.5f,
+    animationSpec = tween(
+        durationMillis = 300,
+        easing = DecelerateCubicEasing
+    )
+)
+
+internal fun mainContentPopExit() = slideOutHorizontally(
+    targetOffsetX = { it },
+    animationSpec = tween(
+        durationMillis = 300,
+        delayMillis = 100,
+        easing = AccelerateDecelerateEasing
+    )
+) + fadeOut(
+    targetAlpha = 0.5f,
+    animationSpec = tween(
+        durationMillis = 200,
+        delayMillis = 200,
+        easing = DecelerateCubicEasing
+    )
+)

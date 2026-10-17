@@ -23,9 +23,8 @@ import de.maniac103.squeezeclient.model.ListResponse
 import de.maniac103.squeezeclient.model.PagingParams
 import kotlin.math.max
 
-class ItemPagingSource<T : Any>(
-    private val producer: suspend (PagingParams) -> ListResponse<T>
-) : PagingSource<Int, T>() {
+class ItemPagingSource<T : Any>(private val producer: suspend (PagingParams) -> ListResponse<T>) :
+    PagingSource<Int, T>() {
     override fun getRefreshKey(state: PagingState<Int, T>) =
         state.anchorPosition?.let { anchorPosition ->
             val anchorPage = state.closestPageToPosition(anchorPosition)

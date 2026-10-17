@@ -108,6 +108,20 @@ data class JiveActions(
     }
 
     companion object {
-        val EMPTY = JiveActions(null, null, null, null, null, null, null, null, null, null, null, null, null)
+        val EMPTY = JiveActions(
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null
+        )
     }
 }

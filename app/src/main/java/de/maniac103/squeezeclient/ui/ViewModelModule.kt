@@ -33,14 +33,14 @@ import de.maniac103.squeezeclient.ui.nowplaying.NowPlayingViewModel
 import de.maniac103.squeezeclient.ui.nowplaying.PlaylistViewModel
 import de.maniac103.squeezeclient.ui.playermanagement.PlayerManagementViewModel
 import de.maniac103.squeezeclient.ui.search.LibrarySearchResultsViewModel
-import de.maniac103.squeezeclient.ui.search.RadioSearchResultViewModel
+import de.maniac103.squeezeclient.ui.search.RadioSearchResultsViewModel
 import de.maniac103.squeezeclient.ui.search.SearchViewModel
 import de.maniac103.squeezeclient.ui.volume.VolumePopupViewModel
 import org.koin.android.ext.koin.androidApplication
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
-    object ActivePlayerScope
+object ActivePlayerScope
 
 val viewModelModule = module {
     viewModel {
@@ -102,7 +102,7 @@ val viewModelModule = module {
             )
         }
         viewModel { params ->
-            RadioSearchResultViewModel(
+            RadioSearchResultsViewModel(
                 connectionHelper = get(),
                 playerId = get<PlayerId>(),
                 searchTerm = params.get<String>()

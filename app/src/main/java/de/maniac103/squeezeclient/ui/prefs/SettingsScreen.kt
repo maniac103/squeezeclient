@@ -74,9 +74,14 @@ fun SettingsScreen(
             entry { position ->
                 val mapLabelResId = { value: Preferences.AppThemeMode ->
                     when (value) {
-                        Preferences.AppThemeMode.Light -> R.string.settings_theme_light
-                        Preferences.AppThemeMode.Dark -> R.string.settings_theme_dark
-                        Preferences.AppThemeMode.SystemDefault -> R.string.settings_theme_follow_system
+                        Preferences.AppThemeMode.Light ->
+                            R.string.settings_theme_light
+
+                        Preferences.AppThemeMode.Dark ->
+                            R.string.settings_theme_dark
+
+                        Preferences.AppThemeMode.SystemDefault ->
+                            R.string.settings_theme_follow_system
                     }
                 }
 
@@ -112,7 +117,9 @@ fun SettingsScreen(
                 SwitchPreference(
                     position = position,
                     title = stringResource(R.string.settings_volume_buttons_title),
-                    summaryProvider = { _ -> stringResource(R.string.settings_volume_buttons_summary) },
+                    summaryProvider = { _ ->
+                        stringResource(R.string.settings_volume_buttons_summary)
+                    },
                     preference = preferences.useVolumeButtonsForPlayerVolume
                 )
             }
@@ -137,6 +144,7 @@ fun SettingsScreen(
                     summaryProvider = { value ->
                         when (value) {
                             0 -> stringResource(R.string.settings_fade_in_seconds_summary_disabled)
+
                             else -> pluralStringResource(
                                 R.plurals.settings_fade_in_seconds_summary,
                                 value,
@@ -228,7 +236,8 @@ fun SettingsScreen(
                                 R.string.settings_local_player_volume_mode_summary_device
 
                             Preferences.LocalPlayerVolumeMode.DeviceWhilePlaying ->
-                                R.string.settings_local_player_volume_mode_summary_device_while_playing
+                                R.string
+                                    .settings_local_player_volume_mode_summary_device_while_playing
                         }
                         stringResource(resId)
                     },

@@ -78,14 +78,16 @@ import de.maniac103.squeezeclient.model.PlayerStatus.PlayState
 import de.maniac103.squeezeclient.model.Playlist
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
-import de.maniac103.squeezeclient.ui.maincontent.MainLayout
 import de.maniac103.squeezeclient.ui.bottomsheets.InputSheetContent
 import de.maniac103.squeezeclient.ui.composables.ArtworkImage
 import de.maniac103.squeezeclient.ui.composables.BottomSheetContentWrapper
 import de.maniac103.squeezeclient.ui.contextmenu.ContextMenuBottomSheetContent
 import de.maniac103.squeezeclient.ui.contextmenu.ContextMenuBottomSheetViewModel
+import de.maniac103.squeezeclient.ui.maincontent.MainLayout
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -96,10 +98,6 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
-import kotlin.Int
-import kotlin.String
-import kotlin.time.Clock
-import kotlin.time.Duration.Companion.minutes
 
 @Composable
 internal fun NowPlayingScreen(
@@ -159,7 +157,9 @@ internal fun NowPlayingScreen(
         onInfoMenuItemSelected = { parentItem, contextItem ->
             val job = when (val result = viewModel.onContextMenuItemSelected(contextItem)) {
                 is ContextMenuItemResult.None -> null
+
                 is ContextMenuItemResult.DoAction -> result.job
+
                 is ContextMenuItemResult.GoAction ->
                     onInfoMenuItemGoAction(result.action, parentItem, contextItem)
             }
@@ -390,9 +390,7 @@ private fun PlayerSurface(
 }
 
 @Composable
-private fun PlayerBackground(
-    layoutSpec: ContentLayoutSpec
-) = Box(
+private fun PlayerBackground(layoutSpec: ContentLayoutSpec) = Box(
     modifier = Modifier
         .fillMaxSize()
         .clip(
@@ -485,7 +483,9 @@ private fun PlayerToolbar(
                             },
                             leadingIcon = {
                                 Icon(
-                                    imageVector = ImageVector.vectorResource(R.drawable.ic_playlist_save_24dp),
+                                    imageVector = ImageVector.vectorResource(
+                                        R.drawable.ic_playlist_save_24dp
+                                    ),
                                     contentDescription = null // FIXME
                                 )
                             }
@@ -498,7 +498,9 @@ private fun PlayerToolbar(
                             },
                             leadingIcon = {
                                 Icon(
-                                    imageVector = ImageVector.vectorResource(R.drawable.ic_playlist_clear_24dp),
+                                    imageVector = ImageVector.vectorResource(
+                                        R.drawable.ic_playlist_clear_24dp
+                                    ),
                                     contentDescription = null // FIXME
                                 )
                             }
@@ -518,7 +520,7 @@ private fun PlayerToolbar(
 private fun PlayerArtwork(
     state: NowPlayingUiState,
     serverConfig: ServerConfiguration?,
-    bounds: Bounds,
+    bounds: Bounds
 ) = ArtworkImage(
     artwork = state.artwork,
     serverConfig = serverConfig,
@@ -530,10 +532,7 @@ private fun PlayerArtwork(
 )
 
 @Composable
-private fun PlayerInformation(
-    state: NowPlayingUiState,
-    geometry: PlayerGeometry
-) {
+private fun PlayerInformation(state: NowPlayingUiState, geometry: PlayerGeometry) {
     SongInfoText(
         text = state.title.resolve(),
         layoutSpec = geometry.title,
@@ -631,7 +630,7 @@ private fun PlaybackButton(
     ) {
         Icon(
             imageVector = ImageVector.vectorResource(icon),
-            contentDescription = null,
+            contentDescription = null // FIXME
         )
     }
 }
@@ -640,7 +639,7 @@ private fun PlaybackButton(
 private fun ProgressControls(
     state: NowPlayingUiState,
     layoutSpec: ProgressLayoutSpec,
-    onSeek: (Int) -> Unit,
+    onSeek: (Int) -> Unit
 ) {
     val sliderState = rememberSliderState(
         value = state.positionSeconds,
@@ -759,10 +758,7 @@ private fun PlaylistSheet(
 }
 
 @Composable
-private fun PlaylistHandle(
-    progress: MotionProgress,
-    dragDistance: Float
-) {
+private fun PlaylistHandle(progress: MotionProgress, dragDistance: Float) {
     val scope = rememberCoroutineScope()
 
     Column(
@@ -780,7 +776,7 @@ private fun PlaylistHandle(
         Surface(
             modifier = Modifier.padding(top = 16.dp, bottom = 8.dp),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            shape = MaterialTheme.shapes.extraLarge,
+            shape = MaterialTheme.shapes.extraLarge
         ) {
             Box(Modifier.size(width = 32.dp, height = 4.dp))
         }
@@ -830,7 +826,7 @@ private fun SongInfoText(
             modifier = Modifier.offset {
                 IntOffset(
                     x = (remainingHorizontalSpace * alignmentProgress).roundToInt(),
-                    y = 0,
+                    y = 0
                 )
             }
         )
@@ -848,7 +844,7 @@ internal fun Modifier.dragHandle(
     progress: MotionProgress,
     canClickToClose: Boolean,
     dragDistance: Float,
-    scope: CoroutineScope,
+    scope: CoroutineScope
 ): Modifier {
     LaunchedEffect(progress, dragDistance) {
         progress.updateDragDistance(dragDistance)
@@ -870,7 +866,7 @@ internal fun Modifier.dragHandle(
         )
         .anchoredDraggable(
             state = progress.anchoredState(),
-            orientation = orientation,
+            orientation = orientation
         )
 }
 

@@ -25,12 +25,12 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import de.maniac103.squeezeclient.Preferences
 import de.maniac103.squeezeclient.ui.theme.AppTheme
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import kotlin.time.Duration.Companion.seconds
 
 class PlayerManagementActivity : ComponentActivity() {
     private val viewModel: PlayerManagementViewModel by viewModel()
@@ -44,7 +44,7 @@ class PlayerManagementActivity : ComponentActivity() {
             AppTheme(preferences.appTheme) {
                 PlayerManagementUi(
                     viewModel = viewModel,
-                    onGoBack = { finish() },
+                    onGoBack = { finish() }
                 )
             }
         }

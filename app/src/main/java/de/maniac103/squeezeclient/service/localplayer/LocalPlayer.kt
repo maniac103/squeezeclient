@@ -49,12 +49,12 @@ import androidx.media3.exoplayer.util.EventLogger
 import androidx.media3.extractor.DefaultExtractorsFactory
 import de.maniac103.squeezeclient.BuildConfig
 import de.maniac103.squeezeclient.Preferences
-import okhttp3.OkHttpClient
 import kotlin.math.roundToInt
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
+import okhttp3.OkHttpClient
 import okhttp3.Response
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
@@ -71,7 +71,8 @@ class LocalPlayer(
     onAudioStreamFlushed: () -> Unit = {},
     private val onHeadersReceived: (response: Response) -> Unit = {},
     private val onMetadataReceived: (title: CharSequence, artworkUri: Uri?) -> Unit = { _, _ -> }
-) : Player.Listener, KoinComponent {
+) : Player.Listener,
+    KoinComponent {
     private val preferences = get<Preferences>()
     private val httpClient = get<OkHttpClient>()
     private val dataSourceFactory: HttpDataSource.Factory

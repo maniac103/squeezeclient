@@ -21,7 +21,7 @@ fun SlimBrowseItemList.SlimBrowseItem.extractTrailingWidget(
 
         actions.choices != null ->
             SlimBrowseItemTrailingWidget.Choice(
-                actions.choices.items[actions.choices.selectedIndex].title,
+                actions.choices.items[actions.choices.selectedIndex].title
             )
 
         actions.hasContextMenu ->
@@ -32,4 +32,3 @@ fun SlimBrowseItemList.SlimBrowseItem.extractTrailingWidget(
         else -> null
     }
 }
-

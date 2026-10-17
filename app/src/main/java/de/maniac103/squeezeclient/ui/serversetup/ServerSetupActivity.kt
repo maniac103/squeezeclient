@@ -40,6 +40,7 @@ import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.InetAddress
 import java.net.SocketException
+import kotlin.getValue
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -54,7 +55,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 import kotlinx.coroutines.withContext
 import org.koin.android.ext.android.inject
-import kotlin.getValue
 
 class ServerSetupActivity : AppCompatActivity() {
     private val connectionHelper: ConnectionHelper by inject()

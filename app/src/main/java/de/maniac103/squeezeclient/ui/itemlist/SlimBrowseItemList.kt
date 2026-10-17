@@ -34,7 +34,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import de.maniac103.squeezeclient.model.ServerConfiguration
@@ -118,7 +117,7 @@ fun SlimBrowsePagedItemListOrGrid(
 
 @Composable
 fun SlimBrowseItemList(
-    viewModel: SlimBrowseItemListViewModel = viewModel(),
+    viewModel: SlimBrowseItemListViewModel,
     serverConfig: ServerConfiguration?,
     mode: SlimBrowseItemListMode,
     modifier: Modifier = Modifier,
@@ -141,7 +140,7 @@ fun SlimBrowseItemList(
 
 @Composable
 fun SlimBrowseSubItemList(
-    viewModel: SlimBrowseSubItemListViewModel = viewModel(),
+    viewModel: SlimBrowseSubItemListViewModel,
     serverConfig: ServerConfiguration?,
     modifier: Modifier = Modifier,
     itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {},

@@ -68,7 +68,6 @@ import org.koin.android.ext.android.inject
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
 
-@OptIn(ExperimentalTime::class)
 class LocalPlaybackService :
     Service(),
     LifecycleOwner {

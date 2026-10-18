@@ -27,3 +27,5 @@ sealed interface TextResource {
         override fun resolve() = pluralStringResource(resId, quantity, *argsArray)
     }
 }
+
+fun String.toTextResource() = TextResource.Raw(this)

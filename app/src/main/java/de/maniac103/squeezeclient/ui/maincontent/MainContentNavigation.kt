@@ -18,6 +18,7 @@
 package de.maniac103.squeezeclient.ui.maincontent
 
 import androidx.navigation3.runtime.NavKey
+import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.cometd.request.LibrarySearchRequest
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.JiveActions
@@ -25,12 +26,18 @@ import de.maniac103.squeezeclient.model.ParcelableArtworkItem
 import de.maniac103.squeezeclient.model.SlideshowImage
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.model.WindowStyle
+import de.maniac103.squeezeclient.ui.composables.TextResource
+import de.maniac103.squeezeclient.ui.composables.toTextResource
 import kotlinx.serialization.Serializable
 
 @Serializable
 sealed class MainContentNavigation : NavKey {
+    open fun generateBreadcrumb(): BreadcrumbsItem? = null
+
     @Serializable
-    open class JiveHomeMenuPage(val nodeId: String, val title: String) : MainContentNavigation()
+    open class JiveHomeMenuPage(val nodeId: String, val title: String) : MainContentNavigation() {
+        override fun generateBreadcrumb() = BreadcrumbsItem(title.toTextResource(), null, null)
+    }
 
     @Serializable
     class SlimBrowseItemPage(
@@ -39,25 +46,45 @@ sealed class MainContentNavigation : NavKey {
         val icon: ParcelableArtworkItem?,
         val fetchAction: JiveAction,
         val windowStyle: WindowStyle?
-    ) : MainContentNavigation()
+    ) : MainContentNavigation() {
+        override fun generateBreadcrumb() =
+            BreadcrumbsItem(title.toTextResource(), parentTitle?.toTextResource(), icon)
+    }
 
     @Serializable
     class SlimBrowseSubItemPage(val title: String, val fetchAction: JiveAction, val position: Int) :
-        MainContentNavigation()
+        MainContentNavigation() {
+        override fun generateBreadcrumb() = BreadcrumbsItem(title.toTextResource(), null, null)
+    }
 
     @Serializable
     class GalleryPage(
         val items: List<SlideshowImage>,
         val title: String,
         val parentTitle: String?
-    ) : MainContentNavigation()
+    ) : MainContentNavigation() {
+        override fun generateBreadcrumb() =
+            BreadcrumbsItem(title.toTextResource(), parentTitle?.toTextResource(), null)
+    }
 
     @Serializable
     class LocalSearchResults(val searchTerm: String, val mode: LibrarySearchRequest.Mode) :
-        MainContentNavigation()
+        MainContentNavigation() {
+        override fun generateBreadcrumb() = BreadcrumbsItem(
+            TextResource.StringRes(R.string.page_title_library_search, searchTerm),
+            null,
+            null
+        )
+    }
 
     @Serializable
-    class RadioSearchResults(val searchTerm: String) : MainContentNavigation()
+    class RadioSearchResults(val searchTerm: String) : MainContentNavigation() {
+        override fun generateBreadcrumb() = BreadcrumbsItem(
+            TextResource.StringRes(R.string.page_title_radio_search, searchTerm),
+            null,
+            null
+        )
+    }
 
     @Serializable
     class HomeMenuInput(val title: String, val input: JiveActions.Input) : MainContentNavigation()

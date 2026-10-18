@@ -52,7 +52,6 @@ fun PlaylistRow(
     }
 
     ListItem(
-        headlineContent = { Text(item.title) },
         supportingContent = { subtext.takeIf { it.isNotEmpty() }?.let { Text(it) } },
         leadingContent = {
             ArtworkImage(
@@ -77,19 +76,21 @@ fun PlaylistRow(
             } else {
                 Color.Transparent
             },
-            headlineColor = if (isSelected) {
+            contentColor = if (isSelected) {
                 MaterialTheme.colorScheme.onPrimaryContainer
             } else {
-                ListItemDefaults.colors().headlineColor
+                ListItemDefaults.colors().contentColor
             },
-            supportingColor = if (isSelected) {
+            supportingContentColor = if (isSelected) {
                 MaterialTheme.colorScheme.onPrimaryContainer
             } else {
-                ListItemDefaults.colors().supportingTextColor
+                ListItemDefaults.colors().supportingContentColor
             }
         ),
         modifier = modifier
-    )
+    ) {
+        Text(item.title)
+    }
 }
 
 @Preview

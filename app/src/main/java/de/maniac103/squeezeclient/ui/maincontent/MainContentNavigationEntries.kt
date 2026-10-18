@@ -25,6 +25,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.fromHtml
+import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.scene.DialogSceneStrategy
@@ -345,11 +348,14 @@ internal fun EntryProviderScope<NavKey>.homeMenuChoicesNavEntry(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun EntryProviderScope<NavKey>.slimBrowseChoicesNavEntry(
     onChoiceSelected: (JiveAction, SlimBrowseItemList.SlimBrowseItem) -> Job?,
     onDone: (NavKey) -> Unit
-) = entry<MainContentNavigation.SlimBrowseChoices> { route ->
+) = entry<MainContentNavigation.SlimBrowseChoices>(
+    metadata = BottomSheetSceneStrategy.bottomSheet()
+) { route ->
     ChoicesBottomSheet(route.item.title, route.choices) { action ->
         onChoiceSelected(action, route.item)
             .also { it.invokeOnDoneOrNull { onDone(route) } }
@@ -362,7 +368,10 @@ internal fun EntryProviderScope<NavKey>.infoNavEntry() = entry<MainContentNaviga
     metadata = BottomSheetSceneStrategy.bottomSheet()
 ) { route ->
     BottomSheetContentWrapper(route.title, false) {
-        Text(route.info)
+        Text(
+            text = AnnotatedString.fromHtml(route.info),
+            modifier = Modifier.padding(top = 16.dp)
+        )
     }
 }
 
@@ -389,13 +398,16 @@ internal fun EntryProviderScope<NavKey>.contextMenuNavEntry(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun EntryProviderScope<NavKey>.itemActionsNavEntry(
     serverConfig: State<ServerConfiguration?>,
     onDownloadSelected: (DownloadRequestData) -> Unit,
     onActionSelected: (JiveAction, SlimBrowseItemList.SlimBrowseItem) -> Job?,
     onDone: (NavKey) -> Unit
-) = entry<MainContentNavigation.ItemActions> { route ->
+) = entry<MainContentNavigation.ItemActions>(
+    metadata = BottomSheetSceneStrategy.bottomSheet()
+) { route ->
     val viewModel = koinViewModel<ItemActionsViewModel> { parametersOf(route.item) }
 
     ItemActionsSheet(viewModel, serverConfig.value) { action ->

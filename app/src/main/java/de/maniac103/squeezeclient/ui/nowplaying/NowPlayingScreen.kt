@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.minus
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -721,6 +722,9 @@ private fun PlaylistSheet(
     val dragDistance = LocalDensity.current.run { dragDistanceDp?.toPx() }
     val cornerSize = lerp(16.dp, 0.dp, progress.value)
     val sheetColor = MaterialTheme.colorScheme.surfaceContainerHighest
+    val topPadding = PaddingValues(
+        top = layoutSpec.padding.calculateTopPadding()
+    )
 
     Column(
         modifier = Modifier
@@ -734,11 +738,18 @@ private fun PlaylistSheet(
             )
             .background(sheetColor)
     ) {
-        // FIXME: even if not draggable header should be present
         if (layoutSpec.needsHandle) {
             PlaylistHandle(
                 progress = progress,
-                dragDistance = dragDistance ?: 0F
+                dragDistance = dragDistance ?: 0F,
+                modifier = Modifier.padding(topPadding)
+            )
+        } else {
+            PlaylistTitle(
+                modifier = Modifier
+                    .padding(topPadding)
+                    .padding(bottom = 4.dp)
+                    .align(Alignment.CenterHorizontally)
             )
         }
         val contentAlpha = if (layoutSpec.needsHandle) {
@@ -749,7 +760,7 @@ private fun PlaylistSheet(
         playlistContent(
             sheetColor,
             Modifier
-                .padding(layoutSpec.padding)
+                .padding(layoutSpec.padding - topPadding)
                 .alpha(contentAlpha)
                 .fillMaxWidth()
                 .weight(1F)
@@ -758,12 +769,16 @@ private fun PlaylistSheet(
 }
 
 @Composable
-private fun PlaylistHandle(progress: MotionProgress, dragDistance: Float) {
+private fun PlaylistHandle(
+    progress: MotionProgress,
+    dragDistance: Float,
+    modifier: Modifier = Modifier
+) {
     val scope = rememberCoroutineScope()
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .dragHandle(
                 orientation = Orientation.Vertical,
@@ -781,9 +796,16 @@ private fun PlaylistHandle(progress: MotionProgress, dragDistance: Float) {
             Box(Modifier.size(width = 32.dp, height = 4.dp))
         }
 
-        Text(stringResource(R.string.playlist))
+        PlaylistTitle()
     }
 }
+
+@Composable
+private fun PlaylistTitle(modifier: Modifier = Modifier) = Text(
+    text = stringResource(R.string.playlist),
+    style = MaterialTheme.typography.titleSmall,
+    modifier = modifier
+)
 
 @Composable
 private fun SongInfoText(

@@ -117,7 +117,7 @@ fun SlimBrowseItemListRow(
             trailingWidget is SlimBrowseItemTrailingWidget.Choice -> {
                 Text(
                     text = trailingWidget.label,
-                    style = AppTheme.TextStyles.listItemSecondary,
+                    style = AppTheme.TextStyles.listItemPrimary,
                     modifier = extraModifier
                 )
             }

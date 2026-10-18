@@ -89,7 +89,9 @@ fun ContextMenuBottomSheetContent(
             .fillMaxWidth()
             .animateContentSize()
     ) {
-        Row {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp)
+        ) {
             parentItem.extractIconUrl()?.let {
                 ArtworkImage(
                     artwork = parentItem,

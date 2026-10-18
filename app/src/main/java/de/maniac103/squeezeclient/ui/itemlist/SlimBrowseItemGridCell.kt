@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -93,7 +94,7 @@ fun SlimBrowseItemGridCell(
                     text = title,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    style = AppTheme.TextStyles.listItemPrimary,
+                    style = MaterialTheme.typography.bodyMediumEmphasized,
                     modifier = Modifier
                         .align(Alignment.CenterHorizontally)
                 )
@@ -103,7 +104,7 @@ fun SlimBrowseItemGridCell(
                         text = subtext,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
-                        style = AppTheme.TextStyles.listItemSecondary,
+                        style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier
                             .align(Alignment.CenterHorizontally)
                     )

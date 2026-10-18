@@ -107,6 +107,7 @@ fun SearchBox(
         onCategoryClick = { category ->
             if (!category.busy) {
                 onOpenResultsListener(queryState.text, category.type)
+                viewModel.close()
             }
         }
     )

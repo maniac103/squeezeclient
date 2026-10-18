@@ -536,7 +536,6 @@ private fun calculateLandscapeGeometry(
     val collapsedProgressHeight = 8.dp
     val expandedControlsSize = 72.dp
     val expandedProgressHeight = 64.dp
-    val expandedArtworkControlsPadding = 16.dp
 
     // Collapsed state
     val collapsedBackground = Bounds(
@@ -668,28 +667,32 @@ private fun calculateLandscapeGeometry(
     )
 
     val expandedArtworkSize = expandedContent.height * expandedArtworkHeightFraction
+    val expandedHeightRemainder = height -
+        topInset -
+        toolbarHeight -
+        bottomInset -
+        expandedArtworkSize -
+        expandedControlsSize -
+        expandedProgressHeight
+    val expandedVertSpacing = expandedHeightRemainder / 4
+
     val expandedArtwork = Bounds(
         start = expandedContent.start + 16.dp,
-        top = toolbarHeight + 16.dp,
+        top = toolbarHeight + topInset + expandedVertSpacing,
         width = expandedArtworkSize,
         height = expandedArtworkSize
     )
 
-    val heightAvailableForExpandedControls =
-        height - expandedArtwork.bottom - bottomInset - expandedArtworkControlsPadding - 16.dp
-    val expandedControlsVertSpacing =
-        (heightAvailableForExpandedControls - expandedControlsSize - expandedProgressHeight) / 3
-
     val expandedProgress = Bounds(
         start = expandedContent.start + 8.dp,
-        top = expandedArtwork.bottom + expandedArtworkControlsPadding + expandedControlsVertSpacing,
+        top = expandedArtwork.bottom + expandedVertSpacing,
         width = expandedContent.width - 16.dp,
         height = expandedProgressHeight
     )
 
     val expandedControlsPadding = 16.dp
     val expandedControlsWidth = expandedContent.width - expandedControlsPadding * 2
-    val expandedControlsTop = expandedProgress.bottom + expandedControlsVertSpacing
+    val expandedControlsTop = expandedProgress.bottom + expandedVertSpacing
     val expandedControlsHorzSpacing = (expandedControlsWidth - expandedControlsSize * 5) / 4
 
     val expandedRepeat = Bounds(
@@ -795,7 +798,7 @@ private fun calculateLandscapeGeometry(
             bounds = Bounds(
                 start = 0.dp,
                 top = 0.dp,
-                width = width,
+                width = width - expandedPlaylist.width,
                 height = 64.dp + topInset
             ),
             alpha = fadeInWindow(progress, .50f, .70f)

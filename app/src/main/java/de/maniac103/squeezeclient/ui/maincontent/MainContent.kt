@@ -30,6 +30,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
+import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavKey
@@ -55,6 +56,7 @@ fun MainContent(
     serverConfig: State<ServerConfiguration?>,
     useGridForSlimbrowseItems: State<Boolean>,
     pagePadding: PaddingValues,
+    compensateBottomPagePaddingDuringAnimation: Boolean,
     modifier: Modifier = Modifier,
     onGalleryItemSelected: (SlideshowImage) -> Unit = {},
     onDownloadSelected: (DownloadRequestData) -> Unit = {},
@@ -196,7 +198,14 @@ fun MainContent(
         isPredictiveBack -> MainContentAnimationType.PredictiveBack
         else -> MainContentAnimationType.Normal
     }
-    val animationState = MainContentAnimationState(animationType, pagePadding)
+    val animationState = MainContentAnimationState(
+        animType = animationType,
+        bottomPaddingForCompensation = if (compensateBottomPagePaddingDuringAnimation) {
+            pagePadding.calculateBottomPadding()
+        } else {
+            0.dp
+        }
+    )
 
     LaunchedEffect(Unit) {
         viewModel.navigationFlow.collect { destination ->

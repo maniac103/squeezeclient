@@ -29,6 +29,7 @@ import de.maniac103.squeezeclient.model.PlayerStatus.RepeatState
 import de.maniac103.squeezeclient.model.PlayerStatus.ShuffleState
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.ui.composables.TextResource
+import de.maniac103.squeezeclient.ui.composables.toTextResource
 import kotlin.time.DurationUnit
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -171,7 +172,7 @@ data class NowPlayingContextMenuData(
 )
 
 class NowPlayingUiState(private val status: PlayerStatus) {
-    val title get() = status.playlist.nowPlaying?.title?.let { TextResource.Raw(it) }
+    val title get() = status.playlist.nowPlaying?.title?.toTextResource()
         ?: TextResource.StringRes(R.string.nowplaying_empty_playlist)
     val artist get() = status.playlist.nowPlaying?.artist?.takeIf { it.isNotEmpty() }
     val album get() = status.playlist.nowPlaying?.album?.takeIf { it.isNotEmpty() }

@@ -1,6 +1,5 @@
 package de.maniac103.squeezeclient.ui.maincontent
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
@@ -8,6 +7,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -47,7 +47,7 @@ fun Breadcrumbs(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier.padding(8.dp)
     ) {
-        Image(
+        Icon(
             imageVector = ImageVector.vectorResource(R.drawable.ic_home_24dp),
             contentDescription = null, // FIXME
             modifier = Modifier.clickable(onClick = onHomeClicked)

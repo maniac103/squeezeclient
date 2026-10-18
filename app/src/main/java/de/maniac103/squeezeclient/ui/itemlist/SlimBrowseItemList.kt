@@ -50,10 +50,10 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
+import kotlin.time.Duration.Companion.seconds
 import my.nanihadesuka.compose.LazyColumnScrollbar
 import my.nanihadesuka.compose.LazyVerticalGridScrollbar
 import my.nanihadesuka.compose.ScrollbarSettings
-import kotlin.time.Duration.Companion.seconds
 
 enum class SlimBrowseItemListMode {
     ListWithoutIcons,
@@ -232,11 +232,11 @@ internal fun ScrollIndicator(entry: SlimBrowseItemList.SlimBrowseItem?, visible:
                     val getX = { x: Float -> if (isRtl) w - x else x }
 
                     val vertices = floatArrayOf(
-                        getX(0f), 0f,                           // Top-left
-                        getX(w - notchRadius), 0f,              // Before notch slant
-                        getX(w), h / 2f,                        // Tip of the notch point
-                        getX(w - notchRadius), h,               // After notch slant
-                        getX(0f), h                             // Bottom-left
+                        getX(0f), 0f, // Top-left
+                        getX(w - notchRadius), 0f, // Before notch slant
+                        getX(w), h / 2f, // Tip of the notch point
+                        getX(w - notchRadius), h, // After notch slant
+                        getX(0f), h // Bottom-left
                     )
 
                     val polygon = RoundedPolygon(

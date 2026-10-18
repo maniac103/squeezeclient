@@ -35,12 +35,12 @@ sealed class MainContentNavigation : NavKey {
     open fun generateBreadcrumb(): BreadcrumbsItem? = null
 
     @Serializable
-    open class JiveHomeMenuPage(val nodeId: String, val title: String) : MainContentNavigation() {
+    data class JiveHomeMenuPage(val nodeId: String, val title: String) : MainContentNavigation() {
         override fun generateBreadcrumb() = BreadcrumbsItem(title.toTextResource(), null, null)
     }
 
     @Serializable
-    class SlimBrowseItemPage(
+    data class SlimBrowseItemPage(
         val title: String,
         val parentTitle: String?,
         val icon: ParcelableArtworkItem?,
@@ -52,13 +52,16 @@ sealed class MainContentNavigation : NavKey {
     }
 
     @Serializable
-    class SlimBrowseSubItemPage(val title: String, val fetchAction: JiveAction, val position: Int) :
-        MainContentNavigation() {
+    data class SlimBrowseSubItemPage(
+        val title: String,
+        val fetchAction: JiveAction,
+        val position: Int
+    ) : MainContentNavigation() {
         override fun generateBreadcrumb() = BreadcrumbsItem(title.toTextResource(), null, null)
     }
 
     @Serializable
-    class GalleryPage(
+    data class GalleryPage(
         val items: List<SlideshowImage>,
         val title: String,
         val parentTitle: String?
@@ -68,7 +71,7 @@ sealed class MainContentNavigation : NavKey {
     }
 
     @Serializable
-    class LocalSearchResults(val searchTerm: String, val mode: LibrarySearchRequest.Mode) :
+    data class LocalSearchResults(val searchTerm: String, val mode: LibrarySearchRequest.Mode) :
         MainContentNavigation() {
         override fun generateBreadcrumb() = BreadcrumbsItem(
             TextResource.StringRes(R.string.page_title_library_search, searchTerm),
@@ -78,7 +81,7 @@ sealed class MainContentNavigation : NavKey {
     }
 
     @Serializable
-    class RadioSearchResults(val searchTerm: String) : MainContentNavigation() {
+    data class RadioSearchResults(val searchTerm: String) : MainContentNavigation() {
         override fun generateBreadcrumb() = BreadcrumbsItem(
             TextResource.StringRes(R.string.page_title_radio_search, searchTerm),
             null,
@@ -87,51 +90,53 @@ sealed class MainContentNavigation : NavKey {
     }
 
     @Serializable
-    class HomeMenuInput(val title: String, val input: JiveActions.Input) : MainContentNavigation()
-
-    @Serializable
-    class HomeMenuTimePicker(val title: String, val input: JiveActions.Input) :
+    data class HomeMenuInput(val title: String, val input: JiveActions.Input) :
         MainContentNavigation()
 
     @Serializable
-    class SlimBrowseInput(
+    data class HomeMenuTimePicker(val title: String, val input: JiveActions.Input) :
+        MainContentNavigation()
+
+    @Serializable
+    data class SlimBrowseInput(
         val item: SlimBrowseItemList.SlimBrowseItem,
         val input: JiveActions.Input
     ) : MainContentNavigation()
 
     @Serializable
-    class SlimBrowseTimePicker(
+    data class SlimBrowseTimePicker(
         val item: SlimBrowseItemList.SlimBrowseItem,
         val input: JiveActions.Input
     ) : MainContentNavigation()
 
     @Serializable
-    class SliderInput(val title: String, val slider: JiveActions.Slider) : MainContentNavigation()
-
-    @Serializable
-    class HomeMenuChoices(val parentTitle: String, val choices: JiveActions.Choices) :
+    data class SliderInput(val title: String, val slider: JiveActions.Slider) :
         MainContentNavigation()
 
     @Serializable
-    class SlimBrowseChoices(
+    data class HomeMenuChoices(val parentTitle: String, val choices: JiveActions.Choices) :
+        MainContentNavigation()
+
+    @Serializable
+    data class SlimBrowseChoices(
         val item: SlimBrowseItemList.SlimBrowseItem,
         val choices: JiveActions.Choices
     ) : MainContentNavigation()
 
     @Serializable
-    class Info(val title: String, val info: String) : MainContentNavigation()
+    data class Info(val title: String, val info: String) : MainContentNavigation()
 
     @Serializable
-    class ContextMenu(
+    data class ContextMenu(
         val item: SlimBrowseItemList.SlimBrowseItem,
         val menuItems: List<SlimBrowseItemList.SlimBrowseItem>
     ) : MainContentNavigation()
 
     @Serializable
-    class ItemActions(val item: SlimBrowseItemList.SlimBrowseItem) : MainContentNavigation()
+    data class ItemActions(val item: SlimBrowseItemList.SlimBrowseItem) : MainContentNavigation()
 
     @Serializable
-    class WebLink(val title: String, val link: String) : MainContentNavigation()
+    data class WebLink(val title: String, val link: String) : MainContentNavigation()
 
     @Serializable
     object Home : MainContentNavigation()
@@ -140,8 +145,8 @@ sealed class MainContentNavigation : NavKey {
     object NowPlaying : MainContentNavigation()
 
     @Serializable
-    class GoBack(val levels: Int) : MainContentNavigation()
+    data class GoBack(val levels: Int) : MainContentNavigation()
 
     @Serializable
-    class RefreshContent(val levels: Int) : MainContentNavigation()
+    data class RefreshContent(val levels: Int) : MainContentNavigation()
 }

@@ -503,7 +503,7 @@ private fun calculatePortraitGeometry(
                 bounds = lerp(collapsedShuffle, expandedShuffle, progress),
                 alpha = fadeInWindow(progress, 0.5F, 0.8F)
             )
-        ).let  {
+        ).let {
             if (layoutDirection == LayoutDirection.Rtl) it.withReversedOrder() else it
         }
     )

@@ -97,7 +97,7 @@ private fun Transition<EnterExitState>.animateDpForPredictiveBack(
 
 @Composable
 fun MainContentPage(content: @Composable () -> Unit) {
-    val bottomPadding = LocalMainContentAnimationState.current.pagePadding.calculateBottomPadding()
+    val bottomPadding = LocalMainContentAnimationState.current.bottomPaddingForCompensation
     val transition = LocalNavAnimatedContentScope.current.transition
 
     val scale by transition.animateFloatForPredictiveBack(

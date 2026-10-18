@@ -352,7 +352,7 @@ private fun PlayerSurface(
             layoutSpec = geometry.toolbar,
             state = state,
             showNowPlayingActions = !playlistExpanded || !geometry.playlist.needsHandle,
-            showPlaylistActions = playlistExpanded,
+            showPlaylistActions = playlistExpanded || !geometry.playlist.needsHandle,
             onNavigateUp = onNavigateUp,
             onShowInfoMenu = onShowInfoMenu,
             onShowSavePlaylistNameInput = onShowSavePlaylistNameInput,

@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.ui.composables.ArtworkImage
+import de.maniac103.squeezeclient.ui.composables.toTextResource
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -85,11 +86,11 @@ fun Breadcrumbs(
                     }
 
                     item.parentTitle?.let { parentTitle ->
-                        BreadcrumbsTextSegment(parentTitle, alphaModifier)
+                        BreadcrumbsTextSegment(parentTitle.resolve(), alphaModifier)
                         BreadcrumbsTextSegment(" › ", alphaModifier)
                     }
 
-                    BreadcrumbsTextSegment(item.title, alphaModifier)
+                    BreadcrumbsTextSegment(item.title.resolve(), alphaModifier)
                 }
             }
         }
@@ -108,9 +109,13 @@ private fun BreadcrumbsTextSegment(text: String, modifier: Modifier = Modifier) 
 @Composable
 fun BreadcrumbsPreview() {
     val items = listOf(
-        BreadcrumbsItem("My music", null, null),
-        BreadcrumbsItem("Album artists", null, null),
-        BreadcrumbsItem("Some context action", "Some artist", null)
+        BreadcrumbsItem("My music".toTextResource(), null, null),
+        BreadcrumbsItem("Album artists".toTextResource(), null, null),
+        BreadcrumbsItem(
+            "Some context action".toTextResource(),
+            "Some artist".toTextResource(),
+            null
+        )
     )
     val stateFlow = MutableStateFlow(BreadcrumbsState(items, 0.5F))
     Breadcrumbs(stateFlow, null)

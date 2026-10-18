@@ -81,7 +81,7 @@ fun JiveHomeItemListEntry(
         if (!choiceLabel.isNullOrEmpty()) {
             Text(
                 text = choiceLabel,
-                style = AppTheme.TextStyles.listItemSecondary,
+                style = AppTheme.TextStyles.listItemPrimary,
                 modifier = Modifier
                     .align(Alignment.CenterVertically)
                     .padding(end = 16.dp)

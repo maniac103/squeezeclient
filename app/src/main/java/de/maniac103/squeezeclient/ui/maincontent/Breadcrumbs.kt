@@ -72,11 +72,6 @@ fun Breadcrumbs(
                     modifier = Modifier
                         .clickable(onClick = { onGoBack(items.size - index - 1) })
                 ) {
-                    item.parentTitle?.let { parentTitle ->
-                        BreadcrumbsTextSegment(" › ", alphaModifier)
-                        BreadcrumbsTextSegment(parentTitle, alphaModifier)
-                    }
-
                     BreadcrumbsTextSegment(" › ", alphaModifier)
 
                     item.icon?.let {
@@ -84,9 +79,14 @@ fun Breadcrumbs(
                             it,
                             serverConfig,
                             modifier = alphaModifier
-                                .padding(end = 8.dp)
+                                .padding(end = 4.dp)
                                 .size(16.dp)
                         )
+                    }
+
+                    item.parentTitle?.let { parentTitle ->
+                        BreadcrumbsTextSegment(parentTitle, alphaModifier)
+                        BreadcrumbsTextSegment(" › ", alphaModifier)
                     }
 
                     BreadcrumbsTextSegment(item.title, alphaModifier)

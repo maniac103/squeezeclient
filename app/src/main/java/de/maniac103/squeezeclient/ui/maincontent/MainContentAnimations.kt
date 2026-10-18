@@ -17,16 +17,15 @@
 
 package de.maniac103.squeezeclient.ui.maincontent
 
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.Easing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import kotlin.math.PI
 import kotlin.math.cos
 
@@ -37,11 +36,11 @@ internal enum class MainContentAnimationType {
 
 internal data class MainContentAnimationState(
     val animType: MainContentAnimationType,
-    val pagePadding: PaddingValues
+    val bottomPaddingForCompensation: Dp
 )
 
 internal val LocalMainContentAnimationState = staticCompositionLocalOf {
-    MainContentAnimationState(MainContentAnimationType.Normal, PaddingValues())
+    MainContentAnimationState(MainContentAnimationType.Normal, 0.dp)
 }
 
 internal val AccelerateDecelerateEasing = Easing { fraction ->

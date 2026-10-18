@@ -33,6 +33,7 @@ import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.cometd.ConnectionHelper
 import de.maniac103.squeezeclient.extfuncs.await
 import de.maniac103.squeezeclient.model.DownloadRequestData
+import de.maniac103.squeezeclient.model.PlayerStatus
 import de.maniac103.squeezeclient.service.DownloadWorker
 import de.maniac103.squeezeclient.service.localplayer.LocalPlaybackService
 import de.maniac103.squeezeclient.service.mediasession.MediaService
@@ -105,7 +106,12 @@ class MainActivity : ComponentActivity() {
         val mainViewModel by viewModel<MainActivityViewModel>()
         val connectedState = mainViewModel.stateFlow.value as? MainActivityState.Connected
         val activePlayerId = connectedState?.selectedPlayer?.id
-        if (activePlayerId != null && !isChangingConfigurations) {
+        val playState = mainViewModel.selectedPlayerStateFlow.value?.playbackState
+        if (
+            activePlayerId != null &&
+            playState == PlayerStatus.PlayState.Playing &&
+            !isChangingConfigurations
+        ) {
             MediaService.start(this, activePlayerId, true)
         }
         super.onStop()

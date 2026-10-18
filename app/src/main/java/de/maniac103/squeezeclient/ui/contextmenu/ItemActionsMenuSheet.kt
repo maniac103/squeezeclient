@@ -67,7 +67,7 @@ fun ItemActionsSheet(
                 modifier = Modifier
                     .padding(horizontal = 16.dp)
             ) {
-                viewModel.item.extractIconUrl()?.let {
+                if (viewModel.item.isValidIcon) {
                     ArtworkImage(
                         artwork = item,
                         serverConfig = serverConfig,

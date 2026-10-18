@@ -66,7 +66,7 @@ val viewModelModule = module {
         viewModel { params ->
             ContextMenuBottomSheetViewModel(
                 connectionHelper = get(),
-                playerId = params.get<PlayerId>(),
+                playerId = get<PlayerId>(),
                 initialItems = params.get<List<SlimBrowseItemList.SlimBrowseItem>>(),
                 parentItem = params.get<SlimBrowseItemList.SlimBrowseItem>()
             )

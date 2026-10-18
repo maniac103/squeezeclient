@@ -135,7 +135,8 @@ fun PreferenceText(title: String, summary: String?, modifier: Modifier = Modifie
     if (summary != null) {
         Text(
             text = summary,
-            style = MaterialTheme.typography.bodyMedium
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }
@@ -167,7 +168,7 @@ fun SwitchPreference(
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            modifier = Modifier.padding(16.dp)
         ) {
             PreferenceText(
                 title = title,
@@ -216,7 +217,7 @@ inline fun <reified T : Enum<T>> ListPreference(
             summary = summaryProvider(value),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp)
+                .padding(16.dp)
         )
     }
 
@@ -274,7 +275,7 @@ fun SliderPreference(
     val scope = rememberCoroutineScope()
 
     Column(
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+        modifier = Modifier.padding(16.dp)
     ) {
         PreferenceText(
             title = title,

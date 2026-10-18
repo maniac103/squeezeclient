@@ -17,35 +17,22 @@
 
 package de.maniac103.squeezeclient.ui.itemlist
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.model.ArtworkItem
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
@@ -123,56 +110,11 @@ fun SlimBrowseItemGridCell(
                 }
             }
 
-            val extraModifier = Modifier
-                .align(Alignment.CenterVertically)
-
-            when {
-                busy -> {
-                    CircularProgressIndicator(
-                        strokeWidth = 3.dp,
-                        modifier = extraModifier.size(24.dp)
-                    )
-                }
-
-                trailingWidget is SlimBrowseItemTrailingWidget.Choice -> {
-                    Text(
-                        text = trailingWidget.label,
-                        style = AppTheme.TextStyles.listItemSecondary,
-                        modifier = extraModifier
-                    )
-                }
-
-                trailingWidget is SlimBrowseItemTrailingWidget.Checkbox -> {
-                    Checkbox(
-                        checked = trailingWidget.checked,
-                        onCheckedChange = { },
-                        modifier = extraModifier
-                    )
-                }
-
-                trailingWidget is SlimBrowseItemTrailingWidget.Radio -> {
-                    RadioButton(
-                        selected = trailingWidget.checked,
-                        onClick = { },
-                        modifier = extraModifier
-                    )
-                }
-
-                trailingWidget is SlimBrowseItemTrailingWidget.ContextMenu -> {
-                    Image(
-                        ImageVector.vectorResource(R.drawable.ic_menu_overflow),
-                        contentScale = ContentScale.Inside,
-                        contentDescription = null, // FIXME
-                        modifier = extraModifier
-                            .size(48.dp)
-                            .clickable(
-                                onClick = trailingWidget.clickListener,
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = ripple(bounded = false)
-                            )
-                    )
-                }
-            }
+            SlimBrowseItemTrailingWidgetUi(
+                busy = busy,
+                widget = trailingWidget,
+                modifier = Modifier.align(Alignment.CenterVertically)
+            )
         }
     }
 }

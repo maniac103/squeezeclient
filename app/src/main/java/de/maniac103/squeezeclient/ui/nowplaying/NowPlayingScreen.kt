@@ -918,7 +918,10 @@ fun NowPlayingPreview() {
                 containerSize = DpSize(maxWidth, maxHeight),
                 mainContentPadding = PaddingValues(),
                 mainContentPagePadding = PaddingValues(),
+                breadcrumbsPadding = PaddingValues(),
                 searchBoxPadding = PaddingValues(),
+                toolbarPadding = PaddingValues(),
+                toolbarContentPadding = PaddingValues(),
                 collapsedNowPlayingHeight = 64.dp,
                 nowPlayingCornerSize = 16.dp
             )

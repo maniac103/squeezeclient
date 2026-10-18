@@ -24,6 +24,8 @@ interface ArtworkItem {
     val icon: String?
     val iconId: String?
 
+    val isValidIcon get() = extractIconUrl() != null
+
     fun extractIconUrl(): String? = when {
         iconId?.toLongOrNull(16) != null -> "/music/$iconId/cover"
         iconId != null -> iconId

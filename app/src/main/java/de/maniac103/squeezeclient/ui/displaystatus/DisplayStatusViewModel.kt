@@ -49,7 +49,7 @@ class DisplayStatusViewModel(connectionHelper: ConnectionHelper, playerId: Playe
                 uiMessageFlowInternal.emit(
                     DisplayStatusMessage(
                         text = message.text.joinToString("\n").trim(),
-                        icon = message
+                        icon = message.takeIf { it.isValidIcon }
                     )
                 )
                 delay(message.duration ?: 2.seconds)
@@ -59,4 +59,4 @@ class DisplayStatusViewModel(connectionHelper: ConnectionHelper, playerId: Playe
     }
 }
 
-class DisplayStatusMessage(val text: String, val icon: ArtworkItem)
+class DisplayStatusMessage(val text: String, val icon: ArtworkItem?)

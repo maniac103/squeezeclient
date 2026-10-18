@@ -89,9 +89,9 @@ fun DisplayStatusIndicator(
                             .background(MaterialTheme.colorScheme.secondaryContainer)
                             .padding(8.dp)
                     ) {
-                        messageToShow.icon.extractIconUrl()?.let {
+                        messageToShow.icon?.let {
                             ArtworkImage(
-                                artwork = messageToShow.icon,
+                                artwork = it,
                                 serverConfig = serverConfig,
                                 usePlaceholder = false,
                                 modifier = Modifier

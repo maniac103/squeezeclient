@@ -2,21 +2,18 @@ package de.maniac103.squeezeclient.ui.itemlist
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.defaultMinSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
@@ -25,7 +22,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.model.JiveHomeMenuItem
-import de.maniac103.squeezeclient.ui.theme.AppTheme
 
 @Composable
 fun JiveHomeItemListEntry(
@@ -34,17 +30,11 @@ fun JiveHomeItemListEntry(
     choiceLabel: String?,
     iconResourceId: Int?,
     modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .defaultMinSize(minHeight = 64.dp)
-            .padding(vertical = 8.dp)
-    ) {
+) = ListItem(
+    leadingContent = {
         val iconModifier = Modifier
-            .padding(horizontal = 16.dp)
             .size(40.dp)
-            .align(Alignment.CenterVertically)
+
         if (iconResourceId != null) {
             Image(
                 ImageVector.vectorResource(iconResourceId),
@@ -54,40 +44,33 @@ fun JiveHomeItemListEntry(
         } else {
             Spacer(modifier = iconModifier)
         }
-
-        Column(
-            modifier = Modifier
-                .align(Alignment.CenterVertically)
-                .weight(1f)
-                .padding(end = 16.dp)
-        ) {
+    },
+    supportingContent = {
+        if (!subtext.isNullOrEmpty()) {
             Text(
-                text = title,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                style = AppTheme.TextStyles.listItemPrimary
+                text = subtext,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
             )
-
-            if (!subtext.isNullOrEmpty()) {
-                Text(
-                    text = subtext,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    style = AppTheme.TextStyles.listItemSecondary
-                )
-            }
         }
-
+    },
+    trailingContent = {
         if (!choiceLabel.isNullOrEmpty()) {
             Text(
                 text = choiceLabel,
-                style = AppTheme.TextStyles.listItemPrimary,
+                style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier
-                    .align(Alignment.CenterVertically)
                     .padding(end = 16.dp)
             )
         }
-    }
+    },
+    modifier = modifier
+){
+    Text(
+        text = title,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis
+    )
 }
 
 @Composable

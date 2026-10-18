@@ -1,26 +1,19 @@
 package de.maniac103.squeezeclient.ui.itemlist
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -30,7 +23,6 @@ import de.maniac103.squeezeclient.model.ArtworkItem
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.ui.composables.ArtworkImage
-import de.maniac103.squeezeclient.ui.theme.AppTheme
 
 @Composable
 fun SlimBrowseItemListRow(
@@ -59,101 +51,75 @@ fun SlimBrowseItemListRow(
     serverConfig: ServerConfiguration?,
     busy: Boolean,
     modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .defaultMinSize(minHeight = 64.dp)
-            .padding(top = 8.dp, bottom = 8.dp)
-    ) {
+) = ListItem(
+    leadingContent = {
         if (artwork != null) {
             ArtworkImage(
                 artwork = artwork,
                 serverConfig = serverConfig,
                 modifier = Modifier
-                    .padding(horizontal = 16.dp)
                     .size(40.dp)
-                    .align(Alignment.CenterVertically)
             )
-        } else {
-            Spacer(modifier = Modifier.size(16.dp))
         }
-
-        Column(
-            modifier = Modifier
-                .align(Alignment.CenterVertically)
-                .weight(1f)
-                .padding(end = 16.dp)
-        ) {
-            Text(
-                text = title,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                style = AppTheme.TextStyles.listItemPrimary
-            )
-
-            if (!subtext.isNullOrEmpty()) {
-                Text(
-                    text = subtext,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    style = AppTheme.TextStyles.listItemSecondary
-                )
-            }
-        }
-
-        val extraModifier = Modifier
-            .align(Alignment.CenterVertically)
-            .padding(end = 16.dp)
-
+    },
+    trailingContent = {
         when {
             busy -> {
                 CircularProgressIndicator(
                     strokeWidth = 3.dp,
-                    modifier = extraModifier.size(24.dp)
+                    modifier = Modifier.size(24.dp)
                 )
             }
 
             trailingWidget is SlimBrowseItemTrailingWidget.Choice -> {
                 Text(
                     text = trailingWidget.label,
-                    style = AppTheme.TextStyles.listItemPrimary,
-                    modifier = extraModifier
+                    style = MaterialTheme.typography.titleMedium
                 )
             }
 
             trailingWidget is SlimBrowseItemTrailingWidget.Checkbox -> {
                 Checkbox(
                     checked = trailingWidget.checked,
-                    onCheckedChange = { },
-                    modifier = extraModifier
+                    onCheckedChange = { }
                 )
             }
 
             trailingWidget is SlimBrowseItemTrailingWidget.Radio -> {
                 RadioButton(
                     selected = trailingWidget.checked,
-                    onClick = { },
-                    modifier = extraModifier
+                    onClick = { }
                 )
             }
 
             trailingWidget is SlimBrowseItemTrailingWidget.ContextMenu -> {
-                Image(
-                    ImageVector.vectorResource(R.drawable.ic_menu_overflow),
-                    contentScale = ContentScale.Inside,
-                    contentDescription = null, // FIXME
-                    modifier = extraModifier
-                        .size(48.dp)
-                        .clickable(
-                            onClick = trailingWidget.clickListener,
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = ripple(bounded = false)
-                        )
-                )
+                IconButton(
+                    onClick = trailingWidget.clickListener
+                ) {
+                    Icon(
+                        imageVector = ImageVector.vectorResource(R.drawable.ic_menu_overflow),
+                        contentDescription = null // FIXME
+                    )
+                }
             }
         }
-    }
+    },
+    supportingContent = {
+        if (!subtext.isNullOrEmpty()) {
+            Text(
+                text = subtext,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    },
+    modifier = modifier
+) {
+    Text(
+        text = title,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis
+    )
 }
 
 @Preview

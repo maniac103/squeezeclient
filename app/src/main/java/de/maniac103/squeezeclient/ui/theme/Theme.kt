@@ -303,10 +303,3 @@ fun AppTheme(
         content = content
     )
 }
-
-object AppTheme {
-    object TextStyles {
-        val listItemPrimary @Composable get() = MaterialTheme.typography.titleMedium
-        val listItemSecondary @Composable get() = MaterialTheme.typography.bodySmall
-    }
-}

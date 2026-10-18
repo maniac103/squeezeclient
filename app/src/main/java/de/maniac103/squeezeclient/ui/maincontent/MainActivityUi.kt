@@ -108,6 +108,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
+import kotlinx.datetime.format.Padding
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.scope.KoinScope
 import org.koin.core.annotation.KoinExperimentalAPI
@@ -116,7 +117,11 @@ sealed interface MainLayout {
     val containerSize: DpSize
     val mainContentPadding: PaddingValues
     val mainContentPagePadding: PaddingValues
+    val compensateMainContentBottomPagePaddingDuringAnimation: Boolean
+    val breadcrumbsPadding: PaddingValues
     val searchBoxPadding: PaddingValues
+    val toolbarPadding: PaddingValues
+    val toolbarContentPadding: PaddingValues
     val nowPlayingCornerSize: Dp
     val useGridForSlimBrowseItems: Boolean
 
@@ -124,7 +129,11 @@ sealed interface MainLayout {
         override val containerSize: DpSize,
         override val mainContentPadding: PaddingValues,
         override val mainContentPagePadding: PaddingValues,
+        override val compensateMainContentBottomPagePaddingDuringAnimation: Boolean = true,
+        override val breadcrumbsPadding: PaddingValues,
         override val searchBoxPadding: PaddingValues,
+        override val toolbarPadding: PaddingValues,
+        override val toolbarContentPadding: PaddingValues,
         val collapsedNowPlayingHeight: Dp,
         override val nowPlayingCornerSize: Dp
     ) : MainLayout {
@@ -135,7 +144,11 @@ sealed interface MainLayout {
         override val containerSize: DpSize,
         override val mainContentPadding: PaddingValues,
         override val mainContentPagePadding: PaddingValues,
+        override val compensateMainContentBottomPagePaddingDuringAnimation: Boolean = false,
         override val searchBoxPadding: PaddingValues,
+        override val breadcrumbsPadding: PaddingValues,
+        override val toolbarPadding: PaddingValues,
+        override val toolbarContentPadding: PaddingValues,
         val collapsedNowPlayingWidth: Dp,
         override val nowPlayingCornerSize: Dp
     ) : MainLayout {
@@ -292,7 +305,7 @@ private fun MainActivityDrawerContent(
     onLocalPlaybackEnabledChanged: (Boolean) -> Unit
 ) {
     val drawerInsets = DrawerDefaults.windowInsets
-    val headerInsets = drawerInsets.only(WindowInsetsSides.Top)
+    val headerInsets = drawerInsets.only(WindowInsetsSides.Top + WindowInsetsSides.Start)
     val contentInsets = drawerInsets.only(
         WindowInsetsSides.Start + WindowInsetsSides.End + WindowInsetsSides.Bottom
     )
@@ -482,9 +495,7 @@ private fun MainActivityConnected(
                     }
                 }
 
-                Column(
-                    modifier = Modifier.padding(layout.mainContentPadding)
-                ) {
+                Column {
                     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
                     val appBarColors = TopAppBarDefaults.topAppBarColors()
                     val appBarColor by remember(appBarColors, scrollBehavior) {
@@ -506,7 +517,9 @@ private fun MainActivityConnected(
                             containerColor = appBarColor,
                             scrolledContainerColor = appBarColor
                         ),
-                        onOpenSearch = searchViewModel::open
+                        onOpenSearch = searchViewModel::open,
+                        contentPadding = layout.toolbarContentPadding,
+                        modifier = Modifier.padding(layout.toolbarPadding)
                     )
                     Breadcrumbs(
                         mainContentViewModel.breadcrumbsFlow,
@@ -516,12 +529,15 @@ private fun MainActivityConnected(
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(appBarColor)
+                            .padding(layout.breadcrumbsPadding)
                     )
                     MainContent(
                         viewModel = mainContentViewModel,
                         serverConfig = serverConfigState,
                         useGridForSlimbrowseItems = useGridForSlimBrowseItemsState,
                         pagePadding = layout.mainContentPagePadding,
+                        compensateBottomPagePaddingDuringAnimation =
+                            layout.compensateMainContentBottomPagePaddingDuringAnimation,
                         onGalleryItemSelected = onGalleryItemSelected,
                         onDownloadSelected = onDownloadSelected,
                         onWebLinkSelected = onWebLinkSelected,
@@ -532,6 +548,7 @@ private fun MainActivityConnected(
                         },
                         modifier = Modifier
                             .weight(1F)
+                            .padding(layout.mainContentPadding)
                             .nestedScroll(scrollBehavior.nestedScrollConnection)
                     )
                 }
@@ -581,7 +598,9 @@ private fun MainActivityAppBar(
     selectedPlayer: Player?,
     scrollBehavior: TopAppBarScrollBehavior? = null,
     colors: TopAppBarColors = TopAppBarDefaults.topAppBarColors(),
-    onOpenSearch: (() -> Unit)?
+    onOpenSearch: (() -> Unit)?,
+    contentPadding: PaddingValues = TopAppBarDefaults.ContentPadding,
+    modifier: Modifier = Modifier
 ) {
     val scope = rememberCoroutineScope()
 
@@ -618,7 +637,9 @@ private fun MainActivityAppBar(
                     )
                 }
             }
-        }
+        },
+        contentPadding = contentPadding,
+        modifier = modifier
     )
 }
 
@@ -667,11 +688,18 @@ private fun determineMainLayout(
                 start = insets.calculateStartPadding(layoutDirection),
                 end = insets.calculateEndPadding(layoutDirection)
             )
+            val breadcrumbsPadding = PaddingValues(
+                start = insets.calculateStartPadding(layoutDirection),
+                end = insets.calculateEndPadding(layoutDirection)
+            )
             MainLayout.Portrait(
                 containerSize = containerSize,
                 mainContentPadding = mainContentPadding,
                 mainContentPagePadding = mainContentPagePadding,
+                breadcrumbsPadding = breadcrumbsPadding,
                 searchBoxPadding = searchBoxPadding,
+                toolbarPadding = PaddingValues(),
+                toolbarContentPadding = PaddingValues(),
                 collapsedNowPlayingHeight = collapsedNowPlayingHeight,
                 nowPlayingCornerSize = nowPlayingCornerSize
             )
@@ -687,16 +715,29 @@ private fun determineMainLayout(
                 end = nowPlayingCornerSize,
                 bottom = insets.calculateBottomPadding()
             )
+            val breadcrumbsPadding = PaddingValues(
+                start = insets.calculateStartPadding(layoutDirection),
+                end = collapsedNowPlayingWidth + insets.calculateEndPadding(layoutDirection)
+            )
             val searchBoxPadding = PaddingValues(
                 top = insets.calculateTopPadding(),
                 start = insets.calculateStartPadding(layoutDirection),
                 end = collapsedNowPlayingWidth + insets.calculateEndPadding(layoutDirection)
             )
+            val toolbarPadding = PaddingValues(
+                end = collapsedNowPlayingWidth - nowPlayingCornerSize
+            )
+            val toolbarContentPadding = PaddingValues(
+                end = nowPlayingCornerSize
+            )
             MainLayout.Landscape(
                 containerSize = containerSize,
                 mainContentPadding = mainContentPadding,
                 mainContentPagePadding = mainContentPagePadding,
+                breadcrumbsPadding = breadcrumbsPadding,
                 searchBoxPadding = searchBoxPadding,
+                toolbarPadding = toolbarPadding,
+                toolbarContentPadding = toolbarContentPadding,
                 collapsedNowPlayingWidth = collapsedNowPlayingWidth,
                 nowPlayingCornerSize = nowPlayingCornerSize
             )

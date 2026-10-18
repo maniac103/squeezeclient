@@ -25,6 +25,7 @@ kotlin = "2.4.20"
 kotlinx-serialization = "1.11.0"
 kotlinx-coroutines = "1.11.0"
 kotlinx-datetime = "0.8.0"
+lazycolumnscrollbar = "3.0.0"
 okhttp = "5.5.0"
 peko = "3.0.5"
 reorderable = "3.1.0"
@@ -67,6 +68,7 @@ kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 google-material = { module = "com.google.android.material:material", version.ref = "google-material" }
 google-play-services-wearable = { module = "com.google.android.gms:play-services-wearable", version.ref = "google-play-services-wearable" }
+lazycolumnscrollbar = { module = "com.github.nanihadesuka.LazyColumnScrollbar:lazycolumnscrollbar", version.ref = "lazycolumnscrollbar" }
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
 okhttp-logging-interceptor = { module = "com.squareup.okhttp3:logging-interceptor", version.ref = "okhttp" }
 peko = { module = "com.markodevcic:peko", version.ref = "peko" }

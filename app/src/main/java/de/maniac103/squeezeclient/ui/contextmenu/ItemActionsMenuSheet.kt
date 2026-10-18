@@ -18,16 +18,12 @@
 package de.maniac103.squeezeclient.ui.contextmenu
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.BottomSheetDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -42,7 +38,6 @@ import androidx.compose.ui.unit.dp
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.ui.composables.ArtworkImage
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ItemActionsSheet(
     viewModel: ItemActionsViewModel,
@@ -56,13 +51,6 @@ fun ItemActionsSheet(
 
     LazyColumn {
         stickyHeader {
-            Box(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                BottomSheetDefaults.DragHandle(
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }
             Row(
                 modifier = Modifier
                     .padding(horizontal = 16.dp)

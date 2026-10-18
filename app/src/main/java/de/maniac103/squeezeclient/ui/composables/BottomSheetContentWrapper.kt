@@ -44,7 +44,7 @@ fun BottomSheetContentWrapper(title: String, busy: Boolean, content: @Composable
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier
                     .weight(1F)
-                    .padding(16.dp)
+                    .padding(horizontal = 16.dp)
             )
             if (busy) {
                 CircularProgressIndicator(
@@ -59,7 +59,6 @@ fun BottomSheetContentWrapper(title: String, busy: Boolean, content: @Composable
             modifier = Modifier
                 .nestedScroll(rememberNestedScrollInteropConnection())
                 .verticalScroll(rememberScrollState())
-                .padding(top = 0.dp, start = 16.dp, end = 16.dp, bottom = 16.dp)
         ) {
             content()
         }

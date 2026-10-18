@@ -64,11 +64,14 @@ internal sealed interface InputError {
 @Composable
 internal fun InputSheetContent(
     busy: Boolean,
+    modifier: Modifier = Modifier,
     initialText: String? = null,
     minLength: Int = 0,
     allowedChars: String? = null,
     onSubmit: (String) -> Unit = {}
-) = Column {
+) = Column(
+    modifier = modifier
+) {
     val textState = rememberTextFieldState(initialText ?: "")
     val errorReason by remember {
         derivedStateOf {
@@ -199,7 +202,8 @@ fun InputBottomSheet(
             busy = busy,
             initialText = input.initialText,
             minLength = input.minLength,
-            allowedChars = input.allowedChars
+            allowedChars = input.allowedChars,
+            modifier = Modifier.padding(16.dp)
         ) { value ->
             val action = input.action.withInputValue(value)
             onInputSubmitted(action)?.let { job ->

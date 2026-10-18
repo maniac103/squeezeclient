@@ -47,8 +47,11 @@ sealed class MainContentNavigation : NavKey {
         val fetchAction: JiveAction,
         val windowStyle: WindowStyle?
     ) : MainContentNavigation() {
-        override fun generateBreadcrumb() =
-            BreadcrumbsItem(title.toTextResource(), parentTitle?.toTextResource(), icon)
+        override fun generateBreadcrumb() = BreadcrumbsItem(
+            title.toTextResource(),
+            parentTitle?.toTextResource(),
+            icon?.takeIf { it.isValidIcon }
+        )
     }
 
     @Serializable

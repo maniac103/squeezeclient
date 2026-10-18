@@ -92,7 +92,7 @@ fun ContextMenuBottomSheetContent(
         Row(
             modifier = Modifier.padding(horizontal = 16.dp)
         ) {
-            parentItem.extractIconUrl()?.let {
+            if (parentItem.isValidIcon) {
                 ArtworkImage(
                     artwork = parentItem,
                     serverConfig = serverConfig,

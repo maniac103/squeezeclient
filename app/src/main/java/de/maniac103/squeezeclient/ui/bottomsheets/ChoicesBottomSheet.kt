@@ -19,6 +19,8 @@ package de.maniac103.squeezeclient.ui.bottomsheets
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,6 +30,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.JiveActions
 import de.maniac103.squeezeclient.ui.composables.BottomSheetContentWrapper
@@ -43,7 +46,10 @@ fun ChoicesBottomSheet(
     BottomSheetContentWrapper(title, busy) {
         Column {
             choices.items.forEachIndexed { index, choice ->
-                Row {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
                     RadioButton(
                         selected = index == choices.selectedIndex,
                         enabled = !busy,
@@ -54,12 +60,12 @@ fun ChoicesBottomSheet(
                                     busy = false
                                 }
                             }
-                        },
-                        modifier = Modifier.align(Alignment.CenterVertically)
+                        }
                     )
                     Text(
                         text = choice.title,
-                        modifier = Modifier.align(Alignment.CenterVertically)
+                        maxLines = 1,
+                        modifier = Modifier.padding(end = 16.dp)
                     )
                 }
             }

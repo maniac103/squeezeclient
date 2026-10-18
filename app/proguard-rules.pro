@@ -13,8 +13,3 @@
 #}
 
 -dontobfuscate
-
-# see https://github.com/androidx/constraintlayout/issues/428
--keepclassmembers class * extends androidx.constraintlayout.motion.widget.Key {
-  public <init>();
-}

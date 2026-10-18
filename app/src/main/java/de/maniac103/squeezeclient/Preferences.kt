@@ -1,9 +1,9 @@
 package de.maniac103.squeezeclient
 
 import android.app.Application
+import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
-import androidx.preference.PreferenceManager
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import java.util.UUID
@@ -19,7 +19,10 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
 class Preferences(appContext: Application) {
-    private val prefs = PreferenceManager.getDefaultSharedPreferences(appContext)
+    private val prefs = appContext.getSharedPreferences(
+        appContext.packageName + "_preferences",
+        Context.MODE_PRIVATE
+    )
 
     enum class AppThemeMode(val prefValue: String) {
         Light("light"),

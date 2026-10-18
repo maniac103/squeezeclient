@@ -17,8 +17,9 @@
 
 package de.maniac103.squeezeclient.ui.nowplaying
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
@@ -27,7 +28,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -64,13 +64,15 @@ fun PlaylistRow(
             )
         },
         trailingContent = {
-            Image(
-                ImageVector.vectorResource(R.drawable.ic_drag_horizontal_24dp),
-                contentScale = ContentScale.Inside,
-                contentDescription = null, // FIXME
+            IconButton(
+                onClick = {},
                 modifier = dragHandleModifier
-                    .size(48.dp)
-            )
+            ) {
+                Icon(
+                    ImageVector.vectorResource(R.drawable.ic_drag_horizontal_24dp),
+                    contentDescription = null // FIXME
+                )
+            }
         },
         colors = ListItemDefaults.colors(
             containerColor = if (isSelected) {
@@ -87,6 +89,11 @@ fun PlaylistRow(
                 MaterialTheme.colorScheme.onPrimaryContainer
             } else {
                 ListItemDefaults.colors().supportingContentColor
+            },
+            trailingContentColor = if (isSelected) {
+                MaterialTheme.colorScheme.onPrimaryContainer
+            } else {
+                ListItemDefaults.colors().trailingContentColor
             }
         ),
         modifier = modifier

@@ -65,7 +65,7 @@ fun JiveHomeItemListEntry(
         }
     },
     modifier = modifier
-){
+) {
     Text(
         text = title,
         maxLines = 1,

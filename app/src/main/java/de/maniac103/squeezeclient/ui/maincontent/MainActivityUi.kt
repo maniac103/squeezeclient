@@ -111,7 +111,6 @@ import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.scope.KoinScope
 import org.koin.core.annotation.KoinExperimentalAPI
-import org.koin.core.parameter.parametersOf
 
 sealed interface MainLayout {
     val containerSize: DpSize
@@ -255,7 +254,7 @@ fun MainActivityUi(
 
                 is MainActivityState.NoPlayers -> {
                     ErrorHintContent(
-                        iconResId = R.drawable.ic_player_16dp,
+                        iconResId = R.drawable.ic_player_24dp,
                         textResId = R.string.connection_error_text_no_player,
                         subtext = null,
                         buttons = emptyList()
@@ -355,7 +354,7 @@ private fun MainActivityDrawerContent(
                 connectedState.players.forEach { player ->
                     MainDrawerItem(
                         label = player.name,
-                        iconResId = R.drawable.ic_player_16dp,
+                        iconResId = R.drawable.ic_player_24dp,
                         selected = player == connectedState.selectedPlayer,
                         drawerState = drawerState,
                         onClick = { onPlayerSelected(player.id) }
@@ -414,16 +413,13 @@ fun MainDrawerItem(
         },
         badge = badgeContent,
         icon = {
-            Box(
-                modifier = Modifier.size(24.dp)
-            ) {
-                if (iconResId != null) {
-                    Icon(
-                        imageVector = ImageVector.vectorResource(iconResId),
-                        contentDescription = label,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
+            if (iconResId != null) {
+                Icon(
+                    imageVector = ImageVector.vectorResource(iconResId),
+                    contentDescription = label
+                )
+            } else {
+                Spacer(Modifier.size(24.dp))
             }
         },
         selected = selected,

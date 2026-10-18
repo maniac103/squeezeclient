@@ -33,6 +33,7 @@ import de.maniac103.squeezeclient.model.JiveHomeMenuItem
 import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
+import de.maniac103.squeezeclient.ui.composables.TextResource
 import kotlin.math.max
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -41,7 +42,12 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-data class BreadcrumbsItem(val title: String, val parentTitle: String?, val icon: ArtworkItem?)
+data class BreadcrumbsItem(
+    val title: TextResource,
+    val parentTitle: TextResource?,
+    val icon: ArtworkItem?
+)
+
 data class BreadcrumbsState(val items: List<BreadcrumbsItem>, val backProgress: Float?)
 
 class MainContentViewModel(
@@ -263,25 +269,7 @@ class MainContentViewModel(
 
             val relevantEntries = backStack.subList(1, backStack.size)
             val breadcrumbs = relevantEntries.mapNotNull {
-                when (it) {
-                    is MainContentNavigation.JiveHomeMenuPage -> {
-                        BreadcrumbsItem(it.title, null, null)
-                    }
-
-                    is MainContentNavigation.SlimBrowseItemPage -> {
-                        BreadcrumbsItem(it.title, it.parentTitle, it.icon)
-                    }
-
-                    is MainContentNavigation.SlimBrowseSubItemPage -> {
-                        BreadcrumbsItem(it.title, null, null)
-                    }
-
-                    is MainContentNavigation.GalleryPage -> {
-                        BreadcrumbsItem(it.title, it.parentTitle, null)
-                    }
-
-                    else -> null
-                }
+                (it as? MainContentNavigation)?.generateBreadcrumb()
             }
 
             breadcrumbsFlowInternal.emit(BreadcrumbsState(breadcrumbs, progress))

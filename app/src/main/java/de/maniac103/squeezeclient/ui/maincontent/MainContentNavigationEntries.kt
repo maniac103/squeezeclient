@@ -47,7 +47,6 @@ import de.maniac103.squeezeclient.ui.contextmenu.ContextMenuBottomSheetContent
 import de.maniac103.squeezeclient.ui.contextmenu.ContextMenuBottomSheetViewModel
 import de.maniac103.squeezeclient.ui.contextmenu.ItemActionsSheet
 import de.maniac103.squeezeclient.ui.contextmenu.ItemActionsViewModel
-import de.maniac103.squeezeclient.ui.itemlist.BasePagedSlimBrowseItemListViewModel
 import de.maniac103.squeezeclient.ui.itemlist.JiveHomeItemList
 import de.maniac103.squeezeclient.ui.itemlist.JiveHomeItemListViewModel
 import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseItemList
@@ -61,27 +60,8 @@ import de.maniac103.squeezeclient.ui.search.RadioSearchResultsItemList
 import de.maniac103.squeezeclient.ui.search.RadioSearchResultsViewModel
 import de.maniac103.squeezeclient.ui.slideshow.GalleryGrid
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.Flow
 import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
-
-@Composable
-fun RefreshNavigationObserver(
-    route: NavKey,
-    backStack: List<NavKey>,
-    refreshFlow: Flow<MainContentNavigation.RefreshContent>,
-    viewModel: BasePagedSlimBrowseItemListViewModel
-) {
-    LaunchedEffect(viewModel, backStack) {
-        val ownIndex = backStack.indexOf(route)
-        val depthFromTop = backStack.size - ownIndex
-        refreshFlow.collect { event ->
-            if (depthFromTop in 1..event.levels) {
-                viewModel.refresh()
-            }
-        }
-    }
-}
 
 @Composable
 internal fun EntryProviderScope<NavKey>.jiveHomeMenuNavEntry(
@@ -101,8 +81,7 @@ internal fun EntryProviderScope<NavKey>.jiveHomeMenuNavEntry(
 @Composable
 internal fun EntryProviderScope<NavKey>.slimBrowseNavEntry(
     serverConfig: State<ServerConfiguration?>,
-    backStack: List<NavKey>,
-    refreshFlow: Flow<MainContentNavigation.RefreshContent>,
+    refreshTracker: RefreshTracker,
     useGridIfPossible: State<Boolean>,
     pagePadding: PaddingValues,
     onItemSelected: (SlimBrowseItemList.SlimBrowseItem, JiveAction) -> Job?,
@@ -118,12 +97,12 @@ internal fun EntryProviderScope<NavKey>.slimBrowseNavEntry(
         else -> SlimBrowseItemListMode.ListWithoutIcons
     }
 
-    RefreshNavigationObserver(
-        route = route,
-        backStack = backStack,
-        refreshFlow = refreshFlow,
-        viewModel = viewModel
-    )
+    val isStale = refreshTracker.isStale(route)
+    LaunchedEffect(isStale) {
+        if (isStale && refreshTracker.consume(route)) {
+            viewModel.refresh()
+        }
+    }
 
     MainContentPage {
         SlimBrowseItemList(

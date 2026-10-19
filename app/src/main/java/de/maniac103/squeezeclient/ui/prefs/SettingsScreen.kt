@@ -196,7 +196,6 @@ fun SettingsScreen(
             title = stringResource(R.string.settings_category_local_player)
         ) {
             entry { position ->
-                // TODO: permission request
                 SwitchPreference(
                     position = position,
                     title = stringResource(R.string.settings_local_player_enabled_title),

@@ -20,8 +20,6 @@ package de.maniac103.squeezeclient
 import android.app.Application
 import android.os.Build
 import androidx.appcompat.app.AppCompatDelegate
-import com.google.android.material.color.DynamicColors
-import com.markodevcic.peko.PermissionRequester
 import de.maniac103.squeezeclient.service.DownloadWorker
 import de.maniac103.squeezeclient.service.localplayer.LocalPlaybackService
 import de.maniac103.squeezeclient.ui.viewModelModule
@@ -40,9 +38,7 @@ class SqueezeClientApplication : Application() {
     private val applicationScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
     override fun onCreate() {
-        DynamicColors.applyToActivitiesIfAvailable(this)
         super.onCreate()
-        PermissionRequester.initialize(this)
 
         startKoin {
             androidLogger()

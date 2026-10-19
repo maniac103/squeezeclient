@@ -20,7 +20,6 @@ package de.maniac103.squeezeclient.ui.playermanagement
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -300,7 +299,7 @@ internal fun DragTargetRow(state: RowState, modifier: Modifier = Modifier) = Dra
     horizontalArrangement = Arrangement.Center,
     modifier = modifier.fillMaxWidth()
 ) {
-    Image(
+    Icon(
         imageVector = ImageVector.vectorResource(R.drawable.ic_link_off_24dp),
         contentDescription = null, // FIXME
         modifier = Modifier

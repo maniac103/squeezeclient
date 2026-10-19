@@ -32,8 +32,8 @@
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:theme="@style/Theme.SqueezeClient.NoActionBar"
         android:supportsRtl="true"
-        android:theme="@style/Theme.SqueezeClient"
         android:usesCleartextTraffic="true"
         android:enableOnBackInvokedCallback="true"
         tools:targetApi="34">

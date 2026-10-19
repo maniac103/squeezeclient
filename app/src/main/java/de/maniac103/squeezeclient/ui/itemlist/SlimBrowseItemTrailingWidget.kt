@@ -89,7 +89,7 @@ internal fun SlimBrowseItemTrailingWidgetUi(
         widget is SlimBrowseItemTrailingWidget.Checkbox -> {
             Checkbox(
                 checked = widget.checked,
-                onCheckedChange = { },
+                onCheckedChange = null,
                 modifier = modifier
             )
         }
@@ -97,7 +97,7 @@ internal fun SlimBrowseItemTrailingWidgetUi(
         widget is SlimBrowseItemTrailingWidget.Radio -> {
             RadioButton(
                 selected = widget.checked,
-                onClick = { },
+                onClick = null,
                 modifier = modifier
             )
         }

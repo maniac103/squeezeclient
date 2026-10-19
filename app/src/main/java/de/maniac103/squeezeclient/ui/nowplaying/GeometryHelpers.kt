@@ -127,3 +127,18 @@ internal fun Morph<Float>.rememberIsVisible(
 ): State<Boolean> = remember(this, progress) {
     derivedStateOf { at(progress.value) > threshold }
 }
+
+internal fun windowedLerp(
+    startValue: Dp,
+    endValue: Dp,
+    windowStart: Float,
+    windowEnd: Float,
+    fraction: Float
+) = when {
+    fraction <= windowStart -> startValue
+
+    fraction >= windowEnd -> endValue
+
+    else ->
+        startValue + (endValue - startValue) * (fraction - windowStart) / (windowEnd - windowStart)
+}

@@ -17,26 +17,26 @@
 
 package de.maniac103.squeezeclient.ui
 
+import android.Manifest
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.view.KeyEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.lifecycle.lifecycleScope
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.markodevcic.peko.PermissionRequester
-import com.markodevcic.peko.PermissionResult
 import de.maniac103.squeezeclient.Preferences
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.cometd.ConnectionHelper
-import de.maniac103.squeezeclient.extfuncs.await
+import de.maniac103.squeezeclient.extfuncs.requestPermission
 import de.maniac103.squeezeclient.model.DownloadRequestData
 import de.maniac103.squeezeclient.model.PlayerStatus
 import de.maniac103.squeezeclient.service.DownloadWorker
 import de.maniac103.squeezeclient.service.localplayer.LocalPlaybackService
 import de.maniac103.squeezeclient.service.mediasession.MediaService
+import de.maniac103.squeezeclient.ui.composables.DialogHost
 import de.maniac103.squeezeclient.ui.maincontent.MainActivityState
 import de.maniac103.squeezeclient.ui.maincontent.MainActivityUi
 import de.maniac103.squeezeclient.ui.maincontent.MainActivityViewModel
@@ -47,7 +47,6 @@ import de.maniac103.squeezeclient.ui.slideshow.ImageViewActivity
 import de.maniac103.squeezeclient.ui.theme.AppTheme
 import kotlin.getValue
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
@@ -56,8 +55,10 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 class MainActivity : ComponentActivity() {
     private val preferences: Preferences by inject()
     private val volumeChangeRequestFlow = MutableSharedFlow<Float>()
+    private val dialogHost = DialogHost()
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
         if (preferences.serverConfig.value == null) {
@@ -93,6 +94,7 @@ class MainActivity : ComponentActivity() {
                         startActivity(Intent(this, SettingsActivity::class.java))
                     }
                 )
+                dialogHost.Render()
             }
         }
     }
@@ -153,31 +155,12 @@ class MainActivity : ComponentActivity() {
             // Don't need runtime permission in that case
             return true
         }
-        val requester = PermissionRequester.instance()
-        if (requester.isAnyGranted(android.Manifest.permission.POST_NOTIFICATIONS)) {
-            // Permission already granted
-            return true
-        }
 
-        when (requester.request(android.Manifest.permission.POST_NOTIFICATIONS).first()) {
-            is PermissionResult.Denied.NeedsRationale -> {}
-            is PermissionResult.Denied.DeniedPermanently -> return false
-            is PermissionResult.Cancelled -> return false
-            is PermissionResult.Granted -> return true
-        }
-        // When we're here, we need to show a rationale dialog
-        val dialogResult = MaterialAlertDialogBuilder(this)
-            .setTitle(R.string.permission_rationale_title)
-            .setMessage(R.string.download_permission_rationale_message)
-            .create()
-            .await(
-                positiveText = getString(R.string.permission_rationale_allow),
-                negativeText = getString(R.string.download_permission_rationale_cancel)
-            )
-        if (!dialogResult) {
-            return false
-        }
-        return requester.request(android.Manifest.permission.POST_NOTIFICATIONS)
-            .first() is PermissionResult.Granted
+        return requestPermission(
+            dialogHost = dialogHost,
+            permission = Manifest.permission.POST_NOTIFICATIONS,
+            rationaleDialogTextResId = R.string.download_permission_rationale_message,
+            rationaleDialogCancelButtonTextResId = R.string.download_permission_rationale_cancel
+        )
     }
 }

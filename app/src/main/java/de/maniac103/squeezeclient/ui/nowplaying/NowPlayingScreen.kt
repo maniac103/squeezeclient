@@ -84,21 +84,19 @@ import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.JiveActions
 import de.maniac103.squeezeclient.model.PlayerId
-import de.maniac103.squeezeclient.model.PlayerStatus
-import de.maniac103.squeezeclient.model.PlayerStatus.PlayState
 import de.maniac103.squeezeclient.model.Playlist
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.ui.bottomsheets.InputSheetContent
 import de.maniac103.squeezeclient.ui.composables.ArtworkImage
 import de.maniac103.squeezeclient.ui.composables.BottomSheetContentWrapper
+import de.maniac103.squeezeclient.ui.composables.toTextResource
 import de.maniac103.squeezeclient.ui.contextmenu.ContextMenuBottomSheetContent
 import de.maniac103.squeezeclient.ui.contextmenu.ContextMenuBottomSheetViewModel
 import de.maniac103.squeezeclient.ui.maincontent.MainLayout
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 import kotlin.time.Clock
-import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -988,31 +986,24 @@ private fun Modifier.onLongPressConsumeTap(onLongPress: () -> Unit): Modifier {
 @Preview(widthDp = 360, heightDp = 800)
 @Composable
 fun NowPlayingPreview() {
-    val status = PlayerStatus(
-        playbackState = PlayState.Playing,
-        playlist = PlayerStatus.PlaylistInfo(
-            nowPlaying = Playlist.PlaylistItem(
-                title = "Some title",
-                artist = "Artist",
-                album = "Album",
-                actions = JiveActions.EMPTY
-            ),
-            currentPosition = 7,
-            trackCount = 15,
-            lastChange = Clock.System.now()
-        ),
-        currentSongDuration = 4.minutes,
+    val status = NowPlayingUiState(
+        title = "Some title".toTextResource(),
+        artist = "Artist",
+        album = "Album",
+        artwork = null,
+        playbackStartTimestamp = Clock.System.now(),
         playPosition = 35F,
-        repeatState = PlayerStatus.RepeatState.Off,
-        shuffleState = PlayerStatus.ShuffleState.Off,
+        durationSeconds = 290F,
+        isPlaying = true,
+        isPowered = true,
+        playPauseEnabled = true,
+        repeatIconResId = R.drawable.ic_repeat_off_24dp,
+        shuffleIconResId = R.drawable.ic_shuffle_off_24dp,
+        canSeek = true,
+        playlistPosition = 8,
+        playlistLength = 15,
         playerName = "Some player",
-        connected = true,
-        powered = true,
-        currentVolume = 70,
-        muted = false,
-        syncMaster = null,
-        syncSlaves = null,
-        timestamp = Clock.System.now()
+        contextMenuData = null
     )
 
     val playlistItemData = (0..4)
@@ -1040,7 +1031,7 @@ fun NowPlayingPreview() {
             NowPlayingScreen(
                 playerId = PlayerId("11:22:33:44:55:66"),
                 layoutInput = layoutInput,
-                stateFlow = MutableStateFlow(NowPlayingUiState(status)),
+                stateFlow = MutableStateFlow(status),
                 infoMenuFlow = MutableStateFlow(NowPlayingContextMenuState.Idle),
                 playlistSaveInputStateFlow = MutableStateFlow(PlaylistSaveEditorState.Idle),
                 motionState = motionState,

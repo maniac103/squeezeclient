@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -42,7 +41,6 @@ import androidx.compose.material3.rememberSliderState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -67,12 +65,10 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.DpSize
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastAny
 import androidx.compose.ui.util.fastForEach
@@ -564,7 +560,7 @@ private fun PlayerInformation(
         text = state.title.resolve(),
         layoutSpec = geometry.title,
         progress = progress,
-        alignmentProgress = geometry.textAlignmentProgress,
+        alignment = geometry.textAlignmentProgress,
         fontWeight = FontWeight.Bold
     )
 
@@ -573,7 +569,7 @@ private fun PlayerInformation(
             text = artist,
             layoutSpec = geometry.artist,
             progress = progress,
-            alignmentProgress = geometry.textAlignmentProgress
+            alignment = geometry.textAlignmentProgress
         )
     }
 
@@ -582,7 +578,7 @@ private fun PlayerInformation(
             text = album,
             layoutSpec = geometry.album,
             progress = progress,
-            alignmentProgress = geometry.textAlignmentProgress
+            alignment = geometry.textAlignmentProgress
         )
     }
 }
@@ -866,45 +862,29 @@ private fun SongInfoText(
     text: String,
     layoutSpec: TextLayoutSpec,
     progress: MotionProgress,
-    alignmentProgress: Morph<Float>, // 0 -> start, 0.5 -> center, 1 -> end
+    alignment: Morph<Float>, // 0 -> start, 0.5 -> center, 1 -> end
     modifier: Modifier = Modifier,
     fontWeight: FontWeight? = null
 ) {
-    var textWidth by remember(text) {
-        mutableIntStateOf(0)
-    }
+    val fontSize = layoutSpec.fontSize.at(progress.value)
+    val visible by layoutSpec.alpha.rememberIsVisible(progress)
 
-    BoxWithConstraints(
-        modifier = modifier
-            .bounds(progress, layoutSpec.bounds)
-            .fade(progress, layoutSpec.alpha)
-    ) {
-        val remainingHorizontalSpace = (constraints.maxWidth - textWidth)
-            .coerceAtLeast(0)
-
+    if (visible) {
         Text(
             text = text,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            textAlign = TextAlign.Start,
-            fontSize = layoutSpec.fontSize.at(progress.value),
-            fontWeight = fontWeight,
             softWrap = false,
+            fontSize = fontSize,
+            fontWeight = fontWeight,
             style = TextStyle(
-                lineHeight = layoutSpec.fontSize.at(progress.value),
+                lineHeight = fontSize,
                 platformStyle = PlatformTextStyle(includeFontPadding = false)
             ),
-            onTextLayout = { result ->
-                textWidth = (result.getLineRight(0) - result.getLineLeft(0))
-                    .roundToInt()
-            },
-            modifier = Modifier.offset {
-                val alignmentState = alignmentProgress.at(progress.value)
-                IntOffset(
-                    x = (remainingHorizontalSpace * alignmentState).roundToInt(),
-                    y = 0
-                )
-            }
+            modifier = modifier
+                .bounds(progress, layoutSpec.bounds)
+                .fade(progress, layoutSpec.alpha)
+                .alignHorizontally(progress, alignment)
         )
     }
 }
@@ -917,7 +897,7 @@ internal fun Modifier.bounds(progress: MotionProgress, bounds: Morph<Bounds>) =
             Constraints.fixed(b.width.roundToPx(), b.height.roundToPx())
         )
         layout(placeable.width, placeable.height) {
-            placeable.place(b.start.roundToPx(), b.top.roundToPx())
+            placeable.placeRelative(b.start.roundToPx(), b.top.roundToPx())
         }
     }
 
@@ -925,6 +905,15 @@ internal fun Modifier.bounds(progress: MotionProgress, bounds: Morph<Bounds>) =
 internal fun Modifier.fade(progress: MotionProgress, alpha: Morph<Float>) = this.graphicsLayer {
     this.alpha = alpha.at(progress.value)
 }
+
+internal fun Modifier.alignHorizontally(progress: MotionProgress, alignment: Morph<Float>) =
+    layout { measurable, constraints ->
+        val placeable = measurable.measure(constraints.copy(minWidth = 0, minHeight = 0))
+        layout(constraints.maxWidth, constraints.maxHeight) {
+            val free = (constraints.maxWidth - placeable.width).coerceAtLeast(0)
+            placeable.placeRelative((free * alignment.at(progress.value)).roundToInt(), 0)
+        }
+    }
 
 @Composable
 internal fun Modifier.dragHandle(

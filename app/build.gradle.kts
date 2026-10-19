@@ -170,7 +170,6 @@ dependencies {
     implementation(libs.coil.android)
     implementation(libs.coil.compose)
     implementation(libs.coil.okhttp)
-    implementation(libs.google.material)
     implementation(libs.koin.core)
     implementation(libs.koin.compose)
     implementation(libs.koin.workmanager)
@@ -180,7 +179,6 @@ dependencies {
     implementation(libs.lazycolumnscrollbar)
     implementation(libs.okhttp)
     implementation(libs.okhttp.logging.interceptor)
-    implementation(libs.peko)
     implementation(libs.reorderable)
     "gmsImplementation"(project(":wearapi"))
 }

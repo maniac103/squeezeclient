@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isSpecified
+import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
 import de.maniac103.squeezeclient.ui.maincontent.MainLayout
 
@@ -476,7 +477,7 @@ private fun calculatePortraitGeometry(
                     height = 64.dp + topInset
                 )
             ),
-            alpha = morph(0F, 1F, WindowEasing(0.5F, 0.7F))
+            alpha = morph(0F, 1F, WindowEasing(0.7F, 0.9F))
         ),
 
         title = TextLayoutSpec(
@@ -494,7 +495,18 @@ private fun calculatePortraitGeometry(
         ),
         textAlignmentProgress = morph(0F, 0.5F),
 
-        artwork = morph(collapsedArtwork, expandedArtwork),
+        artwork = morph(
+            start = collapsedArtwork,
+            end = expandedArtwork,
+            interpolator = { s, e, f ->
+                Bounds(
+                    start = windowedLerp(s.start, e.start, 0.3F, 1F, f),
+                    top = lerp(s.top, e.top, f),
+                    width = windowedLerp(s.width, e.width, 0.3F, 1F, f),
+                    height = lerp(s.height, e.height, f)
+                )
+            }
+        ),
 
         controls = ControlsLayoutSpec(
             repeat = ControlLayoutSpec(
@@ -791,7 +803,7 @@ private fun calculateLandscapeGeometry(
             alpha = if (collapsedPlaylistHeightFraction > 0) {
                 constant(1F)
             } else {
-                morph(0F, 1F, WindowEasing(0.5F, 1F))
+                morph(0F, 1F, WindowEasing(0.8F, 1F))
             },
             cornerSize = constant(0.dp),
             contentAlpha = constant(1F)
@@ -800,11 +812,11 @@ private fun calculateLandscapeGeometry(
         progress = ProgressLayoutSpec(
             full = ControlLayoutSpec(
                 bounds = constant(expandedProgress),
-                alpha = morph(0F, 1F, WindowEasing(0.5F, 0.7F))
+                alpha = morph(0F, 1F, WindowEasing(0.7F, 0.9F))
             ),
             mini = ControlLayoutSpec(
                 bounds = constant(collapsedProgress),
-                alpha = morph(1F, 0F, WindowEasing(0.5F, 0.7F))
+                alpha = morph(1F, 0F, WindowEasing(0.0F, 0.3F))
             )
         ),
 
@@ -820,7 +832,18 @@ private fun calculateLandscapeGeometry(
             alpha = morph(0F, 1F, WindowEasing(0.5F, 0.7F))
         ),
 
-        artwork = morph(collapsedArtwork, expandedArtwork),
+        artwork = morph(
+            start = collapsedArtwork,
+            end = expandedArtwork,
+            interpolator = { s, e, f ->
+                Bounds(
+                    start = lerp(s.start, e.start, f),
+                    top = windowedLerp(s.top, e.top, 0.4F, 1F, f),
+                    width = windowedLerp(s.width, e.width, 0.3F, 1F, f),
+                    height = lerp(s.height, e.height, f)
+                )
+            }
+        ),
 
         title = TextLayoutSpec(
             bounds = morph(collapsedTitle, expandedTitle),

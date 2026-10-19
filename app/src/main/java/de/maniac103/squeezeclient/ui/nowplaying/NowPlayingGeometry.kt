@@ -1,3 +1,20 @@
+/*
+ * This file is part of Squeeze Client, an Android client for the LMS music server.
+ * Copyright (c) 2026 Danny Baumann
+ *
+ * This program is free software: you can redistribute it and/or modify it under the terms of the
+ * GNU General Public License as published by the Free Software Foundation,
+ * either version 3 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+ * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with this program.
+ * If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
 package de.maniac103.squeezeclient.ui.nowplaying
 
 import androidx.compose.foundation.gestures.Orientation
@@ -6,45 +23,61 @@ import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isSpecified
-import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.util.lerp
 import de.maniac103.squeezeclient.ui.maincontent.MainLayout
 
 @Immutable
-internal data class Bounds(val start: Dp, val top: Dp, val width: Dp, val height: Dp) {
-    val end get() = start + width
-    val bottom get() = top + height
-    val center get() = DpOffset(start + width / 2, top + height / 2)
+internal sealed interface PlayerGeometryInput {
+    val containerSize: DpSize
+    val cornerSize: Dp
+
+    data class Portrait(
+        override val containerSize: DpSize,
+        override val cornerSize: Dp,
+        val collapsedHeight: Dp
+    ) : PlayerGeometryInput
+
+    data class Landscape(
+        override val containerSize: DpSize,
+        override val cornerSize: Dp,
+        val collapsedWidth: Dp
+    ) : PlayerGeometryInput
 }
 
 @Immutable
 internal data class PlaylistLayoutSpec(
-    val bounds: Bounds,
-    val peekHeight: Dp,
+    // driven by now playing progress
+    val bounds: Morph<Bounds>,
+    val alpha: Morph<Float>,
+    // driven by playlist progress
+    val cornerSize: Morph<Dp>,
+    val contentAlpha: Morph<Float>,
+    // static
     val padding: PaddingValues,
-    val alpha: Float
+    val handleHeight: Dp = Dp.Unspecified,
+    val handleDragDistance: Float = 0F
 ) {
-    val needsHandle get() = peekHeight.isSpecified
+    val needsHandle get() = handleHeight.isSpecified
 }
 
 @Immutable
-internal data class ControlLayoutSpec(val bounds: Bounds, val alpha: Float)
+internal data class ControlLayoutSpec(val bounds: Morph<Bounds>, val alpha: Morph<Float>)
 
 @Immutable
 internal data class TextLayoutSpec(
-    val bounds: Bounds,
-    val fontSize: TextUnit,
-    val alpha: Float = 1F
+    val bounds: Morph<Bounds>,
+    val fontSize: Morph<TextUnit>,
+    val alpha: Morph<Float> = constant(1F)
 )
 
 @Immutable
@@ -52,15 +85,15 @@ internal data class ProgressLayoutSpec(val mini: ControlLayoutSpec, val full: Co
 
 @Immutable
 internal data class CornerSizes(
-    val topStart: Dp,
-    val topEnd: Dp,
-    val bottomStart: Dp,
-    val bottomEnd: Dp
+    val topStart: Morph<Dp>,
+    val topEnd: Morph<Dp>,
+    val bottomStart: Morph<Dp>,
+    val bottomEnd: Morph<Dp>
 )
 
 @Immutable
 internal data class ContentLayoutSpec(
-    val bounds: Bounds,
+    val bounds: Morph<Bounds>,
     val corners: CornerSizes,
     val dragDirection: Orientation,
     val dragDistance: Float
@@ -89,91 +122,69 @@ internal data class PlayerGeometry(
     val progress: ProgressLayoutSpec,
     val toolbar: ControlLayoutSpec,
 
-    val artwork: Bounds,
+    val artwork: Morph<Bounds>,
     val controls: ControlsLayoutSpec,
 
     val title: TextLayoutSpec,
     val artist: TextLayoutSpec,
     val album: TextLayoutSpec,
-    val textAlignmentProgress: Float
+    val textAlignmentProgress: Morph<Float>
 )
 
-@Composable
-internal fun calculatePlayerGeometry(
-    layout: MainLayout,
+private fun calculatePlayerGeometry(
+    input: PlayerGeometryInput,
+    density: Density,
+    layoutDirection: LayoutDirection,
     insets: PaddingValues,
     hasArtist: Boolean,
-    hasAlbum: Boolean,
-    progress: Float
-): PlayerGeometry {
-    val density = LocalDensity.current
-    val layoutDirection = LocalLayoutDirection.current
+    hasAlbum: Boolean
+): PlayerGeometry = when (input) {
+    is PlayerGeometryInput.Portrait ->
+        calculatePortraitGeometry(
+            density = density,
+            layoutDirection = layoutDirection,
+            input = input,
+            insets = insets,
+            hasAlbum = hasAlbum,
+            hasArtist = hasArtist,
+            playlistPeekHeight = 48.dp
+        )
 
-    val topInset = insets.calculateTopPadding()
-    val bottomInset = insets.calculateBottomPadding()
-    val startInset = insets.calculateStartPadding(layoutDirection)
-    val endInset = insets.calculateEndPadding(layoutDirection)
-
-    return when (layout) {
-        is MainLayout.Portrait ->
-            calculatePortraitGeometry(
-                density = density,
-                layoutDirection = layoutDirection,
-                width = layout.containerSize.width,
-                height = layout.containerSize.height,
-                topInset = topInset,
-                bottomInset = bottomInset,
-                startInset = startInset,
-                endInset = endInset,
-                progress = progress,
-                hasAlbum = hasAlbum,
-                hasArtist = hasArtist,
-                collapsedContentHeight = layout.collapsedNowPlayingHeight,
-                playlistPeekHeight = 32.dp
-            )
-
-        is MainLayout.Landscape -> {
-            val isLarge = layout.containerSize.height >= 480.dp
-            calculateLandscapeGeometry(
-                density = density,
-                layoutDirection = layoutDirection,
-                width = layout.containerSize.width,
-                height = layout.containerSize.height,
-                topInset = topInset,
-                bottomInset = bottomInset,
-                startInset = startInset,
-                endInset = endInset,
-                progress = progress,
-                paneWidth = layout.collapsedNowPlayingWidth,
-                hasAlbum = hasAlbum,
-                hasArtist = hasArtist,
-                collapsedTitleSize = 16.sp,
-                expandedTitleSize = if (isLarge) 20.sp else 18.sp,
-                secondaryTextSize = 16.sp,
-                collapsedArtworkHeightFraction = if (isLarge) 0.2F else 0.3F,
-                expandedArtworkHeightFraction = if (isLarge) 0.5F else 0.3F,
-                collapsedPlaylistHeightFraction = if (isLarge) 0.5F else 0.0F,
-                expandedPlaylistWidthFraction = if (isLarge) 0.3F else 0.4F
-            )
-        }
+    is PlayerGeometryInput.Landscape -> {
+        val isLarge = input.containerSize.height >= 480.dp
+        calculateLandscapeGeometry(
+            density = density,
+            layoutDirection = layoutDirection,
+            input = input,
+            insets = insets,
+            hasAlbum = hasAlbum,
+            hasArtist = hasArtist,
+            collapsedTitleSize = 16.sp,
+            expandedTitleSize = if (isLarge) 20.sp else 18.sp,
+            secondaryTextSize = 16.sp,
+            collapsedArtworkHeightFraction = if (isLarge) 0.2F else 0.3F,
+            expandedArtworkHeightFraction = if (isLarge) 0.5F else 0.3F,
+            collapsedPlaylistHeightFraction = if (isLarge) 0.5F else 0.0F,
+            expandedPlaylistWidthFraction = if (isLarge) 0.3F else 0.4F
+        )
     }
 }
 
 private fun calculatePortraitGeometry(
     density: Density,
     layoutDirection: LayoutDirection,
-    width: Dp,
-    height: Dp,
-    topInset: Dp,
-    bottomInset: Dp,
-    startInset: Dp,
-    endInset: Dp,
-    progress: Float,
+    input: PlayerGeometryInput.Portrait,
+    insets: PaddingValues,
     hasAlbum: Boolean,
     hasArtist: Boolean,
-    collapsedContentHeight: Dp,
     playlistPeekHeight: Dp
 ): PlayerGeometry {
+    val containerSize = input.containerSize
+    val topInset = insets.calculateTopPadding()
+    val bottomInset = insets.calculateBottomPadding()
+    val startInset = insets.calculateStartPadding(layoutDirection)
+    val endInset = insets.calculateEndPadding(layoutDirection)
+
     // Constants
     val collapsedArtworkSize = 48.dp
     val toolbarHeight = 64.dp
@@ -190,23 +201,23 @@ private fun calculatePortraitGeometry(
 
     val collapsedBackground = Bounds(
         start = 0.dp,
-        top = height - collapsedContentHeight - bottomInset,
-        width = width,
-        height = collapsedContentHeight + bottomInset
+        top = containerSize.height - input.collapsedHeight - bottomInset,
+        width = containerSize.width,
+        height = input.collapsedHeight + bottomInset
     )
 
     val collapsedContent = Bounds(
         start = startInset,
         top = 0.dp,
-        width = width - startInset - endInset,
-        height = collapsedContentHeight
+        width = containerSize.width - startInset - endInset,
+        height = input.collapsedHeight
     )
 
     val collapsedPlaylist = Bounds(
         start = 0.dp,
         top = collapsedContent.bottom,
-        width = width,
-        height = height
+        width = containerSize.width,
+        height = containerSize.height
     )
 
     val collapsedMiniProgress = Bounds(
@@ -218,14 +229,14 @@ private fun calculatePortraitGeometry(
 
     val collapsedArtwork = Bounds(
         start = 8.dp,
-        top = (collapsedContentHeight - collapsedArtworkSize - collapsedMiniProgress.height) / 2,
+        top = (input.collapsedHeight - collapsedArtworkSize - collapsedMiniProgress.height) / 2,
         width = collapsedArtworkSize,
         height = collapsedArtworkSize
     )
 
     val collapsedControlsWidth = collapsedControlSize * 3 // prev, play/pause, next
     val collapsedControlsStart = collapsedContent.width - 8.dp - collapsedControlsWidth
-    val collapsedControlsTop = (collapsedContentHeight - collapsedControlSize) / 2
+    val collapsedControlsTop = (input.collapsedHeight - collapsedControlSize) / 2
 
     val collapsedRepeat = Bounds(
         start = collapsedControlsStart,
@@ -296,29 +307,29 @@ private fun calculatePortraitGeometry(
     val expandedBackground = Bounds(
         start = 0.dp,
         top = 0.dp,
-        width = width,
-        height = height
+        width = containerSize.width,
+        height = containerSize.height
     )
 
     val expandedContent = Bounds(
         start = startInset,
         top = topInset,
-        width = width - startInset - endInset,
-        height = height - topInset - bottomInset
+        width = containerSize.width - startInset - endInset,
+        height = containerSize.height - topInset - bottomInset
     )
 
     val toolbar = Bounds(
         start = 0.dp,
         top = 0.dp,
-        width = width,
+        width = containerSize.width,
         height = toolbarHeight + topInset
     )
 
     val expandedPlaylist = Bounds(
         start = 0.dp,
         top = toolbar.bottom,
-        width = width,
-        height = height - toolbar.bottom
+        width = containerSize.width,
+        height = containerSize.height - toolbar.bottom
     )
 
     val expandedMiniProgress = Bounds(
@@ -414,16 +425,16 @@ private fun calculatePortraitGeometry(
         height = expandedControlsSize
     )
 
-    val contentCornerRadius = lerp(16.dp, 0.dp, progress)
+    val playlistHandleHeight = playlistPeekHeight + bottomInset
 
     return PlayerGeometry(
         content = ContentLayoutSpec(
-            bounds = lerp(collapsedBackground, expandedBackground, progress),
+            bounds = morph(collapsedBackground, expandedBackground),
             corners = CornerSizes(
-                topStart = contentCornerRadius,
-                topEnd = contentCornerRadius,
-                bottomStart = 0.dp,
-                bottomEnd = 0.dp
+                topStart = morph(input.cornerSize, 0.dp),
+                topEnd = morph(input.cornerSize, 0.dp),
+                bottomStart = constant(0.dp),
+                bottomEnd = constant(0.dp)
             ),
             dragDirection = Orientation.Vertical,
             dragDistance = density.run {
@@ -434,74 +445,77 @@ private fun calculatePortraitGeometry(
         ),
 
         playlist = PlaylistLayoutSpec(
-            bounds = lerp(collapsedPlaylist, expandedPlaylist, progress),
-            padding = PaddingValues(
-                start = startInset,
-                end = endInset,
-                bottom = bottomInset
-            ),
-            peekHeight = playlistPeekHeight + bottomInset,
-            alpha = fadeInWindow(progress, 0.7F, 1F)
+            bounds = morph(collapsedPlaylist, expandedPlaylist),
+            alpha = morph(0F, 1F, easing = WindowEasing(0.7F, 1F)),
+            cornerSize = morph(input.cornerSize, 0.dp),
+            contentAlpha = morph(0f, 1f),
+            padding = PaddingValues(start = startInset, end = endInset, bottom = bottomInset),
+            handleHeight = playlistHandleHeight,
+            handleDragDistance = density.run {
+                (expandedPlaylist.height - playlistHandleHeight).toPx()
+            }
         ),
 
         progress = ProgressLayoutSpec(
             full = ControlLayoutSpec(
-                bounds = lerp(collapsedFullProgress, expandedFullProgress, progress),
-                alpha = fadeInWindow(progress, 0.7F, 1F)
+                bounds = morph(collapsedFullProgress, expandedFullProgress),
+                alpha = morph(0F, 1F, WindowEasing(0.7F, 1F))
             ),
             mini = ControlLayoutSpec(
-                bounds = lerp(collapsedMiniProgress, expandedMiniProgress, progress),
-                alpha = fadeOutWindow(progress, 0.0F, 0.3F)
+                bounds = morph(collapsedMiniProgress, expandedMiniProgress),
+                alpha = morph(1F, 0F, WindowEasing(0.0F, 0.3F))
             )
         ),
 
         toolbar = ControlLayoutSpec(
-            bounds = Bounds(
-                start = startInset,
-                top = 0.dp,
-                width = width,
-                height = 64.dp + topInset
+            bounds = constant(
+                Bounds(
+                    start = startInset,
+                    top = 0.dp,
+                    width = containerSize.width,
+                    height = 64.dp + topInset
+                )
             ),
-            alpha = fadeInWindow(progress, .50f, .70f)
+            alpha = morph(0F, 1F, WindowEasing(0.5F, 0.7F))
         ),
 
         title = TextLayoutSpec(
-            bounds = lerp(collapsedTitle, expandedTitle, progress),
-            fontSize = lerp(collapsedTitleSize, expandedTitleSize, progress)
+            bounds = morph(collapsedTitle, expandedTitle),
+            fontSize = morph(collapsedTitleSize, expandedTitleSize)
         ),
         artist = TextLayoutSpec(
-            bounds = lerp(collapsedArtist, expandedArtist, progress),
-            fontSize = lerp(collapsedSecondarySize, expandedSecondarySize, progress)
+            bounds = morph(collapsedArtist, expandedArtist),
+            fontSize = morph(collapsedSecondarySize, expandedSecondarySize)
         ),
         album = TextLayoutSpec(
-            bounds = lerp(collapsedAlbum, expandedAlbum, progress),
-            fontSize = lerp(0.sp, expandedSecondarySize, progress),
-            alpha = fadeInWindow(progress, 0.5F, 0.8F)
+            bounds = morph(collapsedAlbum, expandedAlbum),
+            fontSize = morph(0.sp, expandedSecondarySize),
+            alpha = morph(0F, 1F, WindowEasing(0.5F, 0.8F))
         ),
-        textAlignmentProgress = lerp(0F, 0.5F, progress),
+        textAlignmentProgress = morph(0F, 0.5F),
 
-        artwork = lerp(collapsedArtwork, expandedArtwork, progress),
+        artwork = morph(collapsedArtwork, expandedArtwork),
 
         controls = ControlsLayoutSpec(
             repeat = ControlLayoutSpec(
-                bounds = lerp(collapsedRepeat, expandedRepeat, progress),
-                alpha = fadeInWindow(progress, 0.5F, 0.8F)
+                bounds = morph(collapsedRepeat, expandedRepeat),
+                alpha = morph(0F, 1F, WindowEasing(0.5F, 0.8F))
             ),
             prevTrack = ControlLayoutSpec(
-                bounds = lerp(collapsedPrevTrack, expandedPrevTrack, progress),
-                alpha = 1F
+                bounds = morph(collapsedPrevTrack, expandedPrevTrack),
+                alpha = constant(1F)
             ),
             playPause = ControlLayoutSpec(
-                bounds = lerp(collapsedPlayPause, expandedPlayPause, progress),
-                alpha = 1F
+                bounds = morph(collapsedPlayPause, expandedPlayPause),
+                alpha = constant(1F)
             ),
             nextTrack = ControlLayoutSpec(
-                bounds = lerp(collapsedNextTrack, expandedNextTrack, progress),
-                alpha = 1F
+                bounds = morph(collapsedNextTrack, expandedNextTrack),
+                alpha = constant(1F)
             ),
             shuffle = ControlLayoutSpec(
-                bounds = lerp(collapsedShuffle, expandedShuffle, progress),
-                alpha = fadeInWindow(progress, 0.5F, 0.8F)
+                bounds = morph(collapsedShuffle, expandedShuffle),
+                alpha = morph(0F, 1F, WindowEasing(0.5F, 0.8F))
             )
         ).let {
             if (layoutDirection == LayoutDirection.Rtl) it.withReversedOrder() else it
@@ -512,14 +526,8 @@ private fun calculatePortraitGeometry(
 private fun calculateLandscapeGeometry(
     density: Density,
     layoutDirection: LayoutDirection,
-    width: Dp,
-    height: Dp,
-    topInset: Dp,
-    bottomInset: Dp,
-    startInset: Dp,
-    endInset: Dp,
-    progress: Float,
-    paneWidth: Dp,
+    input: PlayerGeometryInput.Landscape,
+    insets: PaddingValues,
     hasAlbum: Boolean,
     hasArtist: Boolean,
     collapsedTitleSize: TextUnit,
@@ -530,6 +538,12 @@ private fun calculateLandscapeGeometry(
     collapsedPlaylistHeightFraction: Float,
     expandedPlaylistWidthFraction: Float
 ): PlayerGeometry {
+    val containerSize = input.containerSize
+    val topInset = insets.calculateTopPadding()
+    val bottomInset = insets.calculateBottomPadding()
+    val startInset = insets.calculateStartPadding(layoutDirection)
+    val endInset = insets.calculateEndPadding(layoutDirection)
+
     // Constants
     val toolbarHeight = 64.dp
     val collapsedControlSize = 48.dp
@@ -539,24 +553,25 @@ private fun calculateLandscapeGeometry(
 
     // Collapsed state
     val collapsedBackground = Bounds(
-        start = width - paneWidth,
+        start = containerSize.width - input.collapsedWidth,
         top = 0.dp,
-        width = paneWidth,
-        height = height
+        width = input.collapsedWidth,
+        height = containerSize.height
     )
 
+    val collapsedContentHeight = containerSize.height * (1F - collapsedPlaylistHeightFraction)
     val collapsedPlaylist = Bounds(
-        start = width - paneWidth,
-        top = height * (1F - collapsedPlaylistHeightFraction),
-        width = paneWidth,
-        height = height * collapsedPlaylistHeightFraction
+        start = containerSize.width - input.collapsedWidth,
+        top = collapsedContentHeight,
+        width = input.collapsedWidth,
+        height = containerSize.height * collapsedPlaylistHeightFraction
     )
 
     val collapsedContent = Bounds(
         start = 0.dp,
         top = topInset,
-        width = paneWidth - endInset,
-        height = height * (1F - collapsedPlaylistHeightFraction) - topInset - bottomInset
+        width = input.collapsedWidth - endInset,
+        height = collapsedContentHeight - topInset - bottomInset
     )
 
     val collapsedTitleHeight = collapsedTitleSize.estimateLayoutHeight(density)
@@ -648,26 +663,26 @@ private fun calculateLandscapeGeometry(
     val expandedBackground = Bounds(
         start = 0.dp,
         top = 0.dp,
-        width = width,
-        height = height
+        width = containerSize.width,
+        height = containerSize.height
     )
 
     val expandedPlaylist = Bounds(
-        start = width * (1F - expandedPlaylistWidthFraction),
+        start = containerSize.width * (1F - expandedPlaylistWidthFraction),
         top = 0.dp,
-        width = width * expandedPlaylistWidthFraction,
-        height = height
+        width = containerSize.width * expandedPlaylistWidthFraction,
+        height = containerSize.height
     )
 
     val expandedContent = Bounds(
         start = startInset,
         top = topInset,
-        width = width - expandedPlaylist.width - startInset,
-        height = height - topInset - bottomInset
+        width = containerSize.width - expandedPlaylist.width - startInset,
+        height = containerSize.height - topInset - bottomInset
     )
 
     val expandedArtworkSize = expandedContent.height * expandedArtworkHeightFraction
-    val expandedHeightRemainder = height -
+    val expandedHeightRemainder = containerSize.height -
         topInset -
         toolbarHeight -
         bottomInset -
@@ -751,16 +766,14 @@ private fun calculateLandscapeGeometry(
         height = albumHeight
     )
 
-    val contentCornerRadius = lerp(16.dp, 0.dp, progress)
-
     return PlayerGeometry(
         content = ContentLayoutSpec(
-            bounds = lerp(collapsedBackground, expandedBackground, progress),
+            bounds = morph(collapsedBackground, expandedBackground),
             corners = CornerSizes(
-                topStart = contentCornerRadius,
-                topEnd = 0.dp,
-                bottomStart = contentCornerRadius,
-                bottomEnd = 0.dp
+                topStart = morph(input.cornerSize, 0.dp),
+                topEnd = constant(0.dp),
+                bottomStart = morph(input.cornerSize, 0.dp),
+                bottomEnd = constant(0.dp)
             ),
             dragDirection = Orientation.Horizontal,
             dragDistance = density.run {
@@ -769,78 +782,81 @@ private fun calculateLandscapeGeometry(
         ),
 
         playlist = PlaylistLayoutSpec(
-            bounds = lerp(collapsedPlaylist, expandedPlaylist, progress),
-            peekHeight = Dp.Unspecified,
+            bounds = morph(collapsedPlaylist, expandedPlaylist),
             padding = PaddingValues(
                 top = topInset,
                 end = endInset,
                 bottom = bottomInset
             ),
             alpha = if (collapsedPlaylistHeightFraction > 0) {
-                1F
+                constant(1F)
             } else {
-                fadeInWindow(progress, 0.5F, 1F)
-            }
+                morph(0F, 1F, WindowEasing(0.5F, 1F))
+            },
+            cornerSize = constant(0.dp),
+            contentAlpha = constant(1F)
         ),
 
         progress = ProgressLayoutSpec(
             full = ControlLayoutSpec(
-                bounds = expandedProgress,
-                alpha = fadeInWindow(progress, 0.5F, 0.7F)
+                bounds = constant(expandedProgress),
+                alpha = morph(0F, 1F, WindowEasing(0.5F, 0.7F))
             ),
             mini = ControlLayoutSpec(
-                bounds = collapsedProgress,
-                alpha = fadeOutWindow(progress, 0.5F, 0.7F)
+                bounds = constant(collapsedProgress),
+                alpha = morph(1F, 0F, WindowEasing(0.5F, 0.7F))
             )
         ),
 
         toolbar = ControlLayoutSpec(
-            bounds = Bounds(
-                start = 0.dp,
-                top = 0.dp,
-                width = width - expandedPlaylist.width,
-                height = 64.dp + topInset
+            bounds = constant(
+                Bounds(
+                    start = 0.dp,
+                    top = 0.dp,
+                    width = containerSize.width - expandedPlaylist.width,
+                    height = 64.dp + topInset
+                )
             ),
-            alpha = fadeInWindow(progress, .50f, .70f)
+            alpha = morph(0F, 1F, WindowEasing(0.5F, 0.7F))
         ),
 
-        artwork = lerp(collapsedArtwork, expandedArtwork, progress),
+        artwork = morph(collapsedArtwork, expandedArtwork),
 
         title = TextLayoutSpec(
-            bounds = lerp(collapsedTitle, expandedTitle, progress),
-            fontSize = lerp(collapsedTitleSize, expandedTitleSize, progress)
+            bounds = morph(collapsedTitle, expandedTitle),
+            fontSize = morph(collapsedTitleSize, expandedTitleSize)
         ),
         artist = TextLayoutSpec(
-            bounds = lerp(collapsedArtist, expandedArtist, progress),
-            fontSize = secondaryTextSize
+            bounds = morph(collapsedArtist, expandedArtist),
+            fontSize = constant(secondaryTextSize)
         ),
         album = TextLayoutSpec(
-            bounds = lerp(collapsedAlbum, expandedAlbum, progress),
-            fontSize = secondaryTextSize
+            bounds = morph(collapsedAlbum, expandedAlbum),
+            fontSize = constant(secondaryTextSize)
         ),
 
-        textAlignmentProgress = 0.5F, // always center aligned
+        textAlignmentProgress = constant(0.5F), // always center aligned
 
         controls = ControlsLayoutSpec(
             repeat = ControlLayoutSpec(
-                bounds = lerp(collapsedRepeat, expandedRepeat, progress),
-                alpha = 1F
+                bounds = morph(collapsedRepeat, expandedRepeat),
+                alpha = constant(1F)
             ),
             prevTrack = ControlLayoutSpec(
-                bounds = lerp(collapsedPrevTrack, expandedPrevTrack, progress),
-                alpha = 1F
+                bounds = morph(collapsedPrevTrack, expandedPrevTrack),
+                alpha = constant(1F)
             ),
             playPause = ControlLayoutSpec(
-                bounds = lerp(collapsedPlayPause, expandedPlayPause, progress),
-                alpha = 1F
+                bounds = morph(collapsedPlayPause, expandedPlayPause),
+                alpha = constant(1F)
             ),
             nextTrack = ControlLayoutSpec(
-                bounds = lerp(collapsedNextTrack, expandedNextTrack, progress),
-                alpha = 1F
+                bounds = morph(collapsedNextTrack, expandedNextTrack),
+                alpha = constant(1F)
             ),
             shuffle = ControlLayoutSpec(
-                bounds = lerp(collapsedShuffle, expandedShuffle, progress),
-                alpha = 1F
+                bounds = morph(collapsedShuffle, expandedShuffle),
+                alpha = constant(1F)
             )
         ).let {
             if (layoutDirection == LayoutDirection.Rtl) it.withReversedOrder() else it
@@ -852,21 +868,24 @@ private fun TextUnit.estimateLayoutHeight(density: Density) = with(density) {
     toDp() * 1.3F
 }
 
-private fun lerp(start: Bounds, end: Bounds, fraction: Float) = Bounds(
-    lerp(start.start, end.start, fraction),
-    top = lerp(start.top, end.top, fraction),
-    width = lerp(start.width, end.width, fraction),
-    height = lerp(start.height, end.height, fraction)
-)
+internal fun MainLayout.toGeometryInput(): PlayerGeometryInput = when (this) {
+    is MainLayout.Portrait ->
+        PlayerGeometryInput.Portrait(containerSize, nowPlayingCornerSize, collapsedNowPlayingHeight)
 
-private fun fadeOutWindow(progress: Float, start: Float, end: Float) = when {
-    progress <= start -> 1F
-    progress >= end -> 0F
-    else -> 1F - (progress - start) / (end - start)
+    is MainLayout.Landscape ->
+        PlayerGeometryInput.Landscape(containerSize, nowPlayingCornerSize, collapsedNowPlayingWidth)
 }
 
-private fun fadeInWindow(progress: Float, start: Float, end: Float) = when {
-    progress <= start -> 0f
-    progress >= end -> 1f
-    else -> (progress - start) / (end - start)
+@Composable
+internal fun rememberPlayerGeometry(
+    input: PlayerGeometryInput,
+    insets: PaddingValues,
+    hasArtist: Boolean,
+    hasAlbum: Boolean
+): PlayerGeometry {
+    val density = LocalDensity.current
+    val layoutDirection = LocalLayoutDirection.current
+    return remember(input, density, layoutDirection, insets, hasArtist, hasAlbum) {
+        calculatePlayerGeometry(input, density, layoutDirection, insets, hasArtist, hasAlbum)
+    }
 }

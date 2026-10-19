@@ -25,7 +25,12 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateSetOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -50,6 +55,17 @@ import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlideshowImage
 import kotlinx.coroutines.flow.filterIsInstance
 
+@Stable
+internal class RefreshTracker {
+    private val stale = mutableStateSetOf<NavKey>()
+
+    fun markStale(keys: Collection<NavKey>) {
+        stale.addAll(keys)
+    }
+    fun isStale(key: NavKey) = key in stale
+    fun consume(key: NavKey) = stale.remove(key)
+}
+
 @Composable
 fun MainContent(
     viewModel: MainContentViewModel,
@@ -65,6 +81,7 @@ fun MainContent(
 ) {
     val backStack = rememberNavBackStack(viewModel.initialPage)
     val nestedScrollInterop = rememberNestedScrollInteropConnection()
+    val refreshTracker = remember { RefreshTracker() }
 
     val removeFromBackStack = { route: NavKey ->
         backStack.removeAll { it == route }
@@ -72,6 +89,13 @@ fun MainContent(
     }
     val refreshFlow = viewModel.navigationFlow
         .filterIsInstance<MainContentNavigation.RefreshContent>()
+
+    val currentBackStack by rememberUpdatedState(backStack)
+    LaunchedEffect(refreshFlow, refreshTracker) {
+        refreshFlow.collect { event ->
+            refreshTracker.markStale(currentBackStack.takeLast(event.levels))
+        }
+    }
 
     val entries = rememberDecoratedNavEntries(
         backStack = backStack,
@@ -87,8 +111,7 @@ fun MainContent(
 
             slimBrowseNavEntry(
                 serverConfig = serverConfig,
-                backStack = backStack,
-                refreshFlow = refreshFlow,
+                refreshTracker = refreshTracker,
                 useGridIfPossible = useGridForSlimbrowseItems,
                 pagePadding = pagePadding,
                 onItemSelected = viewModel::onSlimBrowseItemSelected,

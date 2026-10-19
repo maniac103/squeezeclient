@@ -15,6 +15,7 @@ import androidx.compose.foundation.gestures.DraggableAnchors
 import androidx.compose.foundation.gestures.animateTo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.util.lerp
 import kotlin.coroutines.cancellation.CancellationException
@@ -79,14 +80,20 @@ internal fun MotionProgressBackHandler(
     progress: MotionProgress,
     enabled: Boolean = true,
     progressScaler: (Float) -> Float = { it }
-) = PredictiveBackHandler(enabled && progress.value > 0F) { progressFlow ->
-    try {
-        progressFlow.collect { backEvent ->
-            progress.moveTo(1F - progressScaler(backEvent.progress))
+) {
+    val backEnabled by remember(enabled) {
+        derivedStateOf { enabled && progress.isExpanded }
+    }
+
+    PredictiveBackHandler(backEnabled) { progressFlow ->
+        try {
+            progressFlow.collect { backEvent ->
+                progress.moveTo(1F - progressScaler(backEvent.progress))
+            }
+            progress.collapse()
+        } catch (_: CancellationException) {
+            progress.expand()
         }
-        progress.collapse()
-    } catch (_: CancellationException) {
-        progress.expand()
     }
 }
 

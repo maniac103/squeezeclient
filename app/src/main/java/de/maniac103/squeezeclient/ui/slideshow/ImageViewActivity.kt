@@ -27,15 +27,16 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.gestures.animateZoomBy
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.rememberTransformableState
+import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -44,20 +45,24 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.core.content.IntentCompat
-import coil3.annotation.ExperimentalCoilApi
 import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
 import coil3.imageLoader
@@ -69,6 +74,7 @@ import de.maniac103.squeezeclient.model.SlideshowImage
 import de.maniac103.squeezeclient.ui.theme.AppTheme
 import kotlin.getValue
 import kotlin.io.path.createTempFile
+import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 
 class ImageViewActivity : AppCompatActivity() {
@@ -101,57 +107,11 @@ class ImageViewActivity : AppCompatActivity() {
                 ) {
                     var imageIsLoading by remember { mutableStateOf(true) }
 
-                    Scaffold(
-                        topBar = {
-                            TopAppBar(
-                                title = { Text(text = item.caption) },
-                                colors = TopAppBarDefaults.topAppBarColors().copy(
-                                    containerColor = Color.Transparent
-                                ),
-                                navigationIcon = {
-                                    IconButton(
-                                        onClick = { finishAfterTransition() }
-                                    ) {
-                                        Icon(
-                                            imageVector = ImageVector.vectorResource(
-                                                R.drawable.ic_arrow_left_24dp
-                                            ),
-                                            contentDescription = null // FIXME
-                                        )
-                                    }
-                                },
-                                actions = {
-                                    if (!imageIsLoading) {
-                                        IconButton(
-                                            onClick = { share(imageUrl) }
-                                        ) {
-                                            Icon(
-                                                imageVector = ImageVector.vectorResource(
-                                                    R.drawable.ic_share_24dp
-                                                ),
-                                                contentDescription = null // FIXME
-                                            )
-                                        }
-                                    }
-                                },
-                                modifier = Modifier.background(
-                                    Brush.verticalGradient(
-                                        colors = listOf(
-                                            Color.Black.copy(alpha = 0.75F),
-                                            Color.Transparent
-                                        )
-                                    )
-                                )
-                            )
-                        },
-                        modifier = Modifier.fillMaxSize()
-                    ) { _ ->
-                        if (imageIsLoading) {
-                            CircularProgressIndicator(
-                                strokeWidth = 6.dp,
-                                modifier = Modifier.size(128.dp)
-                            )
-                        }
+                    if (imageIsLoading) {
+                        CircularProgressIndicator(
+                            strokeWidth = 6.dp,
+                            modifier = Modifier.size(128.dp)
+                        )
                     }
                     ZoomableAsyncImage(
                         imageRequest = imageRequest,
@@ -160,7 +120,49 @@ class ImageViewActivity : AppCompatActivity() {
                             imageIsLoading = state is AsyncImagePainter.State.Loading
                         },
                         modifier = Modifier
+                            .fillMaxSize()
                             .align(Alignment.Center)
+                    )
+
+                    TopAppBar(
+                        title = { Text(text = item.caption) },
+                        colors = TopAppBarDefaults.topAppBarColors().copy(
+                            containerColor = Color.Transparent
+                        ),
+                        navigationIcon = {
+                            IconButton(
+                                onClick = { finishAfterTransition() }
+                            ) {
+                                Icon(
+                                    imageVector = ImageVector.vectorResource(
+                                        R.drawable.ic_arrow_left_24dp
+                                    ),
+                                    contentDescription = null // FIXME
+                                )
+                            }
+                        },
+                        actions = {
+                            if (!imageIsLoading) {
+                                IconButton(
+                                    onClick = { share(imageUrl) }
+                                ) {
+                                    Icon(
+                                        imageVector = ImageVector.vectorResource(
+                                            R.drawable.ic_share_24dp
+                                        ),
+                                        contentDescription = null // FIXME
+                                    )
+                                }
+                            }
+                        },
+                        modifier = Modifier.background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Black.copy(alpha = 0.75F),
+                                    Color.Transparent
+                                )
+                            )
+                        )
                     )
                 }
             }
@@ -207,30 +209,56 @@ fun ZoomableAsyncImage(
     modifier: Modifier = Modifier
 ) {
     var scale by remember { mutableFloatStateOf(1F) }
-    var offset by remember { mutableStateOf(Offset(0f, 0f)) }
+    var offset by remember { mutableStateOf(Offset.Zero) }
+    var containerSize by remember { mutableStateOf(IntSize.Zero) }
+    val scope = rememberCoroutineScope()
+    val transformState = rememberTransformableState { centroid, zoomChange, panChange, _ ->
+        val center = Offset(containerSize.width / 2f, containerSize.height / 2f)
+        val focal = (if (centroid.isSpecified) centroid else center) - center
+        val newScale = (scale * zoomChange).coerceIn(1F, 5F)
+        val appliedZoom = newScale / scale
+        val zoomedOffset = focal - (focal - offset) * appliedZoom
+        val newOffset = zoomedOffset + panChange
+        val maxX = containerSize.width * (newScale - 1f) / 2f
+        val maxY = containerSize.height * (newScale - 1f) / 2f
 
-    AsyncImage(
-        model = imageRequest,
-        contentDescription = contentDescription,
-        onState = { loadingStateListener(it) },
+        offset = Offset(
+            x = newOffset.x.coerceIn(-maxX, maxX),
+            y = newOffset.y.coerceIn(-maxY, maxY)
+        )
+        scale = newScale
+    }
+
+    Box(
         modifier = modifier
+            .onSizeChanged { containerSize = it }
             .pointerInput(Unit) {
-                detectTransformGestures { _, pan, zoom, _ ->
-                    // Update the scale based on zoom gestures.
-                    scale *= zoom
-
-                    // Limit the zoom levels within a certain range (optional).
-                    scale = scale.coerceIn(0.5f, 3f)
-
-                    // Update the offset to implement panning when zoomed.
-                    offset = if (scale == 1f) Offset(0f, 0f) else offset + pan
-                }
+                detectTapGestures(
+                    onDoubleTap = { tap ->
+                        scope.launch {
+                            val target = if (scale > 1.01F) 1F else 2.5F
+                            transformState.animateZoomBy(target / scale, centroid = tap)
+                        }
+                    }
+                )
             }
-            .graphicsLayer(
-                scaleX = scale,
-                scaleY = scale,
-                translationX = offset.x,
-                translationY = offset.y
+            .transformable(
+                state = transformState,
+                canPan = { scale > 1F }
             )
-    )
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+                translationX = offset.x
+                translationY = offset.y
+            }
+    ) {
+        AsyncImage(
+            model = imageRequest,
+            contentDescription = contentDescription,
+            contentScale = ContentScale.Fit,
+            onState = { loadingStateListener(it) },
+            modifier = Modifier.fillMaxSize()
+        )
+    }
 }

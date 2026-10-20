@@ -23,9 +23,9 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
@@ -49,8 +49,8 @@ fun GalleryGrid(
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
     itemSelectionListener: (SlideshowImage) -> Unit = {}
-) = LazyVerticalGrid(
-    columns = GridCells.Fixed(2),
+) = LazyVerticalStaggeredGrid(
+    columns = StaggeredGridCells.Adaptive(150.dp),
     contentPadding = contentPadding,
     modifier = modifier
 ) {

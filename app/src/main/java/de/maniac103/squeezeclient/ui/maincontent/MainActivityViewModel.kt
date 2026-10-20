@@ -26,11 +26,12 @@ import de.maniac103.squeezeclient.model.Player
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.PlayerStatus
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -38,65 +39,79 @@ class MainActivityViewModel(
     private val connectionHelper: ConnectionHelper,
     private val preferences: Preferences
 ) : ViewModel() {
-    private val selectedPlayerFlowInternal = preferences.lastSelectedPlayer.asFlow()
-    private val stateFlowInternal = MutableStateFlow<MainActivityState>(MainActivityState.Loading)
-    private val selectedPlayerStateFlowInternal = MutableStateFlow<PlayerStatus?>(null)
-    private var connectionAttempts = 0
-    private var selectedPlayerStateSubscription: Job? = null
+    private val stateAndSelectedPlayerFlow = combine(
+        connectionHelper.state,
+        preferences.lastSelectedPlayer.asFlow()
+    ) { state, selectedId -> state to selectedId }
 
-    val stateFlow = stateFlowInternal.asStateFlow()
-    val selectedPlayerStateFlow = selectedPlayerStateFlowInternal.asStateFlow()
+    val stateFlow = stateAndSelectedPlayerFlow
+        .map { (state, selectedId) ->
+            when (state) {
+                is ConnectionState.Disconnected -> {
+                    if (connectionAttempts++ < 3) {
+                        connectionHelper.connect()
+                        MainActivityState.Loading
+                    } else {
+                        MainActivityState.CouldNotConnect
+                    }
+                }
+
+                is ConnectionState.Connecting -> {
+                    MainActivityState.Loading
+                }
+
+                is ConnectionState.Connected -> {
+                    connectionAttempts = 0
+                    val presentPlayers = state.players.filter { it.connected }
+                    val selectedPlayer = selectedId
+                        .let { selected -> presentPlayers.find { it.id == selected } }
+                        ?: presentPlayers.firstOrNull()
+                    if (selectedPlayer != null) {
+                        MainActivityState.Connected(presentPlayers, selectedPlayer)
+                    } else {
+                        MainActivityState.NoPlayers
+                    }
+                }
+
+                is ConnectionState.ConnectionFailure -> {
+                    MainActivityState.ConnectionFailed(state.cause)
+                }
+            }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(),
+            initialValue = MainActivityState.Loading
+        )
+
+    val selectedPlayerActiveStateFlow = stateFlow
+        .flatMapLatest { state ->
+            (state as? MainActivityState.Connected)?.selectedPlayer?.id
+                ?.let { playerId ->
+                    connectionHelper.playerState(playerId)
+                        .flatMapLatest {
+                            it.playStatus
+                        }
+                        .map {
+                            SelectedPlayerActiveState(
+                                playerId,
+                                it.playbackState == PlayerStatus.PlayState.Playing
+                            )
+                        }
+                }
+                ?: flowOf(null)
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(),
+            initialValue = null
+        )
+
     val serverConfigFlow = preferences.serverConfig.asFlow()
     val forceGridForSlimBrowseItemsFlow = preferences.forceGridLayout.asFlow()
     val localPlaybackEnabledFlow = preferences.localPlayerEnabled.asFlow()
 
-    init {
-        viewModelScope.launch {
-            val stateAndSelectedPlayerFlow = combine(
-                connectionHelper.state,
-                selectedPlayerFlowInternal
-            ) { state, selectedId -> state to selectedId }
-            stateAndSelectedPlayerFlow.collect { (state, selectedId) ->
-                when (state) {
-                    is ConnectionState.Disconnected -> {
-                        if (connectionAttempts++ < 3) {
-                            connectionHelper.connect()
-                            stateFlowInternal.emit(MainActivityState.Loading)
-                        } else {
-                            stateFlowInternal.emit(MainActivityState.CouldNotConnect)
-                        }
-                        updateSelectedPlayerStateSubscription(null)
-                    }
-
-                    is ConnectionState.Connecting -> {
-                        stateFlowInternal.emit(MainActivityState.Loading)
-                        updateSelectedPlayerStateSubscription(null)
-                    }
-
-                    is ConnectionState.Connected -> {
-                        connectionAttempts = 0
-                        val presentPlayers = state.players.filter { it.connected }
-                        val selectedPlayer = selectedId
-                            .let { selected -> presentPlayers.find { it.id == selected } }
-                            ?: presentPlayers.firstOrNull()
-                        if (selectedPlayer != null) {
-                            stateFlowInternal.emit(
-                                MainActivityState.Connected(presentPlayers, selectedPlayer)
-                            )
-                        } else {
-                            stateFlowInternal.emit(MainActivityState.NoPlayers)
-                        }
-                        updateSelectedPlayerStateSubscription(selectedPlayer?.id)
-                    }
-
-                    is ConnectionState.ConnectionFailure -> {
-                        stateFlowInternal.emit(MainActivityState.ConnectionFailed(state.cause))
-                        updateSelectedPlayerStateSubscription(null)
-                    }
-                }
-            }
-        }
-    }
+    private var connectionAttempts = 0
 
     fun retryConnection() = viewModelScope.launch {
         connectionAttempts = 0
@@ -110,19 +125,6 @@ class MainActivityViewModel(
     fun setLocalPlaybackEnabled(enabled: Boolean) = viewModelScope.launch {
         preferences.localPlayerEnabled.update(enabled)
     }
-
-    private fun updateSelectedPlayerStateSubscription(selectedPlayerId: PlayerId?) {
-        selectedPlayerStateSubscription?.cancel()
-        selectedPlayerStateSubscription = viewModelScope.launch {
-            if (selectedPlayerId != null) {
-                connectionHelper.playerState(selectedPlayerId)
-                    .flatMapLatest { it.playStatus }
-                    .collect { selectedPlayerStateFlowInternal.emit(it) }
-            } else {
-                selectedPlayerStateFlowInternal.emit(null)
-            }
-        }
-    }
 }
 
 sealed interface MainActivityState {
@@ -132,3 +134,5 @@ sealed interface MainActivityState {
     data object CouldNotConnect : MainActivityState
     data class ConnectionFailed(val cause: Throwable) : MainActivityState
 }
+
+data class SelectedPlayerActiveState(val playerId: PlayerId, val isPlaying: Boolean)

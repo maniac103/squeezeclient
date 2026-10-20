@@ -17,6 +17,8 @@
 
 package de.maniac103.squeezeclient.ui.nowplaying
 
+import androidx.compose.animation.core.EaseInCubic
+import androidx.compose.animation.core.EaseInOutCubic
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
@@ -497,9 +499,9 @@ private fun calculatePortraitGeometry(
         artwork = morph(
             start = collapsedArtwork,
             end = expandedArtwork,
-            startEasing = WindowEasing(0.3F, 1F),
-            widthEasing = WindowEasing(0.3F, 1F),
-            heightEasing = WindowEasing(0.3F, 1F)
+            startEasing = EaseInOutCubic,
+            widthEasing = EaseInCubic,
+            heightEasing = EaseInCubic
         ),
 
         controls = ControlsLayoutSpec(

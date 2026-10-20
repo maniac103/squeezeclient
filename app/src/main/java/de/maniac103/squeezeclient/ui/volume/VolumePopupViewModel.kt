@@ -26,8 +26,11 @@ import kotlin.time.Duration
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -35,31 +38,27 @@ class VolumePopupViewModel(
     private val connectionHelper: ConnectionHelper,
     private val playerId: PlayerId
 ) : ViewModel() {
-    var volumeControlSupported = false
-        private set
-    private val currentPlayerVolumeFlowInternal = MutableStateFlow(0F)
-    private val currentMutedFlowInternal = MutableStateFlow(false)
+    private val currentPlayerStateFlow = connectionHelper.playerState(playerId)
+        .flatMapLatest { it.playStatus }
     private val visibleFlowInternal = MutableStateFlow(false)
 
-    val volumeFlow = currentPlayerVolumeFlowInternal.asStateFlow()
-    val mutedFlow = currentMutedFlowInternal.asStateFlow()
-    val visibleFlow = visibleFlowInternal.asStateFlow()
+    val volumeFlow = currentPlayerStateFlow
+        .map { status -> status.currentVolume?.let { it.toFloat() / 100F } ?: 1F }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(),
+            initialValue = 0F
+        )
 
-    init {
-        viewModelScope.launch {
-            connectionHelper.playerState(playerId)
-                .flatMapLatest { it.playStatus }
-                .collect { status ->
-                    volumeControlSupported = status.currentVolume != null
-                    status.currentVolume?.let {
-                        currentPlayerVolumeFlowInternal.value = it.toFloat() / 100F
-                    }
-                    status.muted?.let {
-                        currentMutedFlowInternal.value = it
-                    }
-                }
-        }
-    }
+    val mutedFlow = currentPlayerStateFlow
+        .map { status -> status.muted ?: false }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(),
+            initialValue = false
+        )
+
+    val visibleFlow = visibleFlowInternal.asStateFlow()
 
     // FIXME: handle already showing
     fun show(duration: Duration) = viewModelScope.launch {
@@ -69,17 +68,15 @@ class VolumePopupViewModel(
     }
 
     fun setVolume(volume: Float) = viewModelScope.launch {
-        currentPlayerVolumeFlowInternal.emit(volume)
         connectionHelper.setVolume(playerId, (volume * 100F).roundToInt())
     }
 
     fun adjustVolume(delta: Float) {
-        val newVolume = (currentPlayerVolumeFlowInternal.value + delta).coerceIn(0F, 1F)
+        val newVolume = (volumeFlow.value + delta).coerceIn(0F, 1F)
         setVolume(newVolume)
     }
 
     fun setMuted(muted: Boolean) = viewModelScope.launch {
-        currentMutedFlowInternal.emit(muted)
         connectionHelper.setMuteState(playerId, muted)
     }
 }

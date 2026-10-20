@@ -43,19 +43,27 @@ internal interface Morph<out T> {
     fun at(progress: Float): T
 }
 
-internal fun interface Interpolator<T> {
-    fun interpolate(start: T, end: T, fraction: Float): T
+@Immutable
+internal data class Interpolated<T>(val easing: Easing, val interpolator: (fraction: Float) -> T) :
+    Morph<T> {
+    override fun at(progress: Float): T = interpolator(easing.transform(progress))
 }
 
 @Immutable
-internal data class Interpolated<T>(
-    val start: T,
-    val end: T,
-    val interpolator: Interpolator<T>,
-    val easing: Easing = LinearEasing
-) : Morph<T> {
-    override fun at(progress: Float): T =
-        interpolator.interpolate(start, end, easing.transform(progress))
+internal data class InterpolatedBounds(
+    val start: Bounds,
+    val end: Bounds,
+    val startEasing: Easing,
+    val topEasing: Easing,
+    val widthEasing: Easing,
+    val heightEasing: Easing
+) : Morph<Bounds> {
+    override fun at(progress: Float) = Bounds(
+        start = lerp(start.start, end.start, startEasing.transform(progress)),
+        top = lerp(start.top, end.top, topEasing.transform(progress)),
+        width = lerp(start.width, end.width, widthEasing.transform(progress)),
+        height = lerp(start.height, end.height, heightEasing.transform(progress))
+    )
 }
 
 @Immutable
@@ -76,47 +84,23 @@ internal data class WindowEasing(
     }
 }
 
-internal object Interpolators {
-    val bounds = Interpolator<Bounds> { s, e, f ->
-        Bounds(
-            start = lerp(s.start, e.start, f),
-            top = lerp(s.top, e.top, f),
-            width = lerp(s.width, e.width, f),
-            height = lerp(s.height, e.height, f)
-        )
-    }
-    val dp = Interpolator<Dp> { s, e, f -> lerp(s, e, f) }
-    val textUnit = Interpolator<TextUnit> { s, e, f -> lerp(s, e, f) }
-    val float = Interpolator<Float> { s, e, f -> lerp(s, e, f) }
-}
-
 internal fun morph(
     start: Bounds,
     end: Bounds,
-    easing: Easing = LinearEasing,
-    interpolator: Interpolator<Bounds> = Interpolators.bounds
-): Morph<Bounds> = Interpolated(start, end, interpolator, easing)
+    startEasing: Easing = LinearEasing,
+    topEasing: Easing = LinearEasing,
+    widthEasing: Easing = LinearEasing,
+    heightEasing: Easing = LinearEasing
+): Morph<Bounds> = InterpolatedBounds(start, end, startEasing, topEasing, widthEasing, heightEasing)
 
-internal fun morph(
-    start: Dp,
-    end: Dp,
-    easing: Easing = LinearEasing,
-    interpolator: Interpolator<Dp> = Interpolators.dp
-): Morph<Dp> = Interpolated(start, end, interpolator, easing)
+internal fun morph(start: Dp, end: Dp, easing: Easing = LinearEasing): Morph<Dp> =
+    Interpolated(easing) { fraction -> lerp(start, end, fraction) }
 
-internal fun morph(
-    start: TextUnit,
-    end: TextUnit,
-    easing: Easing = LinearEasing,
-    interpolator: Interpolator<TextUnit> = Interpolators.textUnit
-): Morph<TextUnit> = Interpolated(start, end, interpolator, easing)
+internal fun morph(start: TextUnit, end: TextUnit, easing: Easing = LinearEasing): Morph<TextUnit> =
+    Interpolated(easing) { fraction -> lerp(start, end, fraction) }
 
-internal fun morph(
-    start: Float,
-    end: Float,
-    easing: Easing = LinearEasing,
-    interpolator: Interpolator<Float> = Interpolators.float
-): Morph<Float> = Interpolated(start, end, interpolator, easing)
+internal fun morph(start: Float, end: Float, easing: Easing = LinearEasing): Morph<Float> =
+    Interpolated(easing) { fraction -> lerp(start, end, fraction) }
 
 internal fun <T> constant(value: T): Morph<T> = Constant(value)
 
@@ -126,19 +110,4 @@ internal fun Morph<Float>.rememberIsVisible(
     threshold: Float = 0.01f
 ): State<Boolean> = remember(this, progress) {
     derivedStateOf { at(progress.value) > threshold }
-}
-
-internal fun windowedLerp(
-    startValue: Dp,
-    endValue: Dp,
-    windowStart: Float,
-    windowEnd: Float,
-    fraction: Float
-) = when {
-    fraction <= windowStart -> startValue
-
-    fraction >= windowEnd -> endValue
-
-    else ->
-        startValue + (endValue - startValue) * (fraction - windowStart) / (windowEnd - windowStart)
 }

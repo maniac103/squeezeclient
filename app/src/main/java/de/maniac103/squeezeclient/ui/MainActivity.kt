@@ -26,7 +26,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.browser.customtabs.CustomTabsIntent
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import de.maniac103.squeezeclient.Preferences
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.cometd.ConnectionHelper
@@ -40,6 +42,7 @@ import de.maniac103.squeezeclient.ui.composables.DialogHost
 import de.maniac103.squeezeclient.ui.maincontent.MainActivityState
 import de.maniac103.squeezeclient.ui.maincontent.MainActivityUi
 import de.maniac103.squeezeclient.ui.maincontent.MainActivityViewModel
+import de.maniac103.squeezeclient.ui.maincontent.SelectedPlayerActiveState
 import de.maniac103.squeezeclient.ui.playermanagement.PlayerManagementActivity
 import de.maniac103.squeezeclient.ui.prefs.SettingsActivity
 import de.maniac103.squeezeclient.ui.serversetup.ServerSetupActivity
@@ -56,6 +59,9 @@ class MainActivity : ComponentActivity() {
     private val preferences: Preferences by inject()
     private val volumeChangeRequestFlow = MutableSharedFlow<Float>()
     private val dialogHost = DialogHost()
+    private val viewModel by viewModel<MainActivityViewModel>()
+
+    private var selectedPlayerActiveState: SelectedPlayerActiveState? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -97,6 +103,14 @@ class MainActivity : ComponentActivity() {
                 dialogHost.Render()
             }
         }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.selectedPlayerActiveStateFlow.collect { state ->
+                    selectedPlayerActiveState = state
+                }
+            }
+        }
     }
 
     override fun onStart() {
@@ -105,16 +119,9 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onStop() {
-        val mainViewModel by viewModel<MainActivityViewModel>()
-        val connectedState = mainViewModel.stateFlow.value as? MainActivityState.Connected
-        val activePlayerId = connectedState?.selectedPlayer?.id
-        val playState = mainViewModel.selectedPlayerStateFlow.value?.playbackState
-        if (
-            activePlayerId != null &&
-            playState == PlayerStatus.PlayState.Playing &&
-            !isChangingConfigurations
-        ) {
-            MediaService.start(this, activePlayerId, true)
+        val selectedPlayerActive = selectedPlayerActiveState
+        if (selectedPlayerActive?.isPlaying == true && !isChangingConfigurations) {
+            MediaService.start(this, selectedPlayerActive.playerId, true)
         }
         super.onStop()
     }

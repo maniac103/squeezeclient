@@ -28,9 +28,7 @@ import de.maniac103.squeezeclient.ui.composables.TextResource
 import de.maniac103.squeezeclient.ui.composables.toTextResource
 import kotlin.collections.get
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
@@ -38,6 +36,7 @@ import kotlinx.coroutines.flow.flatMapMerge
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 sealed class PlayerManagementUiState {
@@ -51,10 +50,6 @@ sealed class PlayerManagementUiState {
 
 @OptIn(ExperimentalStdlibApi::class)
 class PlayerManagementViewModel(private val connectionHelper: ConnectionHelper) : ViewModel() {
-    private val uiStateFlowInternal = MutableStateFlow<PlayerManagementUiState>(
-        PlayerManagementUiState.Loading
-    )
-
     @OptIn(ExperimentalCoroutinesApi::class)
     private val playerInfoBackendFlow = connectionHelper.state
         .mapNotNull { (it as? ConnectionState.Connected)?.players }
@@ -126,48 +121,42 @@ class PlayerManagementViewModel(private val connectionHelper: ConnectionHelper) 
         }
         .distinctUntilChanged()
 
-    val uiStateFlow = uiStateFlowInternal.asStateFlow()
-
-    init {
-        viewModelScope.launch {
-            connectionHelper.state.collectLatest { state ->
-                when (state) {
-                    is ConnectionState.Disconnected -> {
-                        uiStateFlowInternal.emit(PlayerManagementUiState.Disconnected)
-                    }
-
-                    is ConnectionState.ConnectionFailure -> {
-                        uiStateFlowInternal.emit(PlayerManagementUiState.Disconnected)
-                    }
-
-                    is ConnectionState.Connecting -> {
-                        uiStateFlowInternal.emit(PlayerManagementUiState.Loading)
-                    }
-
-                    is ConnectionState.Connected -> {
-                        // We'll update to Ready from the subscription below
-                    }
-                }
-            }
-        }
-
-        viewModelScope.launch {
-            playerInfoBackendFlow.collectLatest { playerData ->
-                val slavesByMaster = mutableMapOf<PlayerId, MutableList<PlayerId>>()
-                playerData.forEach { player ->
-                    if (player.master != null) {
-                        slavesByMaster
-                            .getOrPutIfMissing(player.master) { mutableListOf() }
-                            .add(player.playerId)
-                    }
-                }
-
-                uiStateFlowInternal.emit(
-                    PlayerManagementUiState.Ready(playerData, slavesByMaster)
-                )
-            }
-        }
+    val uiStateFlow = combine(connectionHelper.state, playerInfoBackendFlow) { state, playerData ->
+        state to playerData
     }
+        .map { (state, playerData) ->
+            when (state) {
+                is ConnectionState.Disconnected -> {
+                    PlayerManagementUiState.Disconnected
+                }
+
+                is ConnectionState.ConnectionFailure -> {
+                    PlayerManagementUiState.Disconnected
+                }
+
+                is ConnectionState.Connecting -> {
+                    PlayerManagementUiState.Loading
+                }
+
+                is ConnectionState.Connected -> {
+                    val slavesByMaster = mutableMapOf<PlayerId, MutableList<PlayerId>>()
+                    playerData.forEach { player ->
+                        if (player.master != null) {
+                            slavesByMaster
+                                .getOrPutIfMissing(player.master) { mutableListOf() }
+                                .add(player.playerId)
+                        }
+                    }
+
+                    PlayerManagementUiState.Ready(playerData, slavesByMaster)
+                }
+            }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(),
+            initialValue = PlayerManagementUiState.Loading
+        )
 
     fun togglePlayerPower(playerId: PlayerId) = viewModelScope.launch {
         connectionHelper.togglePower(playerId)

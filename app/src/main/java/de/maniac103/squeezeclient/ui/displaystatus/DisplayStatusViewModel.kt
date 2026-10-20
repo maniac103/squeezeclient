@@ -26,37 +26,32 @@ import de.maniac103.squeezeclient.model.PlayerId
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.transformLatest
 
 class DisplayStatusViewModel(connectionHelper: ConnectionHelper, playerId: PlayerId) : ViewModel() {
-    private val uiMessageFlowInternal = MutableStateFlow<DisplayStatusMessage?>(null)
-
     @OptIn(ExperimentalCoroutinesApi::class)
-    private val backendMessageFlow = connectionHelper.playerState(playerId)
+    val messageFlow = connectionHelper.playerState(playerId)
         .flatMapLatest { it.displayStatus }
         .filter { it.type == DisplayMessage.MessageType.PopupPlay }
-
-    val messageFlow = uiMessageFlowInternal.asStateFlow()
-
-    init {
-        viewModelScope.launch {
-            backendMessageFlow.collectLatest { message ->
-                uiMessageFlowInternal.emit(
-                    DisplayStatusMessage(
-                        text = message.text.joinToString("\n").trim(),
-                        icon = message.takeIf { it.isValidIcon }
-                    )
+        .transformLatest { message ->
+            emit(
+                DisplayStatusMessage(
+                    text = message.text.joinToString("\n").trim(),
+                    icon = message.takeIf { it.isValidIcon }
                 )
-                delay(message.duration ?: 2.seconds)
-                uiMessageFlowInternal.emit(null)
-            }
+            )
+            delay(message.duration ?: 2.seconds)
+            emit(null)
         }
-    }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = null
+        )
 }
 
 class DisplayStatusMessage(val text: String, val icon: ArtworkItem?)

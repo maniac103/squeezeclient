@@ -19,21 +19,21 @@ package de.maniac103.squeezeclient.ui.nowplaying
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.paging.InvalidatingPagingSourceFactory
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import de.maniac103.squeezeclient.cometd.ConnectionHelper
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.ui.itemlist.ItemPagingSource
-import kotlin.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -41,58 +41,50 @@ class PlaylistViewModel(
     private val connectionHelper: ConnectionHelper,
     private val playerId: PlayerId
 ) : ViewModel() {
-    private var lastKnownPlaylistTimestamp: Instant? = null
-    private val uiStateFlowInternal = MutableStateFlow(UiState(0, null))
+    private val pendingMoveRequestsFlow = MutableSharedFlow<PendingMove>()
     private val scrollRequestFlowInternal = MutableSharedFlow<Int>()
 
-    private val pagingSourceFactory = InvalidatingPagingSourceFactory {
-        ItemPagingSource { page ->
-            connectionHelper.fetchPlaylist(playerId, page)
-        }
-    }
+    private val playStatusFlow = connectionHelper.playerState(playerId)
+        .flatMapLatest { it.playStatus }
 
-    val itemsFlow = Pager(
-        config = PagingConfig(
-            pageSize = 200,
-            initialLoadSize = 200,
-            enablePlaceholders = false
-        ),
-        pagingSourceFactory = pagingSourceFactory
-    )
-        .flow
+    val itemsFlow = playStatusFlow
+        .map { it.playlist.lastChange }
+        .distinctUntilChanged()
+        .flatMapLatest {
+            Pager(
+                config = PagingConfig(
+                    pageSize = 200,
+                    initialLoadSize = 200,
+                    enablePlaceholders = false
+                ),
+                pagingSourceFactory = {
+                    ItemPagingSource { page -> connectionHelper.fetchPlaylist(playerId, page) }
+                }
+            ).flow
+        }
         .cachedIn(viewModelScope)
-    val uiStateFlow = uiStateFlowInternal.asStateFlow()
+
+    val uiStateFlow = playStatusFlow
+        .flatMapLatest { status ->
+            val position = status.playlist.currentPosition - 1
+            pendingMoveRequestsFlow
+                .map { UiState(position, it) }
+                .onStart { emit(UiState(position, null)) }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = UiState(0, null)
+        )
+
     val scrollRequestFlow = scrollRequestFlowInternal.asFlow()
 
-    init {
-        viewModelScope.launch {
-            connectionHelper.playerState(playerId)
-                .flatMapLatest { it.playStatus }
-                .collect { status ->
-                    val lastPlaylistTimestamp = lastKnownPlaylistTimestamp
-                    val newPlaylistTimestamp = status.playlist.lastChange
-                    if (
-                        lastPlaylistTimestamp != null &&
-                        lastPlaylistTimestamp != newPlaylistTimestamp
-                    ) {
-                        pagingSourceFactory.invalidate()
-                    }
-
-                    lastKnownPlaylistTimestamp = newPlaylistTimestamp
-                    uiStateFlowInternal.value = UiState(
-                        status.playlist.currentPosition - 1,
-                        null
-                    )
-                }
-        }
-    }
-
     fun scrollToCurrentPlaylistPosition() = viewModelScope.launch {
-        scrollRequestFlowInternal.emit(uiStateFlowInternal.value.currentPosition)
+        scrollRequestFlowInternal.emit(uiStateFlow.value.currentPosition)
     }
 
     fun movePlaylistItem(from: Int, to: Int) = viewModelScope.launch {
-        uiStateFlowInternal.update { it.copy(pendingMove = PendingMove(from, to)) }
+        pendingMoveRequestsFlow.emit(PendingMove(from, to))
         connectionHelper.movePlaylistItem(playerId, from, to)
     }
 

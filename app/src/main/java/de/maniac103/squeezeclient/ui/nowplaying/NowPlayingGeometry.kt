@@ -33,7 +33,6 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isSpecified
-import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
 import de.maniac103.squeezeclient.ui.maincontent.MainLayout
 
@@ -498,14 +497,9 @@ private fun calculatePortraitGeometry(
         artwork = morph(
             start = collapsedArtwork,
             end = expandedArtwork,
-            interpolator = { s, e, f ->
-                Bounds(
-                    start = windowedLerp(s.start, e.start, 0.3F, 1F, f),
-                    top = lerp(s.top, e.top, f),
-                    width = windowedLerp(s.width, e.width, 0.3F, 1F, f),
-                    height = lerp(s.height, e.height, f)
-                )
-            }
+            startEasing = WindowEasing(0.3F, 1F),
+            widthEasing = WindowEasing(0.3F, 1F),
+            heightEasing = WindowEasing(0.3F, 1F)
         ),
 
         controls = ControlsLayoutSpec(
@@ -835,14 +829,9 @@ private fun calculateLandscapeGeometry(
         artwork = morph(
             start = collapsedArtwork,
             end = expandedArtwork,
-            interpolator = { s, e, f ->
-                Bounds(
-                    start = lerp(s.start, e.start, f),
-                    top = windowedLerp(s.top, e.top, 0.4F, 1F, f),
-                    width = windowedLerp(s.width, e.width, 0.3F, 1F, f),
-                    height = lerp(s.height, e.height, f)
-                )
-            }
+            topEasing = WindowEasing(0.4F, 1F),
+            widthEasing = WindowEasing(0.3F, 1F),
+            heightEasing = WindowEasing(0.3F, 1F)
         ),
 
         title = TextLayoutSpec(

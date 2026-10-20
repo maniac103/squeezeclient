@@ -1,6 +1,9 @@
 package de.maniac103.squeezeclient.ui.nowplaying
 
 import android.text.format.DateUtils
+import androidx.activity.compose.PredictiveBackHandler
+import androidx.compose.animation.core.EaseOutQuart
+import androidx.compose.animation.core.animate
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
@@ -40,7 +43,9 @@ import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.material3.rememberSliderState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -50,6 +55,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -90,12 +96,14 @@ import de.maniac103.squeezeclient.ui.composables.toTextResource
 import de.maniac103.squeezeclient.ui.contextmenu.ContextMenuBottomSheetContent
 import de.maniac103.squeezeclient.ui.contextmenu.ContextMenuBottomSheetViewModel
 import de.maniac103.squeezeclient.ui.maincontent.MainLayout
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -306,20 +314,25 @@ internal fun NowPlayingScreen(
             onShowVolumePopup = onShowVolumePopup
         )
 
+        val playlistBackState = remember { PlaylistBackEffectState() }
+
         PlaylistSheet(
             playlistContent = playlistContent,
             nowPlayingProgress = motionState.nowPlaying,
             playlistProgress = motionState.playlist,
-            layoutSpec = geometry.playlist
+            layoutSpec = geometry.playlist,
+            backState = playlistBackState
         )
 
         MotionProgressBackHandler(
             progress = motionState.nowPlaying,
-            enabled = motionState.playlist.value == 0F || !geometry.playlist.needsHandle,
-            progressScaler = { progress -> 0.2F * progress }
+            enabled = motionState.playlist.isCollapsed || !geometry.playlist.needsHandle,
+            easing = { 0.2F * EaseOutQuart.transform(it) }
         )
-        MotionProgressBackHandler(
+
+        PlaylistSheetBackHandler(
             progress = motionState.playlist,
+            backState = playlistBackState,
             enabled = geometry.playlist.needsHandle
         )
     }
@@ -750,7 +763,8 @@ private fun PlaylistSheet(
     layoutSpec: PlaylistLayoutSpec,
     nowPlayingProgress: MotionProgress,
     playlistProgress: MotionProgress,
-    playlistContent: @Composable (Color, Modifier) -> Unit
+    playlistContent: @Composable (Color, Modifier) -> Unit,
+    backState: PlaylistBackEffectState
 ) {
     val sheetColor = MaterialTheme.colorScheme.surfaceContainerHighest
 
@@ -778,6 +792,9 @@ private fun PlaylistSheet(
                 }
                 .graphicsLayer {
                     val corner = layoutSpec.cornerSize.at(playlistProgress.value).toPx()
+                    scaleX = 1F - 0.1F * backState.progress
+                    scaleY = 1F - 0.05F * backState.progress
+                    transformOrigin = TransformOrigin(0.5F, 1F)
                     shape = RoundedCornerShape(
                         topStart = corner,
                         topEnd = corner,
@@ -815,6 +832,36 @@ private fun PlaylistSheet(
                     .weight(1F)
             )
         }
+    }
+}
+
+@Stable
+internal class PlaylistBackEffectState {
+    var progress by mutableFloatStateOf(0f)
+        internal set
+
+    suspend fun reset() {
+        animate(progress, 0f) { v, _ -> progress = v }
+    }
+}
+
+@Composable
+internal fun PlaylistSheetBackHandler(
+    progress: MotionProgress,
+    backState: PlaylistBackEffectState,
+    enabled: Boolean = true
+) = PredictiveBackHandler(enabled && progress.isExpanded) { progressFlow ->
+    try {
+        progressFlow.collect { backEvent ->
+            backState.progress = EaseOutQuart.transform(backEvent.progress)
+        }
+        coroutineScope {
+            launch { backState.reset() }
+            launch { progress.collapse() }
+        }
+    } catch (e: CancellationException) {
+        backState.reset()
+        throw e
     }
 }
 

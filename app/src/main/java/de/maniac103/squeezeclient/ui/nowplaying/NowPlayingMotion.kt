@@ -10,6 +10,8 @@
 package de.maniac103.squeezeclient.ui.nowplaying
 
 import androidx.activity.compose.PredictiveBackHandler
+import androidx.compose.animation.core.Easing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.foundation.gestures.AnchoredDraggableState
 import androidx.compose.foundation.gestures.DraggableAnchors
 import androidx.compose.foundation.gestures.animateTo
@@ -43,6 +45,7 @@ internal class MotionProgress(initialState: MotionAnchor) {
     }
 
     val value get() = progressState.value
+    val isCollapsed get() = state.settledValue == MotionAnchor.Collapsed
     val isExpanded get() = state.settledValue == MotionAnchor.Expanded
 
     fun updateDragDistance(dragDistance: Float) {
@@ -79,7 +82,7 @@ internal class MotionProgress(initialState: MotionAnchor) {
 internal fun MotionProgressBackHandler(
     progress: MotionProgress,
     enabled: Boolean = true,
-    progressScaler: (Float) -> Float = { it }
+    easing: Easing = LinearEasing
 ) {
     val backEnabled by remember(enabled) {
         derivedStateOf { enabled && progress.isExpanded }
@@ -88,7 +91,7 @@ internal fun MotionProgressBackHandler(
     PredictiveBackHandler(backEnabled) { progressFlow ->
         try {
             progressFlow.collect { backEvent ->
-                progress.moveTo(1F - progressScaler(backEvent.progress))
+                progress.moveTo(1F - easing.transform(backEvent.progress))
             }
             progress.collapse()
         } catch (_: CancellationException) {

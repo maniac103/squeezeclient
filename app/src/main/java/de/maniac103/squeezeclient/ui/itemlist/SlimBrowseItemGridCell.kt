@@ -38,7 +38,6 @@ import de.maniac103.squeezeclient.model.ArtworkItem
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.ui.composables.ArtworkImage
-import de.maniac103.squeezeclient.ui.theme.AppTheme
 
 @Composable
 fun SlimBrowseItemGridCell(

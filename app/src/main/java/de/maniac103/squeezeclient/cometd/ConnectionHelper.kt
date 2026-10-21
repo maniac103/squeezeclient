@@ -139,6 +139,8 @@ class ConnectionHelper(
         val client = preferences.serverConfig.value?.let { CometdClient(httpClient, json, it) }
             ?: return
 
+        Log.d(TAG, "Connecting")
+
         this.client = client
         val scope = CoroutineScope(Dispatchers.Main) + SupervisorJob()
         scope.launch {
@@ -153,11 +155,12 @@ class ConnectionHelper(
             }
 
             connectionScope = this
+
             // Subscribe to server status; disconnect on subscription failure
             try {
                 client.subscribe(CometdClient.Channels.serverStatus(clientId))
                     .onEach { message -> parseServerStatus(message) }
-                    .onCompletion { if (isActive) disconnect() }
+                    .onCompletion { if (this@launch.isActive) disconnect() }
                     .launchIn(this)
             } catch (e: CometdClient.CometdException) {
                 handleFailure(e)
@@ -187,7 +190,7 @@ class ConnectionHelper(
                 .onEach { hasSubscribers ->
                     pendingDisconnectJob?.cancel()
                     if (!hasSubscribers) {
-                        pendingDisconnectJob = launch {
+                        pendingDisconnectJob = this@launch.launch {
                             delay(IDLE_DISCONNECT_TIMEOUT)
                             disconnect()
                         }

@@ -83,10 +83,7 @@ data class PlayerStatus(
         val lastChange: Instant
     )
 
-    data class VolumeState(
-        val volume: Int,
-        val muted: Boolean
-    )
+    data class VolumeState(val volume: Int, val muted: Boolean)
 
     val playbackStartTimestamp get() = if (playbackState == PlayState.Playing) {
         timestamp.minus(playPosition.toDouble().toDuration(DurationUnit.SECONDS))

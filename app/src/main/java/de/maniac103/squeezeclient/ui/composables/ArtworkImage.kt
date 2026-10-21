@@ -28,10 +28,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -52,7 +52,8 @@ fun ArtworkImage(
     modifier: Modifier = Modifier,
     placeholderDrawableResId: Int? = R.drawable.ic_disc_24dp,
     fallbackDrawableResId: Int? = null,
-    enforceLoadingOriginalImageSize: Boolean = false
+    enforceLoadingOriginalImageSize: Boolean = false,
+    cornerPercent: () -> Int = { 20 }
 ) {
     var currentAspectRatio by remember { mutableStateOf<Float?>(null) }
     val context = LocalContext.current
@@ -99,7 +100,10 @@ fun ArtworkImage(
                     currentAspectRatio?.let { Modifier.aspectRatio(it) }
                         ?: Modifier
                 )
-                .clip(RoundedCornerShape(percent = 20))
+                .graphicsLayer {
+                    shape = RoundedCornerShape(percent = cornerPercent())
+                    clip = true
+                }
         )
     }
 }

@@ -42,13 +42,7 @@ class VolumePopupViewModel(
     private val visibleFlowInternal = MutableStateFlow(false)
 
     val stateFlow = currentPlayerStateFlow
-        .map { status ->
-            if (status.currentVolume != null && status.muted != null) {
-                VolumeState(status.currentVolume, status.muted)
-            } else {
-                null
-            }
-        }
+        .map { it.volume }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(),
@@ -73,12 +67,10 @@ class VolumePopupViewModel(
     fun adjustVolume(delta: Int) {
         val currentVolume = stateFlow.value?.volume
             ?: return
-        setVolume((currentVolume + delta).coerceIn(0, 100))
+        setVolume(currentVolume + delta)
     }
 
     fun setMuted(muted: Boolean) = viewModelScope.launch {
         connectionHelper.setMuteState(playerId, muted)
     }
 }
-
-data class VolumeState(val volume: Int, val muted: Boolean)

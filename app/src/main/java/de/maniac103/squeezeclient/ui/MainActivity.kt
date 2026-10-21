@@ -57,7 +57,7 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class MainActivity : ComponentActivity() {
     private val preferences: Preferences by inject()
-    private val volumeChangeRequestFlow = MutableSharedFlow<Float>()
+    private val volumeChangeRequestFlow = MutableSharedFlow<Int>()
     private val dialogHost = DialogHost()
     private val viewModel by viewModel<MainActivityViewModel>()
 
@@ -144,7 +144,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun adjustVolume(direction: Int) = lifecycleScope.launch {
-        val stepSize = preferences.volumeStepSize.value * 0.01F
+        val stepSize = preferences.volumeStepSize.value
         volumeChangeRequestFlow.emit(direction * stepSize)
     }
 

@@ -542,11 +542,8 @@ private fun PlayerArtwork(
 ) = ArtworkImage(
     artwork = state.artwork,
     serverConfig = serverConfig,
-    imageRequestModifier = {
-        // FIXME: fallback tinting
-        fallback(R.drawable.ic_album_placeholder)
-        size(Size.ORIGINAL)
-    },
+    fallbackDrawableResId = R.drawable.ic_album_placeholder,
+    enforceLoadingOriginalImageSize = true,
     modifier = Modifier.bounds(progress, bounds)
 )
 

@@ -18,7 +18,6 @@
 package de.maniac103.squeezeclient.cometd
 
 import de.maniac103.squeezeclient.model.PlayerId
-import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.PrimitiveKind

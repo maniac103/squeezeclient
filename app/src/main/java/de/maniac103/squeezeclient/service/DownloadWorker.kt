@@ -52,7 +52,6 @@ import de.maniac103.squeezeclient.extfuncs.getOrCreateNotificationChannel
 import de.maniac103.squeezeclient.model.DownloadSongInfo
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
-import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext

@@ -35,8 +35,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
@@ -49,8 +47,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
@@ -60,6 +56,8 @@ import de.maniac103.squeezeclient.model.JiveActions
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.PlayerStatus
 import de.maniac103.squeezeclient.model.Playlist
+import de.maniac103.squeezeclient.ui.composables.ResourceIcon
+import de.maniac103.squeezeclient.ui.composables.ResourceIconButton
 import de.maniac103.squeezeclient.ui.composables.TextResource
 import kotlin.math.roundToInt
 
@@ -209,7 +207,15 @@ internal fun PlayerRow(
             ) {
                 if (isMaster) {
                     val isPlaying = player.playbackState == PlayerStatus.PlayState.Playing
-                    IconButton(
+                    ResourceIconButton(
+                        drawableResId = when {
+                            isPlaying -> R.drawable.ic_pause_24dp
+                            else -> R.drawable.ic_play_24dp
+                        },
+                        contentDescriptionResId = when {
+                            isPlaying -> R.string.content_description_nowplaying_pause
+                            else -> R.string.content_description_nowplaying_play
+                        },
                         onClick = {
                             val newState = when {
                                 isPlaying -> PlayerStatus.PlayState.Paused
@@ -217,31 +223,21 @@ internal fun PlayerRow(
                             }
                             onChangePlaybackState(player.playerId, newState)
                         }
-                    ) {
-                        val iconResId = when {
-                            isPlaying -> R.drawable.ic_pause_24dp
-                            else -> R.drawable.ic_play_24dp
-                        }
-                        Icon(
-                            imageVector = ImageVector.vectorResource(iconResId),
-                            contentDescription = null // FIXME
-                        )
-                    }
+                    )
                 }
                 if (player.canPowerOff) {
-                    IconButton(
+                    ResourceIconButton(
+                        drawableResId = R.drawable.ic_power_24dp,
+                        contentDescriptionResId = when (player.powered) {
+                            true -> R.string.content_description_player_power_off
+                            false -> R.string.content_description_player_power_on
+                        },
+                        iconTint = when (player.powered) {
+                            true -> MaterialTheme.colorScheme.onSurface
+                            false -> MaterialTheme.colorScheme.onSurfaceVariant
+                        },
                         onClick = { onTogglePower(player.playerId) }
-                    ) {
-                        Icon(
-                            imageVector = ImageVector.vectorResource(R.drawable.ic_power_24dp),
-                            contentDescription = null, // FIXME
-                            tint = if (player.powered) {
-                                MaterialTheme.colorScheme.onSurface
-                            } else {
-                                MaterialTheme.colorScheme.onSurfaceVariant
-                            }
-                        )
-                    }
+                    )
                 }
 
                 if (player.volume != null) {
@@ -284,9 +280,9 @@ internal fun PlayerRow(
                 .size(48.dp)
                 .align(Alignment.CenterVertically)
         ) {
-            Icon(
-                imageVector = ImageVector.vectorResource(R.drawable.ic_drag_horizontal_24dp),
-                contentDescription = null // FIXME
+            ResourceIcon(
+                drawableResId = R.drawable.ic_drag_horizontal_24dp,
+                contentDescriptionResId = R.string.content_description_drag_player_item
             )
         }
     }
@@ -299,11 +295,10 @@ internal fun DragTargetRow(state: RowState, modifier: Modifier = Modifier) = Dra
     horizontalArrangement = Arrangement.Center,
     modifier = modifier.fillMaxWidth()
 ) {
-    Icon(
-        imageVector = ImageVector.vectorResource(R.drawable.ic_link_off_24dp),
-        contentDescription = null, // FIXME
-        modifier = Modifier
-            .size(96.dp)
+    ResourceIcon(
+        drawableResId = R.drawable.ic_link_off_24dp,
+        contentDescriptionResId = R.string.content_description_drag_target_unsync,
+        modifier = Modifier.size(96.dp)
     )
 }
 

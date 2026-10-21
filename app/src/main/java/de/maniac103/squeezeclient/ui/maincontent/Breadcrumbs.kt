@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -17,13 +16,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.ui.composables.ArtworkImage
+import de.maniac103.squeezeclient.ui.composables.ResourceIcon
 import de.maniac103.squeezeclient.ui.composables.toTextResource
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -47,9 +45,9 @@ fun Breadcrumbs(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier.padding(8.dp)
     ) {
-        Icon(
-            imageVector = ImageVector.vectorResource(R.drawable.ic_home_24dp),
-            contentDescription = null, // FIXME
+        ResourceIcon(
+            drawableResId = R.drawable.ic_home_24dp,
+            contentDescriptionResId = R.string.content_description_breadcrumbs_home,
             modifier = Modifier.clickable(onClick = onHomeClicked)
         )
 

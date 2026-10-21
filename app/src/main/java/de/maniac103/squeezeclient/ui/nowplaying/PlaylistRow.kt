@@ -18,8 +18,6 @@
 package de.maniac103.squeezeclient.ui.nowplaying
 
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
@@ -27,8 +25,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import de.maniac103.squeezeclient.R
@@ -36,6 +32,7 @@ import de.maniac103.squeezeclient.model.JiveActions
 import de.maniac103.squeezeclient.model.Playlist
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.ui.composables.ArtworkImage
+import de.maniac103.squeezeclient.ui.composables.ResourceIconButton
 
 @Composable
 fun PlaylistRow(
@@ -64,15 +61,12 @@ fun PlaylistRow(
             )
         },
         trailingContent = {
-            IconButton(
+            ResourceIconButton(
+                drawableResId = R.drawable.ic_drag_horizontal_24dp,
+                contentDescriptionResId = R.string.content_description_drag_playlist_item,
                 onClick = {},
                 modifier = dragHandleModifier
-            ) {
-                Icon(
-                    ImageVector.vectorResource(R.drawable.ic_drag_horizontal_24dp),
-                    contentDescription = null // FIXME
-                )
-            }
+            )
         },
         colors = ListItemDefaults.colors(
             containerColor = if (isSelected) {

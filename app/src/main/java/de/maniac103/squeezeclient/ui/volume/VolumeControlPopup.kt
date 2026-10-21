@@ -28,7 +28,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.FilledIconToggleButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
@@ -39,12 +38,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.maniac103.squeezeclient.R
+import de.maniac103.squeezeclient.ui.composables.ResourceIcon
 import kotlin.math.roundToInt
 
 @Composable
@@ -127,10 +125,12 @@ fun VolumeControlPopup(
                         onCheckedChange = onMuteChanged,
                         modifier = Modifier.padding(bottom = 8.dp)
                     ) {
-                        Icon(
-                            imageVector =
-                                ImageVector.vectorResource(R.drawable.ic_volume_muted_24dp),
-                            contentDescription = null // FIXME
+                        ResourceIcon(
+                            drawableResId = R.drawable.ic_volume_muted_24dp,
+                            contentDescriptionResId = when (muted) {
+                                true -> R.string.content_description_unmute
+                                false -> R.string.content_description_mute
+                            }
                         )
                     }
                 }

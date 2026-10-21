@@ -93,7 +93,7 @@ fun DisplayStatusIndicator(
                             ArtworkImage(
                                 artwork = it,
                                 serverConfig = serverConfig,
-                                usePlaceholder = false,
+                                placeholderDrawableResId = null,
                                 modifier = Modifier
                                     .size(32.dp)
                                     .align(Alignment.CenterVertically)

@@ -94,14 +94,14 @@ class SqueezeboxMediaPlayer(
         val playerId = currentPlayer ?: return@future
         val currentVolume = playerState?.currentVolume ?: return@future
         val stepSize = preferences.volumeStepSize.value
-        connectionHelper.setVolume(playerId, currentVolume + stepSize)
+        connectionHelper.setVolume(playerId, currentVolume.volume + stepSize)
     }
 
     override fun handleDecreaseDeviceVolume(flags: Int) = future {
         val playerId = currentPlayer ?: return@future
         val currentVolume = playerState?.currentVolume ?: return@future
         val stepSize = preferences.volumeStepSize.value
-        connectionHelper.setVolume(playerId, currentVolume - stepSize)
+        connectionHelper.setVolume(playerId, currentVolume.volume - stepSize)
     }
 
     override fun handleSetDeviceMuted(muted: Boolean, flags: Int) = future {
@@ -249,7 +249,8 @@ class SqueezeboxMediaPlayer(
             .setCurrentMediaItemIndex(currentIndex)
 
         playerState.currentVolume?.let {
-            builder.setDeviceVolume(it)
+            builder.setDeviceVolume(it.volume)
+            builder.setIsDeviceMuted(it.muted)
             builder.setDeviceInfo(
                 DeviceInfo.Builder(DeviceInfo.PLAYBACK_TYPE_REMOTE)
                     .setMinVolume(0)
@@ -257,7 +258,6 @@ class SqueezeboxMediaPlayer(
                     .build()
             )
         }
-        playerState.muted?.let { builder.setIsDeviceMuted(it) }
 
         return builder.build()
     }
@@ -435,14 +435,13 @@ class SqueezeboxMediaPlayer(
         private val nowPlayingFallback: Playlist.PlaylistItem?,
         val playlist: Playlist?
     ) {
-        val currentVolume get() = status.currentVolume
+        val currentVolume get() = status.volume
         val currentSong get() = status.playlist.nowPlaying ?: nowPlayingFallback
         val currentSongDuration get() = status.currentSongDuration
         val currentPlayPosition get() = status.currentPlayPosition
         val playlistPosition get() = status.playlist.currentPosition - 1
         val playbackState get() = status.playbackState
         val powered get() = status.powered
-        val muted get() = status.muted
 
         fun isCompleteAndConsistent() =
             playlist != null && status.playlist.lastChange == playlist.timestamp

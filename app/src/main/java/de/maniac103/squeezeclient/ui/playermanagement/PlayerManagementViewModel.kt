@@ -81,7 +81,7 @@ class PlayerManagementViewModel(private val connectionHelper: ConnectionHelper) 
                         playerData.canPowerOff,
                         nowPlayingInfo,
                         playbackState,
-                        status.currentVolume,
+                        status.volume?.volume,
                         status.powered,
                         master
                     )

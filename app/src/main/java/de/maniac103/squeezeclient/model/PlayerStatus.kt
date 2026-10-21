@@ -20,7 +20,6 @@ package de.maniac103.squeezeclient.model
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.DurationUnit
-import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import kotlin.time.toDuration
 import kotlinx.serialization.SerialName
@@ -36,8 +35,7 @@ data class PlayerStatus(
     val playerName: String,
     val connected: Boolean,
     val powered: Boolean,
-    val currentVolume: Int?,
-    val muted: Boolean?,
+    val volume: VolumeState?,
     val syncMaster: PlayerId?,
     val syncSlaves: List<PlayerId>?,
     private val timestamp: Instant
@@ -83,6 +81,11 @@ data class PlayerStatus(
         val currentPosition: Int,
         val trackCount: Int,
         val lastChange: Instant
+    )
+
+    data class VolumeState(
+        val volume: Int,
+        val muted: Boolean
     )
 
     val playbackStartTimestamp get() = if (playbackState == PlayState.Playing) {

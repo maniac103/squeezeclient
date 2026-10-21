@@ -128,12 +128,13 @@ internal fun InputSheetContent(
             .fillMaxWidth()
             .padding(top = 8.dp)
     ) {
+        Text(
+            text = stringResource(R.string.input_submit),
+            modifier = Modifier.padding(end = 8.dp)
+        )
         Icon(
             ImageVector.vectorResource(R.drawable.ic_send_24dp),
-            contentDescription = null // FIXME
-        )
-        Text(
-            text = stringResource(R.string.input_submit)
+            contentDescription = null
         )
     }
 }

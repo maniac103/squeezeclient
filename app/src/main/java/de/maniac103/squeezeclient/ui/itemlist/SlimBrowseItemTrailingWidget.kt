@@ -20,18 +20,15 @@ package de.maniac103.squeezeclient.ui.itemlist
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
+import de.maniac103.squeezeclient.ui.composables.ResourceIconButton
 
 sealed class SlimBrowseItemTrailingWidget {
     class Choice(val label: String) : SlimBrowseItemTrailingWidget()
@@ -103,15 +100,12 @@ internal fun SlimBrowseItemTrailingWidgetUi(
         }
 
         widget is SlimBrowseItemTrailingWidget.ContextMenu -> {
-            IconButton(
+            ResourceIconButton(
+                drawableResId = R.drawable.ic_menu_overflow,
+                contentDescriptionResId = R.string.content_description_context_menu,
                 onClick = widget.clickListener,
                 modifier = modifier
-            ) {
-                Icon(
-                    imageVector = ImageVector.vectorResource(R.drawable.ic_menu_overflow),
-                    contentDescription = null // FIXME
-                )
-            }
+            )
         }
     }
 }

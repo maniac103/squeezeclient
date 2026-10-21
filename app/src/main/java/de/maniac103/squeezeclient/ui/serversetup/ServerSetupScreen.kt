@@ -36,8 +36,6 @@ import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilledIconButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.OutlinedSecureTextField
 import androidx.compose.material3.OutlinedTextField
@@ -54,15 +52,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.model.ServerConfiguration
+import de.maniac103.squeezeclient.ui.composables.ResourceIconButton
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 @Composable
@@ -108,16 +105,11 @@ fun ServerSetupScreen(
                 },
                 navigationIcon = {
                     if (onGoBack != null) {
-                        IconButton(
+                        ResourceIconButton(
+                            drawableResId = R.drawable.ic_arrow_left_24dp,
+                            contentDescriptionResId = R.string.content_description_appbar_back,
                             onClick = onGoBack
-                        ) {
-                            Icon(
-                                imageVector = ImageVector.vectorResource(
-                                    R.drawable.ic_arrow_left_24dp
-                                ),
-                                contentDescription = null // FIXME
-                            )
-                        }
+                        )
                     }
                 },
                 titleHorizontalAlignment = Alignment.CenterHorizontally
@@ -213,20 +205,17 @@ fun ServerSetupScreen(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     placeholder = { Text(stringResource(R.string.server_password_hint)) },
                     trailingIcon = {
-                        val iconResId = if (passwordVisible) {
-                            R.drawable.ic_eye_off_24dp
-                        } else {
-                            R.drawable.ic_eye_24dp
-                        }
-
-                        IconButton(
+                        ResourceIconButton(
+                            drawableResId = when (passwordVisible) {
+                                true -> R.drawable.ic_eye_off_24dp
+                                false -> R.drawable.ic_eye_24dp
+                            },
+                            contentDescriptionResId = when (passwordVisible) {
+                                true -> R.string.content_description_hide_password
+                                false -> R.string.content_description_show_password
+                            },
                             onClick = { passwordVisible = !passwordVisible }
-                        ) {
-                            Icon(
-                                imageVector = ImageVector.vectorResource(iconResId),
-                                contentDescription = null // FIXME
-                            )
-                        }
+                        )
                     },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -304,15 +293,12 @@ fun DiscoveredServersDropdown(
             )
 
             if (discoveredServers != null) {
-                IconButton(
+                ResourceIconButton(
+                    drawableResId = R.drawable.ic_refresh_24dp,
+                    contentDescriptionResId = R.string.content_description_server_setup_refresh,
                     onClick = onStartDiscovery,
                     modifier = Modifier.align(Alignment.CenterStart)
-                ) {
-                    Icon(
-                        imageVector = ImageVector.vectorResource(R.drawable.ic_refresh_24dp),
-                        contentDescription = null // FIXME
-                    )
-                }
+                )
             }
         }
 

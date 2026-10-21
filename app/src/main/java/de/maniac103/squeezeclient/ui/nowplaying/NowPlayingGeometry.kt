@@ -118,13 +118,19 @@ internal data class ControlsLayoutSpec(
 }
 
 @Immutable
+internal data class ArtworkLayoutSpec(
+    val bounds: Morph<Bounds>,
+    val cornerPercentage: Morph<Float>
+)
+
+@Immutable
 internal data class PlayerGeometry(
     val content: ContentLayoutSpec,
     val playlist: PlaylistLayoutSpec,
     val progress: ProgressLayoutSpec,
     val toolbar: ControlLayoutSpec,
 
-    val artwork: Morph<Bounds>,
+    val artwork: ArtworkLayoutSpec,
     val controls: ControlsLayoutSpec,
 
     val title: TextLayoutSpec,
@@ -496,12 +502,15 @@ private fun calculatePortraitGeometry(
         ),
         textAlignmentProgress = morph(0F, 0.5F),
 
-        artwork = morph(
-            start = collapsedArtwork,
-            end = expandedArtwork,
-            startEasing = EaseInOutCubic,
-            widthEasing = EaseInCubic,
-            heightEasing = EaseInCubic
+        artwork = ArtworkLayoutSpec(
+            bounds = morph(
+                start = collapsedArtwork,
+                end = expandedArtwork,
+                startEasing = EaseInOutCubic,
+                widthEasing = EaseInCubic,
+                heightEasing = EaseInCubic
+            ),
+            cornerPercentage = morph(20F, 10F)
         ),
 
         controls = ControlsLayoutSpec(
@@ -828,12 +837,15 @@ private fun calculateLandscapeGeometry(
             alpha = morph(0F, 1F, WindowEasing(0.5F, 0.7F))
         ),
 
-        artwork = morph(
-            start = collapsedArtwork,
-            end = expandedArtwork,
-            topEasing = WindowEasing(0.4F, 1F),
-            widthEasing = WindowEasing(0.3F, 1F),
-            heightEasing = WindowEasing(0.3F, 1F)
+        artwork = ArtworkLayoutSpec(
+            bounds = morph(
+                start = collapsedArtwork,
+                end = expandedArtwork,
+                topEasing = WindowEasing(0.4F, 1F),
+                widthEasing = WindowEasing(0.3F, 1F),
+                heightEasing = WindowEasing(0.3F, 1F)
+            ),
+            cornerPercentage = constant(10F)
         ),
 
         title = TextLayoutSpec(

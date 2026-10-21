@@ -29,7 +29,6 @@ import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 import kotlin.time.Clock
 import kotlin.time.DurationUnit
-import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import kotlin.time.toDuration
 import kotlinx.serialization.SerialName
@@ -121,12 +120,9 @@ data class PlayerStatusResponse(
             playerName,
             connected,
             powered,
-            currentVolume?.absoluteValue
-                ?.takeIf { canControlVolume }
-                ?.roundToInt(),
             currentVolume
                 ?.takeIf { canControlVolume }
-                ?.let { it < 0 },
+                ?.let { PlayerStatus.VolumeState(it.absoluteValue.roundToInt(), it < 0) },
             syncMaster,
             syncSlaves,
             eventTimestamp

@@ -147,4 +147,43 @@
     <string name="settings_local_player_volume_mode_summary_player_only">Der vom Server gesetzte Lautstärkewert steuert nur die Lautstärke der Wiedergabe in der App. Die finale Wiedgergabelautstärke hängt sowohl von der serverseitigen Lautstärke als auch von der eingestellten Medienlautstärke des Gerätes ab.</string>
     <string name="settings_local_player_volume_mode_summary_device">Die Medienlautstärke des Gerätes wird auf die vom Server gesetzte Lautstärke gesetzt. Dadurch wird dieser Wert auch für andere Apps verwendet.</string>
     <string name="settings_local_player_volume_mode_summary_device_while_playing">Die Medienlautstärke des Gerätes wird während der Wiedergabe auf die vom Server gesetzte Lautstärke gesetzt. Bei Ende der Wiedergabe wird die zuvor eingestellte Lautstärke wiederhergestellt.</string>
+
+
+    <string name="content_description_appbar_back">Zurück</string>
+    <string name="content_description_appbar_drawer">Seitenmenü öffnen</string>
+    <string name="content_description_appbar_search">Suche öffnen</string>
+    <string name="content_description_context_menu">Kontextmenü anzeigen</string>
+    <string name="content_description_share">Teilen</string>
+    <string name="content_description_open_settings">Einstellungen öffnen</string>
+    <string name="content_description_drag_playlist_item">Wiedergabelisten-Eintrag verschieben</string>
+    <string name="content_description_remove_playlist_item">Wiedergabelisten-Eintrag entfernen</string>
+    <string name="content_description_breadcrumbs_home">Zur Startseite gehen</string>
+    <string name="content_description_search_close">Suche schließen</string>
+    <string name="content_description_search_clear">Suchtext zurücksetzen</string>
+    <string name="content_description_nowplaying_close">Wiedergabeansicht schließen</string>
+    <string name="content_description_nowplaying_volume">Lautstärke-Steuerung öffnen</string>
+    <string name="content_description_nowplaying_playlist_menu">Menü mit Optionen für Wiedergabeliste öffnen</string>
+    <string name="content_description_nowplaying_playlist_save">Wiedergabeliste speichern</string>
+    <string name="content_description_nowplaying_playlist_clear">Wiedergabeliste leeren</string>
+    <string name="content_description_nowplaying_play">Wiedergabe starten</string>
+    <string name="content_description_nowplaying_pause">Wiedergabe pausieren</string>
+    <string name="content_description_nowplaying_stop">Wiedergabe anhalten</string>
+    <string name="content_description_nowplaying_prev">Vorheriger Titel</string>
+    <string name="content_description_nowplaying_next">Nächster Titel</string>
+    <string name="content_description_nowplaying_repeat_one">Einzelner Titel wird wiederholt, umschalten zu Wiederholung der Wiedergabeliste</string>
+    <string name="content_description_nowplaying_repeat_all">Wiedergabeliste wird wiederholt, umschalten zu ausgeschalteter Wiederholung</string>
+    <string name="content_description_nowplaying_repeat_off">Wiederholung ist ausgeschaltet, umschalten zu Wiederholung des Titels</string>
+    <string name="content_description_nowplaying_shuffle_songs">Titel werden zufällig ausgewählt, umschalten zu zufälliger Albenauswahl</string>
+    <string name="content_description_nowplaying_shuffle_albums">Alben werden zufällig ausgewählt, umschalten zu ausgeschaltetem Zufallsmodus</string>
+    <string name="content_description_nowplaying_shuffle_off">Zufallsmodus ist ausgeschaltet, umschalten zu zufälliger Titelauswahl</string>
+    <string name="content_description_context_menu_back">Zur vorherigen Menü-Seite zurückwechseln</string>
+    <string name="content_description_player_power_off">Player ausschalten</string>
+    <string name="content_description_player_power_on">Player einschalten</string>
+    <string name="content_description_drag_player_item">Player verschieben, um dessen Synchronisationszustand zu ändern</string>
+    <string name="content_description_drag_target_unsync">Zielpunkt, um Player-Synchronization aufzuheben</string>
+    <string name="content_description_mute">Stummschalten</string>
+    <string name="content_description_unmute">Stummschaltung aufheben</string>
+    <string name="content_description_show_password">Passwort anzeigen</string>
+    <string name="content_description_hide_password">Passwort verstecken</string>
+    <string name="content_description_server_setup_refresh">Erneut nach Servern suchen</string>
 </resources>

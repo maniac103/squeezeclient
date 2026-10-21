@@ -26,7 +26,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.SwipeToDismissBox
@@ -44,10 +43,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.paging.PagingData
@@ -56,6 +53,7 @@ import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.model.JiveActions
 import de.maniac103.squeezeclient.model.Playlist
 import de.maniac103.squeezeclient.model.ServerConfiguration
+import de.maniac103.squeezeclient.ui.composables.ResourceIcon
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -215,9 +213,9 @@ fun DeleteBackground(dismissState: SwipeToDismissBoxState) {
             SwipeToDismissBoxValue.Settled -> Alignment.Center
         }
     ) {
-        Icon(
-            imageVector = ImageVector.vectorResource(R.drawable.ic_delete_24dp),
-            contentDescription = null, // FIXME
+        ResourceIcon(
+            drawableResId = R.drawable.ic_delete_24dp,
+            contentDescriptionResId = R.string.content_description_remove_playlist_item,
             tint = MaterialTheme.colorScheme.onErrorContainer
         )
     }

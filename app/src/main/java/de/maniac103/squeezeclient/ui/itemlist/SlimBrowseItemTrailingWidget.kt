@@ -1,6 +1,6 @@
 /*
  * This file is part of Squeeze Client, an Android client for the LMS music server.
- * Copyright (c) 2024 Danny Baumann
+ * Copyright (c) 2026 Danny Baumann
  *
  * This program is free software: you can redistribute it and/or modify it under the terms of the
  * GNU General Public License as published by the Free Software Foundation,

@@ -26,8 +26,6 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconToggleButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -58,14 +56,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.PlatformTextStyle
@@ -92,6 +88,8 @@ import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.ui.bottomsheets.InputSheetContent
 import de.maniac103.squeezeclient.ui.composables.ArtworkImage
 import de.maniac103.squeezeclient.ui.composables.BottomSheetContentWrapper
+import de.maniac103.squeezeclient.ui.composables.ResourceIcon
+import de.maniac103.squeezeclient.ui.composables.ResourceIconButton
 import de.maniac103.squeezeclient.ui.composables.toTextResource
 import de.maniac103.squeezeclient.ui.contextmenu.ContextMenuBottomSheetContent
 import de.maniac103.squeezeclient.ui.contextmenu.ContextMenuBottomSheetViewModel
@@ -460,48 +458,38 @@ private fun PlayerToolbar(
                 Text(state.toolbarSubtitle.resolve())
             },
             navigationIcon = {
-                IconButton(
+                ResourceIconButton(
+                    drawableResId = R.drawable.ic_chevron_down_24dp,
+                    contentDescriptionResId = R.string.content_description_nowplaying_close,
                     onClick = onNavigateUp
-                ) {
-                    Icon(
-                        imageVector = ImageVector.vectorResource(R.drawable.ic_chevron_down_24dp),
-                        contentDescription = null // FIXME
-                    )
-                }
+                )
             },
             actions = {
                 if (showNowPlayingActions) {
                     state.contextMenuData?.let { data ->
-                        IconButton(
-                            onClick = {
-                                onShowInfoMenu(data)
-                            }
-                        ) {
-                            Icon(
-                                imageVector = ImageVector.vectorResource(R.drawable.ic_info_24dp),
-                                contentDescription = null // FIXME
-                            )
-                        }
-                    }
-                    IconButton(
-                        onClick = onShowVolumePopup
-                    ) {
-                        Icon(
-                            imageVector = ImageVector.vectorResource(R.drawable.ic_volume_24dp),
-                            contentDescription = null // FIXME
+                        ResourceIconButton(
+                            drawableResId = R.drawable.ic_info_24dp,
+                            contentDescriptionResId = R.string.content_description_context_menu,
+                            onClick = { onShowInfoMenu(data) }
                         )
                     }
+
+                    ResourceIconButton(
+                        drawableResId = R.drawable.ic_volume_24dp,
+                        contentDescriptionResId = R.string.content_description_nowplaying_volume,
+                        onClick = onShowVolumePopup
+                    )
                 }
                 if (showPlaylistActions) {
                     var showMenu by remember { mutableStateOf(false) }
-                    IconButton(
+
+                    ResourceIconButton(
+                        drawableResId = R.drawable.ic_menu_overflow,
+                        contentDescriptionResId =
+                            R.string.content_description_nowplaying_playlist_menu,
                         onClick = { showMenu = true }
-                    ) {
-                        Icon(
-                            imageVector = ImageVector.vectorResource(R.drawable.ic_menu_overflow),
-                            contentDescription = null // FIXME
-                        )
-                    }
+                    )
+
                     DropdownMenu(
                         expanded = showMenu,
                         onDismissRequest = { showMenu = false }
@@ -513,11 +501,10 @@ private fun PlayerToolbar(
                                 showMenu = false
                             },
                             leadingIcon = {
-                                Icon(
-                                    imageVector = ImageVector.vectorResource(
-                                        R.drawable.ic_playlist_save_24dp
-                                    ),
-                                    contentDescription = null // FIXME
+                                ResourceIcon(
+                                    drawableResId = R.drawable.ic_playlist_save_24dp,
+                                    contentDescriptionResId =
+                                        R.string.content_description_nowplaying_playlist_save
                                 )
                             }
                         )
@@ -528,11 +515,10 @@ private fun PlayerToolbar(
                                 showMenu = false
                             },
                             leadingIcon = {
-                                Icon(
-                                    imageVector = ImageVector.vectorResource(
-                                        R.drawable.ic_playlist_clear_24dp
-                                    ),
-                                    contentDescription = null // FIXME
+                                ResourceIcon(
+                                    drawableResId = R.drawable.ic_playlist_clear_24dp,
+                                    contentDescriptionResId =
+                                        R.string.content_description_nowplaying_playlist_clear
                                 )
                             }
                         )
@@ -557,6 +543,7 @@ private fun PlayerArtwork(
     artwork = state.artwork,
     serverConfig = serverConfig,
     imageRequestModifier = {
+        // FIXME: fallback tinting
         fallback(R.drawable.ic_album_placeholder)
         size(Size.ORIGINAL)
     },
@@ -609,7 +596,8 @@ private fun PlaybackControls(
     onStop: () -> Unit
 ) {
     PlaybackButton(
-        icon = state.repeatIconResId,
+        iconResId = state.repeatIconResId,
+        contentDescriptionResId = state.repeatContentDescriptionResId,
         layoutSpec = layoutSpec.repeat,
         progress = progress,
         enabled = state.isPowered,
@@ -617,12 +605,16 @@ private fun PlaybackControls(
     )
 
     PlaybackButton(
-        icon = R.drawable.ic_prev_24dp,
+        iconResId = R.drawable.ic_prev_24dp,
+        contentDescriptionResId = R.string.content_description_nowplaying_prev,
         layoutSpec = layoutSpec.prevTrack,
         progress = progress,
         enabled = state.playlistPosition > 1,
         onClick = onPrevious
     )
+
+    val playbackStopContentDescription =
+        stringResource(R.string.content_description_nowplaying_stop)
 
     FilledIconToggleButton(
         checked = state.isPlaying,
@@ -637,8 +629,7 @@ private fun PlaybackControls(
                     Modifier
                         .onLongPressConsumeTap(onStop)
                         .semantics {
-                            // FIXME: label
-                            onLongClick(label = null) {
+                            onLongClick(label = playbackStopContentDescription) {
                                 onStop()
                                 true
                             }
@@ -648,14 +639,15 @@ private fun PlaybackControls(
                 }
             )
     ) {
-        Icon(
-            imageVector = ImageVector.vectorResource(state.playPauseIconResId),
-            contentDescription = null // FIXME
+        ResourceIcon(
+            drawableResId = state.playPauseIconResId,
+            contentDescriptionResId = state.playPauseContentDescriptionResId
         )
     }
 
     PlaybackButton(
-        icon = R.drawable.ic_next_24dp,
+        iconResId = R.drawable.ic_next_24dp,
+        contentDescriptionResId = R.string.content_description_nowplaying_next,
         layoutSpec = layoutSpec.nextTrack,
         progress = progress,
         enabled = state.playlistPosition < state.playlistLength,
@@ -663,7 +655,8 @@ private fun PlaybackControls(
     )
 
     PlaybackButton(
-        icon = state.shuffleIconResId,
+        iconResId = state.shuffleIconResId,
+        contentDescriptionResId = state.shuffleContentDescriptionResId,
         layoutSpec = layoutSpec.shuffle,
         progress = progress,
         enabled = state.isPowered,
@@ -673,26 +666,22 @@ private fun PlaybackControls(
 
 @Composable
 private fun PlaybackButton(
-    icon: Int,
+    iconResId: Int,
+    contentDescriptionResId: Int,
     layoutSpec: ControlLayoutSpec,
     progress: MotionProgress,
     enabled: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
-) {
-    IconButton(
-        onClick = onClick,
-        enabled = enabled,
-        modifier = modifier
-            .bounds(progress, layoutSpec.bounds)
-            .fade(progress, layoutSpec.alpha)
-    ) {
-        Icon(
-            imageVector = ImageVector.vectorResource(icon),
-            contentDescription = null // FIXME
-        )
-    }
-}
+) = ResourceIconButton(
+    drawableResId = iconResId,
+    contentDescriptionResId = contentDescriptionResId,
+    enabled = enabled,
+    onClick = onClick,
+    modifier = modifier
+        .bounds(progress, layoutSpec.bounds)
+        .fade(progress, layoutSpec.alpha)
+)
 
 @Composable
 private fun ProgressControls(
@@ -1034,7 +1023,9 @@ fun NowPlayingPreview() {
         isPowered = true,
         playPauseEnabled = true,
         repeatIconResId = R.drawable.ic_repeat_off_24dp,
+        repeatContentDescriptionResId = R.string.content_description_nowplaying_repeat_off,
         shuffleIconResId = R.drawable.ic_shuffle_off_24dp,
+        shuffleContentDescriptionResId = R.string.content_description_nowplaying_shuffle_off,
         canSeek = true,
         playlistPosition = 8,
         playlistLength = 15,

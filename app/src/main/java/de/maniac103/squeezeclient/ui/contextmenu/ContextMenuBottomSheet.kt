@@ -26,8 +26,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,8 +33,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -44,6 +40,7 @@ import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.ui.composables.ArtworkImage
+import de.maniac103.squeezeclient.ui.composables.ResourceIconButton
 import kotlin.collections.emptyList
 
 @Composable
@@ -123,20 +120,15 @@ fun ContextMenuBottomSheetContent(
             }
         }
         backNavTitle?.let { backNavTitle ->
-            Row {
-                IconButton(
-                    onClick = onBackNavClick,
-                    modifier = Modifier.align(Alignment.CenterVertically)
-                ) {
-                    Icon(
-                        ImageVector.vectorResource(R.drawable.ic_chevron_left_24dp),
-                        contentDescription = null // FIXME
-                    )
-                }
-                Text(
-                    text = backNavTitle,
-                    modifier = Modifier.align(Alignment.CenterVertically)
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                ResourceIconButton(
+                    drawableResId = R.drawable.ic_chevron_left_24dp,
+                    contentDescriptionResId = R.string.content_description_context_menu_back,
+                    onClick = onBackNavClick
                 )
+                Text(text = backNavTitle)
             }
         }
 

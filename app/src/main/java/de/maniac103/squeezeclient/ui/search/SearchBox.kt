@@ -34,8 +34,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
@@ -55,16 +53,15 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.cometd.request.LibrarySearchRequest
+import de.maniac103.squeezeclient.ui.composables.ResourceIconButton
 import kotlin.coroutines.cancellation.CancellationException
 
 @Composable
@@ -157,15 +154,13 @@ fun SearchBox(
                     Row(
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        IconButton(
-                            onClick = { onClose() },
+                        ResourceIconButton(
+                            drawableResId = R.drawable.ic_arrow_left_24dp,
+                            contentDescriptionResId = R.string.content_description_search_close,
+                            onClick = onClose,
                             modifier = Modifier.align(Alignment.CenterVertically)
-                        ) {
-                            Icon(
-                                ImageVector.vectorResource(R.drawable.ic_arrow_left_24dp),
-                                contentDescription = null // FIXME
-                            )
-                        }
+                        )
+
                         TextField(
                             value = queryText,
                             placeholder = {
@@ -190,15 +185,12 @@ fun SearchBox(
                                 .focusRequester(focusRequester)
                         )
                         if (queryText.isNotEmpty()) {
-                            IconButton(
-                                onClick = { onClearQuery() },
+                            ResourceIconButton(
+                                drawableResId = R.drawable.ic_close_24dp,
+                                contentDescriptionResId = R.string.content_description_search_clear,
+                                onClick = onClearQuery,
                                 modifier = Modifier.align(Alignment.CenterVertically)
-                            ) {
-                                Icon(
-                                    ImageVector.vectorResource(R.drawable.ic_close_24dp),
-                                    contentDescription = null // FIXME
-                                )
-                            }
+                            )
                         }
                     }
                     if (queryText.isNotEmpty() && submittedQueryText) {

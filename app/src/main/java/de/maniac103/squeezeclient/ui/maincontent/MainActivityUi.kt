@@ -46,7 +46,6 @@ import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
@@ -93,6 +92,7 @@ import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlideshowImage
 import de.maniac103.squeezeclient.ui.ActivePlayerScope
+import de.maniac103.squeezeclient.ui.composables.ResourceIconButton
 import de.maniac103.squeezeclient.ui.displaystatus.DisplayStatusIndicator
 import de.maniac103.squeezeclient.ui.nowplaying.NowPlayingScreen
 import de.maniac103.squeezeclient.ui.nowplaying.rememberNowPlayingMotionState
@@ -108,7 +108,6 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
-import kotlinx.datetime.format.Padding
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.scope.KoinScope
 import org.koin.core.annotation.KoinExperimentalAPI
@@ -342,17 +341,14 @@ private fun MainActivityDrawerContent(
                         .weight(1F)
                         .align(Alignment.CenterVertically)
                 )
-                IconButton(
+                ResourceIconButton(
+                    drawableResId = R.drawable.ic_settings_24dp,
+                    contentDescriptionResId = R.string.content_description_open_settings,
                     onClick = onOpenServerSetup,
                     colors = IconButtonDefaults.iconButtonColors(
                         contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                     )
-                ) {
-                    Icon(
-                        imageVector = ImageVector.vectorResource(R.drawable.ic_settings_24dp),
-                        contentDescription = null // FIXME
-                    )
-                }
+                )
             }
         }
 
@@ -613,29 +609,23 @@ private fun MainActivityAppBar(
         },
         titleHorizontalAlignment = Alignment.CenterHorizontally,
         navigationIcon = {
-            IconButton(
+            ResourceIconButton(
+                drawableResId = R.drawable.ic_drawer_menu_24dp,
+                contentDescriptionResId = R.string.content_description_appbar_drawer,
                 onClick = {
                     scope.launch {
                         drawerState.open()
                     }
                 }
-            ) {
-                Icon(
-                    imageVector = ImageVector.vectorResource(R.drawable.ic_drawer_menu_24dp),
-                    contentDescription = null // FIXME
-                )
-            }
+            )
         },
         actions = {
             if (onOpenSearch != null) {
-                IconButton(
+                ResourceIconButton(
+                    drawableResId = R.drawable.ic_search_24dp,
+                    contentDescriptionResId = R.string.content_description_appbar_search,
                     onClick = onOpenSearch
-                ) {
-                    Icon(
-                        imageVector = ImageVector.vectorResource(R.drawable.ic_search_24dp),
-                        contentDescription = null // FIXME
-                    )
-                }
+                )
             }
         },
         contentPadding = contentPadding,

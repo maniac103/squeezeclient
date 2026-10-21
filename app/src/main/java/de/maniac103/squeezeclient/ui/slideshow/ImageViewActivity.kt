@@ -35,8 +35,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -54,11 +52,9 @@ import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
@@ -71,6 +67,7 @@ import de.maniac103.squeezeclient.Preferences
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.extfuncs.addServerCredentialsIfNeeded
 import de.maniac103.squeezeclient.model.SlideshowImage
+import de.maniac103.squeezeclient.ui.composables.ResourceIconButton
 import de.maniac103.squeezeclient.ui.theme.AppTheme
 import kotlin.getValue
 import kotlin.io.path.createTempFile
@@ -130,29 +127,19 @@ class ImageViewActivity : AppCompatActivity() {
                             containerColor = Color.Transparent
                         ),
                         navigationIcon = {
-                            IconButton(
+                            ResourceIconButton(
+                                drawableResId = R.drawable.ic_arrow_left_24dp,
+                                contentDescriptionResId = R.string.content_description_appbar_back,
                                 onClick = { finishAfterTransition() }
-                            ) {
-                                Icon(
-                                    imageVector = ImageVector.vectorResource(
-                                        R.drawable.ic_arrow_left_24dp
-                                    ),
-                                    contentDescription = null // FIXME
-                                )
-                            }
+                            )
                         },
                         actions = {
                             if (!imageIsLoading) {
-                                IconButton(
+                                ResourceIconButton(
+                                    drawableResId = R.drawable.ic_share_24dp,
+                                    contentDescriptionResId = R.string.content_description_share,
                                     onClick = { share(imageUrl) }
-                                ) {
-                                    Icon(
-                                        imageVector = ImageVector.vectorResource(
-                                            R.drawable.ic_share_24dp
-                                        ),
-                                        contentDescription = null // FIXME
-                                    )
-                                }
+                                )
                             }
                         },
                         modifier = Modifier.background(

@@ -186,7 +186,9 @@ data class NowPlayingUiState(
     val isPowered: Boolean,
     val playPauseEnabled: Boolean,
     val repeatIconResId: Int,
+    val repeatContentDescriptionResId: Int,
     val shuffleIconResId: Int,
+    val shuffleContentDescriptionResId: Int,
     val canSeek: Boolean,
     val playlistPosition: Int,
     val playlistLength: Int,
@@ -203,6 +205,11 @@ data class NowPlayingUiState(
     val playPauseIconResId get() = when (isPlaying) {
         true -> R.drawable.ic_pause_24dp
         else -> R.drawable.ic_play_24dp
+    }
+
+    val playPauseContentDescriptionResId get() = when (isPlaying) {
+        true -> R.string.content_description_nowplaying_pause
+        false -> R.string.content_description_nowplaying_play
     }
 
     val toolbarSubtitle get() = TextResource.StringRes(
@@ -233,10 +240,21 @@ fun PlayerStatus.toNowPlayingUiState() = NowPlayingUiState(
         RepeatState.RepeatAll -> R.drawable.ic_repeat_24dp
         RepeatState.Off -> R.drawable.ic_repeat_off_24dp
     },
+    repeatContentDescriptionResId = when (repeatState) {
+        RepeatState.RepeatTitle -> R.string.content_description_nowplaying_repeat_one
+        RepeatState.RepeatAll -> R.string.content_description_nowplaying_repeat_all
+        RepeatState.Off -> R.string.content_description_nowplaying_repeat_off
+    },
     shuffleIconResId = when (shuffleState) {
         ShuffleState.ShuffleAlbum -> R.drawable.ic_shuffle_album_24dp
         ShuffleState.ShuffleSong -> R.drawable.ic_shuffle_song_24dp
         ShuffleState.Off -> R.drawable.ic_shuffle_off_24dp
+    },
+    shuffleContentDescriptionResId = when (shuffleState) {
+        ShuffleState.ShuffleAlbum -> R.string.content_description_nowplaying_shuffle_albums
+        ShuffleState.ShuffleSong -> R.string.content_description_nowplaying_shuffle_songs
+        ShuffleState.Off -> R.string.content_description_nowplaying_shuffle_off
+
     },
     canSeek = playbackState != PlayState.Stopped && currentSongDuration != null,
     playlistPosition = playlist.currentPosition,

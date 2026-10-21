@@ -35,6 +35,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.VerticalSlider
 import androidx.compose.material3.rememberSliderState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,31 +45,41 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.maniac103.squeezeclient.R
+import kotlin.math.roundToInt
 
 @Composable
 fun VolumeControlPopup(viewModel: VolumePopupViewModel) {
-    val volume by viewModel.volumeFlow.collectAsStateWithLifecycle()
-    val muted by viewModel.mutedFlow.collectAsStateWithLifecycle()
+    val state by viewModel.stateFlow.collectAsStateWithLifecycle()
     val visible by viewModel.visibleFlow.collectAsStateWithLifecycle()
 
-    VolumeControlPopup(
-        volume = volume,
-        muted = muted,
-        visible = visible,
-        onVolumeChanged = viewModel::setVolume,
-        onMuteChanged = viewModel::setMuted
-    )
+    state?.let {
+        VolumeControlPopup(
+            volume = it.volume,
+            muted = it.muted,
+            visible = visible,
+            onVolumeChanged = viewModel::setVolume,
+            onMuteChanged = viewModel::setMuted
+        )
+    }
 }
 
 @Composable
 fun VolumeControlPopup(
-    volume: Float,
+    volume: Int,
     muted: Boolean,
     visible: Boolean,
-    onVolumeChanged: (Float) -> Unit,
+    onVolumeChanged: (Int) -> Unit,
     onMuteChanged: (Boolean) -> Unit
 ) {
-    val sliderState = rememberSliderState(volume)
+    val sliderState = rememberSliderState(
+        value = volume.toFloat(),
+        trackRange = 0F..100F
+    )
+
+    LaunchedEffect(volume) {
+        sliderState.value = volume.toFloat()
+    }
+
     Column(
         horizontalAlignment = Alignment.End,
         modifier = Modifier
@@ -93,7 +104,7 @@ fun VolumeControlPopup(
                     VerticalSlider(
                         state = sliderState,
                         onValueChange = { sliderState.value = it },
-                        onValueChangeFinished = { onVolumeChanged(sliderState.value) },
+                        onValueChangeFinished = { onVolumeChanged(sliderState.value.roundToInt()) },
                         track = { state ->
                             SliderDefaults.Track(
                                 state,
@@ -134,7 +145,7 @@ fun VolumeControlPopup(
 @Composable
 fun VolumeControlPopupPreview() {
     VolumeControlPopup(
-        volume = 0.6F,
+        volume = 60,
         muted = true,
         visible = true,
         onVolumeChanged = {},

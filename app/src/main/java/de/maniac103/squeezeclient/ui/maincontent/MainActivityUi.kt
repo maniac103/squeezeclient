@@ -158,7 +158,7 @@ sealed interface MainLayout {
 
 @Composable
 fun MainActivityUi(
-    volumeChangeRequestFlow: SharedFlow<Float>,
+    volumeChangeRequestFlow: SharedFlow<Int>,
     onGalleryItemSelected: (SlideshowImage) -> Unit,
     onDownloadSelected: (DownloadRequestData) -> Unit,
     onWebLinkSelected: (title: String, link: Uri) -> Unit,
@@ -191,7 +191,7 @@ fun MainActivityUi(
     serverConfigFlow: Flow<ServerConfiguration?>,
     forceGridForSlimBrowseItemsFlow: Flow<Boolean>,
     localPlaybackEnabledFlow: Flow<Boolean>,
-    volumeChangeRequestFlow: SharedFlow<Float>,
+    volumeChangeRequestFlow: SharedFlow<Int>,
     onGalleryItemSelected: (SlideshowImage) -> Unit = {},
     onDownloadSelected: (DownloadRequestData) -> Unit = {},
     onWebLinkSelected: (title: String, link: Uri) -> Unit = { _, _ -> },
@@ -454,7 +454,7 @@ private fun MainActivityConnected(
     insets: PaddingValues,
     serverConfigState: State<ServerConfiguration?>,
     forceGridForSlimBrowseItemsState: State<Boolean>,
-    volumeChangeRequestFlow: SharedFlow<Float>,
+    volumeChangeRequestFlow: SharedFlow<Int>,
     onDownloadSelected: (DownloadRequestData) -> Unit,
     onGalleryItemSelected: (SlideshowImage) -> Unit,
     onWebLinkSelected: (title: String, link: Uri) -> Unit

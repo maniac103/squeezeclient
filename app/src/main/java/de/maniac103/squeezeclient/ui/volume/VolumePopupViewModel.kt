@@ -21,7 +21,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import de.maniac103.squeezeclient.cometd.ConnectionHelper
 import de.maniac103.squeezeclient.model.PlayerId
-import kotlin.math.roundToInt
 import kotlin.time.Duration
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
@@ -42,41 +41,44 @@ class VolumePopupViewModel(
         .flatMapLatest { it.playStatus }
     private val visibleFlowInternal = MutableStateFlow(false)
 
-    val volumeFlow = currentPlayerStateFlow
-        .map { status -> status.currentVolume?.let { it.toFloat() / 100F } ?: 1F }
+    val stateFlow = currentPlayerStateFlow
+        .map { status ->
+            if (status.currentVolume != null && status.muted != null) {
+                VolumeState(status.currentVolume, status.muted)
+            } else {
+                null
+            }
+        }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(),
-            initialValue = 0F
-        )
-
-    val mutedFlow = currentPlayerStateFlow
-        .map { status -> status.muted ?: false }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(),
-            initialValue = false
+            initialValue = null
         )
 
     val visibleFlow = visibleFlowInternal.asStateFlow()
 
     // FIXME: handle already showing
     fun show(duration: Duration) = viewModelScope.launch {
-        visibleFlowInternal.emit(true)
-        delay(duration)
-        visibleFlowInternal.emit(false)
+        if (stateFlow.value != null) {
+            visibleFlowInternal.emit(true)
+            delay(duration)
+            visibleFlowInternal.emit(false)
+        }
     }
 
-    fun setVolume(volume: Float) = viewModelScope.launch {
-        connectionHelper.setVolume(playerId, (volume * 100F).roundToInt())
+    fun setVolume(volume: Int) = viewModelScope.launch {
+        connectionHelper.setVolume(playerId, volume)
     }
 
-    fun adjustVolume(delta: Float) {
-        val newVolume = (volumeFlow.value + delta).coerceIn(0F, 1F)
-        setVolume(newVolume)
+    fun adjustVolume(delta: Int) {
+        val currentVolume = stateFlow.value?.volume
+            ?: return
+        setVolume((currentVolume + delta).coerceIn(0, 100))
     }
 
     fun setMuted(muted: Boolean) = viewModelScope.launch {
         connectionHelper.setMuteState(playerId, muted)
     }
 }
+
+data class VolumeState(val volume: Int, val muted: Boolean)

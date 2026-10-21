@@ -421,6 +421,7 @@ class MainContentViewModel(
         }
     }
 
+    @Suppress("IntroduceWhenSubject")
     private fun handleGoAction(
         title: String,
         item: SlimBrowseItemList.SlimBrowseItem?,

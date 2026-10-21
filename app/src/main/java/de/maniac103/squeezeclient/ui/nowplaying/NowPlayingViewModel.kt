@@ -255,7 +255,6 @@ fun PlayerStatus.toNowPlayingUiState() = NowPlayingUiState(
         ShuffleState.ShuffleAlbum -> R.string.content_description_nowplaying_shuffle_albums
         ShuffleState.ShuffleSong -> R.string.content_description_nowplaying_shuffle_songs
         ShuffleState.Off -> R.string.content_description_nowplaying_shuffle_off
-
     },
     canSeek = playbackState != PlayState.Stopped && currentSongDuration != null,
     playlistPosition = playlist.currentPosition,

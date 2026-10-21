@@ -34,12 +34,10 @@ import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.cometd.ConnectionHelper
 import de.maniac103.squeezeclient.extfuncs.requestPermission
 import de.maniac103.squeezeclient.model.DownloadRequestData
-import de.maniac103.squeezeclient.model.PlayerStatus
 import de.maniac103.squeezeclient.service.DownloadWorker
 import de.maniac103.squeezeclient.service.localplayer.LocalPlaybackService
 import de.maniac103.squeezeclient.service.mediasession.MediaService
 import de.maniac103.squeezeclient.ui.composables.DialogHost
-import de.maniac103.squeezeclient.ui.maincontent.MainActivityState
 import de.maniac103.squeezeclient.ui.maincontent.MainActivityUi
 import de.maniac103.squeezeclient.ui.maincontent.MainActivityViewModel
 import de.maniac103.squeezeclient.ui.maincontent.SelectedPlayerActiveState
@@ -157,6 +155,7 @@ class MainActivity : ComponentActivity() {
         DownloadWorker.enqueue(items)
     }
 
+    @Suppress("RedundantIf")
     private suspend fun requestNotificationPermissionForDownload(): Boolean {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
             // Don't need runtime permission in that case

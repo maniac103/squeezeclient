@@ -76,8 +76,6 @@ import androidx.compose.ui.util.fastAny
 import androidx.compose.ui.util.fastForEach
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.PagingData
-import coil3.request.fallback
-import coil3.size.Size
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.JiveActions
@@ -381,7 +379,7 @@ private fun PlayerSurface(
         PlayerArtwork(
             state = state,
             serverConfig = serverConfig,
-            bounds = geometry.artwork,
+            layoutSpec = geometry.artwork,
             progress = progress
         )
 
@@ -537,14 +535,17 @@ private fun PlayerToolbar(
 private fun PlayerArtwork(
     state: NowPlayingUiState,
     serverConfig: ServerConfiguration?,
-    progress: MotionProgress,
-    bounds: Morph<Bounds>
+    layoutSpec: ArtworkLayoutSpec,
+    progress: MotionProgress
 ) = ArtworkImage(
     artwork = state.artwork,
     serverConfig = serverConfig,
     fallbackDrawableResId = R.drawable.ic_album_placeholder,
     enforceLoadingOriginalImageSize = true,
-    modifier = Modifier.bounds(progress, bounds)
+    cornerPercent = {
+        layoutSpec.cornerPercentage.at(progress.value).roundToInt()
+    },
+    modifier = Modifier.bounds(progress, layoutSpec.bounds)
 )
 
 @Composable

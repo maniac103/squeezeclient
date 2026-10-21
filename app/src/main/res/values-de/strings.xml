@@ -22,10 +22,6 @@
     <string name="item_title_advanced_settings">Erweiterte Einstellungen</string>
     <string name="menu_manage_players">Wiedergabegeräte verwalten</string>
     <string name="menu_settings">Einstellungen</string>
-    <string name="menu_search">Suche</string>
-    <string name="menu_share">Teilen</string>
-    <string name="menu_player_volume">Lautstärke</string>
-    <string name="menu_song_info">Titel-Informationen</string>
     <string name="now_playing">Aktueller Titel</string>
     <string name="playlist">Wiedergabeliste</string>
     <string name="playlist_save_title">Titel der Wiedergabeliste</string>
@@ -130,7 +126,6 @@
     <string name="settings_theme_title">Farbschema</string>
     <string name="settings_theme_light">Hell</string>
     <string name="settings_theme_dark">Dunkel</string>
-    <string name="settings_theme_follow_battery_saver">Dunkel im Energiesparmodus</string>
     <string name="settings_theme_follow_system">Systemeinstellung verwenden</string>
     <string name="settings_force_grid_title">Listen immer in Gitterform</string>
     <string name="settings_force_grid_summary_off">Bebilderte Listen mit Alben, Titeln usw. in Listen- oder Gitter-Anordnung darstellen, abhängig von Gerätegröße und Ausrichtung.</string>

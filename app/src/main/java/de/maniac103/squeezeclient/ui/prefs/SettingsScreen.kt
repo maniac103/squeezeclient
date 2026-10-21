@@ -178,7 +178,7 @@ fun SettingsScreen(
 
                 ListPreference(
                     position = position,
-                    title = stringResource(R.string.settings_local_player_volume_mode_title),
+                    title = stringResource(R.string.settings_download_path_structure_title),
                     labelProvider = { value -> stringResource(mapLabelResId(value)) },
                     summaryProvider = { value -> stringResource(mapLabelResId(value)) },
                     preference = preferences.downloadFolderStructure

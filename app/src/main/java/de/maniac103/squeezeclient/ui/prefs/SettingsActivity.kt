@@ -52,6 +52,7 @@ class SettingsActivity : ComponentActivity() {
         }
     }
 
+    @Suppress("RedundantIf")
     private suspend fun checkNotificationsPermissionForLocalPlayer(): Boolean {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
             return true

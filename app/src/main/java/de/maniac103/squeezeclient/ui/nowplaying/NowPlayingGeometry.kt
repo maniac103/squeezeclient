@@ -118,10 +118,7 @@ internal data class ControlsLayoutSpec(
 }
 
 @Immutable
-internal data class ArtworkLayoutSpec(
-    val bounds: Morph<Bounds>,
-    val cornerPercentage: Morph<Float>
-)
+internal data class ArtworkLayoutSpec(val bounds: Morph<Bounds>, val cornerPercentage: Morph<Float>)
 
 @Immutable
 internal data class PlayerGeometry(

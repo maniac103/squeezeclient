@@ -21,15 +21,19 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextObfuscationMode
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExposedDropdownMenu
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
@@ -54,6 +58,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -71,7 +76,18 @@ fun ServerSetupScreen(
     onStartDiscovery: () -> Unit = {},
     onGoBack: (() -> Unit)? = null
 ) {
-    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+    val scrollState = rememberScrollState()
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
+        scrollableState = scrollState
+    )
+    val appBarScrollable by remember {
+        derivedStateOf {
+            scrollState.canScrollForward ||
+                scrollState.canScrollBackward ||
+                scrollBehavior.state.heightOffset != 0f
+        }
+    }
+
     val serverAddressState = rememberTextFieldState(currentServerConfig?.hostnameAndPort ?: "")
     val userNameState = rememberTextFieldState(currentServerConfig?.username ?: "")
     val passwordState = rememberTextFieldState(currentServerConfig?.password ?: "")
@@ -94,7 +110,11 @@ fun ServerSetupScreen(
     }
 
     Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier = if (appBarScrollable) {
+            Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
+        } else {
+            Modifier
+        },
         topBar = {
             TopAppBar(
                 title = {
@@ -112,116 +132,123 @@ fun ServerSetupScreen(
                         )
                     }
                 },
-                titleHorizontalAlignment = Alignment.CenterHorizontally
+                titleHorizontalAlignment = Alignment.CenterHorizontally,
+                scrollBehavior = scrollBehavior
             )
         }
     ) { innerPadding ->
         Column(
+            verticalArrangement = Arrangement.Center,
             modifier = Modifier
                 .padding(innerPadding)
+                .consumeWindowInsets(innerPadding)
+                .imePadding()
                 .fillMaxSize()
+                .verticalScroll(scrollState)
+                .padding(horizontal = 16.dp)
         ) {
-            Column(
-                verticalArrangement = Arrangement.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .weight(1F)
-            ) {
-                // discovered servers
-                DiscoveredServersDropdown(
-                    discoveredServers = discoveredServers,
-                    onStartDiscovery = onStartDiscovery,
-                    onEntrySelected = { entry ->
-                        selectedServer = entry
-                        serverAddressState.setTextAndPlaceCursorAtEnd(
-                            when {
-                                entry.hostName.isEmpty() ->
-                                    currentServerConfig?.hostnameAndPort ?: ""
+            // discovered servers
+            DiscoveredServersDropdown(
+                discoveredServers = discoveredServers,
+                onStartDiscovery = onStartDiscovery,
+                onEntrySelected = { entry ->
+                    selectedServer = entry
+                    serverAddressState.setTextAndPlaceCursorAtEnd(
+                        when {
+                            entry.hostName.isEmpty() ->
+                                currentServerConfig?.hostnameAndPort ?: ""
 
-                                entry.port == null -> entry.hostName
+                            entry.port == null -> entry.hostName
 
-                                else -> "${entry.hostName}:${entry.port}"
-                            }
-                        )
-                    }
-                )
-
-                if (discoveredServers == null) {
-                    LinearProgressIndicator(
-                        progress = { discoveryProgress },
-                        modifier = Modifier
-                            .fillMaxWidth()
+                            else -> "${entry.hostName}:${entry.port}"
+                        }
                     )
                 }
+            )
 
-                // server address
-                OutlinedTextField(
-                    state = serverAddressState,
-                    enabled = selectedServer?.hostName.isNullOrEmpty(),
-                    isError = addressHasError,
-                    lineLimits = TextFieldLineLimits.SingleLine,
-                    supportingText = {
-                        if (addressHasError) {
-                            Text(
-                                stringResource(
-                                    R.string.server_address_error,
-                                    serverAddressState.text
-                                )
-                            )
-                        }
-                    },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri),
-                    placeholder = { Text(stringResource(R.string.server_address_hint)) },
+            if (discoveredServers == null) {
+                LinearProgressIndicator(
+                    progress = { discoveryProgress },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 4.dp)
-                )
-
-                // user name
-                OutlinedTextField(
-                    state = userNameState,
-                    lineLimits = TextFieldLineLimits.SingleLine,
-                    placeholder = { Text(stringResource(R.string.server_user_hint)) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp)
-                )
-
-                // password
-                OutlinedSecureTextField(
-                    state = passwordState,
-                    isError = !credentialsValid,
-                    supportingText = {
-                        if (!credentialsValid) {
-                            Text(stringResource(R.string.server_creds_error))
-                        }
-                    },
-                    textObfuscationMode = if (passwordVisible) {
-                        TextObfuscationMode.Visible
-                    } else {
-                        TextObfuscationMode.System
-                    },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    placeholder = { Text(stringResource(R.string.server_password_hint)) },
-                    trailingIcon = {
-                        ResourceIconButton(
-                            drawableResId = when (passwordVisible) {
-                                true -> R.drawable.ic_eye_off_24dp
-                                false -> R.drawable.ic_eye_24dp
-                            },
-                            contentDescriptionResId = when (passwordVisible) {
-                                true -> R.string.content_description_hide_password
-                                false -> R.string.content_description_show_password
-                            },
-                            onClick = { passwordVisible = !passwordVisible }
-                        )
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp)
                 )
             }
+
+            // server address
+            OutlinedTextField(
+                state = serverAddressState,
+                enabled = selectedServer?.hostName.isNullOrEmpty(),
+                isError = addressHasError,
+                lineLimits = TextFieldLineLimits.SingleLine,
+                supportingText = {
+                    if (addressHasError) {
+                        Text(
+                            stringResource(
+                                R.string.server_address_error,
+                                serverAddressState.text
+                            )
+                        )
+                    }
+                },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Uri,
+                    imeAction = ImeAction.Next
+                ),
+                placeholder = { Text(stringResource(R.string.server_address_hint)) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp)
+            )
+
+            // user name
+            OutlinedTextField(
+                state = userNameState,
+                lineLimits = TextFieldLineLimits.SingleLine,
+                keyboardOptions = KeyboardOptions(
+                    imeAction = ImeAction.Next
+                ),
+                placeholder = { Text(stringResource(R.string.server_user_hint)) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp)
+            )
+
+            // password
+            OutlinedSecureTextField(
+                state = passwordState,
+                isError = !credentialsValid,
+                supportingText = {
+                    if (!credentialsValid) {
+                        Text(stringResource(R.string.server_creds_error))
+                    }
+                },
+                textObfuscationMode = if (passwordVisible) {
+                    TextObfuscationMode.Visible
+                } else {
+                    TextObfuscationMode.System
+                },
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Done
+                ),
+                placeholder = { Text(stringResource(R.string.server_password_hint)) },
+                trailingIcon = {
+                    ResourceIconButton(
+                        drawableResId = when (passwordVisible) {
+                            true -> R.drawable.ic_eye_off_24dp
+                            false -> R.drawable.ic_eye_24dp
+                        },
+                        contentDescriptionResId = when (passwordVisible) {
+                            true -> R.string.content_description_hide_password
+                            false -> R.string.content_description_show_password
+                        },
+                        onClick = { passwordVisible = !passwordVisible }
+                    )
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp)
+            )
 
             FilledIconButton(
                 onClick = {

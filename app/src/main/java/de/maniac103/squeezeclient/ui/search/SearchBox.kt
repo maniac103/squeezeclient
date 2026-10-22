@@ -19,7 +19,13 @@ package de.maniac103.squeezeclient.ui.search
 
 import android.annotation.SuppressLint
 import androidx.activity.compose.PredictiveBackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.EaseOutQuart
+import androidx.compose.animation.core.animate
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,7 +50,9 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -73,41 +81,53 @@ fun SearchBox(
 ) {
     val queryState by viewModel.queryFlow.collectAsStateWithLifecycle()
     val categories by viewModel.categoriesFlow.collectAsStateWithLifecycle(emptyList())
-    val backProgress by viewModel.backProgressFlow.collectAsStateWithLifecycle()
     val isVisible by viewModel.visibleFlow.collectAsStateWithLifecycle()
 
-    if (!isVisible) {
-        return
-    }
+    var backProgress by remember { mutableFloatStateOf(0F) }
 
-    PredictiveBackHandler { progressFlow ->
+    PredictiveBackHandler(enabled = isVisible) { progressFlow ->
         try {
             progressFlow.collect { backEvent ->
-                viewModel.setBackProgress(backEvent.progress)
+                backProgress = EaseOutQuart.transform(0.3F * backEvent.progress)
             }
             viewModel.close()
+            animate(backProgress, 1F) { value, _ -> backProgress = value }
         } catch (_: CancellationException) {
-            viewModel.setBackProgress(0F)
+            animate(backProgress, 0F) { value, _ -> backProgress = value }
         }
     }
 
-    SearchBox(
-        queryText = queryState.text,
-        submittedQueryText = queryState.submitted,
-        categories = categories,
-        backgroundAlpha = 1F - backProgress,
-        pillModifier = pillModifier.scale(1F - backProgress),
-        onQueryTextChanged = { viewModel.updateQuery(it) },
-        onClearQuery = { viewModel.updateQuery("") },
-        onSubmitQuery = { viewModel.submitQueryImmediately() },
-        onClose = onCloseListener,
-        onCategoryClick = { category ->
-            if (!category.busy) {
-                onOpenResultsListener(queryState.text, category.type)
-                viewModel.close()
+    AnimatedVisibility(
+        visible = isVisible,
+        enter = fadeIn(),
+        exit = fadeOut()
+    ) {
+        LaunchedEffect(transition.currentState) {
+            if (transition.currentState == EnterExitState.PostExit ||
+                transition.currentState == EnterExitState.PreEnter
+            ) {
+                backProgress = 0F
             }
         }
-    )
+
+        SearchBox(
+            queryText = queryState.text,
+            submittedQueryText = queryState.submitted,
+            categories = categories,
+            backgroundAlpha = 1F - backProgress,
+            pillModifier = pillModifier.scale(1F - backProgress),
+            onQueryTextChanged = { viewModel.updateQuery(it) },
+            onClearQuery = { viewModel.updateQuery("") },
+            onSubmitQuery = { viewModel.submitQueryImmediately() },
+            onClose = onCloseListener,
+            onCategoryClick = { category ->
+                if (!category.busy) {
+                    onOpenResultsListener(queryState.text, category.type)
+                    viewModel.close()
+                }
+            }
+        )
+    }
 }
 
 @Composable

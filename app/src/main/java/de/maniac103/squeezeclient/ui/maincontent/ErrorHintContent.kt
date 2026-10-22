@@ -37,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import de.maniac103.squeezeclient.R
@@ -210,6 +211,7 @@ internal fun MainIcon(iconResId: Int, modifier: Modifier = Modifier) = Icon(
 @Composable
 internal fun HintMainText(textResId: Int, modifier: Modifier = Modifier) = Text(
     text = stringResource(textResId),
+    textAlign = TextAlign.Center,
     style = MaterialTheme.typography.titleLarge,
     modifier = modifier
 )
@@ -218,6 +220,7 @@ internal fun HintMainText(textResId: Int, modifier: Modifier = Modifier) = Text(
 internal fun HintSubText(subtext: String?, modifier: Modifier = Modifier) = subtext?.let {
     Text(
         text = it,
+        textAlign = TextAlign.Center,
         style = MaterialTheme.typography.bodyLarge,
         modifier = modifier
     )

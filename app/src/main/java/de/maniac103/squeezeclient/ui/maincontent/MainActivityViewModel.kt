@@ -25,6 +25,7 @@ import de.maniac103.squeezeclient.cometd.ConnectionState
 import de.maniac103.squeezeclient.model.Player
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.PlayerStatus
+import de.maniac103.squeezeclient.model.ServerConfiguration
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -39,49 +40,75 @@ class MainActivityViewModel(
     private val connectionHelper: ConnectionHelper,
     private val preferences: Preferences
 ) : ViewModel() {
-    private val stateAndSelectedPlayerFlow = combine(
-        connectionHelper.state,
-        preferences.lastSelectedPlayer.asFlow()
-    ) { state, selectedId -> state to selectedId }
+    private var connectionAttempts = 0
+    private var lastSelectedPlayerAndConfig: Pair<ServerConfiguration?, Player>? = null
 
-    val stateFlow = stateAndSelectedPlayerFlow
-        .map { (state, selectedId) ->
+    private val stateSelectedPlayerAndConfigFlow = combine(
+        connectionHelper.state,
+        preferences.serverConfig.asFlow(),
+        preferences.lastSelectedPlayer.asFlow()
+    ) { state, serverConfig, selectedId -> Triple(state, serverConfig, selectedId) }
+
+    val stateFlow = stateSelectedPlayerAndConfigFlow
+        .map { (state, serverConfig, selectedId) ->
+            if (lastSelectedPlayerAndConfig?.first != serverConfig) {
+                // Invalidate last known player once server config changes
+                lastSelectedPlayerAndConfig = null
+            }
+            val lastSelectedPlayer = lastSelectedPlayerAndConfig?.second
+
             when (state) {
                 is ConnectionState.Disconnected -> {
                     if (connectionAttempts++ < 3) {
                         connectionHelper.connect()
-                        MainActivityState.Loading
+                        MainActivityState.Loading(serverConfig, lastSelectedPlayer)
                     } else {
-                        MainActivityState.CouldNotConnect
+                        MainActivityState.CouldNotConnect(serverConfig, lastSelectedPlayer)
                     }
                 }
 
-                is ConnectionState.Connecting -> {
-                    MainActivityState.Loading
-                }
+                is ConnectionState.Connecting ->
+                    MainActivityState.Loading(serverConfig, lastSelectedPlayer)
 
                 is ConnectionState.Connected -> {
                     connectionAttempts = 0
                     val presentPlayers = state.players.filter { it.connected }
-                    val selectedPlayer = selectedId
-                        .let { selected -> presentPlayers.find { it.id == selected } }
+                    val selectedPlayer = presentPlayers.find { it.id == selectedId }
                         ?: presentPlayers.firstOrNull()
-                    if (selectedPlayer != null) {
-                        MainActivityState.Connected(presentPlayers, selectedPlayer)
-                    } else {
-                        MainActivityState.NoPlayers
+
+                    when {
+                        serverConfig == null ->
+                            MainActivityState.Loading(null, null)
+
+                        selectedPlayer != null -> {
+                            lastSelectedPlayerAndConfig = serverConfig to selectedPlayer
+                            MainActivityState.Connected(
+                                serverConfig,
+                                presentPlayers,
+                                selectedPlayer
+                            )
+                        }
+
+                        else -> {
+                            lastSelectedPlayerAndConfig = null
+                            MainActivityState.NoPlayers(serverConfig)
+                        }
                     }
                 }
 
                 is ConnectionState.ConnectionFailure -> {
-                    MainActivityState.ConnectionFailed(state.cause)
+                    MainActivityState.ConnectionFailed(
+                        serverConfig,
+                        lastSelectedPlayer,
+                        state.cause
+                    )
                 }
             }
         }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(),
-            initialValue = MainActivityState.Loading
+            initialValue = MainActivityState.Loading(null, null)
         )
 
     val selectedPlayerActiveStateFlow = stateFlow
@@ -89,9 +116,7 @@ class MainActivityViewModel(
             (state as? MainActivityState.Connected)?.selectedPlayer?.id
                 ?.let { playerId ->
                     connectionHelper.playerState(playerId)
-                        .flatMapLatest {
-                            it.playStatus
-                        }
+                        .flatMapLatest { it.playStatus }
                         .map {
                             SelectedPlayerActiveState(
                                 playerId,
@@ -107,11 +132,8 @@ class MainActivityViewModel(
             initialValue = null
         )
 
-    val serverConfigFlow = preferences.serverConfig.asFlow()
     val forceGridForSlimBrowseItemsFlow = preferences.forceGridLayout.asFlow()
     val localPlaybackEnabledFlow = preferences.localPlayerEnabled.asFlow()
-
-    private var connectionAttempts = 0
 
     fun retryConnection() = viewModelScope.launch {
         connectionAttempts = 0
@@ -128,11 +150,35 @@ class MainActivityViewModel(
 }
 
 sealed interface MainActivityState {
-    data object Loading : MainActivityState
-    data object NoPlayers : MainActivityState
-    data class Connected(val players: List<Player>, val selectedPlayer: Player) : MainActivityState
-    data object CouldNotConnect : MainActivityState
-    data class ConnectionFailed(val cause: Throwable) : MainActivityState
+    val serverConfig: ServerConfiguration?
+    val selectedPlayer: Player?
+
+    data class Loading(
+        override val serverConfig: ServerConfiguration?,
+        override val selectedPlayer: Player?
+    ) : MainActivityState
+
+    data class NoPlayers(
+        override val serverConfig: ServerConfiguration,
+        override val selectedPlayer: Player? = null
+    ) : MainActivityState
+
+    data class Connected(
+        override val serverConfig: ServerConfiguration,
+        val players: List<Player>,
+        override val selectedPlayer: Player
+    ) : MainActivityState
+
+    data class CouldNotConnect(
+        override val serverConfig: ServerConfiguration?,
+        override val selectedPlayer: Player?
+    ) : MainActivityState
+
+    data class ConnectionFailed(
+        override val serverConfig: ServerConfiguration?,
+        override val selectedPlayer: Player?,
+        val cause: Throwable
+    ) : MainActivityState
 }
 
 data class SelectedPlayerActiveState(val playerId: PlayerId, val isPlaying: Boolean)

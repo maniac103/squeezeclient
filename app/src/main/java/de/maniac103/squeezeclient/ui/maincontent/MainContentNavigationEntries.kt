@@ -349,7 +349,7 @@ internal fun EntryProviderScope<NavKey>.infoNavEntry() = entry<MainContentNaviga
     BottomSheetContentWrapper(route.title, false) {
         Text(
             text = AnnotatedString.fromHtml(route.info),
-            modifier = Modifier.padding(top = 16.dp)
+            modifier = Modifier.padding(16.dp)
         )
     }
 }

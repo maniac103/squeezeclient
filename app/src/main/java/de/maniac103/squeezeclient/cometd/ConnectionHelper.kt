@@ -72,6 +72,8 @@ import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.PlayerStatus
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
+import de.maniac103.squeezeclient.util.SubscriptionTracker
+import de.maniac103.squeezeclient.util.tracked
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CancellationException
@@ -122,8 +124,9 @@ class ConnectionHelper(
     private val httpClient: OkHttpClient
 ) : KoinComponent {
     private var client: CometdClient? = null
+    private val subscriptionTracker = SubscriptionTracker()
     private val stateFlow = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected)
-    val state = stateFlow.asStateFlow()
+    val state = stateFlow.asStateFlow().tracked(subscriptionTracker, "Connection state")
 
     private val playerStates = mutableMapOf<PlayerId, PlayerState>()
     private var connectionScope: CoroutineScope? = null
@@ -207,6 +210,7 @@ class ConnectionHelper(
     fun playerState(playerId: PlayerId): Flow<PlayerState> = stateFlow
         .mapNotNull { (it as? ConnectionState.Connected)?.players?.find { p -> p.id == playerId } }
         .mapNotNull { p -> playerStates[p.id] }
+        .tracked(subscriptionTracker, "Player state [$playerId]")
 
     suspend fun fetchItemsForAction(
         playerId: PlayerId,
@@ -484,6 +488,8 @@ class ConnectionHelper(
     }
 
     private fun disconnectInternal(newState: ConnectionState) {
+        Log.d(TAG, "Disconnected, new state: $newState")
+        subscriptionTracker.dumpActive()
         client?.disconnect()
         client = null
         connectionScope?.cancel()
@@ -580,9 +586,15 @@ class ConnectionHelper(
             }
         )
 
-        val homeMenu: SharedFlow<Map<String, JiveHomeMenuItem>> = homeMenuFlow.asSharedFlow()
-        val playStatus: SharedFlow<PlayerStatus> = playerStatusFlow.asSharedFlow()
-        val displayStatus: SharedFlow<DisplayMessage> = displayStatusFlow.asSharedFlow()
+        val homeMenu: SharedFlow<Map<String, JiveHomeMenuItem>> = homeMenuFlow
+            .asSharedFlow()
+            .tracked(connectionHelper.subscriptionTracker, "Home menu [$playerId]")
+        val playStatus: SharedFlow<PlayerStatus> = playerStatusFlow
+            .asSharedFlow()
+            .tracked(connectionHelper.subscriptionTracker, "Play status [$playerId]")
+        val displayStatus: SharedFlow<DisplayMessage> = displayStatusFlow
+            .asSharedFlow()
+            .tracked(connectionHelper.subscriptionTracker, "Display status [$playerId]")
 
         private fun <T> createSubscribingFlow(
             subscribeMethod: suspend (Boolean) -> Unit,

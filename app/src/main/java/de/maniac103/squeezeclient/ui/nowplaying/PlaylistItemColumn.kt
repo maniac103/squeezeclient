@@ -22,10 +22,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.SwipeToDismissBox
@@ -47,8 +49,9 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.LoadState
+import androidx.paging.LoadStates
 import androidx.paging.PagingData
-import androidx.paging.compose.collectAsLazyPagingItems
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.extfuncs.collectAsLazyPagingItemsWithLifecycle
 import de.maniac103.squeezeclient.model.JiveActions
@@ -106,6 +109,16 @@ fun PlaylistItemColumn(
     }
     var selectedItemPosition by remember {
         mutableIntStateOf(uiState.currentPosition)
+    }
+
+    if (!pagingItems.loadState.isIdle) {
+        Box {
+            LinearProgressIndicator(
+                modifier = modifier
+                    .fillMaxWidth()
+            )
+        }
+        return
     }
 
     LaunchedEffect(pagingItems.itemSnapshotList, uiState) {
@@ -225,6 +238,11 @@ fun DeleteBackground(dismissState: SwipeToDismissBoxState) {
 @Preview(widthDp = 360, heightDp = 800)
 @Composable
 fun PlaylistItemColumnPreview() {
+    val idleLoadStates = LoadStates(
+        refresh = LoadState.NotLoading(true),
+        prepend = LoadState.NotLoading(true),
+        append = LoadState.NotLoading(true)
+    )
     val itemsFlow = (0..4)
         .map { index ->
             Playlist.PlaylistItem(
@@ -234,7 +252,7 @@ fun PlaylistItemColumnPreview() {
                 actions = JiveActions.EMPTY
             )
         }
-        .let { PagingData.from(it) }
+        .let { PagingData.from(it, sourceLoadStates = idleLoadStates) }
         .let { MutableStateFlow(it) }
 
     val uiStateFlow = MutableStateFlow(PlaylistViewModel.UiState(3, null))

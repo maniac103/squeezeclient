@@ -41,7 +41,6 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberSliderState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -58,6 +57,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.maniac103.squeezeclient.Preferences
 import de.maniac103.squeezeclient.R
 import kotlin.enums.enumEntries
@@ -149,7 +149,7 @@ fun SwitchPreference(
     onInterceptValueChange: suspend (Boolean) -> Boolean = { true },
     preference: Preferences.Preference<Boolean>
 ) {
-    val checked by preference.asFlow().collectAsState(preference.value)
+    val checked by preference.asFlow().collectAsStateWithLifecycle(preference.value)
     val scope = rememberCoroutineScope()
 
     val handleUpdate = { newValue: Boolean ->
@@ -202,7 +202,7 @@ inline fun <reified T : Enum<T>> ListPreference(
     crossinline summaryProvider: @Composable (T) -> String?,
     preference: Preferences.Preference<T>
 ) {
-    val value by preference.asFlow().collectAsState(preference.value)
+    val value by preference.asFlow().collectAsStateWithLifecycle(preference.value)
     var selectionShown by rememberSaveable { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
@@ -271,7 +271,7 @@ fun SliderPreference(
 ) = PreferenceCard(
     position = position
 ) {
-    val value by preference.asFlow().collectAsState(preference.value)
+    val value by preference.asFlow().collectAsStateWithLifecycle(preference.value)
     val scope = rememberCoroutineScope()
 
     Column(

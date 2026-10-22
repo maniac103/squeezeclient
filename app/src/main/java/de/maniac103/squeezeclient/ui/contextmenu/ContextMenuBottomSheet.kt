@@ -29,13 +29,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
@@ -49,9 +49,9 @@ fun ContextMenuBottomSheetContent(
     serverConfig: ServerConfiguration?,
     itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {}
 ) {
-    val items by viewModel.pageFlow.collectAsState(emptyList())
-    val busyItem by viewModel.busyItemFlow.collectAsState()
-    val backNavTitle by viewModel.backNavTitleFlow.collectAsState(null)
+    val items by viewModel.pageFlow.collectAsStateWithLifecycle(emptyList())
+    val busyItem by viewModel.busyItemFlow.collectAsStateWithLifecycle()
+    val backNavTitle by viewModel.backNavTitleFlow.collectAsStateWithLifecycle(null)
 
     ContextMenuBottomSheetContent(
         items = items,

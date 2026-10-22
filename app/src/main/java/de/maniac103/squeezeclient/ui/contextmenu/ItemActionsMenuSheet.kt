@@ -27,7 +27,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,6 +34,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.ui.composables.ArtworkImage
 
@@ -46,8 +46,8 @@ fun ItemActionsSheet(
     actionSelectedListener: (ItemActionsViewModel.ActionItem) -> Unit
 ) {
     val item = viewModel.item
-    val actions by viewModel.actionsFlow.collectAsState(emptyList())
-    val busyAction by viewModel.busyActionFlow.collectAsState(null)
+    val actions by viewModel.actionsFlow.collectAsStateWithLifecycle(emptyList())
+    val busyAction by viewModel.busyActionFlow.collectAsStateWithLifecycle(null)
 
     LazyColumn {
         stickyHeader {

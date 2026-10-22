@@ -19,20 +19,26 @@ package de.maniac103.squeezeclient.ui.nowplaying
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.InvalidatingPagingSourceFactory
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import de.maniac103.squeezeclient.cometd.ConnectionHelper
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.ui.itemlist.ItemPagingSource
+import kotlin.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -43,26 +49,37 @@ class PlaylistViewModel(
 ) : ViewModel() {
     private val pendingMoveRequestsFlow = MutableSharedFlow<PendingMove>()
     private val scrollRequestFlowInternal = MutableSharedFlow<Int>()
+    private val pagingSourceFactory = InvalidatingPagingSourceFactory {
+        ItemPagingSource { page -> connectionHelper.fetchPlaylist(playerId, page) }
+    }
+    private var lastKnownPlaylistTimestamp: Instant? = null
 
     private val playStatusFlow = connectionHelper.playerState(playerId)
         .flatMapLatest { it.playStatus }
 
-    val itemsFlow = playStatusFlow
+    private val pagingFlow = Pager(
+        config = PagingConfig(pageSize = 200, initialLoadSize = 200, enablePlaceholders = false),
+        pagingSourceFactory = pagingSourceFactory
+    )
+        .flow
+        .cachedIn(viewModelScope)
+
+    private val playlistTimestampMonitorFlow = playStatusFlow
         .map { it.playlist.lastChange }
         .distinctUntilChanged()
-        .flatMapLatest {
-            Pager(
-                config = PagingConfig(
-                    pageSize = 200,
-                    initialLoadSize = 200,
-                    enablePlaceholders = false
-                ),
-                pagingSourceFactory = {
-                    ItemPagingSource { page -> connectionHelper.fetchPlaylist(playerId, page) }
-                }
-            ).flow
+        .onEach { timestamp ->
+            val last = lastKnownPlaylistTimestamp
+            lastKnownPlaylistTimestamp = timestamp
+            if (last != null && last != timestamp) {
+                pagingSourceFactory.invalidate()
+            }
         }
-        .cachedIn(viewModelScope)
+        .shareIn(viewModelScope, SharingStarted.WhileSubscribed(), replay = 0)
+
+    val itemsFlow = channelFlow {
+        launch { playlistTimestampMonitorFlow.collect() }
+        pagingFlow.collect { send(it) }
+    }
 
     val uiStateFlow = playStatusFlow
         .flatMapLatest { status ->
@@ -73,7 +90,7 @@ class PlaylistViewModel(
         }
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
+            started = SharingStarted.WhileSubscribed(),
             initialValue = UiState(0, null)
         )
 

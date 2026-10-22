@@ -43,7 +43,6 @@ class SearchViewModel(
     private val localResultsFlow = MutableStateFlow(createLocalCategories(null))
     private val radioResultsFLow = MutableStateFlow(createRadioCategory(null))
     private val queryTextFlow = MutableStateFlow(QueryState("", false))
-    private val backProgressFlowInternal = MutableStateFlow(0F)
 
     private var submitJob: Job? = null
     private var searchJob: Job? = null
@@ -52,7 +51,6 @@ class SearchViewModel(
         local + radio
     }
     val queryFlow = queryTextFlow.asStateFlow()
-    val backProgressFlow = backProgressFlowInternal.asStateFlow()
     val visibleFlow = visibleFlowInternal.asStateFlow()
 
     fun open() = viewModelScope.launch {
@@ -62,14 +60,6 @@ class SearchViewModel(
     fun close() = viewModelScope.launch {
         updateQuery("")
         visibleFlowInternal.emit(false)
-    }
-
-    // FIXME: keep this in SearchBox?
-    fun setBackProgress(progress: Float) {
-        val decelerateQuint = { fraction: Float ->
-            1f - (1f - fraction).let { it * it * it * it * it }
-        }
-        backProgressFlowInternal.value = 0.3F * decelerateQuint(progress)
     }
 
     fun updateQuery(query: String) {

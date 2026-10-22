@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,7 +32,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -60,12 +62,15 @@ fun Breadcrumbs(
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier.padding(8.dp)
+        modifier = modifier.padding(horizontal = 8.dp)
     ) {
         ResourceIcon(
             drawableResId = R.drawable.ic_home_24dp,
             contentDescriptionResId = R.string.content_description_breadcrumbs_home,
-            modifier = Modifier.clickable(onClick = onHomeClicked)
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .clickable(onClick = onHomeClicked)
+                .padding(8.dp)
         )
 
         val listState = rememberLazyListState()
@@ -75,37 +80,51 @@ fun Breadcrumbs(
         }
 
         LazyRow(
+            state = listState,
             verticalAlignment = Alignment.CenterVertically
         ) {
             itemsIndexed(items) { index, item ->
-                val alphaModifier = state.backProgress
-                    ?.takeIf { index == items.size - 1 }
-                    ?.let { Modifier.alpha(1F - it) }
-                    ?: Modifier
+                val alphaModifier = Modifier.graphicsLayer {
+                    alpha = state.backProgress
+                        ?.takeIf { index == items.size - 1 }
+                        ?.let { 1F - it }
+                        ?: 1F
+                }
 
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .clickable(onClick = { onGoBack(items.size - index - 1) })
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    BreadcrumbsTextSegment(" › ", alphaModifier)
+                    BreadcrumbsTextSegment("›", alphaModifier)
 
-                    item.icon?.let {
-                        ArtworkImage(
-                            it,
-                            serverConfig,
-                            modifier = alphaModifier
-                                .padding(end = 4.dp)
-                                .size(16.dp)
-                        )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(percent = 50))
+                            .clickable(
+                                onClick = { onGoBack(items.size - index - 1) }
+                            )
+                            .padding(8.dp)
+                    ) {
+                        item.icon?.let {
+                            ArtworkImage(
+                                it,
+                                serverConfig,
+                                modifier = alphaModifier
+                                    .padding(end = 4.dp)
+                                    .size(16.dp)
+                            )
+                        }
+
+                        item.parentTitle?.let { parentTitle ->
+                            BreadcrumbsTextSegment(parentTitle.resolve(), alphaModifier)
+                            BreadcrumbsTextSegment(
+                                text = "›",
+                                modifier = alphaModifier.padding(horizontal = 8.dp)
+                            )
+                        }
+
+                        BreadcrumbsTextSegment(item.title.resolve(), alphaModifier)
                     }
-
-                    item.parentTitle?.let { parentTitle ->
-                        BreadcrumbsTextSegment(parentTitle.resolve(), alphaModifier)
-                        BreadcrumbsTextSegment(" › ", alphaModifier)
-                    }
-
-                    BreadcrumbsTextSegment(item.title.resolve(), alphaModifier)
                 }
             }
         }
@@ -115,7 +134,7 @@ fun Breadcrumbs(
 @Composable
 private fun BreadcrumbsTextSegment(text: String, modifier: Modifier = Modifier) = Text(
     text = text,
-    style = MaterialTheme.typography.labelMedium,
+    style = MaterialTheme.typography.labelLarge,
     maxLines = 1,
     modifier = modifier
 )

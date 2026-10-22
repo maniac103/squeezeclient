@@ -20,6 +20,8 @@ package de.maniac103.squeezeclient.ui.maincontent
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ModalBottomSheetProperties
+import androidx.compose.material3.SheetValue
+import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -47,7 +49,10 @@ internal data class BottomSheetScene<T : Any>(
 
     override val content: @Composable (() -> Unit) = {
         val lifecycleOwner = rememberLifecycleOwner()
+        val sheetState = rememberBottomSheetState(initialValue = SheetValue.Expanded)
+
         ModalBottomSheet(
+            sheetState = sheetState,
             onDismissRequest = onBack,
             properties = modalBottomSheetProperties
         ) {

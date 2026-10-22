@@ -251,7 +251,7 @@ internal fun NowPlayingScreen(
     )
 
     (infoMenu as? NowPlayingContextMenuState.Show)?.let { menuState ->
-        val sheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden)
+        val sheetState = rememberBottomSheetState(initialValue = SheetValue.Expanded)
         ModalBottomSheet(
             onDismissRequest = onInfoMenuDismissed,
             sheetState = sheetState

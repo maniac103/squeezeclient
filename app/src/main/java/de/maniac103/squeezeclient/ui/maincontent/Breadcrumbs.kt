@@ -17,6 +17,9 @@
 
 package de.maniac103.squeezeclient.ui.maincontent
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
@@ -56,74 +59,78 @@ fun Breadcrumbs(
     val state by stateFlow.collectAsStateWithLifecycle()
     val items = state.items
 
-    if (items.isEmpty() && state.backProgress == null) {
-        return
-    }
-
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier.padding(horizontal = 8.dp)
+    AnimatedVisibility(
+        visible = items.isNotEmpty(),
+        enter = expandVertically(expandFrom = Alignment.Top),
+        exit = shrinkVertically(shrinkTowards = Alignment.Top)
     ) {
-        ResourceIcon(
-            drawableResId = R.drawable.ic_home_24dp,
-            contentDescriptionResId = R.string.content_description_breadcrumbs_home,
-            modifier = Modifier
-                .clip(RoundedCornerShape(8.dp))
-                .clickable(onClick = onHomeClicked)
-                .padding(8.dp)
-        )
-
-        val listState = rememberLazyListState()
-
-        LaunchedEffect(items.size) {
-            listState.animateScrollToItem(items.lastIndex)
-        }
-
-        LazyRow(
-            state = listState,
-            verticalAlignment = Alignment.CenterVertically
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = modifier.padding(horizontal = 8.dp)
         ) {
-            itemsIndexed(items) { index, item ->
-                val alphaModifier = Modifier.graphicsLayer {
-                    alpha = state.backProgress
-                        ?.takeIf { index == items.size - 1 }
-                        ?.let { 1F - it }
-                        ?: 1F
-                }
+            ResourceIcon(
+                drawableResId = R.drawable.ic_home_24dp,
+                contentDescriptionResId = R.string.content_description_breadcrumbs_home,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable(onClick = onHomeClicked)
+                    .padding(8.dp)
+            )
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    BreadcrumbsTextSegment("›", alphaModifier)
+            val listState = rememberLazyListState()
+
+            LaunchedEffect(items.size) {
+                if (items.isNotEmpty()) {
+                    listState.animateScrollToItem(items.lastIndex)
+                }
+            }
+
+            LazyRow(
+                state = listState,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                itemsIndexed(items) { index, item ->
+                    val alphaModifier = Modifier.graphicsLayer {
+                        alpha = state.backProgress
+                            ?.takeIf { index == items.size - 1 }
+                            ?.let { 1F - it }
+                            ?: 1F
+                    }
 
                     Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(percent = 50))
-                            .clickable(
-                                onClick = { onGoBack(items.size - index - 1) }
-                            )
-                            .padding(8.dp)
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        item.icon?.let {
-                            ArtworkImage(
-                                it,
-                                serverConfig,
-                                modifier = alphaModifier
-                                    .padding(end = 4.dp)
-                                    .size(16.dp)
-                            )
-                        }
+                        BreadcrumbsTextSegment("›", alphaModifier)
 
-                        item.parentTitle?.let { parentTitle ->
-                            BreadcrumbsTextSegment(parentTitle.resolve(), alphaModifier)
-                            BreadcrumbsTextSegment(
-                                text = "›",
-                                modifier = alphaModifier.padding(horizontal = 8.dp)
-                            )
-                        }
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(percent = 50))
+                                .clickable(
+                                    onClick = { onGoBack(items.size - index - 1) }
+                                )
+                                .padding(8.dp)
+                        ) {
+                            item.icon?.let {
+                                ArtworkImage(
+                                    it,
+                                    serverConfig,
+                                    modifier = alphaModifier
+                                        .padding(end = 4.dp)
+                                        .size(16.dp)
+                                )
+                            }
 
-                        BreadcrumbsTextSegment(item.title.resolve(), alphaModifier)
+                            item.parentTitle?.let { parentTitle ->
+                                BreadcrumbsTextSegment(parentTitle.resolve(), alphaModifier)
+                                BreadcrumbsTextSegment(
+                                    text = "›",
+                                    modifier = alphaModifier.padding(horizontal = 8.dp)
+                                )
+                            }
+
+                            BreadcrumbsTextSegment(item.title.resolve(), alphaModifier)
+                        }
                     }
                 }
             }

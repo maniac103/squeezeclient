@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
@@ -52,6 +53,7 @@ import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -68,15 +70,21 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
@@ -100,6 +108,7 @@ import de.maniac103.squeezeclient.ui.search.SearchBox
 import de.maniac103.squeezeclient.ui.search.SearchViewModel
 import de.maniac103.squeezeclient.ui.volume.VolumeControlPopup
 import de.maniac103.squeezeclient.ui.volume.VolumePopupViewModel
+import kotlin.String
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -168,7 +177,6 @@ fun MainActivityUi(
     val viewModel = koinViewModel<MainActivityViewModel>()
     MainActivityUi(
         stateFlow = viewModel.stateFlow,
-        serverConfigFlow = viewModel.serverConfigFlow,
         forceGridForSlimBrowseItemsFlow = viewModel.forceGridForSlimBrowseItemsFlow,
         localPlaybackEnabledFlow = viewModel.localPlaybackEnabledFlow,
         volumeChangeRequestFlow = volumeChangeRequestFlow,
@@ -187,7 +195,6 @@ fun MainActivityUi(
 @Composable
 fun MainActivityUi(
     stateFlow: StateFlow<MainActivityState>,
-    serverConfigFlow: Flow<ServerConfiguration?>,
     forceGridForSlimBrowseItemsFlow: Flow<Boolean>,
     localPlaybackEnabledFlow: Flow<Boolean>,
     volumeChangeRequestFlow: SharedFlow<Int>,
@@ -203,8 +210,8 @@ fun MainActivityUi(
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val state by stateFlow.collectAsStateWithLifecycle()
+    val serverConfigState = rememberUpdatedState(state.serverConfig)
 
-    val serverConfigState = serverConfigFlow.collectAsStateWithLifecycle(null)
     val forceGridForSlimBrowseItemsState =
         forceGridForSlimBrowseItemsFlow.collectAsStateWithLifecycle(false)
     val localPlaybackEnabledState = localPlaybackEnabledFlow.collectAsStateWithLifecycle(false)
@@ -214,7 +221,7 @@ fun MainActivityUi(
         drawerContent = {
             MainActivityDrawerContent(
                 drawerState = drawerState,
-                serverConfig = serverConfigState.value,
+                serverConfig = state.serverConfig,
                 connectedState = state as? MainActivityState.Connected,
                 localPlaybackEnabled = localPlaybackEnabledState.value,
                 onOpenServerSetup = onOpenServerSetup,
@@ -225,7 +232,23 @@ fun MainActivityUi(
             )
         }
     ) {
-        Scaffold { innerPadding ->
+        Box(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            state.selectedPlayer?.let { player ->
+                MainActivityPlayerContent(
+                    drawerState = drawerState,
+                    selectedPlayer = player,
+                    serverConfigState = serverConfigState,
+                    visible = state is MainActivityState.Connected,
+                    forceGridForSlimBrowseItemsState = forceGridForSlimBrowseItemsState,
+                    volumeChangeRequestFlow = volumeChangeRequestFlow,
+                    onGalleryItemSelected = onGalleryItemSelected,
+                    onDownloadSelected = onDownloadSelected,
+                    onWebLinkSelected = onWebLinkSelected
+                )
+            }
+
             when (val state = state) {
                 is MainActivityState.Loading -> {
                     MainActivityLoadingIndicator(
@@ -234,8 +257,8 @@ fun MainActivityUi(
                 }
 
                 is MainActivityState.CouldNotConnect -> {
-                    ErrorHintContent(
-                        iconResId = R.drawable.ic_cloud_question_24dp,
+                    MainActivityErrorContent(
+                        drawerState = drawerState,
                         textResId = R.string.connection_error_text_no_connection,
                         subtext = null,
                         buttons = listOf(
@@ -252,8 +275,8 @@ fun MainActivityUi(
                 }
 
                 is MainActivityState.ConnectionFailed -> {
-                    ErrorHintContent(
-                        iconResId = R.drawable.ic_cloud_question_24dp,
+                    MainActivityErrorContent(
+                        drawerState = drawerState,
                         textResId = R.string.connection_error_text_connection_failure,
                         subtext = state.cause.message,
                         buttons = listOf(
@@ -266,7 +289,8 @@ fun MainActivityUi(
                 }
 
                 is MainActivityState.NoPlayers -> {
-                    ErrorHintContent(
+                    MainActivityErrorContent(
+                        drawerState = drawerState,
                         iconResId = R.drawable.ic_player_24dp,
                         textResId = R.string.connection_error_text_no_player,
                         subtext = null,
@@ -275,17 +299,7 @@ fun MainActivityUi(
                 }
 
                 is MainActivityState.Connected -> {
-                    MainActivityConnected(
-                        drawerState = drawerState,
-                        selectedPlayer = state.selectedPlayer,
-                        insets = innerPadding,
-                        serverConfigState = serverConfigState,
-                        forceGridForSlimBrowseItemsState = forceGridForSlimBrowseItemsState,
-                        volumeChangeRequestFlow = volumeChangeRequestFlow,
-                        onGalleryItemSelected = onGalleryItemSelected,
-                        onDownloadSelected = onDownloadSelected,
-                        onWebLinkSelected = onWebLinkSelected
-                    )
+                    // Already made MainActivityPlayerContent visible above
                 }
             }
         }
@@ -445,11 +459,11 @@ fun MainDrawerItem(
 
 @OptIn(KoinExperimentalAPI::class)
 @Composable
-private fun MainActivityConnected(
+private fun MainActivityPlayerContent(
     drawerState: DrawerState,
     selectedPlayer: Player,
-    insets: PaddingValues,
     serverConfigState: State<ServerConfiguration?>,
+    visible: Boolean,
     forceGridForSlimBrowseItemsState: State<Boolean>,
     volumeChangeRequestFlow: SharedFlow<Int>,
     onDownloadSelected: (DownloadRequestData) -> Unit,
@@ -479,10 +493,25 @@ private fun MainActivityConnected(
                 }
             }
 
-            BoxWithConstraints {
+            BoxWithConstraints(
+                modifier = if (visible) Modifier else Modifier.hideAndBlockInput()
+            ) {
+                val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+                val systemInsets = ScaffoldDefaults.contentWindowInsets.asPaddingValues()
+                val appBarColors = TopAppBarDefaults.topAppBarColors()
+                val appBarColor by remember(appBarColors, scrollBehavior) {
+                    derivedStateOf {
+                        val overlappingFraction = scrollBehavior.state.overlappedFraction
+                        lerp(
+                            start = appBarColors.containerColor,
+                            stop = appBarColors.scrolledContainerColor,
+                            fraction = FastOutLinearInEasing.transform(overlappingFraction)
+                        )
+                    }
+                }
                 val layout = determineMainLayout(
                     containerSize = DpSize(maxWidth, maxHeight),
-                    insets = insets,
+                    insets = systemInsets,
                     layoutDirection = LocalLayoutDirection.current
                 )
 
@@ -492,62 +521,59 @@ private fun MainActivityConnected(
                     }
                 }
 
-                Column {
-                    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
-                    val appBarColors = TopAppBarDefaults.topAppBarColors()
-                    val appBarColor by remember(appBarColors, scrollBehavior) {
-                        derivedStateOf {
-                            val overlappingFraction = scrollBehavior.state.overlappedFraction
-                            lerp(
-                                start = appBarColors.containerColor,
-                                stop = appBarColors.scrolledContainerColor,
-                                fraction = FastOutLinearInEasing.transform(overlappingFraction)
-                            )
-                        }
+                Scaffold(
+                    modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+                    topBar = {
+                        MainActivityAppBar(
+                            drawerState = drawerState,
+                            scrollBehavior = scrollBehavior,
+                            selectedPlayer = selectedPlayer,
+                            colors = appBarColors.copy(
+                                containerColor = appBarColor,
+                                scrolledContainerColor = appBarColor
+                            ),
+                            onOpenSearch = searchViewModel::open,
+                            contentPadding = layout.toolbarContentPadding,
+                            modifier = Modifier.padding(layout.toolbarPadding)
+                        )
                     }
-
-                    MainActivityAppBar(
-                        drawerState = drawerState,
-                        scrollBehavior = scrollBehavior,
-                        selectedPlayer = selectedPlayer,
-                        colors = appBarColors.copy(
-                            containerColor = appBarColor,
-                            scrolledContainerColor = appBarColor
-                        ),
-                        onOpenSearch = searchViewModel::open,
-                        contentPadding = layout.toolbarContentPadding,
-                        modifier = Modifier.padding(layout.toolbarPadding)
-                    )
-                    Breadcrumbs(
-                        mainContentViewModel.breadcrumbsFlow,
-                        serverConfig = serverConfigState.value,
-                        onHomeClicked = mainContentViewModel::goToHome,
-                        onGoBack = mainContentViewModel::goBack,
+                ) { innerPadding ->
+                    Column(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .background(appBarColor)
-                            .padding(layout.breadcrumbsPadding)
-                    )
-                    MainContent(
-                        viewModel = mainContentViewModel,
-                        serverConfig = serverConfigState,
-                        useGridForSlimbrowseItems = useGridForSlimBrowseItemsState,
-                        pagePadding = layout.mainContentPagePadding,
-                        compensateBottomPagePaddingDuringAnimation =
-                            layout.compensateMainContentBottomPagePaddingDuringAnimation,
-                        onGalleryItemSelected = onGalleryItemSelected,
-                        onDownloadSelected = onDownloadSelected,
-                        onWebLinkSelected = onWebLinkSelected,
-                        onGoToNowPlaying = {
-                            scope.launch {
-                                nowPlayingMotionState.nowPlaying.expand()
-                            }
-                        },
-                        modifier = Modifier
-                            .weight(1F)
-                            .padding(layout.mainContentPadding)
-                            .nestedScroll(scrollBehavior.nestedScrollConnection)
-                    )
+                            .fillMaxSize()
+                            .padding(top = innerPadding.calculateTopPadding())
+                    ) {
+                        Breadcrumbs(
+                            mainContentViewModel.breadcrumbsFlow,
+                            serverConfig = serverConfigState.value,
+                            onHomeClicked = mainContentViewModel::goToHome,
+                            onGoBack = mainContentViewModel::goBack,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(appBarColor)
+                                .padding(layout.breadcrumbsPadding)
+                        )
+                        MainContent(
+                            viewModel = mainContentViewModel,
+                            serverConfig = serverConfigState,
+                            useGridForSlimbrowseItems = useGridForSlimBrowseItemsState,
+                            pagePadding = layout.mainContentPagePadding,
+                            compensateBottomPagePaddingDuringAnimation =
+                                layout.compensateMainContentBottomPagePaddingDuringAnimation,
+                            onGalleryItemSelected = onGalleryItemSelected,
+                            onDownloadSelected = onDownloadSelected,
+                            onWebLinkSelected = onWebLinkSelected,
+                            onGoToNowPlaying = {
+                                scope.launch {
+                                    nowPlayingMotionState.nowPlaying.expand()
+                                }
+                            },
+                            modifier = Modifier
+                                .weight(1F)
+                                .padding(layout.mainContentPadding)
+                                .nestedScroll(scrollBehavior.nestedScrollConnection)
+                        )
+                    }
                 }
 
                 NowPlayingScreen(
@@ -555,7 +581,7 @@ private fun MainActivityConnected(
                     layout = layout,
                     motionState = nowPlayingMotionState,
                     serverConfig = serverConfigState.value,
-                    insets = insets,
+                    insets = systemInsets,
                     onShowVolumePopup = { volumeViewModel.show(5.seconds) },
                     onInfoMenuItemGoAction = { action, parentItem, contextItem ->
                         mainContentViewModel.goToHome()
@@ -593,11 +619,11 @@ private fun MainActivityConnected(
 private fun MainActivityAppBar(
     drawerState: DrawerState,
     selectedPlayer: Player?,
+    modifier: Modifier = Modifier,
     scrollBehavior: TopAppBarScrollBehavior? = null,
     colors: TopAppBarColors = TopAppBarDefaults.topAppBarColors(),
     onOpenSearch: (() -> Unit)?,
-    contentPadding: PaddingValues = TopAppBarDefaults.ContentPadding,
-    modifier: Modifier = Modifier
+    contentPadding: PaddingValues = TopAppBarDefaults.ContentPadding
 ) {
     val scope = rememberCoroutineScope()
 
@@ -635,16 +661,19 @@ private fun MainActivityAppBar(
 }
 
 @Composable
-private fun MainActivityLoadingIndicator(drawerState: DrawerState) = Column(
-    modifier = Modifier.fillMaxSize()
-) {
-    MainActivityAppBar(
-        drawerState = drawerState,
-        selectedPlayer = null,
-        onOpenSearch = null
-    )
+private fun MainActivityLoadingIndicator(drawerState: DrawerState) = Scaffold(
+    topBar = {
+        MainActivityAppBar(
+            drawerState = drawerState,
+            selectedPlayer = null,
+            onOpenSearch = null
+        )
+    }
+) { innerPadding ->
     Box(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(innerPadding)
     ) {
         CircularProgressIndicator(
             strokeWidth = 6.dp,
@@ -653,6 +682,31 @@ private fun MainActivityLoadingIndicator(drawerState: DrawerState) = Column(
                 .align(Alignment.Center)
         )
     }
+}
+
+@Composable
+private fun MainActivityErrorContent(
+    drawerState: DrawerState,
+    textResId: Int,
+    subtext: String?,
+    buttons: List<ActionButtonSpec>,
+    iconResId: Int = R.drawable.ic_cloud_question_24dp
+) = Scaffold(
+    topBar = {
+        MainActivityAppBar(
+            drawerState = drawerState,
+            selectedPlayer = null,
+            onOpenSearch = null
+        )
+    }
+) { innerPadding ->
+    ErrorHintContent(
+        iconResId = iconResId,
+        textResId = textResId,
+        subtext = subtext,
+        buttons = buttons,
+        modifier = Modifier.padding(innerPadding)
+    )
 }
 
 private fun determineMainLayout(
@@ -736,6 +790,19 @@ private fun determineMainLayout(
     }
 }
 
+private fun Modifier.hideAndBlockInput(): Modifier = this
+    .alpha(0F)
+    .clearAndSetSemantics { }
+    .focusProperties { canFocus = false }
+    .pointerInput(Unit) {
+        awaitPointerEventScope {
+            while (true) {
+                awaitPointerEvent(PointerEventPass.Initial)
+                    .changes.forEach { it.consume() }
+            }
+        }
+    }
+
 @Preview(widthDp = 360, heightDp = 800)
 @Composable
 fun MainActivityUiPreview() {
@@ -757,9 +824,19 @@ fun MainActivityUiPreview() {
             connected = true
         )
     )
+    val state = MainActivityState.Connected(
+        serverConfig = ServerConfiguration(
+            name = "Test",
+            hostnameAndPort = "1.2.3.4:9000",
+            username = null,
+            password = null
+        ),
+        players = players,
+        selectedPlayer = players[1]
+    )
+
     MainActivityUi(
-        stateFlow = MutableStateFlow(MainActivityState.Connected(players, players[1])),
-        serverConfigFlow = flowOf(null),
+        stateFlow = MutableStateFlow(state),
         forceGridForSlimBrowseItemsFlow = flowOf(false),
         localPlaybackEnabledFlow = flowOf(false),
         volumeChangeRequestFlow = MutableSharedFlow()

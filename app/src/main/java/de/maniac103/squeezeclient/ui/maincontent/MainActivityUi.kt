@@ -63,7 +63,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -83,6 +82,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.rememberViewModelStoreOwner
 import de.maniac103.squeezeclient.R
@@ -202,11 +202,12 @@ fun MainActivityUi(
     onLocalPlaybackEnabledChanged: (Boolean) -> Unit = {}
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val state by stateFlow.collectAsState()
+    val state by stateFlow.collectAsStateWithLifecycle()
 
-    val serverConfigState = serverConfigFlow.collectAsState(null)
-    val forceGridForSlimBrowseItemsState = forceGridForSlimBrowseItemsFlow.collectAsState(false)
-    val localPlaybackEnabledState = localPlaybackEnabledFlow.collectAsState(false)
+    val serverConfigState = serverConfigFlow.collectAsStateWithLifecycle(null)
+    val forceGridForSlimBrowseItemsState =
+        forceGridForSlimBrowseItemsFlow.collectAsStateWithLifecycle(false)
+    val localPlaybackEnabledState = localPlaybackEnabledFlow.collectAsStateWithLifecycle(false)
 
     ModalNavigationDrawer(
         drawerState = drawerState,

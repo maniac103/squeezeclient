@@ -17,6 +17,16 @@
 
 package de.maniac103.squeezeclient.extfuncs
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.flowWithLifecycle
+import androidx.paging.PagingData
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.transformWhile
@@ -45,4 +55,16 @@ fun <T> Flow<ValueOrCompletion<T>>.dematerializeCompletion(): Flow<T> = transfor
             false
         }
     }
+}
+
+@Composable
+fun <T : Any> Flow<PagingData<T>>.collectAsLazyPagingItemsWithLifecycle(
+    lifecycle: Lifecycle = LocalLifecycleOwner.current.lifecycle,
+    minActiveState: Lifecycle.State = Lifecycle.State.STARTED,
+    context: CoroutineContext = EmptyCoroutineContext
+): LazyPagingItems<T> {
+    val lifecycleAwareFlow = remember(this, lifecycle, minActiveState) {
+        flowWithLifecycle(lifecycle, minActiveState)
+    }
+    return lifecycleAwareFlow.collectAsLazyPagingItems(context)
 }

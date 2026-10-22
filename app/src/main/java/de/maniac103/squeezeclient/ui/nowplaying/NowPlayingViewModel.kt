@@ -58,7 +58,7 @@ class NowPlayingViewModel(private val connectionHelper: ConnectionHelper, val pl
         .map { it.toNowPlayingUiState() }
         .stateIn(
             viewModelScope,
-            SharingStarted.WhileSubscribed(5_000),
+            SharingStarted.WhileSubscribed(),
             null
         )
     val contextMenuFlow = contextMenuFlowInternal.asStateFlow()

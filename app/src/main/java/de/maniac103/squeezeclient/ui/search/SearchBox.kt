@@ -43,7 +43,6 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -59,6 +58,7 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.cometd.request.LibrarySearchRequest
 import de.maniac103.squeezeclient.ui.composables.ResourceIconButton
@@ -71,10 +71,10 @@ fun SearchBox(
     onCloseListener: () -> Unit,
     onOpenResultsListener: (query: String, type: LibrarySearchRequest.Mode?) -> Unit
 ) {
-    val queryState by viewModel.queryFlow.collectAsState()
-    val categories by viewModel.categoriesFlow.collectAsState(emptyList())
-    val backProgress by viewModel.backProgressFlow.collectAsState()
-    val isVisible by viewModel.visibleFlow.collectAsState()
+    val queryState by viewModel.queryFlow.collectAsStateWithLifecycle()
+    val categories by viewModel.categoriesFlow.collectAsStateWithLifecycle(emptyList())
+    val backProgress by viewModel.backProgressFlow.collectAsStateWithLifecycle()
+    val isVisible by viewModel.visibleFlow.collectAsStateWithLifecycle()
 
     if (!isVisible) {
         return

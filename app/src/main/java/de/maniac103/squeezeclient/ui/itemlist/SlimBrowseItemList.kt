@@ -35,7 +35,6 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
@@ -46,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.graphics.shapes.CornerRounding
 import androidx.graphics.shapes.RoundedPolygon
 import androidx.graphics.shapes.toPath
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import de.maniac103.squeezeclient.model.ServerConfiguration
@@ -169,7 +169,7 @@ fun SlimBrowseItemList(
     contextMenuClickListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {}
 ) {
     val entries = viewModel.itemsFlow.collectAsLazyPagingItems()
-    val busyItem by viewModel.busyItemFlow.collectAsState()
+    val busyItem by viewModel.busyItemFlow.collectAsStateWithLifecycle()
 
     SlimBrowsePagedItemListOrGrid(
         entries,
@@ -192,8 +192,8 @@ fun SlimBrowseSubItemList(
     itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {},
     contextMenuClickListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {}
 ) {
-    val entries by viewModel.itemsFlow.collectAsState(emptyList())
-    val busyItem = viewModel.busyItemFlow.collectAsState()
+    val entries by viewModel.itemsFlow.collectAsStateWithLifecycle(emptyList())
+    val busyItem = viewModel.busyItemFlow.collectAsStateWithLifecycle()
 
     LazyColumn(
         contentPadding = contentPadding,

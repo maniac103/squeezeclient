@@ -34,7 +34,6 @@ import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -47,9 +46,11 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
 import de.maniac103.squeezeclient.R
+import de.maniac103.squeezeclient.extfuncs.collectAsLazyPagingItemsWithLifecycle
 import de.maniac103.squeezeclient.model.JiveActions
 import de.maniac103.squeezeclient.model.Playlist
 import de.maniac103.squeezeclient.model.ServerConfiguration
@@ -94,8 +95,8 @@ fun PlaylistItemColumn(
     onRemovePlaylistItem: (position: Int) -> Unit = {}
 ) {
     val lazyListState = rememberLazyListState()
-    val pagingItems = itemsFlow.collectAsLazyPagingItems()
-    val uiState by uiStateFlow.collectAsState()
+    val pagingItems = itemsFlow.collectAsLazyPagingItemsWithLifecycle()
+    val uiState by uiStateFlow.collectAsStateWithLifecycle()
 
     var dragStartIndex by remember {
         mutableIntStateOf(-1)

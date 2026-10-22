@@ -19,9 +19,9 @@ package de.maniac103.squeezeclient.ui.search
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
@@ -39,7 +39,7 @@ fun LibrarySearchResultsItemList(
     contextMenuClickListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {}
 ) {
     val entries = viewModel.itemsFlow.collectAsLazyPagingItems()
-    val busyItem by viewModel.busyItemFlow.collectAsState()
+    val busyItem by viewModel.busyItemFlow.collectAsStateWithLifecycle()
 
     SlimBrowsePagedItemListOrGrid(
         entries = entries,

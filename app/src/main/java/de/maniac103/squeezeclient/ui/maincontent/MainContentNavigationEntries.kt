@@ -50,6 +50,7 @@ import de.maniac103.squeezeclient.ui.bottomsheets.SliderBottomSheetContent
 import de.maniac103.squeezeclient.ui.composables.InputTimePicker
 import de.maniac103.squeezeclient.ui.contextmenu.ContextMenuBottomSheetContent
 import de.maniac103.squeezeclient.ui.contextmenu.ContextMenuViewModel
+import de.maniac103.squeezeclient.ui.contextmenu.ItemAction
 import de.maniac103.squeezeclient.ui.contextmenu.ItemActionsMenuSheetContent
 import de.maniac103.squeezeclient.ui.contextmenu.ItemActionsViewModel
 import de.maniac103.squeezeclient.ui.itemlist.JiveHomeItemList
@@ -84,7 +85,7 @@ internal fun EntryProviderScope<NavKey>.JiveHomeMenuNavEntry(
             state = listState,
             viewModel = viewModel,
             contentPadding = pagePadding,
-            itemSelectionListener = onItemSelected
+            onItemSelected = onItemSelected
         )
     }
 }
@@ -98,7 +99,7 @@ internal fun EntryProviderScope<NavKey>.SlimBrowseNavEntry(
     pagePadding: PaddingValues,
     appBarState: TopAppBarState?,
     onItemSelected: (SlimBrowseItemList.SlimBrowseItem, JiveAction) -> Job?,
-    onContextMenuItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job?
+    onItemContextMenuSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job?
 ) = entry<MainContentNavigation.SlimBrowseItemPage> { route ->
     val viewModel = koinViewModel<SlimBrowseItemListViewModel> { parametersOf(route.fetchAction) }
     val canUseGrid =
@@ -125,16 +126,8 @@ internal fun EntryProviderScope<NavKey>.SlimBrowseNavEntry(
             serverConfig = serverConfig.value,
             mode = mode,
             contentPadding = pagePadding,
-            itemSelectionListener = { selectedItem ->
-                onItemSelected(selectedItem, route.fetchAction)?.let { job ->
-                    viewModel.setItemBusy(selectedItem, job)
-                }
-            },
-            contextMenuClickListener = { item ->
-                onContextMenuItemSelected(item)?.let { job ->
-                    viewModel.setItemBusy(item, job)
-                }
-            }
+            onItemSelected = { item -> onItemSelected(item, route.fetchAction) },
+            onItemContextMenuSelected = onItemContextMenuSelected
         )
     }
 }
@@ -145,7 +138,7 @@ internal fun EntryProviderScope<NavKey>.SlimBrowseSubItemsNavEntry(
     pagePadding: PaddingValues,
     appBarState: TopAppBarState?,
     onItemSelected: (SlimBrowseItemList.SlimBrowseItem, JiveAction) -> Job?,
-    onContextMenuItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job?
+    onItemContextMenuSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job?
 ) = entry<MainContentNavigation.SlimBrowseSubItemPage> { route ->
     val viewModel = koinViewModel<SlimBrowseSubItemListViewModel> {
         parametersOf(route.fetchAction, route.position)
@@ -161,14 +154,8 @@ internal fun EntryProviderScope<NavKey>.SlimBrowseSubItemsNavEntry(
             viewModel = viewModel,
             serverConfig = serverConfig.value,
             contentPadding = pagePadding,
-            itemSelectionListener = { selectedItem ->
-                onItemSelected(selectedItem, route.fetchAction)
-                    ?.let { job -> viewModel.setItemBusy(selectedItem, job) }
-            },
-            contextMenuClickListener = { item ->
-                onContextMenuItemSelected(item)
-                    ?.let { job -> viewModel.setItemBusy(item, job) }
-            }
+            onItemSelected = { item -> onItemSelected(item, route.fetchAction) },
+            onItemContextMenuSelected = onItemContextMenuSelected
         )
     }
 }
@@ -191,7 +178,7 @@ internal fun EntryProviderScope<NavKey>.GalleryNavEntry(
             items = route.items,
             serverConfig = serverConfig.value,
             contentPadding = pagePadding,
-            itemSelectionListener = onItemSelected
+            onItemSelected = onItemSelected
         )
     }
 }
@@ -204,7 +191,7 @@ internal fun EntryProviderScope<NavKey>.LocalSearchResultsNavKey(
     pagePadding: PaddingValues,
     appBarState: TopAppBarState?,
     onItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job?,
-    onContextMenuItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job?
+    onItemContextMenuSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job?
 ) = entry<MainContentNavigation.LocalSearchResults> { route ->
     val viewModel = koinViewModel<LibrarySearchResultsViewModel> {
         parametersOf(route.searchTerm, route.mode)
@@ -220,14 +207,8 @@ internal fun EntryProviderScope<NavKey>.LocalSearchResultsNavKey(
             serverConfig = serverConfig.value,
             mode = mode,
             contentPadding = pagePadding,
-            itemSelectionListener = { item ->
-                onItemSelected(item)
-                    ?.let { job -> viewModel.setItemBusy(item, job) }
-            },
-            contextMenuClickListener = { item ->
-                onContextMenuItemSelected(item)
-                    ?.let { job -> viewModel.setItemBusy(item, job) }
-            }
+            onItemSelected = onItemSelected,
+            onItemContextMenuSelected = onItemContextMenuSelected
         )
     }
 }
@@ -240,7 +221,7 @@ internal fun EntryProviderScope<NavKey>.RadioSearchResultsNavKey(
     pagePadding: PaddingValues,
     appBarState: TopAppBarState?,
     onItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job?,
-    onContextMenuItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job?
+    onItemContextMenuSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job?
 ) = entry<MainContentNavigation.RadioSearchResults> { route ->
     val viewModel = koinViewModel<RadioSearchResultsViewModel> {
         parametersOf(route.searchTerm)
@@ -256,14 +237,8 @@ internal fun EntryProviderScope<NavKey>.RadioSearchResultsNavKey(
             serverConfig = serverConfig.value,
             mode = mode,
             contentPadding = pagePadding,
-            itemSelectionListener = { item ->
-                onItemSelected(item)
-                    ?.let { job -> viewModel.setItemBusy(item, job) }
-            },
-            contextMenuClickListener = { item ->
-                onContextMenuItemSelected(item)
-                    ?.let { job -> viewModel.setItemBusy(item, job) }
-            }
+            onItemSelected = onItemSelected,
+            onItemContextMenuSelected = onItemContextMenuSelected
         )
     }
 }
@@ -295,8 +270,8 @@ internal fun EntryProviderScope<NavKey>.HomeMenuTimePickerNavEntry(
     metadata = DialogSceneStrategy.dialog()
 ) { route ->
     InputTimePicker(
-        route.title,
-        route.input,
+        title = route.title,
+        input = route.input,
         onInputSubmitted = { action ->
             onInputSubmitted(route.title, action, route.input.actionHasTarget)
         },
@@ -355,10 +330,14 @@ internal fun EntryProviderScope<NavKey>.SliderInputNavEntry(
 ) = entry<MainContentNavigation.SliderInput>(
     metadata = BottomSheetSceneStrategy.bottomSheet()
 ) { route ->
-    SliderBottomSheetContent(route.title, route.slider) { action ->
-        onValueChanged(action)
-            .also { it.invokeOnDoneOrNull { onDone(route) } }
-    }
+    SliderBottomSheetContent(
+        title = route.title,
+        slider = route.slider,
+        onValueSet = { action ->
+            onValueChanged(action)
+                .also { it.invokeOnDoneOrNull { onDone(route) } }
+        }
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -369,11 +348,14 @@ internal fun EntryProviderScope<NavKey>.HomeMenuChoicesNavEntry(
 ) = entry<MainContentNavigation.HomeMenuChoices>(
     metadata = BottomSheetSceneStrategy.bottomSheet()
 ) { route ->
-    ChoicesBottomSheetContent(route.parentTitle, route.choices) { action ->
-        onChoiceSelected(action).also {
-            it.invokeOnDoneOrNull { onDone(route) }
+    ChoicesBottomSheetContent(
+        title = route.parentTitle,
+        choices = route.choices,
+        onChoiceSelected = { action ->
+            onChoiceSelected(action)
+                .also { it.invokeOnDoneOrNull { onDone(route) } }
         }
-    }
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -384,10 +366,14 @@ internal fun EntryProviderScope<NavKey>.SlimBrowseChoicesNavEntry(
 ) = entry<MainContentNavigation.SlimBrowseChoices>(
     metadata = BottomSheetSceneStrategy.bottomSheet()
 ) { route ->
-    ChoicesBottomSheetContent(route.item.title, route.choices) { action ->
-        onChoiceSelected(action, route.item)
-            .also { it.invokeOnDoneOrNull { onDone(route) } }
-    }
+    ChoicesBottomSheetContent(
+        title = route.item.title,
+        choices = route.choices,
+        onChoiceSelected = { action ->
+            onChoiceSelected(action, route.item)
+                .also { it.invokeOnDoneOrNull { onDone(route) } }
+        }
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -395,7 +381,10 @@ internal fun EntryProviderScope<NavKey>.SlimBrowseChoicesNavEntry(
 internal fun EntryProviderScope<NavKey>.InfoNavEntry() = entry<MainContentNavigation.Info>(
     metadata = BottomSheetSceneStrategy.bottomSheet()
 ) { route ->
-    BottomSheetContentWrapper(route.title, false) {
+    BottomSheetContentWrapper(
+        title = route.title,
+        busy = false
+    ) {
         Text(
             text = AnnotatedString.fromHtml(route.info),
             modifier = Modifier.padding(16.dp)
@@ -419,11 +408,14 @@ internal fun EntryProviderScope<NavKey>.ContextMenuNavEntry(
         parametersOf(route.menuItems, route.item)
     }
 
-    ContextMenuBottomSheetContent(viewModel, serverConfig.value) { item ->
-        onItemSelected(item, route.item)
-            ?.also { viewModel.setItemBusy(item, it) }
-            .invokeOnDoneOrNull { onDone(route) }
-    }
+    ContextMenuBottomSheetContent(
+        viewModel = viewModel,
+        serverConfig = serverConfig.value,
+        onItemSelected = { item ->
+            onItemSelected(item, route.item)
+                .also { it.invokeOnDoneOrNull { onDone(route) } }
+        }
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -438,14 +430,20 @@ internal fun EntryProviderScope<NavKey>.ItemActionsNavEntry(
 ) { route ->
     val viewModel = koinViewModel<ItemActionsViewModel> { parametersOf(route.item) }
 
-    ItemActionsMenuSheetContent(viewModel, serverConfig.value) { action ->
-        if (action.download != null) {
-            onDownloadSelected(action.download)
-        } else {
-            action.action
-                ?.let { onActionSelected(it, route.item) }
-                ?.also { viewModel.setActionBusy(action, it) }
-                .invokeOnDoneOrNull { onDone(route) }
+    ItemActionsMenuSheetContent(
+        viewModel = viewModel,
+        serverConfig = serverConfig.value,
+        onActionSelected = { action ->
+            when (action) {
+                is ItemAction.Download -> {
+                    onDownloadSelected(action.download)
+                    null
+                }
+
+                is ItemAction.Action ->
+                    onActionSelected(action.action, route.item)
+                        .also { it.invokeOnDoneOrNull { onDone(route) } }
+            }
         }
-    }
+    )
 }

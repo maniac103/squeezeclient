@@ -76,8 +76,8 @@ import kotlin.coroutines.cancellation.CancellationException
 fun SearchBox(
     viewModel: SearchViewModel,
     @SuppressLint("ModifierParameter") pillModifier: Modifier = Modifier,
-    onCloseListener: () -> Unit,
-    onOpenResultsListener: (query: String, type: LibrarySearchRequest.Mode?) -> Unit
+    onClose: () -> Unit,
+    onOpenResults: (query: String, type: LibrarySearchRequest.Mode?) -> Unit
 ) {
     val queryState by viewModel.queryFlow.collectAsStateWithLifecycle()
     val categories by viewModel.categoriesFlow.collectAsStateWithLifecycle(emptyList())
@@ -119,10 +119,10 @@ fun SearchBox(
             onQueryTextChanged = { viewModel.updateQuery(it) },
             onClearQuery = { viewModel.updateQuery("") },
             onSubmitQuery = { viewModel.submitQueryImmediately() },
-            onClose = onCloseListener,
+            onClose = onClose,
             onCategoryClick = { category ->
                 if (!category.busy) {
-                    onOpenResultsListener(queryState.text, category.type)
+                    onOpenResults(queryState.text, category.type)
                     viewModel.close()
                 }
             }

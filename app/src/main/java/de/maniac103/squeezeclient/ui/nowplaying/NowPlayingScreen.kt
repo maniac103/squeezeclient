@@ -188,10 +188,12 @@ internal fun NowPlayingScreen(
                 is ContextMenuItemResult.GoAction ->
                     onInfoMenuItemGoAction(result.action, parentItem, contextItem)
             }
-            job?.invokeOnCompletion {
-                viewModel.onContextMenuDismissed()
-                scope.launch {
-                    motionState.nowPlaying.collapse()
+            job?.apply {
+                invokeOnCompletion {
+                    viewModel.onContextMenuDismissed()
+                    scope.launch {
+                        motionState.nowPlaying.collapse()
+                    }
                 }
             }
         },
@@ -229,7 +231,7 @@ internal fun NowPlayingScreen(
     onInfoMenuItemSelected: (
         parentItem: SlimBrowseItemList.SlimBrowseItem,
         contextItem: SlimBrowseItemList.SlimBrowseItem
-    ) -> Unit = { _, _ -> },
+    ) -> Job? = { _, _ -> null },
     onInfoMenuDismissed: () -> Unit = {},
     onShowSavePlaylistNameInput: () -> Unit = {},
     onSavePlaylistNameEntered: (String) -> Unit = {},
@@ -262,7 +264,7 @@ internal fun NowPlayingScreen(
             ContextMenuBottomSheetContent(
                 viewModel = viewModel,
                 serverConfig = serverConfig,
-                itemSelectionListener = { item ->
+                onItemSelected = { item ->
                     onInfoMenuItemSelected(menuState.parentItem, item)
                 }
             )

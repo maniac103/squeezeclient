@@ -37,13 +37,13 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.ui.composables.ArtworkImage
+import kotlinx.coroutines.Job
 
 @Composable
 fun ItemActionsMenuSheetContent(
     viewModel: ItemActionsViewModel,
     serverConfig: ServerConfiguration?,
-    // FIXME: sealed class for selection listener param
-    actionSelectedListener: (ItemActionsViewModel.ActionItem) -> Unit
+    onActionSelected: (ItemAction) -> Job?
 ) {
     val item = viewModel.item
     val actions by viewModel.actionsFlow.collectAsStateWithLifecycle(emptyList())
@@ -91,7 +91,11 @@ fun ItemActionsMenuSheetContent(
                 title = stringResource(action.labelResId),
                 busy = action == busyAction,
                 selectable = true,
-                modifier = Modifier.clickable { actionSelectedListener(action) }
+                modifier = Modifier.clickable {
+                    onActionSelected(action.action)?.let { job ->
+                        viewModel.setActionBusy(action, job)
+                    }
+                }
             )
         }
     }

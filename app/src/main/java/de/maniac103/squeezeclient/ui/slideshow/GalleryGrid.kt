@@ -73,30 +73,32 @@ fun GalleryGrid(
 }
 
 @Composable
-fun GalleryGridItem(imageRequest: ImageRequest, caption: String, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-            .padding(8.dp)
-    ) {
-        SubcomposeAsyncImage(
-            model = imageRequest,
-            contentDescription = caption,
-            loading = {
-                CircularProgressIndicator(
-                    strokeWidth = 4.dp,
-                    modifier = Modifier
-                        .size(64.dp)
-                )
-            },
-            modifier = Modifier
-                .clip(RoundedCornerShape(percent = 10))
-                .align(Alignment.CenterHorizontally)
-        )
-        Text(
-            text = caption,
-            textAlign = TextAlign.Center,
-            modifier = Modifier
-                .fillMaxWidth()
-        )
-    }
+private fun GalleryGridItem(
+    imageRequest: ImageRequest,
+    caption: String,
+    modifier: Modifier = Modifier
+) = Column(
+    modifier = modifier
+        .padding(8.dp)
+) {
+    SubcomposeAsyncImage(
+        model = imageRequest,
+        contentDescription = caption,
+        loading = {
+            CircularProgressIndicator(
+                strokeWidth = 4.dp,
+                modifier = Modifier
+                    .size(64.dp)
+            )
+        },
+        modifier = Modifier
+            .clip(RoundedCornerShape(percent = 10))
+            .align(Alignment.CenterHorizontally)
+    )
+    Text(
+        text = caption,
+        textAlign = TextAlign.Center,
+        modifier = Modifier
+            .fillMaxWidth()
+    )
 }

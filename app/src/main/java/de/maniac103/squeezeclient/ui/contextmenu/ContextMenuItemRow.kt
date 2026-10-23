@@ -31,7 +31,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun ContextMenuListRow(
+fun ContextMenuItemRow(
     title: String,
     busy: Boolean,
     selectable: Boolean,

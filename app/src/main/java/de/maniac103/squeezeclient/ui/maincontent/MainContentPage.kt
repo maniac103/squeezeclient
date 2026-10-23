@@ -115,6 +115,7 @@ fun MainContentPage(
     val animationRunning = transition.currentState != transition.targetState
     val pageIsActive = transition.targetState == EnterExitState.Visible &&
         animationState.animType != MainContentAnimationType.PredictiveBack
+    val isEnterAnimation = transition.targetState == EnterExitState.Visible
     val animationStateReporter by rememberUpdatedState(
         LocalMainContentAnimationState.current.onTransitionRunningChanged
     )
@@ -136,12 +137,14 @@ fun MainContentPage(
         }
     }
 
+    val animationDelay = if (isEnterAnimation) 300 else 0
+
     val scale by transition.animateFloatForPredictiveBack(
         valueDuringAnimation = 0.95F,
         settledValue = 1F,
         animation = tween(
             durationMillis = 100,
-            delayMillis = 300,
+            delayMillis = animationDelay,
             easing = EaseOutQuart
         ),
         label = "main-content-scale"
@@ -152,7 +155,7 @@ fun MainContentPage(
         settledValue = 0.dp,
         animation = tween(
             durationMillis = 100,
-            delayMillis = 300,
+            delayMillis = animationDelay,
             easing = EaseOutQuart
         ),
         label = "main-content-corner-radius"
@@ -163,7 +166,7 @@ fun MainContentPage(
         settledValue = 0.dp,
         animation = tween(
             durationMillis = 100,
-            delayMillis = 300,
+            delayMillis = animationDelay,
             easing = EaseOutQuart
         ),
         label = "main-content-bottom-compensation"
@@ -171,11 +174,10 @@ fun MainContentPage(
 
     val elevation by transition.animateDpForPredictiveBack(
         valueDuringAnimation = 4.dp,
-        valueDuringExitAnimation = 0.dp,
         settledValue = 0.dp,
         animation = tween(
             durationMillis = 100,
-            delayMillis = 300
+            delayMillis = animationDelay
         ),
         label = "main-content-elevation"
     )

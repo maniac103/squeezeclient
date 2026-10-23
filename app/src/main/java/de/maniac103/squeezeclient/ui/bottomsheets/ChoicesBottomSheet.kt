@@ -33,11 +33,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.JiveActions
-import de.maniac103.squeezeclient.ui.composables.BottomSheetContentWrapper
 import kotlinx.coroutines.Job
 
 @Composable
-fun ChoicesBottomSheet(
+fun ChoicesBottomSheetContent(
     title: String,
     choices: JiveActions.Choices,
     onChoiceSelected: (JiveAction) -> Job?

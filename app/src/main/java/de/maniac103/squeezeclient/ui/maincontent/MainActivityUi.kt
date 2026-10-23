@@ -109,7 +109,7 @@ import de.maniac103.squeezeclient.ui.nowplaying.NowPlayingScreen
 import de.maniac103.squeezeclient.ui.nowplaying.rememberNowPlayingMotionState
 import de.maniac103.squeezeclient.ui.search.SearchBox
 import de.maniac103.squeezeclient.ui.search.SearchViewModel
-import de.maniac103.squeezeclient.ui.volume.VolumeControlPopup
+import de.maniac103.squeezeclient.ui.volume.VolumePopup
 import de.maniac103.squeezeclient.ui.volume.VolumePopupViewModel
 import kotlin.String
 import kotlin.math.abs
@@ -635,7 +635,7 @@ private fun MainActivityPlayerContent(
                         }
                     }
                 )
-                VolumeControlPopup(
+                VolumePopup(
                     viewModel = volumeViewModel
                 )
                 DisplayStatusIndicator(

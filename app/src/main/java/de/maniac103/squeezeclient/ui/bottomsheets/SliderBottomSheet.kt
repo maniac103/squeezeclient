@@ -36,13 +36,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.JiveActions
-import de.maniac103.squeezeclient.ui.composables.BottomSheetContentWrapper
 import kotlin.math.roundToInt
 import kotlinx.coroutines.Job
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SliderBottomSheet(title: String, slider: JiveActions.Slider, onValueSet: (JiveAction) -> Job?) {
+fun SliderBottomSheetContent(
+    title: String,
+    slider: JiveActions.Slider,
+    onValueSet: (JiveAction) -> Job?
+) {
     var busy by remember { mutableStateOf(false) }
     val sliderState = rememberSliderState(
         value = slider.initialValue.toFloat(),

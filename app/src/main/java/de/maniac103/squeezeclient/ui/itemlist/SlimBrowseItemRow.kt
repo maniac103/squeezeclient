@@ -33,14 +33,14 @@ import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.ui.composables.ArtworkImage
 
 @Composable
-fun SlimBrowseItemListRow(
+fun SlimBrowseItemRow(
     item: SlimBrowseItemList.SlimBrowseItem,
     serverConfig: ServerConfiguration?,
     showIcon: Boolean,
     busy: Boolean,
     modifier: Modifier = Modifier,
     contextMenuClickListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {}
-) = SlimBrowseItemListRow(
+) = SlimBrowseItemRow(
     title = item.title,
     subtext = item.subText ?: item.extraInfo,
     trailingWidget = item.extractTrailingWidget(contextMenuClickListener),
@@ -51,7 +51,7 @@ fun SlimBrowseItemListRow(
 )
 
 @Composable
-fun SlimBrowseItemListRow(
+fun SlimBrowseItemRow(
     title: String,
     subtext: String?,
     trailingWidget: SlimBrowseItemTrailingWidget?,
@@ -103,11 +103,11 @@ fun SlimBrowseItemListRowPreview() {
     }
 
     Column(modifier = Modifier.fillMaxWidth()) {
-        SlimBrowseItemListRow("Title", "Subtext", null, dummyArtwork, null, false)
-        SlimBrowseItemListRow("No Subtext", null, null, dummyArtwork, null, false)
-        SlimBrowseItemListRow("No icon", null, null, null, null, false)
-        SlimBrowseItemListRow("Busy", "Subtext", null, dummyArtwork, null, true)
-        SlimBrowseItemListRow(
+        SlimBrowseItemRow("Title", "Subtext", null, dummyArtwork, null, false)
+        SlimBrowseItemRow("No Subtext", null, null, dummyArtwork, null, false)
+        SlimBrowseItemRow("No icon", null, null, null, null, false)
+        SlimBrowseItemRow("Busy", "Subtext", null, dummyArtwork, null, true)
+        SlimBrowseItemRow(
             "Menu",
             "Subtext",
             SlimBrowseItemTrailingWidget.ContextMenu {},
@@ -115,7 +115,7 @@ fun SlimBrowseItemListRowPreview() {
             null,
             false
         )
-        SlimBrowseItemListRow(
+        SlimBrowseItemRow(
             "Choice",
             "Subtext",
             SlimBrowseItemTrailingWidget.Choice("On"),
@@ -123,7 +123,7 @@ fun SlimBrowseItemListRowPreview() {
             null,
             false
         )
-        SlimBrowseItemListRow(
+        SlimBrowseItemRow(
             "Radio",
             "Subtext",
             SlimBrowseItemTrailingWidget.Radio(true),
@@ -131,7 +131,7 @@ fun SlimBrowseItemListRowPreview() {
             null,
             false
         )
-        SlimBrowseItemListRow(
+        SlimBrowseItemRow(
             "Checkbox",
             "Subtext",
             SlimBrowseItemTrailingWidget.Checkbox(true),

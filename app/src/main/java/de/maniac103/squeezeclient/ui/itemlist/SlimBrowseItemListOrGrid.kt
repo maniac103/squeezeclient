@@ -17,31 +17,19 @@
 
 package de.maniac103.squeezeclient.ui.itemlist
 
-import android.content.res.Configuration
-import androidx.compose.foundation.ScrollIndicatorState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.LazyPagingItems
@@ -54,50 +42,8 @@ import my.nanihadesuka.compose.LazyColumnScrollbar
 import my.nanihadesuka.compose.LazyVerticalGridScrollbar
 import my.nanihadesuka.compose.ScrollbarSettings
 
-sealed interface SlimBrowseItemListMode {
-    val scrollIndicatorState: ScrollIndicatorState?
-
-    data class List(val listState: LazyListState, val showIcons: Boolean) : SlimBrowseItemListMode {
-        override val scrollIndicatorState get() = listState.scrollIndicatorState
-    }
-
-    data class Grid(val gridState: LazyGridState, val cellMinSize: Dp) : SlimBrowseItemListMode {
-        override val scrollIndicatorState get() = gridState.scrollIndicatorState
-    }
-}
-
 @Composable
-fun rememberSlimBrowseItemListMode(
-    useGrid: Boolean,
-    showIcons: Boolean,
-    gridCellMinSize: Dp,
-    listState: LazyListState = rememberLazyListState(),
-    gridState: LazyGridState = rememberLazyGridState()
-): SlimBrowseItemListMode {
-    val lastUsedGrid = remember { mutableStateOf(useGrid) }
-
-    SideEffect {
-        if (lastUsedGrid.value != useGrid) {
-            if (useGrid) {
-                gridState.requestScrollToItem(listState.firstVisibleItemIndex)
-            } else {
-                listState.requestScrollToItem(gridState.firstVisibleItemIndex)
-            }
-            lastUsedGrid.value = useGrid
-        }
-    }
-
-    return remember(useGrid, showIcons, listState, gridState) {
-        if (useGrid) {
-            SlimBrowseItemListMode.Grid(gridState, gridCellMinSize)
-        } else {
-            SlimBrowseItemListMode.List(listState, showIcons)
-        }
-    }
-}
-
-@Composable
-fun SlimBrowsePagedItemListOrGrid(
+fun SlimBrowseItemListOrGrid(
     entries: LazyPagingItems<SlimBrowseItemList.SlimBrowseItem>,
     busyItem: SlimBrowseItemList.SlimBrowseItem?,
     serverConfig: ServerConfiguration?,
@@ -110,8 +56,7 @@ fun SlimBrowsePagedItemListOrGrid(
     if (!entries.loadState.isIdle) {
         Box {
             LinearProgressIndicator(
-                modifier = modifier
-                    .fillMaxWidth()
+                modifier = modifier.fillMaxWidth()
             )
         }
         return
@@ -172,7 +117,7 @@ fun SlimBrowsePagedItemListOrGrid(
                 ) {
                     items(entries.itemCount) { index ->
                         entries[index]?.let { entry ->
-                            SlimBrowseItemListRow(
+                            SlimBrowseItemRow(
                                 item = entry,
                                 serverConfig = serverConfig,
                                 showIcon = mode.showIcons,
@@ -191,7 +136,7 @@ fun SlimBrowsePagedItemListOrGrid(
 }
 
 @Composable
-fun SlimBrowseItemList(
+fun SlimBrowseItemListOrGrid(
     viewModel: SlimBrowseItemListViewModel,
     serverConfig: ServerConfiguration?,
     contentPadding: PaddingValues,
@@ -203,7 +148,7 @@ fun SlimBrowseItemList(
     val entries = viewModel.itemsFlow.collectAsLazyPagingItems()
     val busyItem by viewModel.busyItemFlow.collectAsStateWithLifecycle()
 
-    SlimBrowsePagedItemListOrGrid(
+    SlimBrowseItemListOrGrid(
         entries,
         busyItem,
         serverConfig,
@@ -213,37 +158,4 @@ fun SlimBrowseItemList(
         itemSelectionListener,
         contextMenuClickListener
     )
-}
-
-@Composable
-fun SlimBrowseSubItemList(
-    viewModel: SlimBrowseSubItemListViewModel,
-    serverConfig: ServerConfiguration?,
-    contentPadding: PaddingValues,
-    modifier: Modifier = Modifier,
-    state: LazyListState = rememberLazyListState(),
-    itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {},
-    contextMenuClickListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {}
-) {
-    val entries by viewModel.itemsFlow.collectAsStateWithLifecycle(emptyList())
-    val busyItem = viewModel.busyItemFlow.collectAsStateWithLifecycle()
-
-    LazyColumn(
-        state = state,
-        contentPadding = contentPadding,
-        modifier = modifier
-    ) {
-        items(entries) { entry ->
-            SlimBrowseItemListRow(
-                item = entry,
-                serverConfig = serverConfig,
-                showIcon = false,
-                busy = entry == busyItem,
-                modifier = Modifier.clickable(
-                    onClick = { itemSelectionListener(entry) }
-                ),
-                contextMenuClickListener = contextMenuClickListener
-            )
-        }
-    }
 }

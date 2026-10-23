@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.scene.DialogSceneStrategy
+import de.maniac103.squeezeclient.extfuncs.invokeOnDoneOrNull
 import de.maniac103.squeezeclient.model.DownloadRequestData
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.JiveHomeMenuItem
@@ -42,18 +43,18 @@ import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlideshowImage
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.model.WindowStyle
-import de.maniac103.squeezeclient.ui.bottomsheets.ChoicesBottomSheet
-import de.maniac103.squeezeclient.ui.bottomsheets.InputBottomSheet
-import de.maniac103.squeezeclient.ui.bottomsheets.InputTimePicker
-import de.maniac103.squeezeclient.ui.bottomsheets.SliderBottomSheet
-import de.maniac103.squeezeclient.ui.composables.BottomSheetContentWrapper
+import de.maniac103.squeezeclient.ui.bottomsheets.BottomSheetContentWrapper
+import de.maniac103.squeezeclient.ui.bottomsheets.ChoicesBottomSheetContent
+import de.maniac103.squeezeclient.ui.bottomsheets.InputBottomSheetContent
+import de.maniac103.squeezeclient.ui.bottomsheets.SliderBottomSheetContent
+import de.maniac103.squeezeclient.ui.composables.InputTimePicker
 import de.maniac103.squeezeclient.ui.contextmenu.ContextMenuBottomSheetContent
-import de.maniac103.squeezeclient.ui.contextmenu.ContextMenuBottomSheetViewModel
-import de.maniac103.squeezeclient.ui.contextmenu.ItemActionsSheet
+import de.maniac103.squeezeclient.ui.contextmenu.ContextMenuViewModel
+import de.maniac103.squeezeclient.ui.contextmenu.ItemActionsMenuSheetContent
 import de.maniac103.squeezeclient.ui.contextmenu.ItemActionsViewModel
 import de.maniac103.squeezeclient.ui.itemlist.JiveHomeItemList
 import de.maniac103.squeezeclient.ui.itemlist.JiveHomeItemListViewModel
-import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseItemList
+import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseItemListOrGrid
 import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseItemListViewModel
 import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseSubItemList
 import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseSubItemListViewModel
@@ -68,7 +69,7 @@ import org.koin.androidx.compose.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 @Composable
-internal fun EntryProviderScope<NavKey>.jiveHomeMenuNavEntry(
+internal fun EntryProviderScope<NavKey>.JiveHomeMenuNavEntry(
     pagePadding: PaddingValues,
     appBarState: TopAppBarState?,
     onItemSelected: (JiveHomeMenuItem) -> Unit
@@ -89,7 +90,7 @@ internal fun EntryProviderScope<NavKey>.jiveHomeMenuNavEntry(
 }
 
 @Composable
-internal fun EntryProviderScope<NavKey>.slimBrowseNavEntry(
+internal fun EntryProviderScope<NavKey>.SlimBrowseNavEntry(
     serverConfig: State<ServerConfiguration?>,
     refreshTracker: RefreshTracker,
     useGridIfPossible: State<Boolean>,
@@ -119,7 +120,7 @@ internal fun EntryProviderScope<NavKey>.slimBrowseNavEntry(
         appBarState = appBarState,
         indicatorState = mode.scrollIndicatorState
     ) {
-        SlimBrowseItemList(
+        SlimBrowseItemListOrGrid(
             viewModel = viewModel,
             serverConfig = serverConfig.value,
             mode = mode,
@@ -139,7 +140,7 @@ internal fun EntryProviderScope<NavKey>.slimBrowseNavEntry(
 }
 
 @Composable
-internal fun EntryProviderScope<NavKey>.slimBrowseSubItemsNavEntry(
+internal fun EntryProviderScope<NavKey>.SlimBrowseSubItemsNavEntry(
     serverConfig: State<ServerConfiguration?>,
     pagePadding: PaddingValues,
     appBarState: TopAppBarState?,
@@ -173,7 +174,7 @@ internal fun EntryProviderScope<NavKey>.slimBrowseSubItemsNavEntry(
 }
 
 @Composable
-internal fun EntryProviderScope<NavKey>.galleryNavEntry(
+internal fun EntryProviderScope<NavKey>.GalleryNavEntry(
     serverConfig: State<ServerConfiguration?>,
     pagePadding: PaddingValues,
     appBarState: TopAppBarState?,
@@ -196,7 +197,7 @@ internal fun EntryProviderScope<NavKey>.galleryNavEntry(
 }
 
 @Composable
-internal fun EntryProviderScope<NavKey>.localSearchResultsNavKey(
+internal fun EntryProviderScope<NavKey>.LocalSearchResultsNavKey(
     serverConfig: State<ServerConfiguration?>,
     useGrid: State<Boolean>,
     gridCellMinSize: Dp,
@@ -232,7 +233,7 @@ internal fun EntryProviderScope<NavKey>.localSearchResultsNavKey(
 }
 
 @Composable
-internal fun EntryProviderScope<NavKey>.radioSearchResultsNavKey(
+internal fun EntryProviderScope<NavKey>.RadioSearchResultsNavKey(
     serverConfig: State<ServerConfiguration?>,
     useGrid: State<Boolean>,
     gridCellMinSize: Dp,
@@ -269,20 +270,25 @@ internal fun EntryProviderScope<NavKey>.radioSearchResultsNavKey(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun EntryProviderScope<NavKey>.homeMenuInputNavEntry(
+internal fun EntryProviderScope<NavKey>.HomeMenuInputNavEntry(
     onInputSubmitted: (title: String, action: JiveAction, isGoAction: Boolean) -> Job?,
     onDone: (NavKey) -> Unit
 ) = entry<MainContentNavigation.HomeMenuInput>(
     metadata = BottomSheetSceneStrategy.bottomSheet()
 ) { route ->
-    InputBottomSheet(route.title, route.input) { action ->
-        onInputSubmitted(route.title, action, route.input.actionHasTarget)
-            .also { it.invokeOnDoneOrNull { onDone(route) } }
-    }
+    InputBottomSheetContent(
+        title = route.title,
+        input = route.input,
+        onInputSubmitted = { action ->
+            onInputSubmitted(route.title, action, route.input.actionHasTarget)
+                .also { it.invokeOnDoneOrNull { onDone(route) } }
+        },
+        modifier = Modifier.padding(16.dp)
+    )
 }
 
 @Composable
-internal fun EntryProviderScope<NavKey>.homeMenuTimePickerNavEntry(
+internal fun EntryProviderScope<NavKey>.HomeMenuTimePickerNavEntry(
     onInputSubmitted: (title: String, action: JiveAction, isGoAction: Boolean) -> Job?,
     onDone: (NavKey) -> Unit
 ) = entry<MainContentNavigation.HomeMenuTimePicker>(
@@ -300,7 +306,7 @@ internal fun EntryProviderScope<NavKey>.homeMenuTimePickerNavEntry(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun EntryProviderScope<NavKey>.slimBrowseInputNavEntry(
+internal fun EntryProviderScope<NavKey>.SlimBrowseInputNavEntry(
     onInputSubmitted: (
         item: SlimBrowseItemList.SlimBrowseItem,
         action: JiveAction,
@@ -310,14 +316,18 @@ internal fun EntryProviderScope<NavKey>.slimBrowseInputNavEntry(
 ) = entry<MainContentNavigation.SlimBrowseInput>(
     metadata = BottomSheetSceneStrategy.bottomSheet()
 ) { route ->
-    InputBottomSheet(route.item.title, route.input) { action ->
-        onInputSubmitted(route.item, action, route.input.actionHasTarget)
-            .also { it.invokeOnDoneOrNull { onDone(route) } }
-    }
+    InputBottomSheetContent(
+        title = route.item.title,
+        input = route.input,
+        onInputSubmitted = { action ->
+            onInputSubmitted(route.item, action, route.input.actionHasTarget)
+                .also { it.invokeOnDoneOrNull { onDone(route) } }
+        }
+    )
 }
 
 @Composable
-internal fun EntryProviderScope<NavKey>.slimBrowseTimePickerNavEntry(
+internal fun EntryProviderScope<NavKey>.SlimBrowseTimePickerNavEntry(
     onInputSubmitted: (
         item: SlimBrowseItemList.SlimBrowseItem,
         action: JiveAction,
@@ -328,8 +338,8 @@ internal fun EntryProviderScope<NavKey>.slimBrowseTimePickerNavEntry(
     metadata = DialogSceneStrategy.dialog()
 ) { route ->
     InputTimePicker(
-        route.item.title,
-        route.input,
+        title = route.item.title,
+        input = route.input,
         onInputSubmitted = { action ->
             onInputSubmitted(route.item, action, route.input.actionHasTarget)
         },
@@ -339,13 +349,13 @@ internal fun EntryProviderScope<NavKey>.slimBrowseTimePickerNavEntry(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun EntryProviderScope<NavKey>.sliderInputNavEntry(
+internal fun EntryProviderScope<NavKey>.SliderInputNavEntry(
     onValueChanged: (JiveAction) -> Job?,
     onDone: (NavKey) -> Unit
 ) = entry<MainContentNavigation.SliderInput>(
     metadata = BottomSheetSceneStrategy.bottomSheet()
 ) { route ->
-    SliderBottomSheet(route.title, route.slider) { action ->
+    SliderBottomSheetContent(route.title, route.slider) { action ->
         onValueChanged(action)
             .also { it.invokeOnDoneOrNull { onDone(route) } }
     }
@@ -353,13 +363,13 @@ internal fun EntryProviderScope<NavKey>.sliderInputNavEntry(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun EntryProviderScope<NavKey>.homeMenuChoicesNavEntry(
+internal fun EntryProviderScope<NavKey>.HomeMenuChoicesNavEntry(
     onChoiceSelected: (JiveAction) -> Job?,
     onDone: (NavKey) -> Unit
 ) = entry<MainContentNavigation.HomeMenuChoices>(
     metadata = BottomSheetSceneStrategy.bottomSheet()
 ) { route ->
-    ChoicesBottomSheet(route.parentTitle, route.choices) { action ->
+    ChoicesBottomSheetContent(route.parentTitle, route.choices) { action ->
         onChoiceSelected(action).also {
             it.invokeOnDoneOrNull { onDone(route) }
         }
@@ -368,13 +378,13 @@ internal fun EntryProviderScope<NavKey>.homeMenuChoicesNavEntry(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun EntryProviderScope<NavKey>.slimBrowseChoicesNavEntry(
+internal fun EntryProviderScope<NavKey>.SlimBrowseChoicesNavEntry(
     onChoiceSelected: (JiveAction, SlimBrowseItemList.SlimBrowseItem) -> Job?,
     onDone: (NavKey) -> Unit
 ) = entry<MainContentNavigation.SlimBrowseChoices>(
     metadata = BottomSheetSceneStrategy.bottomSheet()
 ) { route ->
-    ChoicesBottomSheet(route.item.title, route.choices) { action ->
+    ChoicesBottomSheetContent(route.item.title, route.choices) { action ->
         onChoiceSelected(action, route.item)
             .also { it.invokeOnDoneOrNull { onDone(route) } }
     }
@@ -382,7 +392,7 @@ internal fun EntryProviderScope<NavKey>.slimBrowseChoicesNavEntry(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun EntryProviderScope<NavKey>.infoNavEntry() = entry<MainContentNavigation.Info>(
+internal fun EntryProviderScope<NavKey>.InfoNavEntry() = entry<MainContentNavigation.Info>(
     metadata = BottomSheetSceneStrategy.bottomSheet()
 ) { route ->
     BottomSheetContentWrapper(route.title, false) {
@@ -395,7 +405,7 @@ internal fun EntryProviderScope<NavKey>.infoNavEntry() = entry<MainContentNaviga
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun EntryProviderScope<NavKey>.contextMenuNavEntry(
+internal fun EntryProviderScope<NavKey>.ContextMenuNavEntry(
     serverConfig: State<ServerConfiguration?>,
     onItemSelected: (
         item: SlimBrowseItemList.SlimBrowseItem,
@@ -405,7 +415,7 @@ internal fun EntryProviderScope<NavKey>.contextMenuNavEntry(
 ) = entry<MainContentNavigation.ContextMenu>(
     metadata = BottomSheetSceneStrategy.bottomSheet()
 ) { route ->
-    val viewModel = koinViewModel<ContextMenuBottomSheetViewModel> {
+    val viewModel = koinViewModel<ContextMenuViewModel> {
         parametersOf(route.menuItems, route.item)
     }
 
@@ -418,7 +428,7 @@ internal fun EntryProviderScope<NavKey>.contextMenuNavEntry(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun EntryProviderScope<NavKey>.itemActionsNavEntry(
+internal fun EntryProviderScope<NavKey>.ItemActionsNavEntry(
     serverConfig: State<ServerConfiguration?>,
     onDownloadSelected: (DownloadRequestData) -> Unit,
     onActionSelected: (JiveAction, SlimBrowseItemList.SlimBrowseItem) -> Job?,
@@ -428,7 +438,7 @@ internal fun EntryProviderScope<NavKey>.itemActionsNavEntry(
 ) { route ->
     val viewModel = koinViewModel<ItemActionsViewModel> { parametersOf(route.item) }
 
-    ItemActionsSheet(viewModel, serverConfig.value) { action ->
+    ItemActionsMenuSheetContent(viewModel, serverConfig.value) { action ->
         if (action.download != null) {
             onDownloadSelected(action.download)
         } else {
@@ -437,13 +447,5 @@ internal fun EntryProviderScope<NavKey>.itemActionsNavEntry(
                 ?.also { viewModel.setActionBusy(action, it) }
                 .invokeOnDoneOrNull { onDone(route) }
         }
-    }
-}
-
-internal fun Job?.invokeOnDoneOrNull(onDone: () -> Unit) {
-    if (this == null) {
-        onDone()
-    } else {
-        invokeOnCompletion { onDone() }
     }
 }

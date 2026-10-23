@@ -19,14 +19,18 @@ package de.maniac103.squeezeclient.ui.maincontent
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.fromHtml
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
@@ -50,10 +54,10 @@ import de.maniac103.squeezeclient.ui.contextmenu.ItemActionsViewModel
 import de.maniac103.squeezeclient.ui.itemlist.JiveHomeItemList
 import de.maniac103.squeezeclient.ui.itemlist.JiveHomeItemListViewModel
 import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseItemList
-import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseItemListMode
 import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseItemListViewModel
 import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseSubItemList
 import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseSubItemListViewModel
+import de.maniac103.squeezeclient.ui.itemlist.rememberSlimBrowseItemListMode
 import de.maniac103.squeezeclient.ui.search.LibrarySearchResultsItemList
 import de.maniac103.squeezeclient.ui.search.LibrarySearchResultsViewModel
 import de.maniac103.squeezeclient.ui.search.RadioSearchResultsItemList
@@ -66,11 +70,17 @@ import org.koin.core.parameter.parametersOf
 @Composable
 internal fun EntryProviderScope<NavKey>.jiveHomeMenuNavEntry(
     pagePadding: PaddingValues,
+    appBarState: TopAppBarState?,
     onItemSelected: (JiveHomeMenuItem) -> Unit
 ) = entry<MainContentNavigation.JiveHomeMenuPage> { route ->
     val viewModel = koinViewModel<JiveHomeItemListViewModel> { parametersOf(route.nodeId) }
-    MainContentPage {
+    val listState = rememberLazyListState()
+    MainContentPage(
+        appBarState = appBarState,
+        indicatorState = listState.scrollIndicatorState
+    ) {
         JiveHomeItemList(
+            state = listState,
             viewModel = viewModel,
             contentPadding = pagePadding,
             itemSelectionListener = onItemSelected
@@ -83,19 +93,20 @@ internal fun EntryProviderScope<NavKey>.slimBrowseNavEntry(
     serverConfig: State<ServerConfiguration?>,
     refreshTracker: RefreshTracker,
     useGridIfPossible: State<Boolean>,
+    gridCellMinSize: Dp,
     pagePadding: PaddingValues,
+    appBarState: TopAppBarState?,
     onItemSelected: (SlimBrowseItemList.SlimBrowseItem, JiveAction) -> Job?,
     onContextMenuItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job?
 ) = entry<MainContentNavigation.SlimBrowseItemPage> { route ->
     val viewModel = koinViewModel<SlimBrowseItemListViewModel> { parametersOf(route.fetchAction) }
     val canUseGrid =
         route.windowStyle == WindowStyle.IconList || route.windowStyle == WindowStyle.HomeMenu
-    val showIcons = route.windowStyle != null && route.windowStyle != WindowStyle.TextOnlyList
-    val mode = when {
-        useGridIfPossible.value && canUseGrid -> SlimBrowseItemListMode.Grid
-        showIcons -> SlimBrowseItemListMode.ListWithIcons
-        else -> SlimBrowseItemListMode.ListWithoutIcons
-    }
+    val mode = rememberSlimBrowseItemListMode(
+        useGrid = useGridIfPossible.value && canUseGrid,
+        showIcons = route.windowStyle != null && route.windowStyle != WindowStyle.TextOnlyList,
+        gridCellMinSize = gridCellMinSize
+    )
 
     val isStale = refreshTracker.isStale(route)
     LaunchedEffect(isStale) {
@@ -104,7 +115,10 @@ internal fun EntryProviderScope<NavKey>.slimBrowseNavEntry(
         }
     }
 
-    MainContentPage {
+    MainContentPage(
+        appBarState = appBarState,
+        indicatorState = mode.scrollIndicatorState
+    ) {
         SlimBrowseItemList(
             viewModel = viewModel,
             serverConfig = serverConfig.value,
@@ -128,15 +142,21 @@ internal fun EntryProviderScope<NavKey>.slimBrowseNavEntry(
 internal fun EntryProviderScope<NavKey>.slimBrowseSubItemsNavEntry(
     serverConfig: State<ServerConfiguration?>,
     pagePadding: PaddingValues,
+    appBarState: TopAppBarState?,
     onItemSelected: (SlimBrowseItemList.SlimBrowseItem, JiveAction) -> Job?,
     onContextMenuItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job?
 ) = entry<MainContentNavigation.SlimBrowseSubItemPage> { route ->
     val viewModel = koinViewModel<SlimBrowseSubItemListViewModel> {
         parametersOf(route.fetchAction, route.position)
     }
+    val listState = rememberLazyListState()
 
-    MainContentPage {
+    MainContentPage(
+        appBarState = appBarState,
+        indicatorState = listState.scrollIndicatorState
+    ) {
         SlimBrowseSubItemList(
+            state = listState,
             viewModel = viewModel,
             serverConfig = serverConfig.value,
             contentPadding = pagePadding,
@@ -156,10 +176,17 @@ internal fun EntryProviderScope<NavKey>.slimBrowseSubItemsNavEntry(
 internal fun EntryProviderScope<NavKey>.galleryNavEntry(
     serverConfig: State<ServerConfiguration?>,
     pagePadding: PaddingValues,
+    appBarState: TopAppBarState?,
     onItemSelected: (SlideshowImage) -> Unit
 ) = entry<MainContentNavigation.GalleryPage> { route ->
-    MainContentPage {
+    val gridState = rememberLazyStaggeredGridState()
+
+    MainContentPage(
+        appBarState = appBarState,
+        indicatorState = gridState.scrollIndicatorState
+    ) {
         GalleryGrid(
+            state = gridState,
             items = route.items,
             serverConfig = serverConfig.value,
             contentPadding = pagePadding,
@@ -172,19 +199,25 @@ internal fun EntryProviderScope<NavKey>.galleryNavEntry(
 internal fun EntryProviderScope<NavKey>.localSearchResultsNavKey(
     serverConfig: State<ServerConfiguration?>,
     useGrid: State<Boolean>,
+    gridCellMinSize: Dp,
     pagePadding: PaddingValues,
+    appBarState: TopAppBarState?,
     onItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job?,
     onContextMenuItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job?
 ) = entry<MainContentNavigation.LocalSearchResults> { route ->
     val viewModel = koinViewModel<LibrarySearchResultsViewModel> {
         parametersOf(route.searchTerm, route.mode)
     }
+    val mode = rememberSlimBrowseItemListMode(useGrid.value, true, gridCellMinSize)
 
-    MainContentPage {
+    MainContentPage(
+        appBarState = appBarState,
+        indicatorState = mode.scrollIndicatorState
+    ) {
         LibrarySearchResultsItemList(
             viewModel = viewModel,
             serverConfig = serverConfig.value,
-            useGrid = useGrid.value,
+            mode = mode,
             contentPadding = pagePadding,
             itemSelectionListener = { item ->
                 onItemSelected(item)
@@ -202,19 +235,25 @@ internal fun EntryProviderScope<NavKey>.localSearchResultsNavKey(
 internal fun EntryProviderScope<NavKey>.radioSearchResultsNavKey(
     serverConfig: State<ServerConfiguration?>,
     useGrid: State<Boolean>,
+    gridCellMinSize: Dp,
     pagePadding: PaddingValues,
+    appBarState: TopAppBarState?,
     onItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job?,
     onContextMenuItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job?
 ) = entry<MainContentNavigation.RadioSearchResults> { route ->
     val viewModel = koinViewModel<RadioSearchResultsViewModel> {
         parametersOf(route.searchTerm)
     }
+    val mode = rememberSlimBrowseItemListMode(useGrid.value, true, gridCellMinSize)
 
-    MainContentPage {
+    MainContentPage(
+        appBarState = appBarState,
+        indicatorState = mode.scrollIndicatorState
+    ) {
         RadioSearchResultsItemList(
             viewModel = viewModel,
             serverConfig = serverConfig.value,
-            useGrid = useGrid.value,
+            mode = mode,
             contentPadding = pagePadding,
             itemSelectionListener = { item ->
                 onItemSelected(item)

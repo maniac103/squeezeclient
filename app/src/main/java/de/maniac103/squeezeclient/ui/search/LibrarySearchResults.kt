@@ -33,7 +33,7 @@ fun LibrarySearchResultsItemList(
     viewModel: LibrarySearchResultsViewModel,
     serverConfig: ServerConfiguration?,
     contentPadding: PaddingValues,
-    useGrid: Boolean,
+    mode: SlimBrowseItemListMode,
     modifier: Modifier = Modifier,
     itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {},
     contextMenuClickListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {}
@@ -47,7 +47,7 @@ fun LibrarySearchResultsItemList(
         serverConfig = serverConfig,
         contentPadding = contentPadding,
         modifier = modifier,
-        mode = if (useGrid) SlimBrowseItemListMode.Grid else SlimBrowseItemListMode.ListWithIcons,
+        mode = mode,
         itemSelectionListener = itemSelectionListener,
         contextMenuClickListener = contextMenuClickListener
     )

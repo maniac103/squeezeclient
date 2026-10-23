@@ -46,12 +46,12 @@ import de.maniac103.squeezeclient.ui.composables.ResourceIcon
 import kotlin.math.roundToInt
 
 @Composable
-fun VolumeControlPopup(viewModel: VolumePopupViewModel) {
+fun VolumePopup(viewModel: VolumePopupViewModel) {
     val state by viewModel.stateFlow.collectAsStateWithLifecycle()
     val visible by viewModel.visibleFlow.collectAsStateWithLifecycle()
 
     state?.let {
-        VolumeControlPopup(
+        VolumePopup(
             volume = it.volume,
             muted = it.muted,
             visible = visible,
@@ -62,7 +62,7 @@ fun VolumeControlPopup(viewModel: VolumePopupViewModel) {
 }
 
 @Composable
-fun VolumeControlPopup(
+fun VolumePopup(
     volume: Int,
     muted: Boolean,
     visible: Boolean,
@@ -143,8 +143,8 @@ fun VolumeControlPopup(
 
 @Preview(widthDp = 360, heightDp = 640)
 @Composable
-fun VolumeControlPopupPreview() {
-    VolumeControlPopup(
+fun VolumePopupPreview() {
+    VolumePopup(
         volume = 60,
         muted = true,
         visible = true,

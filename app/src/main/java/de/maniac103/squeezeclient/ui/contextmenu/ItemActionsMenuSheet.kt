@@ -39,7 +39,7 @@ import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.ui.composables.ArtworkImage
 
 @Composable
-fun ItemActionsSheet(
+fun ItemActionsMenuSheetContent(
     viewModel: ItemActionsViewModel,
     serverConfig: ServerConfiguration?,
     // FIXME: sealed class for selection listener param
@@ -87,7 +87,7 @@ fun ItemActionsSheet(
             }
         }
         items(actions) { action ->
-            ContextMenuListRow(
+            ContextMenuItemRow(
                 title = stringResource(action.labelResId),
                 busy = action == busyAction,
                 selectable = true,

@@ -44,10 +44,15 @@ abstract class BasePagedSlimBrowseItemListViewModel : ViewModel() {
         .flow
         .cachedIn(viewModelScope)
 
-    fun setItemBusy(item: SlimBrowseItemList.SlimBrowseItem, job: Job) {
-        busyItemInternal.value = item
-        job.invokeOnCompletion {
-            busyItemInternal.value = null
+    internal fun handleItemSelection(
+        item: SlimBrowseItemList.SlimBrowseItem,
+        handler: (SlimBrowseItemList.SlimBrowseItem) -> Job?
+    ) {
+        handler(item)?.apply {
+            busyItemInternal.value = item
+            invokeOnCompletion {
+                busyItemInternal.value = null
+            }
         }
     }
 

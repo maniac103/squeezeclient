@@ -34,11 +34,11 @@ sealed class SlimBrowseItemTrailingWidget {
     class Choice(val label: String) : SlimBrowseItemTrailingWidget()
     class Checkbox(val checked: Boolean) : SlimBrowseItemTrailingWidget()
     class Radio(val checked: Boolean) : SlimBrowseItemTrailingWidget()
-    class ContextMenu(val clickListener: () -> Unit) : SlimBrowseItemTrailingWidget()
+    class ContextMenu(val onClick: () -> Unit) : SlimBrowseItemTrailingWidget()
 }
 
 fun SlimBrowseItemList.SlimBrowseItem.extractTrailingWidget(
-    contextMenuClickListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {}
+    onContextMenuSelected: () -> Unit = {}
 ) = actions?.let { actions ->
     when {
         actions.checkbox != null ->
@@ -53,9 +53,7 @@ fun SlimBrowseItemList.SlimBrowseItem.extractTrailingWidget(
             )
 
         actions.hasContextMenu ->
-            SlimBrowseItemTrailingWidget.ContextMenu {
-                contextMenuClickListener(this)
-            }
+            SlimBrowseItemTrailingWidget.ContextMenu(onContextMenuSelected)
 
         else -> null
     }
@@ -103,7 +101,7 @@ internal fun SlimBrowseItemTrailingWidgetUi(
             ResourceIconButton(
                 drawableResId = R.drawable.ic_menu_overflow,
                 contentDescriptionResId = R.string.content_description_context_menu,
-                onClick = widget.clickListener,
+                onClick = widget.onClick,
                 modifier = modifier
             )
         }

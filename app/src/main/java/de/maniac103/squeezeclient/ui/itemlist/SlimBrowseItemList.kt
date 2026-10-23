@@ -18,13 +18,11 @@
 package de.maniac103.squeezeclient.ui.itemlist
 
 import android.content.res.Configuration
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -33,23 +31,17 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.graphics.asComposePath
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.graphics.shapes.CornerRounding
-import androidx.graphics.shapes.RoundedPolygon
-import androidx.graphics.shapes.toPath
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
+import de.maniac103.squeezeclient.ui.composables.ScrollIndicator
 import kotlin.time.Duration.Companion.seconds
 import my.nanihadesuka.compose.LazyColumnScrollbar
 import my.nanihadesuka.compose.LazyVerticalGridScrollbar
@@ -98,7 +90,7 @@ fun SlimBrowsePagedItemListOrGrid(
             state = gridState,
             settings = scrollbarSettings,
             indicatorContent = { index, isThumbSelected ->
-                ScrollIndicator(entries[index], isThumbSelected)
+                ScrollIndicator(entries[index]?.textKey, isThumbSelected)
             }
         ) {
             LazyVerticalGrid(
@@ -131,7 +123,7 @@ fun SlimBrowsePagedItemListOrGrid(
             state = listState,
             settings = scrollbarSettings,
             indicatorContent = { index, isThumbSelected ->
-                ScrollIndicator(entries[index], isThumbSelected)
+                ScrollIndicator(entries[index]?.textKey, isThumbSelected)
             }
         ) {
             LazyColumn(
@@ -213,42 +205,3 @@ fun SlimBrowseSubItemList(
         }
     }
 }
-
-@Composable
-internal fun ScrollIndicator(entry: SlimBrowseItemList.SlimBrowseItem?, visible: Boolean) =
-    AnimatedVisibility(visible) {
-        val backgroundColor = MaterialTheme.colorScheme.primaryContainer
-        Text(
-            text = entry?.textKey ?: "?",
-            style = MaterialTheme.typography.displayMediumEmphasized,
-            color = MaterialTheme.colorScheme.onPrimaryContainer,
-            modifier = Modifier
-                .padding(horizontal = 8.dp)
-                .drawWithCache {
-                    val notchRadius = 16.dp.toPx()
-                    val w = size.width
-                    val h = size.height
-                    val isRtl = layoutDirection == LayoutDirection.Rtl
-                    val getX = { x: Float -> if (isRtl) w - x else x }
-
-                    val vertices = floatArrayOf(
-                        getX(0f), 0f, // Top-left
-                        getX(w - notchRadius), 0f, // Before notch slant
-                        getX(w), h / 2f, // Tip of the notch point
-                        getX(w - notchRadius), h, // After notch slant
-                        getX(0f), h // Bottom-left
-                    )
-
-                    val polygon = RoundedPolygon(
-                        vertices = vertices,
-                        rounding = CornerRounding(radius = 8.dp.toPx())
-                    )
-                    val polygonPath = polygon.toPath().asComposePath()
-
-                    onDrawBehind {
-                        drawPath(polygonPath, color = backgroundColor)
-                    }
-                }
-                .padding(start = 16.dp, end = 24.dp, top = 8.dp, bottom = 8.dp)
-        )
-    }

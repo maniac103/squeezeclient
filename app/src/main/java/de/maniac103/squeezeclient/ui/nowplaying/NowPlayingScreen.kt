@@ -38,6 +38,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -69,14 +71,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.onLongClick
@@ -88,6 +95,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastAny
 import androidx.compose.ui.util.fastForEach
@@ -163,8 +171,9 @@ internal fun NowPlayingScreen(
         motionState = motionState,
         serverConfig = serverConfig,
         insets = insets,
-        playlistContent = { surfaceColor, playlistModifier ->
+        playlistContent = { listState, surfaceColor, playlistModifier ->
             Playlist(
+                state = listState,
                 viewModel = playlistViewModel,
                 surfaceColor = surfaceColor,
                 serverConfig = serverConfig,
@@ -218,7 +227,7 @@ internal fun NowPlayingScreen(
     serverConfig: ServerConfiguration?,
     insets: PaddingValues,
     motionState: NowPlayingMotionState,
-    playlistContent: @Composable (Color, Modifier) -> Unit,
+    playlistContent: @Composable (LazyListState, Color, Modifier) -> Unit,
     modifier: Modifier = Modifier,
     onPreviousTrack: () -> Unit = {},
     onNextTrack: () -> Unit = {},
@@ -759,15 +768,82 @@ private fun ProgressControls(
     }
 }
 
+private class PlaylistNestedScrollConnection(
+    private val listState: LazyListState,
+    private val progress: MotionProgress,
+    private val velocityThreshold: Float
+) : NestedScrollConnection {
+    private var listTakesScroll: Boolean? = null
+
+    override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+        if (source != NestedScrollSource.UserInput) {
+            return Offset.Zero
+        }
+
+        val delta = available.y
+        return if (delta < 0F) {
+            // Moving upwards resets the list scroll consumption flag
+            listTakesScroll = null
+            Offset(0F, progress.consumeScrollDelta(delta))
+        } else {
+            // Moving downwards: list gets every scroll if it could scroll initially
+            if (listTakesScroll == null) {
+                listTakesScroll = listState.canScrollBackward
+            }
+            Offset.Zero
+        }
+    }
+
+    override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource) =
+        if (source != NestedScrollSource.UserInput || listTakesScroll == true) {
+            Offset.Zero
+        } else {
+            Offset(0F, progress.consumeScrollDelta(available.y))
+        }
+
+    override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
+        val velocity = available.y
+        val forwardToList = listTakesScroll == true
+        listTakesScroll = null
+
+        return if (forwardToList) {
+            Velocity.Zero
+        } else {
+            when {
+                velocity > velocityThreshold -> progress.collapse()
+                velocity < -velocityThreshold -> progress.expand()
+                progress.value >= 0.5f -> progress.expand()
+                else -> progress.collapse()
+            }
+            available
+        }
+    }
+}
+
 @Composable
 private fun PlaylistSheet(
     layoutSpec: PlaylistLayoutSpec,
     nowPlayingProgress: MotionProgress,
     playlistProgress: MotionProgress,
-    playlistContent: @Composable (Color, Modifier) -> Unit,
+    playlistContent: @Composable (LazyListState, Color, Modifier) -> Unit,
     backState: PlaylistBackEffectState
 ) {
+    val playlistState = rememberLazyListState()
     val sheetColor = MaterialTheme.colorScheme.surfaceContainerHighest
+    val velocityThreshold = LocalDensity.current.run { 125.dp.toPx() }
+    val needsHandle = layoutSpec.needsHandle
+    val nestedScrollModifier = remember(playlistProgress, velocityThreshold, needsHandle) {
+        if (needsHandle) {
+            val scrollConnection = PlaylistNestedScrollConnection(
+                listState = playlistState,
+                progress = playlistProgress,
+                velocityThreshold = velocityThreshold
+            )
+            Modifier.nestedScroll(scrollConnection)
+        } else {
+            Modifier
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -779,10 +855,9 @@ private fun PlaylistSheet(
                 .fillMaxSize()
                 .layout { measurable, constraints ->
                     val placeable = measurable.measure(constraints)
-                    val closedOffset = if (layoutSpec.needsHandle) {
-                        placeable.height - layoutSpec.handleHeight.roundToPx()
-                    } else {
-                        0
+                    val closedOffset = when (needsHandle) {
+                        true -> placeable.height - layoutSpec.handleHeight.roundToPx()
+                        false -> 0
                     }
                     layout(placeable.width, placeable.height) {
                         placeable.place(
@@ -805,12 +880,13 @@ private fun PlaylistSheet(
                     clip = true
                 }
                 .background(sheetColor)
+                .then(nestedScrollModifier)
         ) {
             val topPadding = PaddingValues(
                 top = layoutSpec.padding.calculateTopPadding()
             )
 
-            if (layoutSpec.needsHandle) {
+            if (needsHandle) {
                 PlaylistHandle(
                     progress = playlistProgress,
                     dragDistance = layoutSpec.handleDragDistance,
@@ -825,6 +901,7 @@ private fun PlaylistSheet(
                 )
             }
             playlistContent(
+                playlistState,
                 sheetColor,
                 Modifier
                     .padding(layoutSpec.padding)
@@ -1076,8 +1153,9 @@ fun NowPlayingPreview() {
                 motionState = motionState,
                 serverConfig = null,
                 insets = innerPadding,
-                playlistContent = { surfaceColor, modifier ->
+                playlistContent = { listState, surfaceColor, modifier ->
                     Playlist(
+                        state = listState,
                         itemsFlow = MutableStateFlow(playlistItemData),
                         uiStateFlow = MutableStateFlow(playlistUiState),
                         scrollRequestFlow = flow { },

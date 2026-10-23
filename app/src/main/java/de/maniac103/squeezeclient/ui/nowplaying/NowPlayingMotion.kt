@@ -66,6 +66,8 @@ internal class MotionProgress(initialState: MotionAnchor) {
         )
     }
 
+    fun consumeScrollDelta(delta: Float) = state.dispatchRawDelta(delta)
+
     suspend fun collapse() {
         state.animateTo(MotionAnchor.Collapsed)
     }

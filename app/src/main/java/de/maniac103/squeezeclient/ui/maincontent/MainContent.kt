@@ -227,7 +227,8 @@ fun MainContent(
             pagePadding.calculateBottomPadding()
         } else {
             0.dp
-        }
+        },
+        viewModel::onPageTransitionRunningChanged
     )
 
     LaunchedEffect(Unit) {

@@ -98,7 +98,7 @@ fun JiveHomeItemList(
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
     state: LazyListState = rememberLazyListState(),
-    itemSelectionListener: (JiveHomeMenuItem) -> Unit = {}
+    onItemSelected: (JiveHomeMenuItem) -> Unit = {}
 ) {
     val menuEntries by viewModel.homeMenuItemsFlow.collectAsStateWithLifecycle(emptyList())
 
@@ -113,7 +113,7 @@ fun JiveHomeItemList(
                 subtext = entry.subText,
                 choiceLabel = entry.choiceLabel,
                 iconResourceId = entry.iconResourceId,
-                modifier = Modifier.clickable { itemSelectionListener(entry.source) }
+                modifier = Modifier.clickable { onItemSelected(entry.source) }
             )
         }
     }

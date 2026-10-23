@@ -543,6 +543,8 @@ private fun MainActivityPlayerContent(
                             .fillMaxSize()
                             .padding(top = innerPadding.calculateTopPadding())
                     ) {
+                        val searchOpen by searchViewModel.visibleFlow.collectAsStateWithLifecycle()
+
                         Breadcrumbs(
                             mainContentViewModel.breadcrumbsFlow,
                             serverConfig = serverConfigState.value,
@@ -560,6 +562,7 @@ private fun MainActivityPlayerContent(
                             pagePadding = layout.mainContentPagePadding,
                             compensateBottomPagePaddingDuringAnimation =
                                 layout.compensateMainContentBottomPagePaddingDuringAnimation,
+                            navigationBackEnabled = !searchOpen,
                             onGalleryItemSelected = onGalleryItemSelected,
                             onDownloadSelected = onDownloadSelected,
                             onWebLinkSelected = onWebLinkSelected,

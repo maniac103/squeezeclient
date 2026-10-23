@@ -73,6 +73,7 @@ fun MainContent(
     useGridForSlimbrowseItems: State<Boolean>,
     pagePadding: PaddingValues,
     compensateBottomPagePaddingDuringAnimation: Boolean,
+    navigationBackEnabled: Boolean,
     modifier: Modifier = Modifier,
     onGalleryItemSelected: (SlideshowImage) -> Unit = {},
     onDownloadSelected: (DownloadRequestData) -> Unit = {},
@@ -269,18 +270,13 @@ fun MainContent(
         }
     }
 
-    NavigationBackHandler(
-        sceneState = sceneState,
-        state = navigationEventState,
-        onBackCompleted = {
-            // Pop the same entries that SceneState determined should disappear.
-            repeat(entries.size - sceneState.currentScene.previousEntries.size) {
-                backStack.removeLastOrNull()
-            }
-        },
-        onBackCancelled = {
-        }
-    )
+    if (navigationBackEnabled) {
+        NavigationBackHandler(
+            sceneState = sceneState,
+            state = navigationEventState,
+            onBackCompleted = backStack::removeLastOrNull
+        )
+    }
 
     CompositionLocalProvider(LocalMainContentAnimationState provides animationState) {
         Surface(

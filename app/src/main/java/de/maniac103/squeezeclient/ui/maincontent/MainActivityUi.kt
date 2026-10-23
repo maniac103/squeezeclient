@@ -626,8 +626,8 @@ private fun MainActivityPlayerContent(
                 SearchBox(
                     viewModel = searchViewModel,
                     pillModifier = Modifier.padding(layout.searchBoxPadding),
-                    onCloseListener = searchViewModel::close,
-                    onOpenResultsListener = { query, type ->
+                    onClose = searchViewModel::close,
+                    onOpenResults = { query, type ->
                         if (type == null) {
                             mainContentViewModel.openRadioSearchResults(query)
                         } else {

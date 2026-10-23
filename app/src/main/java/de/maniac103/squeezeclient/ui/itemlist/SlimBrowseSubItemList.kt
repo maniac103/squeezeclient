@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
+import kotlinx.coroutines.Job
 
 @Composable
 fun SlimBrowseSubItemList(
@@ -37,8 +38,8 @@ fun SlimBrowseSubItemList(
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
     state: LazyListState = rememberLazyListState(),
-    itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {},
-    contextMenuClickListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {}
+    onItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job? = { null },
+    onItemContextMenuSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job? = { null }
 ) {
     val entries by viewModel.itemsFlow.collectAsStateWithLifecycle(emptyList())
     val busyItem = viewModel.busyItemFlow.collectAsStateWithLifecycle()
@@ -55,9 +56,11 @@ fun SlimBrowseSubItemList(
                 showIcon = false,
                 busy = entry == busyItem,
                 modifier = Modifier.clickable(
-                    onClick = { itemSelectionListener(entry) }
+                    onClick = { viewModel.handleItemSelection(entry, onItemSelected) }
                 ),
-                contextMenuClickListener = contextMenuClickListener
+                onContextMenuSelected = {
+                    viewModel.handleItemSelection(entry, onItemContextMenuSelected)
+                }
             )
         }
     }

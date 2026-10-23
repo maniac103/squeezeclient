@@ -38,6 +38,7 @@ import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.ui.composables.ScrollIndicator
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.Job
 import my.nanihadesuka.compose.LazyColumnScrollbar
 import my.nanihadesuka.compose.LazyVerticalGridScrollbar
 import my.nanihadesuka.compose.ScrollbarSettings
@@ -50,8 +51,8 @@ fun SlimBrowseItemListOrGrid(
     contentPadding: PaddingValues,
     mode: SlimBrowseItemListMode,
     modifier: Modifier = Modifier,
-    itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {},
-    contextMenuClickListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {}
+    onItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {},
+    onItemContextMenuSelected: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {}
 ) {
     if (!entries.loadState.isIdle) {
         Box {
@@ -92,9 +93,11 @@ fun SlimBrowseItemListOrGrid(
                                 serverConfig = serverConfig,
                                 busy = entry == busyItem,
                                 modifier = Modifier.clickable(
-                                    onClick = { itemSelectionListener(entry) }
+                                    onClick = { onItemSelected(entry) }
                                 ),
-                                contextMenuClickListener = contextMenuClickListener
+                                onContextMenuSelected = {
+                                    onItemContextMenuSelected(entry)
+                                }
                             )
                         }
                     }
@@ -123,9 +126,11 @@ fun SlimBrowseItemListOrGrid(
                                 showIcon = mode.showIcons,
                                 busy = entry == busyItem,
                                 modifier = Modifier.clickable(
-                                    onClick = { itemSelectionListener(entry) }
+                                    onClick = { onItemSelected(entry) }
                                 ),
-                                contextMenuClickListener = contextMenuClickListener
+                                onContextMenuSelected = {
+                                    onItemContextMenuSelected(entry)
+                                }
                             )
                         }
                     }
@@ -142,20 +147,24 @@ fun SlimBrowseItemListOrGrid(
     contentPadding: PaddingValues,
     mode: SlimBrowseItemListMode,
     modifier: Modifier = Modifier,
-    itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {},
-    contextMenuClickListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {}
+    onItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job? = { null },
+    onItemContextMenuSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job? = { null }
 ) {
     val entries = viewModel.itemsFlow.collectAsLazyPagingItems()
     val busyItem by viewModel.busyItemFlow.collectAsStateWithLifecycle()
 
     SlimBrowseItemListOrGrid(
-        entries,
-        busyItem,
-        serverConfig,
-        contentPadding,
-        mode,
-        modifier,
-        itemSelectionListener,
-        contextMenuClickListener
+        entries = entries,
+        busyItem = busyItem,
+        serverConfig = serverConfig,
+        contentPadding = contentPadding,
+        mode = mode,
+        modifier = modifier,
+        onItemSelected = { item ->
+            viewModel.handleItemSelection(item, onItemSelected)
+        },
+        onItemContextMenuSelected = { item ->
+            viewModel.handleItemSelection(item, onItemContextMenuSelected)
+        }
     )
 }

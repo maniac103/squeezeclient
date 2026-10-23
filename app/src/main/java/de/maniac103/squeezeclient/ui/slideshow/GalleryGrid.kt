@@ -51,7 +51,7 @@ fun GalleryGrid(
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
     state: LazyStaggeredGridState = rememberLazyStaggeredGridState(),
-    itemSelectionListener: (SlideshowImage) -> Unit = {}
+    onItemSelected: (SlideshowImage) -> Unit = {}
 ) = LazyVerticalStaggeredGrid(
     state = state,
     columns = StaggeredGridCells.Adaptive(150.dp),
@@ -67,7 +67,7 @@ fun GalleryGrid(
             imageRequest = imageRequest,
             caption = item.caption,
             modifier = Modifier
-                .clickable(onClick = { itemSelectionListener(item) })
+                .clickable(onClick = { onItemSelected(item) })
         )
     }
 }

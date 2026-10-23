@@ -123,7 +123,7 @@ fun MainContent(
                 pagePadding = pagePadding,
                 appBarState = appBarState,
                 onItemSelected = viewModel::onSlimBrowseItemSelected,
-                onContextMenuItemSelected = viewModel::onSlimBrowseContextMenu
+                onItemContextMenuSelected = viewModel::onSlimBrowseContextMenu
             )
 
             SlimBrowseSubItemsNavEntry(
@@ -131,7 +131,7 @@ fun MainContent(
                 pagePadding = pagePadding,
                 appBarState = appBarState,
                 onItemSelected = viewModel::onSlimBrowseItemSelected,
-                onContextMenuItemSelected = viewModel::onSlimBrowseContextMenu
+                onItemContextMenuSelected = viewModel::onSlimBrowseContextMenu
             )
 
             GalleryNavEntry(
@@ -148,7 +148,7 @@ fun MainContent(
                 pagePadding = pagePadding,
                 appBarState = appBarState,
                 onItemSelected = { item -> viewModel.onSlimBrowseItemSelected(item, null) },
-                onContextMenuItemSelected = viewModel::onSlimBrowseContextMenu
+                onItemContextMenuSelected = viewModel::onSlimBrowseContextMenu
             )
             RadioSearchResultsNavKey(
                 serverConfig = serverConfig,
@@ -157,7 +157,7 @@ fun MainContent(
                 pagePadding = pagePadding,
                 appBarState = appBarState,
                 onItemSelected = { item -> viewModel.onSlimBrowseItemSelected(item, null) },
-                onContextMenuItemSelected = viewModel::onSlimBrowseContextMenu
+                onItemContextMenuSelected = viewModel::onSlimBrowseContextMenu
             )
 
             HomeMenuInputNavEntry(

@@ -18,6 +18,7 @@
 package de.maniac103.squeezeclient.ui.maincontent
 
 import androidx.compose.animation.EnterExitState
+import androidx.compose.animation.core.EaseOutQuart
 import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.Transition
 import androidx.compose.animation.core.animateDp
@@ -141,7 +142,7 @@ fun MainContentPage(
         animation = tween(
             durationMillis = 100,
             delayMillis = 300,
-            easing = DecelerateQuintEasing
+            easing = EaseOutQuart
         ),
         label = "main-content-scale"
     )
@@ -152,7 +153,7 @@ fun MainContentPage(
         animation = tween(
             durationMillis = 100,
             delayMillis = 300,
-            easing = DecelerateQuintEasing
+            easing = EaseOutQuart
         ),
         label = "main-content-corner-radius"
     )
@@ -163,7 +164,7 @@ fun MainContentPage(
         animation = tween(
             durationMillis = 100,
             delayMillis = 300,
-            easing = DecelerateQuintEasing
+            easing = EaseOutQuart
         ),
         label = "main-content-bottom-compensation"
     )

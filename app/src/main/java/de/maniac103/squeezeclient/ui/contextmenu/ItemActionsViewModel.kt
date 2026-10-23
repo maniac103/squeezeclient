@@ -33,10 +33,18 @@ class ItemActionsViewModel(val item: SlimBrowseItemList.SlimBrowseItem) : ViewMo
     val actionsFlow = flowOf(
         requireNotNull(item.actions).let { actions ->
             listOfNotNull(
-                actions.addAction?.let { ActionItem(R.string.action_add, it, null) },
-                actions.insertAction?.let { ActionItem(R.string.action_insert, it, null) },
-                actions.playAction?.let { ActionItem(R.string.action_play, it, null) },
-                actions.downloadData?.let { ActionItem(R.string.action_download, null, it) }
+                actions.addAction?.let {
+                    ActionItem(R.string.action_add, ItemAction.Action(it))
+                },
+                actions.insertAction?.let {
+                    ActionItem(R.string.action_insert, ItemAction.Action(it))
+                },
+                actions.playAction?.let {
+                    ActionItem(R.string.action_play, ItemAction.Action(it))
+                },
+                actions.downloadData?.let {
+                    ActionItem(R.string.action_download, ItemAction.Download(it))
+                }
             )
         }
     )
@@ -49,9 +57,10 @@ class ItemActionsViewModel(val item: SlimBrowseItemList.SlimBrowseItem) : ViewMo
         }
     }
 
-    data class ActionItem(
-        val labelResId: Int,
-        val action: JiveAction?,
-        val download: DownloadRequestData?
-    )
+    data class ActionItem(val labelResId: Int, val action: ItemAction)
+}
+
+sealed interface ItemAction {
+    data class Action(val action: JiveAction) : ItemAction
+    data class Download(val download: DownloadRequestData) : ItemAction
 }

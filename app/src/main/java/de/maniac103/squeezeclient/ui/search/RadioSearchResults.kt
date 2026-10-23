@@ -27,6 +27,7 @@ import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseItemListMode
 import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseItemListOrGrid
+import kotlinx.coroutines.Job
 
 @Composable
 fun RadioSearchResultsItemList(
@@ -35,8 +36,8 @@ fun RadioSearchResultsItemList(
     contentPadding: PaddingValues,
     mode: SlimBrowseItemListMode,
     modifier: Modifier = Modifier,
-    itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {},
-    contextMenuClickListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {}
+    onItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job? = { null },
+    onItemContextMenuSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job? = { null }
 ) {
     val entries = viewModel.itemsFlow.collectAsLazyPagingItems()
     val busyItem by viewModel.busyItemFlow.collectAsStateWithLifecycle()
@@ -48,7 +49,11 @@ fun RadioSearchResultsItemList(
         contentPadding = contentPadding,
         mode = mode,
         modifier = modifier,
-        itemSelectionListener = itemSelectionListener,
-        contextMenuClickListener = contextMenuClickListener
+        onItemSelected = { item ->
+            viewModel.handleItemSelection(item, onItemSelected)
+        },
+        onItemContextMenuSelected = { item ->
+            viewModel.handleItemSelection(item, onItemContextMenuSelected)
+        }
     )
 }

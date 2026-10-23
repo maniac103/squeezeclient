@@ -36,7 +36,8 @@ internal enum class MainContentAnimationType {
 
 internal data class MainContentAnimationState(
     val animType: MainContentAnimationType,
-    val bottomPaddingForCompensation: Dp
+    val bottomPaddingForCompensation: Dp,
+    val onTransitionRunningChanged: (Boolean) -> Unit = {}
 )
 
 internal val LocalMainContentAnimationState = staticCompositionLocalOf {

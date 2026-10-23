@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -68,74 +69,80 @@ fun SlimBrowseItemListOrGrid(
         thumbUnselectedColor = MaterialTheme.colorScheme.surfaceContainerHighest,
         hideDelayMillis = 2.seconds.inWholeMilliseconds.toInt()
     )
+    val scrollbarModifier = Modifier.padding(
+        top = contentPadding.calculateTopPadding(),
+        bottom = contentPadding.calculateBottomPadding()
+    )
 
     when (mode) {
         is SlimBrowseItemListMode.Grid -> {
+            LazyVerticalGrid(
+                state = mode.gridState,
+                columns = GridCells.Adaptive(mode.cellMinSize),
+                contentPadding = contentPadding,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = modifier
+            ) {
+                items(entries.itemCount) { index ->
+                    entries[index]?.let { entry ->
+                        SlimBrowseItemGridCell(
+                            item = entry,
+                            serverConfig = serverConfig,
+                            busy = entry == busyItem,
+                            modifier = Modifier.clickable(
+                                onClick = { onItemSelected(entry) }
+                            ),
+                            onContextMenuSelected = {
+                                onItemContextMenuSelected(entry)
+                            }
+                        )
+                    }
+                }
+            }
             LazyVerticalGridScrollbar(
                 state = mode.gridState,
                 settings = scrollbarSettings,
                 indicatorContent = { index, isThumbSelected ->
                     ScrollIndicator(entries[index]?.textKey, isThumbSelected)
-                }
-            ) {
-                LazyVerticalGrid(
-                    state = mode.gridState,
-                    columns = GridCells.Adaptive(mode.cellMinSize),
-                    contentPadding = contentPadding,
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = modifier
-                ) {
-                    items(entries.itemCount) { index ->
-                        entries[index]?.let { entry ->
-                            SlimBrowseItemGridCell(
-                                item = entry,
-                                serverConfig = serverConfig,
-                                busy = entry == busyItem,
-                                modifier = Modifier.clickable(
-                                    onClick = { onItemSelected(entry) }
-                                ),
-                                onContextMenuSelected = {
-                                    onItemContextMenuSelected(entry)
-                                }
-                            )
-                        }
-                    }
-                }
-            }
+                },
+                content = {},
+                modifier = scrollbarModifier
+            )
         }
 
         is SlimBrowseItemListMode.List -> {
+            LazyColumn(
+                state = mode.listState,
+                contentPadding = contentPadding,
+                modifier = modifier
+            ) {
+                items(entries.itemCount) { index ->
+                    entries[index]?.let { entry ->
+                        SlimBrowseItemRow(
+                            item = entry,
+                            serverConfig = serverConfig,
+                            showIcon = mode.showIcons,
+                            busy = entry == busyItem,
+                            modifier = Modifier.clickable(
+                                onClick = { onItemSelected(entry) }
+                            ),
+                            onContextMenuSelected = {
+                                onItemContextMenuSelected(entry)
+                            }
+                        )
+                    }
+                }
+            }
             LazyColumnScrollbar(
                 state = mode.listState,
                 settings = scrollbarSettings,
                 indicatorContent = { index, isThumbSelected ->
                     ScrollIndicator(entries[index]?.textKey, isThumbSelected)
-                }
-            ) {
-                LazyColumn(
-                    state = mode.listState,
-                    contentPadding = contentPadding,
-                    modifier = modifier
-                ) {
-                    items(entries.itemCount) { index ->
-                        entries[index]?.let { entry ->
-                            SlimBrowseItemRow(
-                                item = entry,
-                                serverConfig = serverConfig,
-                                showIcon = mode.showIcons,
-                                busy = entry == busyItem,
-                                modifier = Modifier.clickable(
-                                    onClick = { onItemSelected(entry) }
-                                ),
-                                onContextMenuSelected = {
-                                    onItemContextMenuSelected(entry)
-                                }
-                            )
-                        }
-                    }
-                }
-            }
+                },
+                content = {},
+                modifier = scrollbarModifier
+            )
         }
     }
 }

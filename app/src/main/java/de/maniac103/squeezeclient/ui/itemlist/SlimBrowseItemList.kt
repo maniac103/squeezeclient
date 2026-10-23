@@ -35,7 +35,9 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -71,11 +73,26 @@ fun rememberSlimBrowseItemListMode(
     gridCellMinSize: Dp,
     listState: LazyListState = rememberLazyListState(),
     gridState: LazyGridState = rememberLazyGridState()
-): SlimBrowseItemListMode = remember(useGrid, showIcons, listState, gridState) {
-    if (useGrid) {
-        SlimBrowseItemListMode.Grid(gridState, gridCellMinSize)
-    } else {
-        SlimBrowseItemListMode.List(listState, showIcons)
+): SlimBrowseItemListMode {
+    val lastUsedGrid = remember { mutableStateOf(useGrid) }
+
+    SideEffect {
+        if (lastUsedGrid.value != useGrid) {
+            if (useGrid) {
+                gridState.requestScrollToItem(listState.firstVisibleItemIndex)
+            } else {
+                listState.requestScrollToItem(gridState.firstVisibleItemIndex)
+            }
+            lastUsedGrid.value = useGrid
+        }
+    }
+
+    return remember(useGrid, showIcons, listState, gridState) {
+        if (useGrid) {
+            SlimBrowseItemListMode.Grid(gridState, gridCellMinSize)
+        } else {
+            SlimBrowseItemListMode.List(listState, showIcons)
+        }
     }
 }
 

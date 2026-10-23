@@ -35,7 +35,7 @@ import de.maniac103.squeezeclient.ui.composables.ArtworkImage
 import de.maniac103.squeezeclient.ui.composables.ResourceIconButton
 
 @Composable
-fun PlaylistRow(
+internal fun PlaylistItemRow(
     item: Playlist.PlaylistItem,
     isSelected: Boolean,
     serverConfig: ServerConfiguration?,
@@ -98,12 +98,12 @@ fun PlaylistRow(
 
 @Preview
 @Composable
-fun PlaylistRowPreview() {
+fun PlaylistItemRowPreview() {
     val item = Playlist.PlaylistItem(
         "Song title",
         "Artist",
         "Album",
         JiveActions(null, null, null, null, null, null, null, null, null, null, null, null, null)
     )
-    PlaylistRow(item, false, null)
+    PlaylistItemRow(item, false, null)
 }

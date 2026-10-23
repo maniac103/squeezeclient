@@ -45,7 +45,7 @@ import kotlin.collections.emptyList
 
 @Composable
 fun ContextMenuBottomSheetContent(
-    viewModel: ContextMenuBottomSheetViewModel,
+    viewModel: ContextMenuViewModel,
     serverConfig: ServerConfiguration?,
     itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {}
 ) {
@@ -134,7 +134,7 @@ fun ContextMenuBottomSheetContent(
 
         LazyColumn {
             items(items) { item ->
-                ContextMenuListRow(
+                ContextMenuItemRow(
                     title = item.title,
                     busy = item == busyItem,
                     selectable = item.actions?.goAction != null,

@@ -43,7 +43,7 @@ import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.model.JiveHomeMenuItem
 
 @Composable
-fun JiveHomeItemListEntry(
+private fun JiveHomeItemListRow(
     title: String,
     subtext: String?,
     choiceLabel: String?,
@@ -108,7 +108,7 @@ fun JiveHomeItemList(
         contentPadding = contentPadding
     ) {
         items(menuEntries) { entry ->
-            JiveHomeItemListEntry(
+            JiveHomeItemListRow(
                 title = entry.title,
                 subtext = entry.subText,
                 choiceLabel = entry.choiceLabel,
@@ -122,5 +122,5 @@ fun JiveHomeItemList(
 @Preview
 @Composable
 fun JiveHomeItemListEntryPreview() {
-    JiveHomeItemListEntry("Some item", "Some subtext", "Yes", R.drawable.hm_albumartists)
+    JiveHomeItemListRow("Some item", "Some subtext", "Yes", R.drawable.hm_albumartists)
 }

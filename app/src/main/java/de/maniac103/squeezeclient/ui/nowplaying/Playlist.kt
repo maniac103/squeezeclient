@@ -66,13 +66,13 @@ import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
 @Composable
-fun PlaylistItemColumn(
+fun Playlist(
     viewModel: PlaylistViewModel,
     surfaceColor: Color,
     serverConfig: ServerConfiguration?,
     modifier: Modifier = Modifier
 ) {
-    PlaylistItemColumn(
+    Playlist(
         itemsFlow = viewModel.itemsFlow,
         uiStateFlow = viewModel.uiStateFlow,
         scrollRequestFlow = viewModel.scrollRequestFlow,
@@ -86,7 +86,7 @@ fun PlaylistItemColumn(
 }
 
 @Composable
-fun PlaylistItemColumn(
+fun Playlist(
     itemsFlow: Flow<PagingData<Playlist.PlaylistItem>>,
     uiStateFlow: StateFlow<PlaylistViewModel.UiState>,
     scrollRequestFlow: Flow<Int>,
@@ -176,7 +176,7 @@ fun PlaylistItemColumn(
                         onDismiss = { onRemovePlaylistItem(itemPosition) },
                         backgroundContent = { DeleteBackground(dismissState) },
                         content = {
-                            PlaylistRow(
+                            PlaylistItemRow(
                                 item = item,
                                 serverConfig = serverConfig,
                                 isSelected = itemPosition == selectedItemPosition,
@@ -258,7 +258,7 @@ fun PlaylistItemColumnPreview() {
     val uiStateFlow = MutableStateFlow(PlaylistViewModel.UiState(3, null))
     val scrollRequestFlow: Flow<Int> = flow {}
 
-    PlaylistItemColumn(
+    Playlist(
         itemsFlow = itemsFlow,
         uiStateFlow = uiStateFlow,
         scrollRequestFlow = scrollRequestFlow,

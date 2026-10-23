@@ -30,7 +30,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
-class ContextMenuBottomSheetViewModel(
+class ContextMenuViewModel(
     private val connectionHelper: ConnectionHelper,
     private val playerId: PlayerId,
     initialItems: List<SlimBrowseItemList.SlimBrowseItem>,

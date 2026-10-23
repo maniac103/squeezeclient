@@ -109,13 +109,13 @@ fun MainContent(
             rememberViewModelStoreNavEntryDecorator()
         ),
         entryProvider = entryProvider {
-            jiveHomeMenuNavEntry(
+            JiveHomeMenuNavEntry(
                 pagePadding = pagePadding,
                 appBarState = appBarState,
                 onItemSelected = viewModel::onHomeItemSelected
             )
 
-            slimBrowseNavEntry(
+            SlimBrowseNavEntry(
                 serverConfig = serverConfig,
                 refreshTracker = refreshTracker,
                 useGridIfPossible = useGridForSlimBrowseItemsState,
@@ -126,7 +126,7 @@ fun MainContent(
                 onContextMenuItemSelected = viewModel::onSlimBrowseContextMenu
             )
 
-            slimBrowseSubItemsNavEntry(
+            SlimBrowseSubItemsNavEntry(
                 serverConfig = serverConfig,
                 pagePadding = pagePadding,
                 appBarState = appBarState,
@@ -134,14 +134,14 @@ fun MainContent(
                 onContextMenuItemSelected = viewModel::onSlimBrowseContextMenu
             )
 
-            galleryNavEntry(
+            GalleryNavEntry(
                 serverConfig = serverConfig,
                 pagePadding = pagePadding,
                 appBarState = appBarState,
                 onItemSelected = onGalleryItemSelected
             )
 
-            localSearchResultsNavKey(
+            LocalSearchResultsNavKey(
                 serverConfig = serverConfig,
                 useGrid = useGridForSlimBrowseItemsState,
                 gridCellMinSize = slimBrowseMinGridCellSize,
@@ -150,7 +150,7 @@ fun MainContent(
                 onItemSelected = { item -> viewModel.onSlimBrowseItemSelected(item, null) },
                 onContextMenuItemSelected = viewModel::onSlimBrowseContextMenu
             )
-            radioSearchResultsNavKey(
+            RadioSearchResultsNavKey(
                 serverConfig = serverConfig,
                 useGrid = useGridForSlimBrowseItemsState,
                 gridCellMinSize = slimBrowseMinGridCellSize,
@@ -160,37 +160,37 @@ fun MainContent(
                 onContextMenuItemSelected = viewModel::onSlimBrowseContextMenu
             )
 
-            homeMenuInputNavEntry(
+            HomeMenuInputNavEntry(
                 onInputSubmitted = viewModel::onHomeItemInputSubmitted,
                 onDone = removeFromBackStack
             )
-            homeMenuTimePickerNavEntry(
+            HomeMenuTimePickerNavEntry(
                 onInputSubmitted = viewModel::onHomeItemInputSubmitted,
                 onDone = removeFromBackStack
             )
-            slimBrowseInputNavEntry(
+            SlimBrowseInputNavEntry(
                 onInputSubmitted = viewModel::onSlimBrowseInputSubmitted,
                 onDone = removeFromBackStack
             )
-            slimBrowseTimePickerNavEntry(
+            SlimBrowseTimePickerNavEntry(
                 onInputSubmitted = viewModel::onSlimBrowseInputSubmitted,
                 onDone = removeFromBackStack
             )
-            sliderInputNavEntry(
+            SliderInputNavEntry(
                 onValueChanged = viewModel::onSliderValueChanged,
                 onDone = removeFromBackStack
             )
-            homeMenuChoicesNavEntry(
+            HomeMenuChoicesNavEntry(
                 onChoiceSelected = viewModel::onHomeItemChoiceSelected,
                 onDone = removeFromBackStack
             )
-            slimBrowseChoicesNavEntry(
+            SlimBrowseChoicesNavEntry(
                 onChoiceSelected = viewModel::onSlimBrowseChoiceSelected,
                 onDone = removeFromBackStack
             )
-            infoNavEntry()
+            InfoNavEntry()
 
-            contextMenuNavEntry(
+            ContextMenuNavEntry(
                 serverConfig = serverConfig,
                 onItemSelected = { item, parentItem ->
                     val downloadData = viewModel.extractDownloadDataForContextMenuItem(item)
@@ -204,7 +204,7 @@ fun MainContent(
                 onDone = removeFromBackStack
             )
 
-            itemActionsNavEntry(
+            ItemActionsNavEntry(
                 serverConfig = serverConfig,
                 onDownloadSelected = onDownloadSelected,
                 onActionSelected = viewModel::onItemActionSelected,

@@ -100,14 +100,13 @@ import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.Playlist
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
-import de.maniac103.squeezeclient.ui.bottomsheets.InputSheetContent
+import de.maniac103.squeezeclient.ui.bottomsheets.InputBottomSheetContent
 import de.maniac103.squeezeclient.ui.composables.ArtworkImage
-import de.maniac103.squeezeclient.ui.composables.BottomSheetContentWrapper
 import de.maniac103.squeezeclient.ui.composables.ResourceIcon
 import de.maniac103.squeezeclient.ui.composables.ResourceIconButton
 import de.maniac103.squeezeclient.ui.composables.toTextResource
 import de.maniac103.squeezeclient.ui.contextmenu.ContextMenuBottomSheetContent
-import de.maniac103.squeezeclient.ui.contextmenu.ContextMenuBottomSheetViewModel
+import de.maniac103.squeezeclient.ui.contextmenu.ContextMenuViewModel
 import de.maniac103.squeezeclient.ui.maincontent.MainLayout
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.roundToInt
@@ -165,7 +164,7 @@ internal fun NowPlayingScreen(
         serverConfig = serverConfig,
         insets = insets,
         playlistContent = { surfaceColor, playlistModifier ->
-            PlaylistItemColumn(
+            Playlist(
                 viewModel = playlistViewModel,
                 surfaceColor = surfaceColor,
                 serverConfig = serverConfig,
@@ -256,7 +255,7 @@ internal fun NowPlayingScreen(
             onDismissRequest = onInfoMenuDismissed,
             sheetState = sheetState
         ) {
-            val viewModel = koinViewModel<ContextMenuBottomSheetViewModel> {
+            val viewModel = koinViewModel<ContextMenuViewModel> {
                 parametersOf(playerId, menuState.items, menuState.parentItem)
             }
 
@@ -278,16 +277,12 @@ internal fun NowPlayingScreen(
             sheetState = sheetState
         ) {
             val busy = playlistSaveInputState == PlaylistSaveEditorState.Saving
-            BottomSheetContentWrapper(
+            InputBottomSheetContent(
                 title = stringResource(R.string.playlist_save_title),
-                busy = busy
-            ) {
-                InputSheetContent(
-                    busy = busy,
-                    minLength = 1,
-                    onSubmit = onSavePlaylistNameEntered
-                )
-            }
+                busy = busy,
+                minLength = 1,
+                onSubmit = onSavePlaylistNameEntered
+            )
         }
     }
 
@@ -1080,7 +1075,7 @@ fun NowPlayingPreview() {
                 serverConfig = null,
                 insets = innerPadding,
                 playlistContent = { surfaceColor, modifier ->
-                    PlaylistItemColumn(
+                    Playlist(
                         itemsFlow = MutableStateFlow(playlistItemData),
                         uiStateFlow = MutableStateFlow(playlistUiState),
                         scrollRequestFlow = flow { },

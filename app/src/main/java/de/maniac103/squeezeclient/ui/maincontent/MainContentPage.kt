@@ -23,15 +23,19 @@ import androidx.compose.animation.core.Transition
 import androidx.compose.animation.core.animateDp
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ScrollIndicatorState
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
+import androidx.compose.material3.TopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
@@ -99,13 +103,28 @@ private fun Transition<EnterExitState>.animateDpForPredictiveBack(
 }
 
 @Composable
-fun MainContentPage(content: @Composable () -> Unit) {
-    val bottomPadding = LocalMainContentAnimationState.current.bottomPaddingForCompensation
+fun MainContentPage(
+    appBarState: TopAppBarState?,
+    indicatorState: ScrollIndicatorState?,
+    content: @Composable () -> Unit
+) {
+    val animationState = LocalMainContentAnimationState.current
     val transition = LocalNavAnimatedContentScope.current.transition
+    val bottomPadding = animationState.bottomPaddingForCompensation
     val animationRunning = transition.currentState != transition.targetState
+    val pageIsActive = transition.targetState == EnterExitState.Visible &&
+        animationState.animType != MainContentAnimationType.PredictiveBack
     val animationStateReporter by rememberUpdatedState(
         LocalMainContentAnimationState.current.onTransitionRunningChanged
     )
+
+    if (appBarState != null) {
+        LaunchedEffect(pageIsActive, appBarState) {
+            if (!pageIsActive) return@LaunchedEffect
+            snapshotFlow { indicatorState?.scrollOffset ?: 0 }
+                .collect { px -> appBarState.contentOffset = -px.toFloat() }
+        }
+    }
 
     DisposableEffect(animationRunning) {
         animationStateReporter(animationRunning)
@@ -176,8 +195,7 @@ fun MainContentPage(content: @Composable () -> Unit) {
             }
             .padding(bottom = animatedBottomPlaceholderCompensation),
         shape = RoundedCornerShape(cornerRadius),
-        shadowElevation = elevation
-    ) {
-        content()
-    }
+        shadowElevation = elevation,
+        content = content
+    )
 }

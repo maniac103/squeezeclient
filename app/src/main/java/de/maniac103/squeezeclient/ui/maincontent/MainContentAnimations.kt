@@ -17,7 +17,8 @@
 
 package de.maniac103.squeezeclient.ui.maincontent
 
-import androidx.compose.animation.core.Easing
+import androidx.compose.animation.core.EaseInOut
+import androidx.compose.animation.core.EaseOutCubic
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -26,8 +27,6 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import kotlin.math.PI
-import kotlin.math.cos
 
 internal enum class MainContentAnimationType {
     Normal,
@@ -44,30 +43,17 @@ internal val LocalMainContentAnimationState = staticCompositionLocalOf {
     MainContentAnimationState(MainContentAnimationType.Normal, 0.dp)
 }
 
-internal val AccelerateDecelerateEasing = Easing { fraction ->
-    ((cos((fraction + 1f) * PI) / 2.0) + 0.5).toFloat()
-}
-
-internal val DecelerateCubicEasing = Easing { fraction ->
-    1f - (1f - fraction).let { it * it * it }
-}
-
-internal val DecelerateQuintEasing = Easing { fraction ->
-    val x = 1f - fraction
-    1f - x * x * x * x * x
-}
-
 internal fun mainContentEnter() = slideInHorizontally(
     initialOffsetX = { it },
     animationSpec = tween(
         durationMillis = 300,
-        easing = AccelerateDecelerateEasing
+        easing = EaseInOut
     )
 ) + fadeIn(
     initialAlpha = 0.5f,
     animationSpec = tween(
         durationMillis = 300,
-        easing = DecelerateCubicEasing
+        easing = EaseOutCubic
     )
 )
 
@@ -75,13 +61,13 @@ internal fun mainContentExit() = slideOutHorizontally(
     targetOffsetX = { -it },
     animationSpec = tween(
         durationMillis = 300,
-        easing = AccelerateDecelerateEasing
+        easing = EaseInOut
     )
 ) + fadeOut(
     targetAlpha = 0.5f,
     animationSpec = tween(
         durationMillis = 300,
-        easing = DecelerateCubicEasing
+        easing = EaseOutCubic
     )
 )
 
@@ -89,13 +75,13 @@ internal fun mainContentPopEnter() = slideInHorizontally(
     initialOffsetX = { -it },
     animationSpec = tween(
         durationMillis = 300,
-        easing = AccelerateDecelerateEasing
+        easing = EaseInOut
     )
 ) + fadeIn(
     initialAlpha = 0.5f,
     animationSpec = tween(
         durationMillis = 300,
-        easing = DecelerateCubicEasing
+        easing = EaseOutCubic
     )
 )
 
@@ -104,13 +90,13 @@ internal fun mainContentPopExit() = slideOutHorizontally(
     animationSpec = tween(
         durationMillis = 300,
         delayMillis = 100,
-        easing = AccelerateDecelerateEasing
+        easing = EaseInOut
     )
 ) + fadeOut(
     targetAlpha = 0.5f,
     animationSpec = tween(
         durationMillis = 200,
         delayMillis = 200,
-        easing = DecelerateCubicEasing
+        easing = EaseOutCubic
     )
 )

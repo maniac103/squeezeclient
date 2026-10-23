@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.LinearProgressIndicator
@@ -70,9 +71,11 @@ fun Playlist(
     viewModel: PlaylistViewModel,
     surfaceColor: Color,
     serverConfig: ServerConfiguration?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    state: LazyListState = rememberLazyListState()
 ) {
     Playlist(
+        state = state,
         itemsFlow = viewModel.itemsFlow,
         uiStateFlow = viewModel.uiStateFlow,
         scrollRequestFlow = viewModel.scrollRequestFlow,
@@ -93,11 +96,11 @@ fun Playlist(
     surfaceColor: Color,
     serverConfig: ServerConfiguration?,
     modifier: Modifier = Modifier,
+    state: LazyListState = rememberLazyListState(),
     onPlaylistItemSelected: (position: Int) -> Unit = {},
     onMovePlaylistItem: (from: Int, to: Int) -> Unit = { _, _ -> },
     onRemovePlaylistItem: (position: Int) -> Unit = {}
 ) {
-    val lazyListState = rememberLazyListState()
     val pagingItems = itemsFlow.collectAsLazyPagingItemsWithLifecycle()
     val uiState by uiStateFlow.collectAsStateWithLifecycle()
 
@@ -135,12 +138,12 @@ fun Playlist(
 
     LaunchedEffect(Unit) {
         scrollRequestFlow.collect { position ->
-            lazyListState.animateScrollToItem(position)
+            state.animateScrollToItem(position)
         }
     }
 
     val hapticFeedback = LocalHapticFeedback.current
-    val reorderableLazyListState = rememberReorderableLazyListState(lazyListState) { from, to ->
+    val reorderableLazyListState = rememberReorderableLazyListState(state) { from, to ->
         hapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
         items.add(to.index, items.removeAt(from.index))
         if (selectedItemPosition == from.index) {
@@ -149,7 +152,7 @@ fun Playlist(
     }
 
     LazyColumn(
-        state = lazyListState,
+        state = state,
         modifier = modifier.padding(bottom = 16.dp)
     ) {
         items(

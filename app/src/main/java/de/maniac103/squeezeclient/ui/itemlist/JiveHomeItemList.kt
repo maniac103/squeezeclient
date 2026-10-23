@@ -23,7 +23,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
@@ -95,11 +97,13 @@ fun JiveHomeItemList(
     viewModel: JiveHomeItemListViewModel,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
+    state: LazyListState = rememberLazyListState(),
     itemSelectionListener: (JiveHomeMenuItem) -> Unit = {}
 ) {
     val menuEntries by viewModel.homeMenuItemsFlow.collectAsStateWithLifecycle(emptyList())
 
     LazyColumn(
+        state = state,
         modifier = modifier,
         contentPadding = contentPadding
     ) {

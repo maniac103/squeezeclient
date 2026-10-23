@@ -33,7 +33,7 @@ fun RadioSearchResultsItemList(
     viewModel: RadioSearchResultsViewModel,
     serverConfig: ServerConfiguration?,
     contentPadding: PaddingValues,
-    useGrid: Boolean,
+    mode: SlimBrowseItemListMode,
     modifier: Modifier = Modifier,
     itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {},
     contextMenuClickListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {}
@@ -46,7 +46,7 @@ fun RadioSearchResultsItemList(
         busyItem = busyItem,
         serverConfig = serverConfig,
         contentPadding = contentPadding,
-        mode = if (useGrid) SlimBrowseItemListMode.Grid else SlimBrowseItemListMode.ListWithIcons,
+        mode = mode,
         modifier = modifier,
         itemSelectionListener = itemSelectionListener,
         contextMenuClickListener = contextMenuClickListener

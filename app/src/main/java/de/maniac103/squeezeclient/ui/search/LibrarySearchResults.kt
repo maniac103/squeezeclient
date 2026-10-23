@@ -26,7 +26,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseItemListMode
-import de.maniac103.squeezeclient.ui.itemlist.SlimBrowsePagedItemListOrGrid
+import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseItemListOrGrid
 
 @Composable
 fun LibrarySearchResultsItemList(
@@ -41,7 +41,7 @@ fun LibrarySearchResultsItemList(
     val entries = viewModel.itemsFlow.collectAsLazyPagingItems()
     val busyItem by viewModel.busyItemFlow.collectAsStateWithLifecycle()
 
-    SlimBrowsePagedItemListOrGrid(
+    SlimBrowseItemListOrGrid(
         entries = entries,
         busyItem = busyItem,
         serverConfig = serverConfig,

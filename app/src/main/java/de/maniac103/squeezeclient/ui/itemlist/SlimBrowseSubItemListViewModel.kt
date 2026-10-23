@@ -43,10 +43,15 @@ class SlimBrowseSubItemListViewModel(
     val itemsFlow = flow { emit(loadItems()) }
         .shareIn(viewModelScope, SharingStarted.Lazily)
 
-    fun setItemBusy(item: SlimBrowseItemList.SlimBrowseItem, job: Job) {
-        busyItemInternal.value = item
-        job.invokeOnCompletion {
-            busyItemInternal.value = null
+    internal fun handleItemSelection(
+        item: SlimBrowseItemList.SlimBrowseItem,
+        handler: (SlimBrowseItemList.SlimBrowseItem) -> Job?
+    ) {
+        handler(item)?.also { job ->
+            busyItemInternal.value = item
+            job.invokeOnCompletion {
+                busyItemInternal.value = null
+            }
         }
     }
 

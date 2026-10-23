@@ -42,12 +42,13 @@ import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.ui.composables.ArtworkImage
 import de.maniac103.squeezeclient.ui.composables.ResourceIconButton
 import kotlin.collections.emptyList
+import kotlinx.coroutines.Job
 
 @Composable
 fun ContextMenuBottomSheetContent(
     viewModel: ContextMenuViewModel,
     serverConfig: ServerConfiguration?,
-    itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {}
+    onItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job? = { null }
 ) {
     val items by viewModel.pageFlow.collectAsStateWithLifecycle(emptyList())
     val busyItem by viewModel.busyItemFlow.collectAsStateWithLifecycle()
@@ -60,13 +61,15 @@ fun ContextMenuBottomSheetContent(
         serverConfig = serverConfig,
         backNavTitle = backNavTitle,
         onBackNavClick = viewModel::popPage,
-        itemSelectionListener = { item ->
+        onItemSelected = { item ->
             val goAction = item.actions?.goAction
-            if (goAction?.isContextMenu == true) {
+            val job = if (goAction?.isContextMenu == true) {
                 viewModel.pushPage(item, goAction)
+                null
             } else {
-                itemSelectionListener(item)
+                onItemSelected(item)
             }
+            job?.let { viewModel.setItemBusy(item, it) }
         }
     )
 }
@@ -78,7 +81,7 @@ fun ContextMenuBottomSheetContent(
     parentItem: SlimBrowseItemList.SlimBrowseItem,
     backNavTitle: String?,
     serverConfig: ServerConfiguration?,
-    itemSelectionListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {},
+    onItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {},
     onBackNavClick: () -> Unit = {}
 ) {
     Column(
@@ -139,7 +142,7 @@ fun ContextMenuBottomSheetContent(
                     busy = item == busyItem,
                     selectable = item.actions?.goAction != null,
                     modifier = Modifier
-                        .clickable(onClick = { itemSelectionListener(item) })
+                        .clickable(onClick = { onItemSelected(item) })
                 )
             }
         }

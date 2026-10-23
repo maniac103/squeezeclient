@@ -39,11 +39,11 @@ fun SlimBrowseItemRow(
     showIcon: Boolean,
     busy: Boolean,
     modifier: Modifier = Modifier,
-    contextMenuClickListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {}
+    onContextMenuSelected: () -> Unit = {}
 ) = SlimBrowseItemRow(
     title = item.title,
     subtext = item.subText ?: item.extraInfo,
-    trailingWidget = item.extractTrailingWidget(contextMenuClickListener),
+    trailingWidget = item.extractTrailingWidget(onContextMenuSelected),
     artwork = if (showIcon) item else null,
     serverConfig = serverConfig,
     busy = busy,

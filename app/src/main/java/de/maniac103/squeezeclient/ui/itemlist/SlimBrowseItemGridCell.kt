@@ -45,11 +45,11 @@ fun SlimBrowseItemGridCell(
     serverConfig: ServerConfiguration?,
     busy: Boolean,
     modifier: Modifier = Modifier,
-    contextMenuClickListener: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {}
+    onContextMenuSelected: () -> Unit = {}
 ) = SlimBrowseItemGridCell(
     title = item.title,
     subtext = item.subText ?: item.extraInfo,
-    trailingWidget = item.extractTrailingWidget(contextMenuClickListener),
+    trailingWidget = item.extractTrailingWidget(onContextMenuSelected),
     artwork = item,
     serverConfig = serverConfig,
     busy = busy,

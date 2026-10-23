@@ -28,8 +28,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
@@ -100,6 +102,19 @@ private fun Transition<EnterExitState>.animateDpForPredictiveBack(
 fun MainContentPage(content: @Composable () -> Unit) {
     val bottomPadding = LocalMainContentAnimationState.current.bottomPaddingForCompensation
     val transition = LocalNavAnimatedContentScope.current.transition
+    val animationRunning = transition.currentState != transition.targetState
+    val animationStateReporter by rememberUpdatedState(
+        LocalMainContentAnimationState.current.onTransitionRunningChanged
+    )
+
+    DisposableEffect(animationRunning) {
+        animationStateReporter(animationRunning)
+        onDispose {
+            if (animationRunning) {
+                animationStateReporter(false)
+            }
+        }
+    }
 
     val scale by transition.animateFloatForPredictiveBack(
         valueDuringAnimation = 0.95F,

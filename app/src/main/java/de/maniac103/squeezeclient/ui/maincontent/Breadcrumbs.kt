@@ -60,7 +60,7 @@ fun Breadcrumbs(
     val items = state.items
 
     AnimatedVisibility(
-        visible = items.isNotEmpty(),
+        visible = state.showBreadcrumbs,
         enter = expandVertically(expandFrom = Alignment.Top),
         exit = shrinkVertically(shrinkTowards = Alignment.Top)
     ) {
@@ -158,6 +158,6 @@ fun BreadcrumbsPreview() {
             null
         )
     )
-    val stateFlow = MutableStateFlow(BreadcrumbsState(items, 0.5F))
+    val stateFlow = MutableStateFlow(BreadcrumbsState(items, 0.5F, true))
     Breadcrumbs(stateFlow, null)
 }

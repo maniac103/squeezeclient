@@ -35,12 +35,22 @@ import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.ui.composables.TextResource
 import kotlin.math.max
+import kotlin.time.Duration.Companion.milliseconds
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.transformLatest
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 data class BreadcrumbsItem(
     val title: TextResource,
@@ -48,7 +58,11 @@ data class BreadcrumbsItem(
     val icon: ArtworkItem?
 )
 
-data class BreadcrumbsState(val items: List<BreadcrumbsItem>, val backProgress: Float?)
+data class BreadcrumbsState(
+    val items: List<BreadcrumbsItem>,
+    val backProgress: Float?,
+    val showBreadcrumbs: Boolean
+)
 
 class MainContentViewModel(
     private val application: Application,
@@ -56,13 +70,39 @@ class MainContentViewModel(
     private val playerId: PlayerId
 ) : AndroidViewModel(application) {
     private val navigationFlowInternal = MutableSharedFlow<MainContentNavigation>()
-    private val breadcrumbsFlowInternal = MutableStateFlow(BreadcrumbsState(emptyList(), null))
+    private val breadcrumbsFlowInternal: MutableStateFlow<Pair<List<BreadcrumbsItem>, Float?>> =
+        MutableStateFlow(emptyList<BreadcrumbsItem>() to null)
+    private val runningPageTransitions = MutableStateFlow(0)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val breadcrumbsVisibleFlow = breadcrumbsFlowInternal
+        .map { it.first.isNotEmpty() }
+        .transformLatest { breadcrumbsNotEmpty ->
+            // Delay the visibility change until after the corresponding page transition has ended:
+            // - First way for the animation to begin
+            // - Then wait for the animation to end
+            // - Then forward the change
+            withTimeoutOrNull(100.milliseconds) { runningPageTransitions.first { it > 0 } }
+            runningPageTransitions.first { it == 0 }
+            emit(breadcrumbsNotEmpty)
+        }
 
     private var pendingNavigation: Job? = null
 
     val initialPage get() = MainContentNavigation.JiveHomeMenuPage("home", "")
     val navigationFlow = navigationFlowInternal.asSharedFlow()
-    val breadcrumbsFlow = breadcrumbsFlowInternal.asStateFlow()
+    val breadcrumbsFlow =
+        combine(
+            breadcrumbsFlowInternal,
+            breadcrumbsVisibleFlow.onStart { emit(false) }
+        ) { (breadcrumbs, backProgress), visible ->
+            BreadcrumbsState(breadcrumbs, backProgress, visible)
+        }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.Eagerly,
+                initialValue = BreadcrumbsState(emptyList(), null, false)
+            )
 
     fun goToHome() = viewModelScope.launch {
         navigationFlowInternal.emit(MainContentNavigation.Home)
@@ -272,8 +312,15 @@ class MainContentViewModel(
                 (it as? MainContentNavigation)?.generateBreadcrumb()
             }
 
-            breadcrumbsFlowInternal.emit(BreadcrumbsState(breadcrumbs, progress))
+            breadcrumbsFlowInternal.emit(breadcrumbs to progress)
         }
+
+    fun onPageTransitionRunningChanged(running: Boolean) {
+        runningPageTransitions.update {
+            val delta = if (running) 1 else -1
+            (it + delta).coerceAtLeast(0)
+        }
+    }
 
     private suspend fun loadContextMenuItems(
         action: JiveAction,

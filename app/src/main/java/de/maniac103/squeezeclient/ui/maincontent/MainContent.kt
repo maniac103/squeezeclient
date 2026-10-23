@@ -22,6 +22,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.TopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -35,6 +36,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
@@ -70,11 +72,13 @@ internal class RefreshTracker {
 fun MainContent(
     viewModel: MainContentViewModel,
     serverConfig: State<ServerConfiguration?>,
-    useGridForSlimbrowseItems: State<Boolean>,
+    useGridForSlimBrowseItemsState: State<Boolean>,
+    slimBrowseMinGridCellSize: Dp,
     pagePadding: PaddingValues,
     compensateBottomPagePaddingDuringAnimation: Boolean,
     navigationBackEnabled: Boolean,
     modifier: Modifier = Modifier,
+    appBarState: TopAppBarState? = null,
     onGalleryItemSelected: (SlideshowImage) -> Unit = {},
     onDownloadSelected: (DownloadRequestData) -> Unit = {},
     onWebLinkSelected: (title: String, link: Uri) -> Unit = { _, _ -> },
@@ -107,14 +111,17 @@ fun MainContent(
         entryProvider = entryProvider {
             jiveHomeMenuNavEntry(
                 pagePadding = pagePadding,
+                appBarState = appBarState,
                 onItemSelected = viewModel::onHomeItemSelected
             )
 
             slimBrowseNavEntry(
                 serverConfig = serverConfig,
                 refreshTracker = refreshTracker,
-                useGridIfPossible = useGridForSlimbrowseItems,
+                useGridIfPossible = useGridForSlimBrowseItemsState,
+                gridCellMinSize = slimBrowseMinGridCellSize,
                 pagePadding = pagePadding,
+                appBarState = appBarState,
                 onItemSelected = viewModel::onSlimBrowseItemSelected,
                 onContextMenuItemSelected = viewModel::onSlimBrowseContextMenu
             )
@@ -122,6 +129,7 @@ fun MainContent(
             slimBrowseSubItemsNavEntry(
                 serverConfig = serverConfig,
                 pagePadding = pagePadding,
+                appBarState = appBarState,
                 onItemSelected = viewModel::onSlimBrowseItemSelected,
                 onContextMenuItemSelected = viewModel::onSlimBrowseContextMenu
             )
@@ -129,20 +137,25 @@ fun MainContent(
             galleryNavEntry(
                 serverConfig = serverConfig,
                 pagePadding = pagePadding,
+                appBarState = appBarState,
                 onItemSelected = onGalleryItemSelected
             )
 
             localSearchResultsNavKey(
                 serverConfig = serverConfig,
-                useGrid = useGridForSlimbrowseItems,
+                useGrid = useGridForSlimBrowseItemsState,
+                gridCellMinSize = slimBrowseMinGridCellSize,
                 pagePadding = pagePadding,
+                appBarState = appBarState,
                 onItemSelected = { item -> viewModel.onSlimBrowseItemSelected(item, null) },
                 onContextMenuItemSelected = viewModel::onSlimBrowseContextMenu
             )
             radioSearchResultsNavKey(
                 serverConfig = serverConfig,
-                useGrid = useGridForSlimbrowseItems,
+                useGrid = useGridForSlimBrowseItemsState,
+                gridCellMinSize = slimBrowseMinGridCellSize,
                 pagePadding = pagePadding,
+                appBarState = appBarState,
                 onItemSelected = { item -> viewModel.onSlimBrowseItemSelected(item, null) },
                 onContextMenuItemSelected = viewModel::onSlimBrowseContextMenu
             )

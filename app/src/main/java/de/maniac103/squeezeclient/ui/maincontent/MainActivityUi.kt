@@ -18,7 +18,9 @@
 package de.maniac103.squeezeclient.ui.maincontent
 
 import android.net.Uri
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -71,6 +73,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -109,12 +112,14 @@ import de.maniac103.squeezeclient.ui.search.SearchViewModel
 import de.maniac103.squeezeclient.ui.volume.VolumeControlPopup
 import de.maniac103.squeezeclient.ui.volume.VolumePopupViewModel
 import kotlin.String
+import kotlin.math.abs
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
@@ -131,7 +136,8 @@ sealed interface MainLayout {
     val toolbarPadding: PaddingValues
     val toolbarContentPadding: PaddingValues
     val nowPlayingCornerSize: Dp
-    val useGridForSlimBrowseItems: Boolean
+    val useGridForSlimBrowseItemsByDefault: Boolean
+    val slimBrowseGridCellMinSize: Dp
 
     data class Portrait(
         override val containerSize: DpSize,
@@ -145,7 +151,8 @@ sealed interface MainLayout {
         val collapsedNowPlayingHeight: Dp,
         override val nowPlayingCornerSize: Dp
     ) : MainLayout {
-        override val useGridForSlimBrowseItems = false
+        override val useGridForSlimBrowseItemsByDefault = false
+        override val slimBrowseGridCellMinSize = 120.dp
     }
 
     data class Landscape(
@@ -160,7 +167,8 @@ sealed interface MainLayout {
         val collapsedNowPlayingWidth: Dp,
         override val nowPlayingCornerSize: Dp
     ) : MainLayout {
-        override val useGridForSlimBrowseItems = true
+        override val useGridForSlimBrowseItemsByDefault = true
+        override val slimBrowseGridCellMinSize = 160.dp
     }
 }
 
@@ -499,16 +507,33 @@ private fun MainActivityPlayerContent(
                 val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
                 val systemInsets = ScaffoldDefaults.contentWindowInsets.asPaddingValues()
                 val appBarColors = TopAppBarDefaults.topAppBarColors()
-                val appBarColor by remember(appBarColors, scrollBehavior) {
+
+                val targetFraction by remember(scrollBehavior) {
                     derivedStateOf {
-                        val overlappingFraction = scrollBehavior.state.overlappedFraction
-                        lerp(
-                            start = appBarColors.containerColor,
-                            stop = appBarColors.scrolledContainerColor,
-                            fraction = FastOutLinearInEasing.transform(overlappingFraction)
-                        )
+                        FastOutLinearInEasing.transform(scrollBehavior.state.overlappedFraction)
                     }
                 }
+                val shownFraction = remember { Animatable(targetFraction) }
+
+                LaunchedEffect(scrollBehavior) {
+                    snapshotFlow { targetFraction }.collectLatest { target ->
+                        val jump = abs(target - shownFraction.value)
+                        if (jump < 0.2f) {
+                            // normal scrolling: follow the finger exactly
+                            shownFraction.snapTo(target)
+                        } else {
+                            // page switch: ease over to the new value
+                            shownFraction.animateTo(target, tween(durationMillis = 200))
+                        }
+                    }
+                }
+
+                val appBarColor = lerp(
+                    start = appBarColors.containerColor,
+                    stop = appBarColors.scrolledContainerColor,
+                    fraction = shownFraction.value
+                )
+
                 val layout = determineMainLayout(
                     containerSize = DpSize(maxWidth, maxHeight),
                     insets = systemInsets,
@@ -517,12 +542,12 @@ private fun MainActivityPlayerContent(
 
                 val useGridForSlimBrowseItemsState = remember {
                     derivedStateOf {
-                        forceGridForSlimBrowseItemsState.value || layout.useGridForSlimBrowseItems
+                        forceGridForSlimBrowseItemsState.value ||
+                            layout.useGridForSlimBrowseItemsByDefault
                     }
                 }
 
                 Scaffold(
-                    modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
                     topBar = {
                         MainActivityAppBar(
                             drawerState = drawerState,
@@ -555,13 +580,16 @@ private fun MainActivityPlayerContent(
                                 .background(appBarColor)
                                 .padding(layout.breadcrumbsPadding)
                         )
+
                         MainContent(
                             viewModel = mainContentViewModel,
                             serverConfig = serverConfigState,
-                            useGridForSlimbrowseItems = useGridForSlimBrowseItemsState,
+                            useGridForSlimBrowseItemsState = useGridForSlimBrowseItemsState,
+                            slimBrowseMinGridCellSize = layout.slimBrowseGridCellMinSize,
                             pagePadding = layout.mainContentPagePadding,
                             compensateBottomPagePaddingDuringAnimation =
                                 layout.compensateMainContentBottomPagePaddingDuringAnimation,
+                            appBarState = scrollBehavior.state,
                             navigationBackEnabled = !searchOpen,
                             onGalleryItemSelected = onGalleryItemSelected,
                             onDownloadSelected = onDownloadSelected,

@@ -24,6 +24,7 @@ import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.rememberLifecycleOwner
 import androidx.navigation3.runtime.NavEntry
@@ -49,7 +50,11 @@ internal data class BottomSheetScene<T : Any>(
 
     override val content: @Composable (() -> Unit) = {
         val lifecycleOwner = rememberLifecycleOwner()
-        val sheetState = rememberBottomSheetState(initialValue = SheetValue.Expanded)
+        val sheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden)
+
+        LaunchedEffect(Unit) {
+            sheetState.show()
+        }
 
         ModalBottomSheet(
             sheetState = sheetState,

@@ -21,6 +21,7 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -72,6 +73,7 @@ fun Playlist(
     surfaceColor: Color,
     serverConfig: ServerConfiguration?,
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
     state: LazyListState = rememberLazyListState()
 ) {
     Playlist(
@@ -81,6 +83,7 @@ fun Playlist(
         scrollRequestFlow = viewModel.scrollRequestFlow,
         surfaceColor = surfaceColor,
         serverConfig = serverConfig,
+        contentPadding = contentPadding,
         onPlaylistItemSelected = viewModel::setPlaylistPosition,
         onMovePlaylistItem = viewModel::movePlaylistItem,
         onRemovePlaylistItem = viewModel::removePlaylistItem,
@@ -96,6 +99,7 @@ fun Playlist(
     surfaceColor: Color,
     serverConfig: ServerConfiguration?,
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
     state: LazyListState = rememberLazyListState(),
     onPlaylistItemSelected: (position: Int) -> Unit = {},
     onMovePlaylistItem: (from: Int, to: Int) -> Unit = { _, _ -> },
@@ -153,7 +157,8 @@ fun Playlist(
 
     LazyColumn(
         state = state,
-        modifier = modifier.padding(bottom = 16.dp)
+        contentPadding = contentPadding,
+        modifier = modifier
     ) {
         items(
             items = items,

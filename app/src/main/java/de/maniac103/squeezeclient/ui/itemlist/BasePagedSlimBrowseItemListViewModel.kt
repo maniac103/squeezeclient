@@ -23,11 +23,13 @@ import androidx.paging.InvalidatingPagingSourceFactory
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
+import androidx.paging.map
 import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 
 abstract class BasePagedSlimBrowseItemListViewModel : ViewModel() {
     private val busyItemInternal = MutableStateFlow<SlimBrowseItemList.SlimBrowseItem?>(null)
@@ -42,6 +44,7 @@ abstract class BasePagedSlimBrowseItemListViewModel : ViewModel() {
         pagingSourceFactory = pagingSourceFactory
     )
         .flow
+        .map { data -> data.map { it.toUiItem() } }
         .cachedIn(viewModelScope)
 
     internal fun handleItemSelection(

@@ -34,37 +34,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import de.maniac103.squeezeclient.model.ArtworkItem
 import de.maniac103.squeezeclient.model.ServerConfiguration
-import de.maniac103.squeezeclient.model.SlimBrowseItemList
-import de.maniac103.squeezeclient.ui.composables.ArtworkImage
 
 @Composable
-fun SlimBrowseItemGridCell(
-    item: SlimBrowseItemList.SlimBrowseItem,
+fun JiveUiItemGridCell(
+    item: JiveUiItem,
     serverConfig: ServerConfiguration?,
     busy: Boolean,
     modifier: Modifier = Modifier,
     onContextMenuSelected: () -> Unit = {}
-) = SlimBrowseItemGridCell(
-    title = item.title,
-    subtext = item.subText ?: item.extraInfo,
-    trailingWidget = item.extractTrailingWidget(onContextMenuSelected),
-    artwork = item,
-    serverConfig = serverConfig,
-    busy = busy,
-    modifier = modifier
-)
-
-@Composable
-fun SlimBrowseItemGridCell(
-    title: String,
-    subtext: String?,
-    trailingWidget: SlimBrowseItemTrailingWidget?,
-    artwork: ArtworkItem,
-    serverConfig: ServerConfiguration?,
-    busy: Boolean,
-    modifier: Modifier = Modifier
 ) {
     Column(
         modifier = modifier
@@ -72,13 +50,15 @@ fun SlimBrowseItemGridCell(
             .defaultMinSize(minHeight = 64.dp)
             .padding(8.dp)
     ) {
-        ArtworkImage(
-            artwork = artwork,
-            serverConfig = serverConfig,
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(1F)
-        )
+        if (item.icon != null) {
+            JiveUiItemRowIcon(
+                icon = item.icon,
+                serverConfig = serverConfig,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1F)
+            )
+        }
 
         Row(
             modifier = Modifier
@@ -90,7 +70,7 @@ fun SlimBrowseItemGridCell(
                     .weight(1F)
             ) {
                 Text(
-                    text = title,
+                    text = item.title,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.bodyMediumEmphasized,
@@ -98,9 +78,9 @@ fun SlimBrowseItemGridCell(
                         .align(Alignment.CenterHorizontally)
                 )
 
-                if (!subtext.isNullOrEmpty()) {
+                if (!item.subText.isNullOrEmpty()) {
                     Text(
-                        text = subtext,
+                        text = item.subText,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                         style = MaterialTheme.typography.bodySmall,
@@ -110,11 +90,16 @@ fun SlimBrowseItemGridCell(
                 }
             }
 
-            SlimBrowseItemTrailingWidgetUi(
-                busy = busy,
-                widget = trailingWidget,
-                modifier = Modifier.align(Alignment.CenterVertically)
-            )
+            val trailingWidgetModifier = Modifier.align(Alignment.CenterVertically)
+            if (busy) {
+                JiveUiItemRowBusyIndicator(modifier = trailingWidgetModifier)
+            } else if (item.trailingWidget != null) {
+                JiveUiItemRowTrailingWidget(
+                    widget = item.trailingWidget,
+                    onContextMenuSelected = onContextMenuSelected,
+                    modifier = trailingWidgetModifier
+                )
+            }
         }
     }
 }
@@ -122,40 +107,16 @@ fun SlimBrowseItemGridCell(
 @Preview
 @Composable
 fun SlimBrowseItemGridCellPreview() {
-    data class Item(
-        val title: String,
-        val subtext: String?,
-        val trailingWidget: SlimBrowseItemTrailingWidget?,
-        val busy: Boolean
-    )
-
-    val items = listOf(
-        Item("Title", "Subtext", null, false),
-        Item("No Subtext", null, null, false),
-        Item("No Subtext", null, SlimBrowseItemTrailingWidget.ContextMenu {}, false),
-        Item("Busy", "Subtext", null, true),
-        Item("Menu", "Subtext", SlimBrowseItemTrailingWidget.ContextMenu {}, false),
-        Item("Choice", "Subtext", SlimBrowseItemTrailingWidget.Choice("On"), false),
-        Item("Radio", "Subtext", SlimBrowseItemTrailingWidget.Radio(true), false),
-        Item("Checkbox", "Subtext", SlimBrowseItemTrailingWidget.Checkbox(true), false)
-    )
-    val dummyArtwork = object : ArtworkItem {
-        override val icon = null
-        override val iconId = null
-    }
-
+    val items = generateJiveUiPreviewWidgets()
     LazyVerticalGrid(
         columns = GridCells.Adaptive(160.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
-        items(items) { item ->
-            SlimBrowseItemGridCell(
-                item.title,
-                item.subtext,
-                item.trailingWidget,
-                dummyArtwork,
-                null,
-                item.busy
+        items(items) { (item, busy) ->
+            JiveUiItemGridCell(
+                item = item,
+                serverConfig = null,
+                busy = busy
             )
         }
     }

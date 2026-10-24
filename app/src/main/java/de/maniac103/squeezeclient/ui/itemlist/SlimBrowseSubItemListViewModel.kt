@@ -40,7 +40,10 @@ class SlimBrowseSubItemListViewModel(
     private val busyItemInternal = MutableStateFlow<SlimBrowseItemList.SlimBrowseItem?>(null)
     val busyItemFlow = busyItemInternal.asStateFlow()
 
-    val itemsFlow = flow { emit(loadItems()) }
+    val itemsFlow = flow {
+        val items = loadItems().map { it.toUiItem() }
+        emit(items)
+    }
         .shareIn(viewModelScope, SharingStarted.Lazily)
 
     internal fun handleItemSelection(

@@ -46,7 +46,7 @@ import my.nanihadesuka.compose.ScrollbarSettings
 
 @Composable
 fun SlimBrowseItemListOrGrid(
-    entries: LazyPagingItems<SlimBrowseItemList.SlimBrowseItem>,
+    entries: LazyPagingItems<SlimBrowseUiItem>,
     busyItem: SlimBrowseItemList.SlimBrowseItem?,
     serverConfig: ServerConfiguration?,
     contentPadding: PaddingValues,
@@ -86,15 +86,15 @@ fun SlimBrowseItemListOrGrid(
             ) {
                 items(entries.itemCount) { index ->
                     entries[index]?.let { entry ->
-                        SlimBrowseItemGridCell(
-                            item = entry,
+                        JiveUiItemGridCell(
+                            item = entry.uiItem,
                             serverConfig = serverConfig,
-                            busy = entry == busyItem,
+                            busy = entry.source == busyItem,
                             modifier = Modifier.clickable(
-                                onClick = { onItemSelected(entry) }
+                                onClick = { onItemSelected(entry.source) }
                             ),
                             onContextMenuSelected = {
-                                onItemContextMenuSelected(entry)
+                                onItemContextMenuSelected(entry.source)
                             }
                         )
                     }
@@ -104,7 +104,7 @@ fun SlimBrowseItemListOrGrid(
                 state = mode.gridState,
                 settings = scrollbarSettings,
                 indicatorContent = { index, isThumbSelected ->
-                    ScrollIndicator(entries[index]?.textKey, isThumbSelected)
+                    ScrollIndicator(entries[index]?.source?.textKey, isThumbSelected)
                 },
                 content = {},
                 modifier = scrollbarModifier
@@ -119,16 +119,16 @@ fun SlimBrowseItemListOrGrid(
             ) {
                 items(entries.itemCount) { index ->
                     entries[index]?.let { entry ->
-                        SlimBrowseItemRow(
-                            item = entry,
+                        JiveUiItemRow(
+                            item = entry.uiItem,
                             serverConfig = serverConfig,
                             showIcon = mode.showIcons,
-                            busy = entry == busyItem,
+                            busy = entry.source == busyItem,
                             modifier = Modifier.clickable(
-                                onClick = { onItemSelected(entry) }
+                                onClick = { onItemSelected(entry.source) }
                             ),
                             onContextMenuSelected = {
-                                onItemContextMenuSelected(entry)
+                                onItemContextMenuSelected(entry.source)
                             }
                         )
                     }
@@ -138,7 +138,7 @@ fun SlimBrowseItemListOrGrid(
                 state = mode.listState,
                 settings = scrollbarSettings,
                 indicatorContent = { index, isThumbSelected ->
-                    ScrollIndicator(entries[index]?.textKey, isThumbSelected)
+                    ScrollIndicator(entries[index]?.source?.textKey, isThumbSelected)
                 },
                 content = {},
                 modifier = scrollbarModifier

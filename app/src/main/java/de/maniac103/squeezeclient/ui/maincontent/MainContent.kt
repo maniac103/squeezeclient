@@ -110,6 +110,7 @@ fun MainContent(
         ),
         entryProvider = entryProvider {
             JiveHomeMenuNavEntry(
+                serverConfig = serverConfig,
                 pagePadding = pagePadding,
                 appBarState = appBarState,
                 onItemSelected = viewModel::onHomeItemSelected

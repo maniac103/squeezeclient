@@ -50,16 +50,16 @@ fun SlimBrowseSubItemList(
         modifier = modifier
     ) {
         items(entries) { entry ->
-            SlimBrowseItemRow(
-                item = entry,
+            JiveUiItemRow(
+                item = entry.uiItem,
                 serverConfig = serverConfig,
                 showIcon = false,
-                busy = entry == busyItem,
+                busy = entry.source == busyItem,
                 modifier = Modifier.clickable(
-                    onClick = { viewModel.handleItemSelection(entry, onItemSelected) }
+                    onClick = { viewModel.handleItemSelection(entry.source, onItemSelected) }
                 ),
                 onContextMenuSelected = {
-                    viewModel.handleItemSelection(entry, onItemContextMenuSelected)
+                    viewModel.handleItemSelection(entry.source, onItemContextMenuSelected)
                 }
             )
         }

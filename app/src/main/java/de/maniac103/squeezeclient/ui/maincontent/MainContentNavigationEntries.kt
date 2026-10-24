@@ -71,6 +71,7 @@ import org.koin.core.parameter.parametersOf
 
 @Composable
 internal fun EntryProviderScope<NavKey>.JiveHomeMenuNavEntry(
+    serverConfig: State<ServerConfiguration?>,
     pagePadding: PaddingValues,
     appBarState: TopAppBarState?,
     onItemSelected: (JiveHomeMenuItem) -> Unit
@@ -83,6 +84,7 @@ internal fun EntryProviderScope<NavKey>.JiveHomeMenuNavEntry(
     ) {
         JiveHomeItemList(
             state = listState,
+            serverConfig = serverConfig.value,
             viewModel = viewModel,
             contentPadding = pagePadding,
             onItemSelected = onItemSelected

@@ -36,6 +36,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.minus
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListState
@@ -171,13 +172,14 @@ internal fun NowPlayingScreen(
         motionState = motionState,
         serverConfig = serverConfig,
         insets = insets,
-        playlistContent = { listState, surfaceColor, playlistModifier ->
+        playlistContent = {
             Playlist(
                 state = listState,
                 viewModel = playlistViewModel,
-                surfaceColor = surfaceColor,
+                surfaceColor = sheetColor,
                 serverConfig = serverConfig,
-                modifier = playlistModifier
+                contentPadding = contentPadding,
+                modifier = listModifier
             )
         },
         onPreviousTrack = viewModel::previous,
@@ -227,7 +229,7 @@ internal fun NowPlayingScreen(
     serverConfig: ServerConfiguration?,
     insets: PaddingValues,
     motionState: NowPlayingMotionState,
-    playlistContent: @Composable (LazyListState, Color, Modifier) -> Unit,
+    playlistContent: @Composable PlaylistSheetScope.() -> Unit,
     modifier: Modifier = Modifier,
     onPreviousTrack: () -> Unit = {},
     onNextTrack: () -> Unit = {},
@@ -820,12 +822,19 @@ private class PlaylistNestedScrollConnection(
     }
 }
 
+internal data class PlaylistSheetScope(
+    val listState: LazyListState,
+    val sheetColor: Color,
+    val contentPadding: PaddingValues,
+    val listModifier: Modifier
+)
+
 @Composable
 private fun PlaylistSheet(
     layoutSpec: PlaylistLayoutSpec,
     nowPlayingProgress: MotionProgress,
     playlistProgress: MotionProgress,
-    playlistContent: @Composable (LazyListState, Color, Modifier) -> Unit,
+    playlistContent: @Composable PlaylistSheetScope.() -> Unit,
     backState: PlaylistBackEffectState
 ) {
     val playlistState = rememberLazyListState()
@@ -900,15 +909,20 @@ private fun PlaylistSheet(
                         .align(Alignment.CenterHorizontally)
                 )
             }
-            playlistContent(
-                playlistState,
-                sheetColor,
-                Modifier
-                    .padding(layoutSpec.padding)
+
+            val sheetScope = PlaylistSheetScope(
+                listState = playlistState,
+                sheetColor = sheetColor,
+                contentPadding = layoutSpec.padding - topPadding,
+                listModifier = Modifier
                     .fade(playlistProgress, layoutSpec.contentAlpha)
                     .fillMaxWidth()
                     .weight(1F)
             )
+
+            with(sheetScope) {
+                playlistContent()
+            }
         }
     }
 }
@@ -1155,15 +1169,16 @@ fun NowPlayingPreview() {
                 motionState = motionState,
                 serverConfig = null,
                 insets = innerPadding,
-                playlistContent = { listState, surfaceColor, modifier ->
+                playlistContent = {
                     Playlist(
                         state = listState,
                         itemsFlow = MutableStateFlow(playlistItemData),
                         uiStateFlow = MutableStateFlow(playlistUiState),
                         scrollRequestFlow = flow { },
-                        surfaceColor = surfaceColor,
+                        surfaceColor = sheetColor,
                         serverConfig = null,
-                        modifier = modifier
+                        contentPadding = contentPadding,
+                        modifier = listModifier
                     )
                 }
             )

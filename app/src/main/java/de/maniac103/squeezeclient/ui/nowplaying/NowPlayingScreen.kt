@@ -1016,12 +1016,14 @@ private fun SongInfoText(
 
 @Composable
 internal fun Modifier.bounds(progress: MotionProgress, bounds: Morph<Bounds>) =
-    this.layout { measurable, _ ->
+    this.layout { measurable, constraints ->
         val b = bounds.at(progress.value)
         val placeable = measurable.measure(
             Constraints.fixed(b.width.roundToPx(), b.height.roundToPx())
         )
-        layout(placeable.width, placeable.height) {
+        val width = placeable.width.coerceIn(constraints.minWidth, constraints.maxWidth)
+        val height = placeable.height.coerceIn(constraints.minHeight, constraints.maxHeight)
+        layout(width, height) {
             placeable.placeRelative(b.start.roundToPx(), b.top.roundToPx())
         }
     }

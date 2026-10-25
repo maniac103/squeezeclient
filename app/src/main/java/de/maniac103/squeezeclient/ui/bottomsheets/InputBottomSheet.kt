@@ -55,8 +55,7 @@ internal sealed interface InputError {
 fun InputBottomSheetContent(
     title: String,
     input: JiveActions.Input,
-    onInputSubmitted: (JiveAction) -> Job?,
-    modifier: Modifier = Modifier
+    onInputSubmitted: (JiveAction) -> Job?
 ) {
     var busy by remember { mutableStateOf(false) }
     InputBottomSheetContent(
@@ -65,7 +64,7 @@ fun InputBottomSheetContent(
         initialText = input.initialText,
         minLength = input.minLength,
         allowedChars = input.allowedChars,
-        modifier = modifier,
+        modifier = Modifier.padding(16.dp),
         onSubmit = { value ->
             val action = input.action.withInputValue(value)
             onInputSubmitted(action)?.let { job ->

@@ -46,6 +46,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconToggleButton
+import androidx.compose.material3.FilledTonalIconToggleButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -618,9 +619,10 @@ private fun PlaybackControls(
     onToggleShuffle: () -> Unit,
     onStop: () -> Unit
 ) {
-    PlaybackButton(
+    PlaybackToggleButton(
         iconResId = state.repeatIconResId,
         contentDescriptionResId = state.repeatContentDescriptionResId,
+        checked = state.repeatEnabled,
         layoutSpec = layoutSpec.repeat,
         progress = progress,
         enabled = state.isPowered,
@@ -677,13 +679,44 @@ private fun PlaybackControls(
         onClick = onNext
     )
 
-    PlaybackButton(
+    PlaybackToggleButton(
         iconResId = state.shuffleIconResId,
         contentDescriptionResId = state.shuffleContentDescriptionResId,
+        checked = state.shuffleEnabled,
         layoutSpec = layoutSpec.shuffle,
         progress = progress,
         enabled = state.isPowered,
         onClick = onToggleShuffle
+    )
+}
+
+@Composable
+private fun PlaybackToggleButton(
+    iconResId: Int,
+    contentDescriptionResId: Int,
+    checked: Boolean,
+    layoutSpec: ControlLayoutSpec,
+    progress: MotionProgress,
+    enabled: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) = FilledTonalIconToggleButton(
+    checked = checked,
+    onCheckedChange = { onClick() },
+    enabled = enabled,
+    colors = IconButtonDefaults.filledTonalIconToggleButtonColors().copy(
+        containerColor = Color.Transparent,
+        disabledContainerColor = Color.Transparent,
+        contentColor = MaterialTheme.colorScheme.onSurface
+    ),
+    shapes = IconButtonDefaults.toggleableShapes(),
+    modifier = modifier
+        .bounds(progress, layoutSpec.bounds)
+        .fade(progress, layoutSpec.alpha)
+) {
+    ResourceIcon(
+        drawableResId = iconResId,
+        contentDescriptionResId = contentDescriptionResId
     )
 }
 
@@ -1129,8 +1162,10 @@ fun NowPlayingPreview() {
         playPauseEnabled = true,
         repeatIconResId = R.drawable.ic_repeat_off_24dp,
         repeatContentDescriptionResId = R.string.content_description_nowplaying_repeat_off,
+        repeatEnabled = false,
         shuffleIconResId = R.drawable.ic_shuffle_off_24dp,
         shuffleContentDescriptionResId = R.string.content_description_nowplaying_shuffle_off,
+        shuffleEnabled = false,
         canSeek = true,
         playlistPosition = 8,
         playlistLength = 15,
@@ -1150,7 +1185,7 @@ fun NowPlayingPreview() {
         .let { PagingData.from(it) }
     val playlistUiState = PlaylistViewModel.UiState(3, null)
 
-    val motionState = rememberNowPlayingMotionState(initiallyExpanded = false)
+    val motionState = rememberNowPlayingMotionState(initiallyExpanded = true)
 
     BoxWithConstraints {
         Scaffold { innerPadding ->

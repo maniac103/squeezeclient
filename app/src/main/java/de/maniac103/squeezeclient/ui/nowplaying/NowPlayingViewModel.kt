@@ -16,6 +16,8 @@
 
 package de.maniac103.squeezeclient.ui.nowplaying
 
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import de.maniac103.squeezeclient.R
@@ -170,11 +172,13 @@ enum class PlaylistSaveEditorState {
     Saving
 }
 
+@Immutable
 data class NowPlayingContextMenuData(
     val item: SlimBrowseItemList.SlimBrowseItem,
     val action: JiveAction
 )
 
+@Stable
 data class NowPlayingUiState(
     val title: TextResource,
     val artist: String?,

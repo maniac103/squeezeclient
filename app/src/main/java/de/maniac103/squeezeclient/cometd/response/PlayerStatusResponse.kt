@@ -36,6 +36,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.decodeFromJsonElement
 
 // offset and item_loop are not returned when fetching non-existing pages
@@ -44,7 +45,7 @@ import kotlinx.serialization.json.decodeFromJsonElement
 data class PlayerStatusResponse(
     @SerialName("mode")
     val state: PlayerStatus.PlayState,
-    val offset: String? = null,
+    val offset: JsonPrimitive? = null, // string or int
     val count: Int,
     @SerialName("item_loop")
     private val items: List<JsonObject>? = null,
@@ -126,10 +127,10 @@ data class PlayerStatusResponse(
     }
 
     fun asModelPlaylist(json: Json, fetchOffset: Int): Playlist {
-        val actualOffset = when (offset) {
+        val actualOffset = when (val jsonValue = offset?.content) {
             null -> fetchOffset
             "-" -> playlistCurrentIndex
-            else -> offset.toInt()
+            else -> jsonValue.toInt()
         }
         val (playlist, reachableCount) = if (items != null) {
             val playlist = items.mapNotNull { it.asModelPlaylistItem(json, base) }

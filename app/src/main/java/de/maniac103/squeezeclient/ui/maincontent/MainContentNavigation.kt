@@ -22,6 +22,7 @@ import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.cometd.request.LibrarySearchRequest
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.JiveActions
+import de.maniac103.squeezeclient.model.JiveHomeMenuItem
 import de.maniac103.squeezeclient.model.ParcelableArtworkItem
 import de.maniac103.squeezeclient.model.SlideshowImage
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
@@ -35,7 +36,11 @@ sealed class MainContentNavigation : NavKey {
     open fun generateBreadcrumb(): BreadcrumbsItem? = null
 
     @Serializable
-    data class JiveHomeMenuPage(val nodeId: String, val title: String) : MainContentNavigation() {
+    data class JiveHomeMenuPage(
+        val nodeId: String,
+        val title: String,
+        val windowStyle: WindowStyle?
+    ) : MainContentNavigation() {
         override fun generateBreadcrumb() = BreadcrumbsItem(title.toTextResource(), null, null)
     }
 
@@ -58,7 +63,8 @@ sealed class MainContentNavigation : NavKey {
     data class SlimBrowseSubItemPage(
         val title: String,
         val fetchAction: JiveAction,
-        val position: Int
+        val position: Int,
+        val windowStyle: WindowStyle?
     ) : MainContentNavigation() {
         override fun generateBreadcrumb() = BreadcrumbsItem(title.toTextResource(), null, null)
     }
@@ -93,11 +99,11 @@ sealed class MainContentNavigation : NavKey {
     }
 
     @Serializable
-    data class HomeMenuInput(val title: String, val input: JiveActions.Input) :
+    data class HomeMenuInput(val parent: JiveHomeMenuItem, val input: JiveActions.Input) :
         MainContentNavigation()
 
     @Serializable
-    data class HomeMenuTimePicker(val title: String, val input: JiveActions.Input) :
+    data class HomeMenuTimePicker(val parent: JiveHomeMenuItem, val input: JiveActions.Input) :
         MainContentNavigation()
 
     @Serializable

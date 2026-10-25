@@ -189,12 +189,12 @@ fun MainContentPage(
                 val compensationPx = animatedBottomPlaceholderCompensation.toPx()
 
                 scaleX = scale
-                scaleY = if (size.height > 0f) {
+                scaleY = if (size.height > 0F) {
                     scale * (size.height - compensationPx) / size.height
                 } else {
                     scale
                 }
-                translationY = -0.5f * compensationPx * scale
+                translationY = -0.5F * compensationPx * (1 - scale)
             }
             .padding(bottom = animatedBottomPlaceholderCompensation),
         shape = RoundedCornerShape(cornerRadius),

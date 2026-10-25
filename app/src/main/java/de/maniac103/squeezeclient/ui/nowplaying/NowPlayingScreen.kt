@@ -49,6 +49,7 @@ import androidx.compose.material3.FilledIconToggleButton
 import androidx.compose.material3.FilledTonalIconToggleButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
@@ -61,6 +62,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.material3.rememberSliderState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -300,63 +302,65 @@ internal fun NowPlayingScreen(
         }
     }
 
-    Box(
-        modifier = modifier.fillMaxSize()
-    ) {
-        PlayerSurface(
-            state = uiState,
-            serverConfig = serverConfig,
-            geometry = geometry,
-            progress = motionState.nowPlaying,
-            playlistExpanded = motionState.playlist.isExpanded,
-            modifier = Modifier
-                .bounds(motionState.nowPlaying, geometry.content.bounds)
-                .dragHandle(
-                    orientation = geometry.content.dragDirection,
-                    progress = motionState.nowPlaying,
-                    canClickToClose = false,
-                    dragDistance = geometry.content.dragDistance,
-                    scope = scope
-                ),
-            onNavigateUp = {
-                scope.launch {
-                    motionState.nowPlaying.collapse()
-                }
-            },
-            onPrevious = onPreviousTrack,
-            onNext = onNextTrack,
-            onToggleRepeat = onToggleRepeat,
-            onToggleShuffle = onToggleShuffle,
-            onSetPlayingOrPaused = onSetPlayingOrPaused,
-            onStop = onStop,
-            onSeek = onSeek,
-            onShowInfoMenu = onShowInfoMenu,
-            onShowSavePlaylistNameInput = onShowSavePlaylistNameInput,
-            onClearPlaylist = onClearPlaylist,
-            onShowVolumePopup = onShowVolumePopup
-        )
+    CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
+        Box(
+            modifier = modifier.fillMaxSize()
+        ) {
+            PlayerSurface(
+                state = uiState,
+                serverConfig = serverConfig,
+                geometry = geometry,
+                progress = motionState.nowPlaying,
+                playlistExpanded = motionState.playlist.isExpanded,
+                modifier = Modifier
+                    .bounds(motionState.nowPlaying, geometry.content.bounds)
+                    .dragHandle(
+                        orientation = geometry.content.dragDirection,
+                        progress = motionState.nowPlaying,
+                        canClickToClose = false,
+                        dragDistance = geometry.content.dragDistance,
+                        scope = scope
+                    ),
+                onNavigateUp = {
+                    scope.launch {
+                        motionState.nowPlaying.collapse()
+                    }
+                },
+                onPrevious = onPreviousTrack,
+                onNext = onNextTrack,
+                onToggleRepeat = onToggleRepeat,
+                onToggleShuffle = onToggleShuffle,
+                onSetPlayingOrPaused = onSetPlayingOrPaused,
+                onStop = onStop,
+                onSeek = onSeek,
+                onShowInfoMenu = onShowInfoMenu,
+                onShowSavePlaylistNameInput = onShowSavePlaylistNameInput,
+                onClearPlaylist = onClearPlaylist,
+                onShowVolumePopup = onShowVolumePopup
+            )
 
-        val playlistBackState = remember { PlaylistBackEffectState() }
+            val playlistBackState = remember { PlaylistBackEffectState() }
 
-        PlaylistSheet(
-            playlistContent = playlistContent,
-            nowPlayingProgress = motionState.nowPlaying,
-            playlistProgress = motionState.playlist,
-            layoutSpec = geometry.playlist,
-            backState = playlistBackState
-        )
+            PlaylistSheet(
+                playlistContent = playlistContent,
+                nowPlayingProgress = motionState.nowPlaying,
+                playlistProgress = motionState.playlist,
+                layoutSpec = geometry.playlist,
+                backState = playlistBackState
+            )
 
-        MotionProgressBackHandler(
-            progress = motionState.nowPlaying,
-            enabled = motionState.playlist.isCollapsed || !geometry.playlist.needsHandle,
-            easing = { 0.2F * EaseOutQuart.transform(it) }
-        )
+            MotionProgressBackHandler(
+                progress = motionState.nowPlaying,
+                enabled = motionState.playlist.isCollapsed || !geometry.playlist.needsHandle,
+                easing = { 0.2F * EaseOutQuart.transform(it) }
+            )
 
-        PlaylistSheetBackHandler(
-            progress = motionState.playlist,
-            backState = playlistBackState,
-            enabled = geometry.playlist.needsHandle
-        )
+            PlaylistSheetBackHandler(
+                progress = motionState.playlist,
+                backState = playlistBackState,
+                enabled = geometry.playlist.needsHandle
+            )
+        }
     }
 }
 
@@ -706,8 +710,7 @@ private fun PlaybackToggleButton(
     enabled = enabled,
     colors = IconButtonDefaults.filledTonalIconToggleButtonColors().copy(
         containerColor = Color.Transparent,
-        disabledContainerColor = Color.Transparent,
-        contentColor = MaterialTheme.colorScheme.onSurface
+        disabledContainerColor = Color.Transparent
     ),
     shapes = IconButtonDefaults.toggleableShapes(),
     modifier = modifier

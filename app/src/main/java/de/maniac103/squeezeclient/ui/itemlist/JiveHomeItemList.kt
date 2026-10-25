@@ -35,6 +35,7 @@ fun JiveHomeItemList(
     viewModel: JiveHomeItemListViewModel,
     serverConfig: ServerConfiguration?,
     contentPadding: PaddingValues,
+    showIcons: Boolean,
     modifier: Modifier = Modifier,
     state: LazyListState = rememberLazyListState(),
     onItemSelected: (JiveHomeMenuItem) -> Unit = {}
@@ -50,7 +51,7 @@ fun JiveHomeItemList(
             JiveUiItemRow(
                 item = entry.uiItem,
                 serverConfig = serverConfig,
-                showIcon = true,
+                showIcon = showIcons,
                 busy = false,
                 modifier = Modifier.clickable { onItemSelected(entry.source) }
             )

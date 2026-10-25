@@ -86,6 +86,28 @@ private val JIVE_HOME_ICON_MAPPING = mapOf(
     "settingsSync" to R.drawable.hm_sync
 )
 
+private interface SlimBrowseIconMatcher {
+    val iconResId: Int
+    fun matches(url: String): Boolean
+}
+
+private data class EndsWithIconMatcher(val suffix: String, override val iconResId: Int) :
+    SlimBrowseIconMatcher {
+    override fun matches(url: String) = url.endsWith(suffix, ignoreCase = true)
+}
+
+private val SLIMBROWSE_ICON_MAPPING: List<SlimBrowseIconMatcher> = listOf(
+    EndsWithIconMatcher("radiopresets.png", R.drawable.sb_radio_presets),
+    EndsWithIconMatcher("radiolocal.png", R.drawable.sb_radio_local),
+    EndsWithIconMatcher("radiomusic.png", R.drawable.sb_radio_music),
+    EndsWithIconMatcher("radiosports.png", R.drawable.sb_radio_sports),
+    EndsWithIconMatcher("radionews.png", R.drawable.sb_radio_news),
+    EndsWithIconMatcher("radiotalk.png", R.drawable.sb_radio_talk),
+    EndsWithIconMatcher("radioworld.png", R.drawable.sb_radio_world),
+    EndsWithIconMatcher("radiosearch.png", R.drawable.sb_search),
+    EndsWithIconMatcher("podcasts.png", R.drawable.sb_podcast)
+)
+
 internal fun JiveHomeMenuItem.toUiItem(): JiveHomeMenuUiItem {
     val iconResourceId = JIVE_HOME_ICON_MAPPING[id]
     val choiceLabel = choices?.let { it.items[it.selectedIndex].title }
@@ -99,6 +121,11 @@ internal fun JiveHomeMenuItem.toUiItem(): JiveHomeMenuUiItem {
     )
     return JiveHomeMenuUiItem(uiItem, this)
 }
+
+fun ArtworkItem.toUiIcon() = extractIconUrl()
+    ?.let { url -> SLIMBROWSE_ICON_MAPPING.firstOrNull { it.matches(url) } }
+    ?.let { JiveUiItemIcon.Icon(it.iconResId) }
+    ?: JiveUiItemIcon.Artwork(this)
 
 internal fun SlimBrowseItemList.SlimBrowseItem.toUiItem(): SlimBrowseUiItem {
     val trailingWidget = actions?.let { actions ->
@@ -123,7 +150,7 @@ internal fun SlimBrowseItemList.SlimBrowseItem.toUiItem(): SlimBrowseUiItem {
     val uiItem = JiveUiItem(
         title = title,
         subText = subText ?: extraInfo,
-        icon = JiveUiItemIcon.Artwork(this),
+        icon = toUiIcon(),
         trailingWidget = trailingWidget
     )
     return SlimBrowseUiItem(uiItem, this)

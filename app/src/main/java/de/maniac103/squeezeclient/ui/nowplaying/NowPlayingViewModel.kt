@@ -188,8 +188,10 @@ data class NowPlayingUiState(
     val playPauseEnabled: Boolean,
     val repeatIconResId: Int,
     val repeatContentDescriptionResId: Int,
+    val repeatEnabled: Boolean,
     val shuffleIconResId: Int,
     val shuffleContentDescriptionResId: Int,
+    val shuffleEnabled: Boolean,
     val canSeek: Boolean,
     val playlistPosition: Int,
     val playlistLength: Int,
@@ -246,6 +248,7 @@ fun PlayerStatus.toNowPlayingUiState() = NowPlayingUiState(
         RepeatState.RepeatAll -> R.string.content_description_nowplaying_repeat_all
         RepeatState.Off -> R.string.content_description_nowplaying_repeat_off
     },
+    repeatEnabled = repeatState != RepeatState.Off,
     shuffleIconResId = when (shuffleState) {
         ShuffleState.ShuffleAlbum -> R.drawable.ic_shuffle_album_24dp
         ShuffleState.ShuffleSong -> R.drawable.ic_shuffle_song_24dp
@@ -256,6 +259,7 @@ fun PlayerStatus.toNowPlayingUiState() = NowPlayingUiState(
         ShuffleState.ShuffleSong -> R.string.content_description_nowplaying_shuffle_songs
         ShuffleState.Off -> R.string.content_description_nowplaying_shuffle_off
     },
+    shuffleEnabled = shuffleState != ShuffleState.Off,
     canSeek = playbackState != PlayState.Stopped && currentSongDuration != null,
     playlistPosition = playlist.currentPosition,
     playlistLength = playlist.trackCount,

@@ -74,10 +74,12 @@ internal fun EntryProviderScope<NavKey>.JiveHomeMenuNavEntry(
     serverConfig: State<ServerConfiguration?>,
     pagePadding: PaddingValues,
     appBarState: TopAppBarState?,
-    onItemSelected: (JiveHomeMenuItem) -> Unit
+    onItemSelected: (JiveHomeMenuItem, WindowStyle?) -> Unit
 ) = entry<MainContentNavigation.JiveHomeMenuPage> { route ->
     val viewModel = koinViewModel<JiveHomeItemListViewModel> { parametersOf(route.nodeId) }
     val listState = rememberLazyListState()
+    val showIcons = route.windowStyle != WindowStyle.TextOnlyList
+
     MainContentPage(
         appBarState = appBarState,
         indicatorState = listState.scrollIndicatorState
@@ -86,8 +88,9 @@ internal fun EntryProviderScope<NavKey>.JiveHomeMenuNavEntry(
             state = listState,
             serverConfig = serverConfig.value,
             viewModel = viewModel,
+            showIcons = showIcons,
             contentPadding = pagePadding,
-            onItemSelected = onItemSelected
+            onItemSelected = { item -> onItemSelected(item, route.windowStyle) }
         )
     }
 }
@@ -100,15 +103,15 @@ internal fun EntryProviderScope<NavKey>.SlimBrowseNavEntry(
     gridCellMinSize: Dp,
     pagePadding: PaddingValues,
     appBarState: TopAppBarState?,
-    onItemSelected: (SlimBrowseItemList.SlimBrowseItem, JiveAction) -> Job?,
+    onItemSelected: (SlimBrowseItemList.SlimBrowseItem, JiveAction, WindowStyle?) -> Job?,
     onItemContextMenuSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job?
 ) = entry<MainContentNavigation.SlimBrowseItemPage> { route ->
     val viewModel = koinViewModel<SlimBrowseItemListViewModel> { parametersOf(route.fetchAction) }
-    val canUseGrid =
-        route.windowStyle == WindowStyle.IconList || route.windowStyle == WindowStyle.HomeMenu
+    val windowStyle = route.windowStyle ?: WindowStyle.TextOnlyList
+    val canUseGrid = windowStyle == WindowStyle.IconList || windowStyle == WindowStyle.HomeMenu
     val mode = rememberSlimBrowseItemListMode(
         useGrid = useGridIfPossible.value && canUseGrid,
-        showIcons = route.windowStyle != null && route.windowStyle != WindowStyle.TextOnlyList,
+        showIcons = windowStyle != WindowStyle.TextOnlyList,
         gridCellMinSize = gridCellMinSize
     )
 
@@ -128,7 +131,7 @@ internal fun EntryProviderScope<NavKey>.SlimBrowseNavEntry(
             serverConfig = serverConfig.value,
             mode = mode,
             contentPadding = pagePadding,
-            onItemSelected = { item -> onItemSelected(item, route.fetchAction) },
+            onItemSelected = { item -> onItemSelected(item, route.fetchAction, route.windowStyle) },
             onItemContextMenuSelected = onItemContextMenuSelected
         )
     }
@@ -139,7 +142,7 @@ internal fun EntryProviderScope<NavKey>.SlimBrowseSubItemsNavEntry(
     serverConfig: State<ServerConfiguration?>,
     pagePadding: PaddingValues,
     appBarState: TopAppBarState?,
-    onItemSelected: (SlimBrowseItemList.SlimBrowseItem, JiveAction) -> Job?,
+    onItemSelected: (SlimBrowseItemList.SlimBrowseItem, JiveAction, WindowStyle?) -> Job?,
     onItemContextMenuSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job?
 ) = entry<MainContentNavigation.SlimBrowseSubItemPage> { route ->
     val viewModel = koinViewModel<SlimBrowseSubItemListViewModel> {
@@ -156,7 +159,7 @@ internal fun EntryProviderScope<NavKey>.SlimBrowseSubItemsNavEntry(
             viewModel = viewModel,
             serverConfig = serverConfig.value,
             contentPadding = pagePadding,
-            onItemSelected = { item -> onItemSelected(item, route.fetchAction) },
+            onItemSelected = { item -> onItemSelected(item, route.fetchAction, route.windowStyle) },
             onItemContextMenuSelected = onItemContextMenuSelected
         )
     }
@@ -248,16 +251,16 @@ internal fun EntryProviderScope<NavKey>.RadioSearchResultsNavKey(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun EntryProviderScope<NavKey>.HomeMenuInputNavEntry(
-    onInputSubmitted: (title: String, action: JiveAction, isGoAction: Boolean) -> Job?,
+    onInputSubmitted: (parent: JiveHomeMenuItem, action: JiveAction, isGoAction: Boolean) -> Job?,
     onDone: (NavKey) -> Unit
 ) = entry<MainContentNavigation.HomeMenuInput>(
     metadata = BottomSheetSceneStrategy.bottomSheet()
 ) { route ->
     InputBottomSheetContent(
-        title = route.title,
+        title = route.parent.title,
         input = route.input,
         onInputSubmitted = { action ->
-            onInputSubmitted(route.title, action, route.input.actionHasTarget)
+            onInputSubmitted(route.parent, action, route.input.actionHasTarget)
                 .also { it.invokeOnDoneOrNull { onDone(route) } }
         },
         modifier = Modifier.padding(16.dp)
@@ -266,16 +269,16 @@ internal fun EntryProviderScope<NavKey>.HomeMenuInputNavEntry(
 
 @Composable
 internal fun EntryProviderScope<NavKey>.HomeMenuTimePickerNavEntry(
-    onInputSubmitted: (title: String, action: JiveAction, isGoAction: Boolean) -> Job?,
+    onInputSubmitted: (parent: JiveHomeMenuItem, action: JiveAction, isGoAction: Boolean) -> Job?,
     onDone: (NavKey) -> Unit
 ) = entry<MainContentNavigation.HomeMenuTimePicker>(
     metadata = DialogSceneStrategy.dialog()
 ) { route ->
     InputTimePicker(
-        title = route.title,
+        title = route.parent.title,
         input = route.input,
         onInputSubmitted = { action ->
-            onInputSubmitted(route.title, action, route.input.actionHasTarget)
+            onInputSubmitted(route.parent, action, route.input.actionHasTarget)
         },
         onClose = { onDone(route) }
     )

@@ -22,6 +22,7 @@ import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.model.JiveActions
 import de.maniac103.squeezeclient.model.JiveHomeMenuItem
 import de.maniac103.squeezeclient.model.JiveWindow
+import de.maniac103.squeezeclient.model.WindowStyle
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -45,15 +46,20 @@ data class JiveHomeItemListResponse(
         // Omitted in case of 'remove' messages
         val text: String = "",
         val weight: Float = 0F,
-        val window: Window? = null
+        val window: Window? = null,
+        val windowStyle: WindowStyle? = null
         // All action related attributes are handled manually. This includes:
         // actions, choiceStrings, selectedIndex, input
     ) {
-        fun asModelItem(actions: JiveActions?): JiveHomeMenuItem {
+        fun asModelItem(
+            actions: JiveActions?,
+            fallbackWindowStyle: WindowStyle?
+        ): JiveHomeMenuItem {
             val textLines = text.split("\n", limit = 2)
             return JiveHomeMenuItem(
                 id, node, weight, textLines[0], textLines.elementAtOrNull(1),
                 window?.let { JiveWindow(it.titleStyle) },
+                windowStyle ?: fallbackWindowStyle,
                 actions?.goAction,
                 actions?.doAction,
                 actions?.input,
@@ -65,7 +71,7 @@ data class JiveHomeItemListResponse(
     fun asModelItems(json: Json, context: Context): List<JiveHomeMenuItem> {
         val result = items.map { json.parseToJiveHomeMenuItem(it) }.toMutableList()
         result.addAll(
-            FIXED_ITEMS
+            FixedHomeMenuItems.ITEMS
                 .filter { info ->
                     result.any { it.node == info.id } && result.none { it.id == info.id }
                 }
@@ -73,12 +79,19 @@ data class JiveHomeItemListResponse(
         )
         return result
     }
+}
 
-    private data class FixedHomeMenuInfo(
+// The server response is incomplete: some items are missing completely, and for some
+// other items and response is incomplete and e.g. is missing the window style. Thus we have
+// to hardcode the missing data here, like in every other client. See
+// JiveMain::jiveMainNodes in JiveMain.lua in the SqueezePlay repo for reference.
+private object FixedHomeMenuItems {
+    data class ItemInfo(
         val id: String,
         val node: String,
         val weight: Int,
-        val titleResId: Int
+        val titleResId: Int,
+        val windowStyle: WindowStyle?
     ) {
         fun asModelItem(context: Context) = JiveHomeMenuItem(
             id,
@@ -87,6 +100,7 @@ data class JiveHomeItemListResponse(
             context.getString(titleResId),
             null,
             null,
+            windowStyle,
             null,
             null,
             null,
@@ -94,32 +108,41 @@ data class JiveHomeItemListResponse(
         )
     }
 
-    companion object {
-        private val FIXED_ITEMS = listOf(
-            FixedHomeMenuInfo(
-                "extras",
-                "home",
-                1000,
-                R.string.item_title_extras
-            ),
-            FixedHomeMenuInfo(
-                "settings",
-                "home",
-                1001,
-                R.string.item_title_settings
-            ),
-            FixedHomeMenuInfo(
-                "advancedSettings",
-                "settings",
-                1002,
-                R.string.item_title_advanced_settings
-            )
+    val ITEMS = listOf(
+        ItemInfo(
+            "extras",
+            "home",
+            50,
+            R.string.item_title_extras,
+            null
+        ),
+        ItemInfo(
+            "settings",
+            "home",
+            1005,
+            R.string.item_title_settings,
+            null
+        ),
+        ItemInfo(
+            "settingsAudio",
+            "settings",
+            40,
+            R.string.item_title_audio_settings,
+            WindowStyle.TextOnlyList
+        ),
+        ItemInfo(
+            "advancedSettings",
+            "settings",
+            105,
+            R.string.item_title_advanced_settings,
+            WindowStyle.TextOnlyList
         )
-    }
+    )
 }
 
 fun Json.parseToJiveHomeMenuItem(itemObject: JsonObject): JiveHomeMenuItem {
     val item = decodeFromJsonElement<JiveHomeItemListResponse.HomeMenuItemResponse>(itemObject)
     val actions = combineItemAndBaseActions(itemObject, null)
-    return item.asModelItem(actions)
+    val fallback = FixedHomeMenuItems.ITEMS.firstOrNull { it.id == item.id && it.node == item.node }
+    return item.asModelItem(actions, fallback?.windowStyle)
 }

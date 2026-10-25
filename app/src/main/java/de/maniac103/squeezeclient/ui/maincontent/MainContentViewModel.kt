@@ -33,6 +33,7 @@ import de.maniac103.squeezeclient.model.JiveHomeMenuItem
 import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
+import de.maniac103.squeezeclient.model.WindowStyle
 import de.maniac103.squeezeclient.ui.composables.TextResource
 import kotlin.math.max
 import kotlin.time.Duration.Companion.milliseconds
@@ -89,7 +90,7 @@ class MainContentViewModel(
 
     private var pendingNavigation: Job? = null
 
-    val initialPage get() = MainContentNavigation.JiveHomeMenuPage("home", "")
+    val initialPage get() = MainContentNavigation.JiveHomeMenuPage("home", "", WindowStyle.HomeMenu)
     val navigationFlow = navigationFlowInternal.asSharedFlow()
     val breadcrumbsFlow =
         combine(
@@ -129,51 +130,53 @@ class MainContentViewModel(
         action: JiveAction,
         contextItem: SlimBrowseItemList.SlimBrowseItem,
         parentItem: SlimBrowseItemList.SlimBrowseItem
-    ) = onHandleDoOrGoAction(action, true, contextItem, parentItem)
+    ) = onHandleDoOrGoAction(action, true, contextItem, parentItem, null)
 
-    fun onHomeItemSelected(item: JiveHomeMenuItem) = viewModelScope.launch {
-        when {
-            item.input != null -> {
-                val route = when (item.input.type) {
-                    JiveActions.Input.Type.Time ->
-                        MainContentNavigation.HomeMenuTimePicker(item.title, item.input)
+    fun onHomeItemSelected(item: JiveHomeMenuItem, windowStyle: WindowStyle?) =
+        viewModelScope.launch {
+            when {
+                item.input != null -> {
+                    val route = when (item.input.type) {
+                        JiveActions.Input.Type.Time ->
+                            MainContentNavigation.HomeMenuTimePicker(item, item.input)
 
-                    else -> MainContentNavigation.HomeMenuInput(item.title, item.input)
+                        else -> MainContentNavigation.HomeMenuInput(item, item.input)
+                    }
+                    navigationFlowInternal.emit(route)
                 }
-                navigationFlowInternal.emit(route)
-            }
 
-            item.choices != null -> {
-                navigationFlowInternal.emit(
-                    MainContentNavigation.HomeMenuChoices(
-                        item.title,
-                        item.choices
+                item.choices != null -> {
+                    navigationFlowInternal.emit(
+                        MainContentNavigation.HomeMenuChoices(
+                            item.title,
+                            item.choices
+                        )
                     )
-                )
-            }
+                }
 
-            item.doAction != null -> viewModelScope.launch {
-                connectionHelper.executeAction(playerId, item.doAction)
-            }
+                item.doAction != null -> viewModelScope.launch {
+                    connectionHelper.executeAction(playerId, item.doAction)
+                }
 
-            item.goAction != null -> {
-                handleGoAction(item.title, null, null, item.goAction)
-            }
+                item.goAction != null -> {
+                    handleGoAction(item.title, null, null, item.goAction, windowStyle)
+                }
 
-            else -> {
-                navigationFlowInternal.emit(
-                    MainContentNavigation.JiveHomeMenuPage(
-                        item.id,
-                        item.title
+                else -> {
+                    navigationFlowInternal.emit(
+                        MainContentNavigation.JiveHomeMenuPage(
+                            item.id,
+                            item.title,
+                            item.windowStyle
+                        )
                     )
-                )
+                }
             }
         }
-    }
 
-    fun onHomeItemInputSubmitted(title: String, action: JiveAction, isGoAction: Boolean) =
+    fun onHomeItemInputSubmitted(item: JiveHomeMenuItem, action: JiveAction, isGoAction: Boolean) =
         if (isGoAction) {
-            handleGoAction(title, null, null, action)
+            handleGoAction(item.title, null, null, action, item.windowStyle)
         } else {
             viewModelScope.launch {
                 connectionHelper.executeAction(playerId, action)
@@ -186,7 +189,8 @@ class MainContentViewModel(
 
     fun onSlimBrowseItemSelected(
         item: SlimBrowseItemList.SlimBrowseItem,
-        subItemFetchAction: JiveAction?
+        subItemFetchAction: JiveAction?,
+        windowStyle: WindowStyle?
     ) = item.actions?.let { actions ->
         when {
             actions.input != null -> viewModelScope.launch {
@@ -214,11 +218,11 @@ class MainContentViewModel(
                 } else {
                     actions.checkbox.onAction
                 }
-                onHandleDoOrGoAction(action, false, item, null)
+                onHandleDoOrGoAction(action, false, item, null, null)
             }
 
             actions.radio != null -> {
-                onHandleDoOrGoAction(actions.radio.action, false, item, null)
+                onHandleDoOrGoAction(actions.radio.action, false, item, null, null)
             }
 
             item.webLink != null -> viewModelScope.launch {
@@ -236,14 +240,15 @@ class MainContentViewModel(
                         MainContentNavigation.SlimBrowseSubItemPage(
                             item.title,
                             fetchAction,
-                            item.listPosition
+                            item.listPosition,
+                            windowStyle
                         )
                     )
                 }
             }
 
             actions.goAction != null -> {
-                onHandleDoOrGoAction(actions.goAction, true, item, null)
+                onHandleDoOrGoAction(actions.goAction, true, item, null, windowStyle)
             }
 
             else -> null
@@ -270,10 +275,10 @@ class MainContentViewModel(
         item: SlimBrowseItemList.SlimBrowseItem,
         action: JiveAction,
         isGoAction: Boolean
-    ) = onHandleDoOrGoAction(action, isGoAction, item, null)
+    ) = onHandleDoOrGoAction(action, isGoAction, item, null, null)
 
     fun onSlimBrowseChoiceSelected(choice: JiveAction, item: SlimBrowseItemList.SlimBrowseItem) =
-        onHandleDoOrGoAction(choice, false, item, null)
+        onHandleDoOrGoAction(choice, false, item, null, null)
 
     fun onSliderValueChanged(action: JiveAction) = viewModelScope.launch {
         connectionHelper.executeAction(playerId, action)
@@ -288,17 +293,17 @@ class MainContentViewModel(
     ) = item.actions?.let { actions ->
         when {
             actions.doAction != null ->
-                onHandleDoOrGoAction(actions.doAction, false, item, parentItem)
+                onHandleDoOrGoAction(actions.doAction, false, item, parentItem, null)
 
             actions.goAction != null ->
-                onHandleDoOrGoAction(actions.goAction, true, item, parentItem)
+                onHandleDoOrGoAction(actions.goAction, true, item, parentItem, null)
 
             else -> null
         }
     }
 
     fun onItemActionSelected(action: JiveAction, item: SlimBrowseItemList.SlimBrowseItem) =
-        onHandleDoOrGoAction(action, false, item, null)
+        onHandleDoOrGoAction(action, false, item, null, null)
 
     fun onBreadcrumbsChanged(backStack: List<NavKey>, transition: NavigationEventTransitionState) =
         viewModelScope.launch {
@@ -380,7 +385,8 @@ class MainContentViewModel(
         action: JiveAction,
         isGoAction: Boolean,
         item: SlimBrowseItemList.SlimBrowseItem,
-        parentItem: SlimBrowseItemList.SlimBrowseItem?
+        parentItem: SlimBrowseItemList.SlimBrowseItem?,
+        parentWindowStyle: WindowStyle?
     ): Job? {
         // The logic below both translates nextWindow to adjust for whether it came from a
         // context menu or not, and splits navigation and refresh which are combined in the
@@ -440,7 +446,7 @@ class MainContentViewModel(
         val refreshLevels = max(refreshLevelsFromNextWindow, refreshLevelsFromRefresh)
 
         return if (isGoAction && nextWindow == null) {
-            handleGoAction(item.title, item, parentItem, action)
+            handleGoAction(item.title, item, parentItem, action, parentWindowStyle)
         } else {
             viewModelScope.launch {
                 connectionHelper.executeAction(playerId, action)
@@ -469,7 +475,8 @@ class MainContentViewModel(
         title: String,
         item: SlimBrowseItemList.SlimBrowseItem?,
         parentItem: SlimBrowseItemList.SlimBrowseItem?,
-        action: JiveAction
+        action: JiveAction,
+        parentWindowStyle: WindowStyle?
     ): Job? {
         pendingNavigation?.cancel()
         pendingNavigation = viewModelScope.launch {
@@ -511,7 +518,7 @@ class MainContentViewModel(
                         parentItem?.title,
                         parentItem ?: item,
                         action,
-                        result.window?.windowStyle
+                        result.window?.windowStyle ?: parentWindowStyle
                     )
                 }
             }

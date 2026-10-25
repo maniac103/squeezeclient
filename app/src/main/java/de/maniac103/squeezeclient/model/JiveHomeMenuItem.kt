@@ -30,6 +30,7 @@ data class JiveHomeMenuItem(
     val title: String,
     val subText: String?,
     val window: JiveWindow?,
+    val windowStyle: WindowStyle?,
     val goAction: JiveAction?,
     val doAction: JiveAction?,
     val input: JiveActions.Input?,

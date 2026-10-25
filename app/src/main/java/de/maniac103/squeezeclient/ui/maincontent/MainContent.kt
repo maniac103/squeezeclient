@@ -148,7 +148,7 @@ fun MainContent(
                 gridCellMinSize = slimBrowseMinGridCellSize,
                 pagePadding = pagePadding,
                 appBarState = appBarState,
-                onItemSelected = { item -> viewModel.onSlimBrowseItemSelected(item, null) },
+                onItemSelected = { item -> viewModel.onSlimBrowseItemSelected(item, null, null) },
                 onItemContextMenuSelected = viewModel::onSlimBrowseContextMenu
             )
             RadioSearchResultsNavKey(
@@ -157,7 +157,7 @@ fun MainContent(
                 gridCellMinSize = slimBrowseMinGridCellSize,
                 pagePadding = pagePadding,
                 appBarState = appBarState,
-                onItemSelected = { item -> viewModel.onSlimBrowseItemSelected(item, null) },
+                onItemSelected = { item -> viewModel.onSlimBrowseItemSelected(item, null, null) },
                 onItemContextMenuSelected = viewModel::onSlimBrowseContextMenu
             )
 

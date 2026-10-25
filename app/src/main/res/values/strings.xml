@@ -20,6 +20,7 @@
     <string name="app_name" translatable="false">Squeeze Client</string>
     <string name="item_title_extras">Extras</string>
     <string name="item_title_settings">Settings</string>
+    <string name="item_title_audio_settings">Audio</string>
     <string name="item_title_advanced_settings">Advanced settings</string>
     <string name="menu_settings">Settings</string>
     <string name="menu_manage_players">Manage players</string>

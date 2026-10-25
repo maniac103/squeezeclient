@@ -359,6 +359,7 @@ private fun calculatePortraitGeometry(
     val expandedTextHeight = expandedTitleHeight + expandedArtistHeight + expandedAlbumHeight
     val expandedVerticalSpacing = (
         expandedContent.height -
+            playlistPeekHeight -
             expandedArtwork.bottom -
             expandedTextHeight -
             expandedControlsSize -

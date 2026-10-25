@@ -165,13 +165,13 @@ private fun calculatePlayerGeometry(
             insets = insets,
             hasAlbum = hasAlbum,
             hasArtist = hasArtist,
-            collapsedTitleSize = 16.sp,
-            expandedTitleSize = if (isLarge) 20.sp else 18.sp,
-            secondaryTextSize = 16.sp,
+            collapsedTitleSize = 18.sp,
+            expandedTitleSize = if (isLarge) 24.sp else 20.sp,
+            secondaryTextSize = if (isLarge) 18.sp else 16.sp,
             collapsedArtworkHeightFraction = if (isLarge) 0.2F else 0.3F,
-            expandedArtworkHeightFraction = if (isLarge) 0.5F else 0.3F,
+            expandedArtworkHeightFraction = if (isLarge) 0.5F else 0.35F,
             collapsedPlaylistHeightFraction = if (isLarge) 0.5F else 0.0F,
-            expandedPlaylistWidthFraction = if (isLarge) 0.3F else 0.4F
+            expandedPlaylistWidthFraction = if (isLarge) 0.3F else 0.35F
         )
     }
 }
@@ -773,7 +773,7 @@ private fun calculateLandscapeGeometry(
     val expandedTextHeight = expandedTitleHeight + albumHeight + artistHeight
     val expandedTextSpacing = (expandedArtwork.height - expandedTextHeight) / 2
     val expandedTextStart = expandedArtwork.end + 8.dp
-    val expandedTextWidth = expandedContent.width - expandedTextStart - 8.dp
+    val expandedTextWidth = expandedContent.end - expandedTextStart - 8.dp
 
     val expandedTitle = Bounds(
         start = expandedTextStart,

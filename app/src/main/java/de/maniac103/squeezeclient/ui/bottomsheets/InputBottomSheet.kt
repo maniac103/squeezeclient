@@ -128,6 +128,7 @@ fun InputBottomSheetContent(
                         is InputError.TooShort ->
                             pluralStringResource(
                                 R.plurals.input_length_error_message,
+                                error.minLength,
                                 error.minLength
                             )
 

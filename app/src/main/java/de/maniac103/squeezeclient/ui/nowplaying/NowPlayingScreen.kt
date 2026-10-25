@@ -746,13 +746,14 @@ private fun ProgressControls(
     progress: MotionProgress,
     onSeek: (Int) -> Unit
 ) {
+    var autoAdvanceProgress by remember(state) { mutableStateOf(state.isPlaying) }
     val sliderState = rememberSliderState(
         value = state.positionSeconds,
         trackRange = 0F..state.durationSeconds
     )
 
-    LaunchedEffect(state.isPlaying) {
-        while (state.isPlaying) {
+    LaunchedEffect(state, autoAdvanceProgress) {
+        while (autoAdvanceProgress) {
             sliderState.value = state.positionSeconds
             delay(1.seconds)
         }
@@ -777,10 +778,16 @@ private fun ProgressControls(
                 state = sliderState,
                 enabled = state.canSeek,
                 onValueChange = {
+                    autoAdvanceProgress = false
                     sliderState.value = it
                 },
                 onValueChangeFinished = {
-                    onSeek(sliderState.value.roundToInt())
+                    val newPosition = sliderState.value.roundToInt()
+                    if (newPosition != state.positionSeconds.roundToInt()) {
+                        onSeek(sliderState.value.roundToInt())
+                    } else {
+                        autoAdvanceProgress = true
+                    }
                 },
                 modifier = Modifier.weight(1f)
             )

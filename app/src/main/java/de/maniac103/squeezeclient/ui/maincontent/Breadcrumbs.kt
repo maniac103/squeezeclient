@@ -42,9 +42,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.model.ServerConfiguration
-import de.maniac103.squeezeclient.ui.composables.ArtworkImage
 import de.maniac103.squeezeclient.ui.composables.ResourceIcon
 import de.maniac103.squeezeclient.ui.composables.toTextResource
+import de.maniac103.squeezeclient.ui.itemlist.JiveUiItemRowIcon
+import de.maniac103.squeezeclient.ui.itemlist.toUiIcon
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -111,10 +112,10 @@ fun Breadcrumbs(
                                 )
                                 .padding(8.dp)
                         ) {
-                            item.icon?.let {
-                                ArtworkImage(
-                                    it,
-                                    serverConfig,
+                            item.icon?.toUiIcon()?.let { icon ->
+                                JiveUiItemRowIcon(
+                                    icon = icon,
+                                    serverConfig = serverConfig,
                                     modifier = alphaModifier
                                         .padding(end = 4.dp)
                                         .size(16.dp)

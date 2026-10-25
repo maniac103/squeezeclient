@@ -234,14 +234,14 @@ private fun calculatePortraitGeometry(
 
     val collapsedArtwork = Bounds(
         start = 8.dp,
-        top = (input.collapsedHeight - collapsedArtworkSize - collapsedMiniProgress.height) / 2,
+        top = (collapsedMiniProgress.top - collapsedArtworkSize) / 2,
         width = collapsedArtworkSize,
         height = collapsedArtworkSize
     )
 
     val collapsedControlsWidth = collapsedControlSize * 3 // prev, play/pause, next
     val collapsedControlsStart = collapsedContent.width - 8.dp - collapsedControlsWidth
-    val collapsedControlsTop = (input.collapsedHeight - collapsedControlSize) / 2
+    val collapsedControlsTop = (collapsedMiniProgress.top - collapsedControlSize) / 2
 
     val collapsedRepeat = Bounds(
         start = collapsedControlsStart,

@@ -749,7 +749,7 @@ private fun determineMainLayout(
 
     return when {
         containerSize.width < containerSize.height -> {
-            val collapsedNowPlayingHeight = 64.dp
+            val collapsedNowPlayingHeight = 68.dp // 64dp sheet + 4dp progress indicator
             val mainContentPadding = PaddingValues(
                 bottom = insets.calculateBottomPadding() +
                     collapsedNowPlayingHeight - nowPlayingCornerSize

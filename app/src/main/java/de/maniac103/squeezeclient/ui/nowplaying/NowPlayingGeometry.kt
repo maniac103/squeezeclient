@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isSpecified
+import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.sp
 import de.maniac103.squeezeclient.ui.maincontent.MainLayout
 
@@ -195,8 +196,10 @@ private fun calculatePortraitGeometry(
     val toolbarHeight = 64.dp
     val miniProgressHeight = 4.dp
     val collapsedControlSize = 48.dp
+    val collapsedControlSpacing = 4.dp
     val expandedProgressSize = 64.dp
-    val expandedControlsSize = 72.dp
+    val expandedPlayPauseSize = 72.dp
+    val expandedOtherControlsSize = 48.dp
     val collapsedTitleSize = 16.sp
     val collapsedSecondarySize = 14.sp
     val expandedTitleSize = 24.sp
@@ -239,7 +242,7 @@ private fun calculatePortraitGeometry(
         height = collapsedArtworkSize
     )
 
-    val collapsedControlsWidth = collapsedControlSize * 3 // prev, play/pause, next
+    val collapsedControlsWidth = collapsedControlSize * 3 + collapsedControlSpacing * 2
     val collapsedControlsStart = collapsedContent.width - 8.dp - collapsedControlsWidth
     val collapsedControlsTop = (collapsedMiniProgress.top - collapsedControlSize) / 2
 
@@ -256,13 +259,13 @@ private fun calculatePortraitGeometry(
         height = collapsedControlSize
     )
     val collapsedPlayPause = Bounds(
-        start = collapsedPrevTrack.end,
+        start = collapsedPrevTrack.end + collapsedControlSpacing,
         top = collapsedControlsTop,
         width = collapsedControlSize,
         height = collapsedControlSize
     )
     val collapsedNextTrack = Bounds(
-        start = collapsedPlayPause.end,
+        start = collapsedPlayPause.end + collapsedControlSpacing,
         top = collapsedControlsTop,
         width = collapsedControlSize,
         height = collapsedControlSize
@@ -362,7 +365,7 @@ private fun calculatePortraitGeometry(
             playlistPeekHeight -
             expandedArtwork.bottom -
             expandedTextHeight -
-            expandedControlsSize -
+            max(expandedPlayPauseSize, expandedOtherControlsSize) -
             expandedProgressSize
         ) / 4
 
@@ -396,39 +399,42 @@ private fun calculatePortraitGeometry(
     )
 
     val expandedControlsPadding = 16.dp
-    val expandedControlsTop = expandedFullProgress.bottom + expandedVerticalSpacing
+    val expandedPlayPauseTop = expandedFullProgress.bottom + expandedVerticalSpacing
+    val expandedOtherControlsTop =
+        expandedPlayPauseTop + (expandedPlayPauseSize - expandedOtherControlsSize) / 2
     val expandedControlsWidth = expandedContent.width - expandedControlsPadding * 2
-    val expandedControlsSpacing = (expandedControlsWidth - expandedControlsSize * 5) / 4
+    val expandedControlsSpacing =
+        (expandedControlsWidth - expandedPlayPauseSize - expandedOtherControlsSize * 4) / 4
 
     val expandedRepeat = Bounds(
         start = expandedControlsPadding,
-        top = expandedControlsTop,
-        width = expandedControlsSize,
-        height = expandedControlsSize
+        top = expandedOtherControlsTop,
+        width = expandedOtherControlsSize,
+        height = expandedOtherControlsSize
     )
     val expandedPrevTrack = Bounds(
         start = expandedRepeat.end + expandedControlsSpacing,
-        top = expandedControlsTop,
-        width = expandedControlsSize,
-        height = expandedControlsSize
+        top = expandedOtherControlsTop,
+        width = expandedOtherControlsSize,
+        height = expandedOtherControlsSize
     )
     val expandedPlayPause = Bounds(
         start = expandedPrevTrack.end + expandedControlsSpacing,
-        top = expandedControlsTop,
-        width = expandedControlsSize,
-        height = expandedControlsSize
+        top = expandedPlayPauseTop,
+        width = expandedPlayPauseSize,
+        height = expandedPlayPauseSize
     )
     val expandedNextTrack = Bounds(
         start = expandedPlayPause.end + expandedControlsSpacing,
-        top = expandedControlsTop,
-        width = expandedControlsSize,
-        height = expandedControlsSize
+        top = expandedOtherControlsTop,
+        width = expandedOtherControlsSize,
+        height = expandedOtherControlsSize
     )
     val expandedShuffle = Bounds(
         start = expandedNextTrack.end + expandedControlsSpacing,
-        top = expandedControlsTop,
-        width = expandedControlsSize,
-        height = expandedControlsSize
+        top = expandedOtherControlsTop,
+        width = expandedOtherControlsSize,
+        height = expandedOtherControlsSize
     )
 
     val playlistHandleHeight = playlistPeekHeight + bottomInset
@@ -562,8 +568,10 @@ private fun calculateLandscapeGeometry(
     // Constants
     val toolbarHeight = 64.dp
     val collapsedControlSize = 48.dp
+    val collapsedControlSpacing = 4.dp
     val collapsedProgressHeight = 8.dp
-    val expandedControlsSize = 72.dp
+    val expandedPlayPauseSize = 72.dp
+    val expandedOtherControlsSize = 48.dp
     val expandedProgressHeight = 64.dp
 
     // Collapsed state
@@ -640,7 +648,8 @@ private fun calculateLandscapeGeometry(
         height = albumHeight
     )
 
-    val collapsedControlsPadding = (collapsedContent.width - collapsedControlSize * 5) / 2
+    val collapsedControlsPadding =
+        (collapsedContent.width - collapsedControlSize * 5 - collapsedControlSpacing * 4) / 2
     val collapsedControlsTop = collapsedAlbum.bottom + collapsedItemVertSpacing
 
     val collapsedRepeat = Bounds(
@@ -650,25 +659,25 @@ private fun calculateLandscapeGeometry(
         height = collapsedControlSize
     )
     val collapsedPrevTrack = Bounds(
-        start = collapsedRepeat.end,
+        start = collapsedRepeat.end + collapsedControlSpacing,
         top = collapsedControlsTop,
         width = collapsedControlSize,
         height = collapsedControlSize
     )
     val collapsedPlayPause = Bounds(
-        start = collapsedPrevTrack.end,
+        start = collapsedPrevTrack.end + collapsedControlSpacing,
         top = collapsedControlsTop,
         width = collapsedControlSize,
         height = collapsedControlSize
     )
     val collapsedNextTrack = Bounds(
-        start = collapsedPlayPause.end,
+        start = collapsedPlayPause.end + collapsedControlSpacing,
         top = collapsedControlsTop,
         width = collapsedControlSize,
         height = collapsedControlSize
     )
     val collapsedShuffle = Bounds(
-        start = collapsedNextTrack.end,
+        start = collapsedNextTrack.end + collapsedControlSpacing,
         top = collapsedControlsTop,
         width = collapsedControlSize,
         height = collapsedControlSize
@@ -702,7 +711,7 @@ private fun calculateLandscapeGeometry(
         toolbarHeight -
         bottomInset -
         expandedArtworkSize -
-        expandedControlsSize -
+        max(expandedPlayPauseSize, expandedOtherControlsSize) -
         expandedProgressHeight
     val expandedVertSpacing = expandedHeightRemainder / 4
 
@@ -722,38 +731,41 @@ private fun calculateLandscapeGeometry(
 
     val expandedControlsPadding = 16.dp
     val expandedControlsWidth = expandedContent.width - expandedControlsPadding * 2
-    val expandedControlsTop = expandedProgress.bottom + expandedVertSpacing
-    val expandedControlsHorzSpacing = (expandedControlsWidth - expandedControlsSize * 5) / 4
+    val expandedPlayPauseTop = expandedProgress.bottom + expandedVertSpacing
+    val expandedOtherControlsTop =
+        expandedPlayPauseTop + (expandedPlayPauseSize - expandedOtherControlsSize) / 2
+    val expandedControlsHorzSpacing =
+        (expandedControlsWidth - expandedPlayPauseSize - expandedOtherControlsSize * 4) / 4
 
     val expandedRepeat = Bounds(
         start = expandedContent.start + expandedControlsPadding,
-        top = expandedControlsTop,
-        width = expandedControlsSize,
-        height = expandedControlsSize
+        top = expandedOtherControlsTop,
+        width = expandedOtherControlsSize,
+        height = expandedOtherControlsSize
     )
     val expandedPrevTrack = Bounds(
         start = expandedRepeat.end + expandedControlsHorzSpacing,
-        top = expandedControlsTop,
-        width = expandedControlsSize,
-        height = expandedControlsSize
+        top = expandedOtherControlsTop,
+        width = expandedOtherControlsSize,
+        height = expandedOtherControlsSize
     )
     val expandedPlayPause = Bounds(
         start = expandedPrevTrack.end + expandedControlsHorzSpacing,
-        top = expandedControlsTop,
-        width = expandedControlsSize,
-        height = expandedControlsSize
+        top = expandedPlayPauseTop,
+        width = expandedPlayPauseSize,
+        height = expandedPlayPauseSize
     )
     val expandedNextTrack = Bounds(
         start = expandedPlayPause.end + expandedControlsHorzSpacing,
-        top = expandedControlsTop,
-        width = expandedControlsSize,
-        height = expandedControlsSize
+        top = expandedOtherControlsTop,
+        width = expandedOtherControlsSize,
+        height = expandedOtherControlsSize
     )
     val expandedShuffle = Bounds(
         start = expandedNextTrack.end + expandedControlsHorzSpacing,
-        top = expandedControlsTop,
-        width = expandedControlsSize,
-        height = expandedControlsSize
+        top = expandedOtherControlsTop,
+        width = expandedOtherControlsSize,
+        height = expandedOtherControlsSize
     )
 
     val expandedTitleHeight = expandedTitleSize.estimateLayoutHeight(density)

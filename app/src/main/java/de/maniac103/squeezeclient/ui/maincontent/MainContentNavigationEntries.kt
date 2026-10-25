@@ -262,8 +262,7 @@ internal fun EntryProviderScope<NavKey>.HomeMenuInputNavEntry(
         onInputSubmitted = { action ->
             onInputSubmitted(route.parent, action, route.input.actionHasTarget)
                 .also { it.invokeOnDoneOrNull { onDone(route) } }
-        },
-        modifier = Modifier.padding(16.dp)
+        }
     )
 }
 

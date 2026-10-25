@@ -348,13 +348,6 @@ private fun calculatePortraitGeometry(
     )
 
     val expandedArtworkSize = minOf(expandedContent.width, expandedContent.height * 0.4F)
-    val expandedArtwork = Bounds(
-        start = (expandedContent.width - expandedArtworkSize) / 2,
-        top = toolbar.bottom + 32.dp,
-        width = expandedArtworkSize,
-        height = expandedArtworkSize
-    )
-
     val expandedTitleHeight = expandedTitleSize.estimateLayoutHeight(density)
     val expandedSecondaryHeight = expandedSecondarySize.estimateLayoutHeight(density)
     val expandedArtistHeight = if (hasArtist) expandedSecondaryHeight else 0.dp
@@ -362,12 +355,20 @@ private fun calculatePortraitGeometry(
     val expandedTextHeight = expandedTitleHeight + expandedArtistHeight + expandedAlbumHeight
     val expandedVerticalSpacing = (
         expandedContent.height -
+            toolbarHeight -
             playlistPeekHeight -
-            expandedArtwork.bottom -
+            expandedArtworkSize -
             expandedTextHeight -
             max(expandedPlayPauseSize, expandedOtherControlsSize) -
             expandedProgressSize
-        ) / 4
+        ) / 5
+
+    val expandedArtwork = Bounds(
+        start = (expandedContent.width - expandedArtworkSize) / 2,
+        top = toolbar.bottom + expandedVerticalSpacing,
+        width = expandedArtworkSize,
+        height = expandedArtworkSize
+    )
 
     val expandedTextStart = 8.dp
     val expandedTextWidth = expandedContent.width - 16.dp

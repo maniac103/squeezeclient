@@ -96,8 +96,7 @@ class ImageViewActivity : AppCompatActivity() {
                 .build()
 
             AppTheme(
-                themePreference = preferences.appTheme,
-                forceDarkTheme = true
+                mode = Preferences.AppThemeMode.Dark
             ) {
                 Box(
                     modifier = Modifier.fillMaxSize()

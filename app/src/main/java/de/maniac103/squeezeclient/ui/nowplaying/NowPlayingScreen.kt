@@ -97,7 +97,7 @@ import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.Velocity
@@ -106,6 +106,7 @@ import androidx.compose.ui.util.fastAny
 import androidx.compose.ui.util.fastForEach
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.PagingData
+import de.maniac103.squeezeclient.Preferences
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.JiveActions
@@ -121,6 +122,7 @@ import de.maniac103.squeezeclient.ui.composables.toTextResource
 import de.maniac103.squeezeclient.ui.contextmenu.ContextMenuBottomSheetContent
 import de.maniac103.squeezeclient.ui.contextmenu.ContextMenuViewModel
 import de.maniac103.squeezeclient.ui.maincontent.MainLayout
+import de.maniac103.squeezeclient.ui.theme.AppTheme
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
@@ -1159,7 +1161,7 @@ private fun Modifier.onLongPressConsumeTap(onLongPress: () -> Unit): Modifier {
     }
 }
 
-@Preview(widthDp = 360, heightDp = 800)
+@PreviewLightDark
 @Composable
 fun NowPlayingPreview() {
     val status = NowPlayingUiState(
@@ -1200,36 +1202,38 @@ fun NowPlayingPreview() {
 
     val motionState = rememberNowPlayingMotionState(initiallyExpanded = true)
 
-    BoxWithConstraints {
-        Scaffold { innerPadding ->
-            val layoutInput = PlayerGeometryInput.Portrait(
-                containerSize = DpSize(maxWidth, maxHeight),
-                collapsedHeight = 64.dp,
-                cornerSize = 16.dp
-            )
+    AppTheme(Preferences.AppThemeMode.SystemDefault) {
+        BoxWithConstraints {
+            Scaffold { innerPadding ->
+                val layoutInput = PlayerGeometryInput.Portrait(
+                    containerSize = DpSize(maxWidth, maxHeight),
+                    collapsedHeight = 64.dp,
+                    cornerSize = 16.dp
+                )
 
-            NowPlayingScreen(
-                playerId = PlayerId("11:22:33:44:55:66"),
-                layoutInput = layoutInput,
-                stateFlow = MutableStateFlow(status),
-                infoMenuFlow = MutableStateFlow(NowPlayingContextMenuState.Idle),
-                playlistSaveInputStateFlow = MutableStateFlow(PlaylistSaveEditorState.Idle),
-                motionState = motionState,
-                serverConfig = null,
-                insets = innerPadding,
-                playlistContent = {
-                    Playlist(
-                        state = listState,
-                        itemsFlow = MutableStateFlow(playlistItemData),
-                        uiStateFlow = MutableStateFlow(playlistUiState),
-                        scrollRequestFlow = flow { },
-                        surfaceColor = sheetColor,
-                        serverConfig = null,
-                        contentPadding = contentPadding,
-                        modifier = listModifier
-                    )
-                }
-            )
+                NowPlayingScreen(
+                    playerId = PlayerId("11:22:33:44:55:66"),
+                    layoutInput = layoutInput,
+                    stateFlow = MutableStateFlow(status),
+                    infoMenuFlow = MutableStateFlow(NowPlayingContextMenuState.Idle),
+                    playlistSaveInputStateFlow = MutableStateFlow(PlaylistSaveEditorState.Idle),
+                    motionState = motionState,
+                    serverConfig = null,
+                    insets = innerPadding,
+                    playlistContent = {
+                        Playlist(
+                            state = listState,
+                            itemsFlow = MutableStateFlow(playlistItemData),
+                            uiStateFlow = MutableStateFlow(playlistUiState),
+                            scrollRequestFlow = flow { },
+                            surfaceColor = sheetColor,
+                            serverConfig = null,
+                            contentPadding = contentPadding,
+                            modifier = listModifier
+                        )
+                    }
+                )
+            }
         }
     }
 }

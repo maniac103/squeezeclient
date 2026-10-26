@@ -18,12 +18,8 @@
 package de.maniac103.squeezeclient.ui.maincontent
 
 import androidx.compose.animation.EnterExitState
-import androidx.compose.animation.core.EaseOutQuart
-import androidx.compose.animation.core.FiniteAnimationSpec
-import androidx.compose.animation.core.Transition
 import androidx.compose.animation.core.animateDp
 import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ScrollIndicatorState
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -33,75 +29,13 @@ import androidx.compose.material3.TopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.ui.LocalNavAnimatedContentScope
-
-@Composable
-private fun Transition<EnterExitState>.animateFloatForPredictiveBack(
-    valueDuringAnimation: Float,
-    valueDuringEnterAnimation: Float = valueDuringAnimation,
-    valueDuringExitAnimation: Float = valueDuringAnimation,
-    settledValue: Float,
-    animation: FiniteAnimationSpec<Float>,
-    label: String
-): State<Float> {
-    val isPredictiveBack =
-        LocalMainContentAnimationState.current.animType == MainContentAnimationType.PredictiveBack
-
-    return animateFloat(
-        transitionSpec = {
-            if (!isPredictiveBack) {
-                tween(durationMillis = 0)
-            } else {
-                animation
-            }
-        },
-        label = label
-    ) { state ->
-        when (state) {
-            EnterExitState.PreEnter if isPredictiveBack -> valueDuringEnterAnimation
-            EnterExitState.PostExit if isPredictiveBack -> valueDuringExitAnimation
-            else -> settledValue
-        }
-    }
-}
-
-@Composable
-private fun Transition<EnterExitState>.animateDpForPredictiveBack(
-    valueDuringAnimation: Dp,
-    valueDuringEnterAnimation: Dp = valueDuringAnimation,
-    valueDuringExitAnimation: Dp = valueDuringAnimation,
-    settledValue: Dp,
-    animation: FiniteAnimationSpec<Dp>,
-    label: String
-): State<Dp> {
-    val isPredictiveBack =
-        LocalMainContentAnimationState.current.animType == MainContentAnimationType.PredictiveBack
-
-    return animateDp(
-        transitionSpec = {
-            if (!isPredictiveBack) {
-                tween(durationMillis = 0)
-            } else {
-                animation
-            }
-        },
-        label = label
-    ) { state ->
-        when (state) {
-            EnterExitState.PreEnter if isPredictiveBack -> valueDuringEnterAnimation
-            EnterExitState.PostExit if isPredictiveBack -> valueDuringExitAnimation
-            else -> settledValue
-        }
-    }
-}
 
 @Composable
 fun MainContentPage(
@@ -111,16 +45,11 @@ fun MainContentPage(
 ) {
     val animationState = LocalMainContentAnimationState.current
     val transition = LocalNavAnimatedContentScope.current.transition
-    val bottomPadding = animationState.bottomPaddingForCompensation
-    val animationRunning = transition.currentState != transition.targetState
-    val pageIsActive = transition.targetState == EnterExitState.Visible &&
-        animationState.animType != MainContentAnimationType.PredictiveBack
-    val isEnterAnimation = transition.targetState == EnterExitState.Visible
-    val animationStateReporter by rememberUpdatedState(
-        LocalMainContentAnimationState.current.onTransitionRunningChanged
-    )
+    val isPredictiveBack = animationState.animType == MainContentAnimationType.PredictiveBack
 
     if (appBarState != null) {
+        val pageIsActive = transition.targetState == EnterExitState.Visible && !isPredictiveBack
+
         LaunchedEffect(pageIsActive, appBarState) {
             if (!pageIsActive) return@LaunchedEffect
             snapshotFlow { indicatorState?.scrollOffset ?: 0 }
@@ -128,7 +57,10 @@ fun MainContentPage(
         }
     }
 
-    DisposableEffect(animationRunning) {
+    val animationRunning = transition.currentState != transition.targetState
+    val animationStateReporter by rememberUpdatedState(animationState.onTransitionRunningChanged)
+
+    DisposableEffect(animationRunning, animationStateReporter) {
         animationStateReporter(animationRunning)
         onDispose {
             if (animationRunning) {
@@ -137,48 +69,36 @@ fun MainContentPage(
         }
     }
 
-    val animationDelay = if (isEnterAnimation) 300 else 0
+    fun <T> targetValueByState(state: EnterExitState, animatedValue: T, settledValue: T) =
+        when (state) {
+            EnterExitState.PreEnter if isPredictiveBack -> animatedValue
+            EnterExitState.PostExit if isPredictiveBack -> animatedValue
+            else -> settledValue
+        }
 
-    val scale by transition.animateFloatForPredictiveBack(
-        valueDuringAnimation = 0.95F,
-        settledValue = 1F,
-        animation = tween(
-            durationMillis = 100,
-            delayMillis = animationDelay,
-            easing = EaseOutQuart
-        ),
+    val scale by transition.animateFloat(
+        transitionSpec = { mainContentPageAnimationSpec(targetState, isPredictiveBack) },
+        targetValueByState = { state -> targetValueByState(state, 0.95F, 1F) },
         label = "main-content-scale"
     )
 
-    val cornerRadius by transition.animateDpForPredictiveBack(
-        valueDuringAnimation = 24.dp,
-        settledValue = 0.dp,
-        animation = tween(
-            durationMillis = 100,
-            delayMillis = animationDelay,
-            easing = EaseOutQuart
-        ),
+    val cornerRadius by transition.animateDp(
+        transitionSpec = { mainContentPageAnimationSpec(targetState, isPredictiveBack) },
+        targetValueByState = { state -> targetValueByState(state, 24.dp, 0.dp) },
         label = "main-content-corner-radius"
     )
 
-    val animatedBottomPlaceholderCompensation by transition.animateDpForPredictiveBack(
-        valueDuringAnimation = bottomPadding,
-        settledValue = 0.dp,
-        animation = tween(
-            durationMillis = 100,
-            delayMillis = animationDelay,
-            easing = EaseOutQuart
-        ),
+    val animatedBottomPlaceholderCompensation by transition.animateDp(
+        transitionSpec = { mainContentPageAnimationSpec(targetState, isPredictiveBack) },
+        targetValueByState = { state ->
+            targetValueByState(state, animationState.bottomPaddingForCompensation, 0.dp)
+        },
         label = "main-content-bottom-compensation"
     )
 
-    val elevation by transition.animateDpForPredictiveBack(
-        valueDuringAnimation = 4.dp,
-        settledValue = 0.dp,
-        animation = tween(
-            durationMillis = 100,
-            delayMillis = animationDelay
-        ),
+    val elevation by transition.animateDp(
+        transitionSpec = { mainContentPageAnimationSpec(targetState, isPredictiveBack) },
+        targetValueByState = { state -> targetValueByState(state, 4.dp, 0.dp) },
         label = "main-content-elevation"
     )
 

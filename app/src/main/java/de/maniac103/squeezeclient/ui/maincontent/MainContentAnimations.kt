@@ -17,16 +17,21 @@
 
 package de.maniac103.squeezeclient.ui.maincontent
 
+import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.core.EaseInOut
+import androidx.compose.animation.core.EaseInOutCubic
 import androidx.compose.animation.core.EaseOutCubic
+import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.navigation3.ui.LocalNavAnimatedContentScope
 
 internal enum class MainContentAnimationType {
     Normal,
@@ -89,7 +94,6 @@ internal fun mainContentPopExit() = slideOutHorizontally(
     targetOffsetX = { it },
     animationSpec = tween(
         durationMillis = 300,
-        delayMillis = 100,
         easing = EaseInOut
     )
 ) + fadeOut(
@@ -99,4 +103,13 @@ internal fun mainContentPopExit() = slideOutHorizontally(
         delayMillis = 200,
         easing = EaseOutCubic
     )
+)
+
+internal fun <T> mainContentPageAnimationSpec(
+    targetState: EnterExitState,
+    isPredictiveBack: Boolean
+): FiniteAnimationSpec<T> = tween(
+    durationMillis = if (isPredictiveBack) 100 else 0,
+    delayMillis = if (targetState == EnterExitState.Visible) 300 else 100,
+    easing = EaseInOutCubic
 )

@@ -148,7 +148,7 @@ fun Playlist(
 
     val hapticFeedback = LocalHapticFeedback.current
     val reorderableLazyListState = rememberReorderableLazyListState(state) { from, to ->
-        hapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
+        hapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentTick)
         items.add(to.index, items.removeAt(from.index))
         if (selectedItemPosition == from.index) {
             selectedItemPosition = to.index

@@ -626,6 +626,8 @@ private fun PlaybackControls(
     onToggleShuffle: () -> Unit,
     onStop: () -> Unit
 ) {
+    val hapticFeedback = LocalHapticFeedback.current
+
     PlaybackToggleButton(
         iconResId = state.repeatIconResId,
         contentDescriptionResId = state.repeatContentDescriptionResId,
@@ -662,6 +664,7 @@ private fun PlaybackControls(
                         .onLongPressConsumeTap(onStop)
                         .semantics {
                             onLongClick(label = playbackStopContentDescription) {
+                                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                                 onStop()
                                 true
                             }
@@ -752,6 +755,7 @@ private fun ProgressControls(
     progress: MotionProgress,
     onSeek: (Int) -> Unit
 ) {
+    val hapticFeedback = LocalHapticFeedback.current
     var autoAdvanceProgress by remember(state) { mutableStateOf(state.isPlaying) }
     val sliderState = key(state.durationSeconds) {
         rememberSliderState(
@@ -788,11 +792,13 @@ private fun ProgressControls(
                 onValueChange = {
                     autoAdvanceProgress = false
                     sliderState.value = it
+                    hapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
                 },
                 onValueChangeFinished = {
                     val newPosition = sliderState.value.roundToInt()
                     if (newPosition != state.positionSeconds.roundToInt()) {
                         onSeek(sliderState.value.roundToInt())
+                        hapticFeedback.performHapticFeedback(HapticFeedbackType.GestureEnd)
                     } else {
                         autoAdvanceProgress = true
                     }

@@ -265,16 +265,22 @@ private val highContrastDarkColorScheme = darkColorScheme(
 @Composable
 fun AppTheme(
     themePreference: Preferences.Preference<Preferences.AppThemeMode>,
-    forceDarkTheme: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val themeSetting by themePreference.asFlow()
         .collectAsStateWithLifecycle(themePreference.value)
 
-    val darkTheme = when {
-        forceDarkTheme -> true
-        themeSetting == Preferences.AppThemeMode.Dark -> true
-        themeSetting == Preferences.AppThemeMode.Light -> false
+    AppTheme(
+        mode = themeSetting,
+        content = content
+    )
+}
+
+@Composable
+fun AppTheme(mode: Preferences.AppThemeMode, content: @Composable () -> Unit) {
+    val darkTheme = when (mode) {
+        Preferences.AppThemeMode.Dark -> true
+        Preferences.AppThemeMode.Light -> false
         else -> isSystemInDarkTheme()
     }
 

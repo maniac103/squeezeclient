@@ -389,8 +389,13 @@ internal fun EntryProviderScope<NavKey>.InfoNavEntry() = entry<MainContentNaviga
         title = route.title,
         busy = false
     ) {
+        val text = if (route.info.firstOrNull() == '<') {
+            AnnotatedString.fromHtml(route.info) // looks like HTML content
+        } else {
+            AnnotatedString(route.info) // probably plain text
+        }
         Text(
-            text = AnnotatedString.fromHtml(route.info),
+            text = text,
             modifier = Modifier.padding(16.dp)
         )
     }

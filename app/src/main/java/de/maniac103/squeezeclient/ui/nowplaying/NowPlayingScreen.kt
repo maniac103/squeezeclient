@@ -932,7 +932,7 @@ private fun PlaylistSheet(
                 .graphicsLayer {
                     val corner = layoutSpec.cornerSize.at(playlistProgress.value).toPx()
                     scaleX = 1F - 0.1F * backState.progress
-                    scaleY = 1F - 0.05F * backState.progress
+                    scaleY = 1F - 0.02F * backState.progress
                     transformOrigin = TransformOrigin(0.5F, 1F)
                     shape = RoundedCornerShape(
                         topStart = corner,

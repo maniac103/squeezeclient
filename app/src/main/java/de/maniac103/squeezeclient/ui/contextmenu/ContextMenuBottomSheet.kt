@@ -17,7 +17,13 @@
 
 package de.maniac103.squeezeclient.ui.contextmenu
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.EaseInOut
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -36,12 +42,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.ui.NavDisplay
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.ui.composables.ArtworkImage
 import de.maniac103.squeezeclient.ui.composables.ResourceIconButton
-import kotlin.collections.emptyList
 import kotlinx.coroutines.Job
 
 @Composable
@@ -50,17 +57,15 @@ fun ContextMenuBottomSheetContent(
     serverConfig: ServerConfiguration?,
     onItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job? = { null }
 ) {
-    val items by viewModel.pageFlow.collectAsStateWithLifecycle(emptyList())
+    val pageStack by viewModel.pageStackFlow.collectAsStateWithLifecycle()
     val busyItem by viewModel.busyItemFlow.collectAsStateWithLifecycle()
-    val backNavTitle by viewModel.backNavTitleFlow.collectAsStateWithLifecycle(null)
 
     ContextMenuBottomSheetContent(
-        items = items,
+        pageStack = pageStack,
         busyItem = busyItem,
         parentItem = viewModel.parentItem,
         serverConfig = serverConfig,
-        backNavTitle = backNavTitle,
-        onBackNavClick = viewModel::popPage,
+        onNavigateBack = viewModel::popPage,
         onItemSelected = { item ->
             val goAction = item.actions?.goAction
             val job = if (goAction?.isContextMenu == true) {
@@ -76,75 +81,118 @@ fun ContextMenuBottomSheetContent(
 
 @Composable
 fun ContextMenuBottomSheetContent(
-    items: List<SlimBrowseItemList.SlimBrowseItem>,
-    busyItem: SlimBrowseItemList.SlimBrowseItem?,
+    pageStack: List<ContextMenuViewModel.Page>,
     parentItem: SlimBrowseItemList.SlimBrowseItem,
-    backNavTitle: String?,
+    busyItem: SlimBrowseItemList.SlimBrowseItem?,
     serverConfig: ServerConfiguration?,
     onItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {},
-    onBackNavClick: () -> Unit = {}
+    onNavigateBack: () -> Unit = {}
 ) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .animateContentSize()
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 16.dp)
-        ) {
-            if (parentItem.isValidIcon) {
-                ArtworkImage(
-                    artwork = parentItem,
-                    serverConfig = serverConfig,
-                    placeholderDrawableResId = null,
-                    modifier = Modifier
-                        .padding(start = 4.dp, end = 12.dp, top = 4.dp, bottom = 4.dp)
-                        .size(40.dp)
-                        .align(Alignment.CenterVertically)
-                )
-            }
-            Column(
-                modifier = Modifier.align(Alignment.CenterVertically)
-            ) {
-                Text(
-                    text = parentItem.title,
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.SemiBold
-                    )
-                )
-                parentItem.subText?.let { subText ->
-                    Text(
-                        text = subText,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.titleSmall
-                    )
-                }
-            }
-        }
-        backNavTitle?.let { backNavTitle ->
+        ContextMenuHeader(
+            item = parentItem,
+            serverConfig = serverConfig
+        )
+
+        val currentPage = pageStack.last()
+        AnimatedVisibility(visible = currentPage.canGoBack) {
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 ResourceIconButton(
                     drawableResId = R.drawable.ic_chevron_left_24dp,
                     contentDescriptionResId = R.string.content_description_context_menu_back,
-                    onClick = onBackNavClick
+                    onClick = onNavigateBack
                 )
-                Text(text = backNavTitle)
+                Text(text = currentPage.parent.title)
             }
         }
 
-        LazyColumn {
-            items(items) { item ->
-                ContextMenuItemRow(
-                    title = item.title,
-                    busy = item == busyItem,
-                    selectable = item.actions?.goAction != null,
-                    modifier = Modifier
-                        .clickable(onClick = { onItemSelected(item) })
-                )
+        NavDisplay(
+            backStack = pageStack,
+            onBack = onNavigateBack,
+            transitionSpec = {
+                contextMenuPageEnter(1) togetherWith contextMenuPageExit(1)
+            },
+            popTransitionSpec = {
+                contextMenuPageEnter(-1) togetherWith contextMenuPageExit(-1)
+            },
+            predictivePopTransitionSpec = {
+                contextMenuPageEnter(-1) togetherWith contextMenuPageExit(-1)
+            },
+            entryProvider = entryProvider {
+                entry<ContextMenuViewModel.Page> { page ->
+                    LazyColumn {
+                        items(page.items) { item ->
+                            ContextMenuItemRow(
+                                title = item.title,
+                                busy = item == busyItem,
+                                selectable = item.actions?.goAction != null,
+                                modifier = Modifier
+                                    .clickable(onClick = { onItemSelected(item) })
+                            )
+                        }
+                    }
+                }
             }
+        )
+    }
+}
+
+private fun contextMenuPageEnter(direction: Int) = slideInHorizontally(
+    initialOffsetX = { it * direction },
+    animationSpec = tween(
+        durationMillis = 300,
+        easing = EaseInOut
+    )
+)
+
+private fun contextMenuPageExit(direction: Int) = slideOutHorizontally(
+    targetOffsetX = { -it * direction },
+    animationSpec = tween(
+        durationMillis = 300,
+        easing = EaseInOut
+    )
+)
+
+@Composable
+private fun ContextMenuHeader(
+    item: SlimBrowseItemList.SlimBrowseItem,
+    serverConfig: ServerConfiguration?
+) = Row(
+    modifier = Modifier.padding(horizontal = 16.dp)
+) {
+    if (item.isValidIcon) {
+        ArtworkImage(
+            artwork = item,
+            serverConfig = serverConfig,
+            placeholderDrawableResId = null,
+            modifier = Modifier
+                .padding(start = 4.dp, end = 12.dp, top = 4.dp, bottom = 4.dp)
+                .size(40.dp)
+                .align(Alignment.CenterVertically)
+        )
+    }
+    Column(
+        modifier = Modifier.align(Alignment.CenterVertically)
+    ) {
+        Text(
+            text = item.title,
+            style = MaterialTheme.typography.titleMedium.copy(
+                fontWeight = FontWeight.SemiBold
+            )
+        )
+        item.subText?.let { subText ->
+            Text(
+                text = subText,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.titleSmall
+            )
         }
     }
 }

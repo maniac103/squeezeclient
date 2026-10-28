@@ -19,14 +19,27 @@ package de.maniac103.squeezeclient.extfuncs
 
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Color
+import android.os.Build
 import android.provider.Settings
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.ui.composables.DialogHost
 import java.util.UUID
 import kotlin.coroutines.resume
 import kotlinx.coroutines.suspendCancellableCoroutine
+
+fun ComponentActivity.enableEdgeToEdge() {
+    enableEdgeToEdge(
+        navigationBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT)
+    )
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        window.isNavigationBarContrastEnforced = false
+    }
+}
 
 private suspend fun ComponentActivity.requestPermission(permission: String): Boolean =
     suspendCancellableCoroutine { cont ->

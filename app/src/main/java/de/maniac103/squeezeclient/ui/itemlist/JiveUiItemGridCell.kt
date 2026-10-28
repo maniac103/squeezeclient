@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -30,6 +31,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ListItemColors
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -79,6 +81,7 @@ fun JiveUiItemGridCell(
                 modifier = Modifier
                     .align(Alignment.CenterVertically)
                     .weight(1F)
+                    .padding(end = 4.dp)
             ) {
                 Text(
                     text = item.title,
@@ -103,15 +106,20 @@ fun JiveUiItemGridCell(
                 }
             }
 
-            CompositionLocalProvider(LocalContentColor provides colors.trailingContentColor) {
-                val trailingWidgetModifier = Modifier.align(Alignment.CenterVertically)
+            CompositionLocalProvider(
+                LocalContentColor provides colors.trailingContentColor,
+                LocalMinimumInteractiveComponentSize provides 24.dp
+            ) {
+                val trailingWidgetModifier = Modifier
+                    .align(Alignment.CenterVertically)
                 if (busy) {
                     JiveUiItemRowBusyIndicator(modifier = trailingWidgetModifier)
                 } else if (item.trailingWidget != null) {
                     JiveUiItemRowTrailingWidget(
                         widget = item.trailingWidget,
                         onContextMenuSelected = onContextMenuSelected,
-                        modifier = trailingWidgetModifier
+                        modifier = trailingWidgetModifier,
+                        contextMenuModifier = trailingWidgetModifier.size(24.dp)
                     )
                 }
             }

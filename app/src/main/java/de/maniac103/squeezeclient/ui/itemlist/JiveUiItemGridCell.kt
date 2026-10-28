@@ -26,11 +26,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ListItemColors
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -44,20 +50,25 @@ fun JiveUiItemGridCell(
     modifier: Modifier = Modifier,
     onContextMenuSelected: () -> Unit = {}
 ) {
+    val colors = ListItemDefaults.colors()
     Column(
-        modifier = modifier
+        modifier = Modifier
+            .clip(RoundedCornerShape(16.dp))
+            .then(modifier)
             .fillMaxWidth()
             .defaultMinSize(minHeight = 64.dp)
             .padding(8.dp)
     ) {
         if (item.icon != null) {
-            JiveUiItemRowIcon(
-                icon = item.icon,
-                serverConfig = serverConfig,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(1F)
-            )
+            CompositionLocalProvider(LocalContentColor provides colors.leadingContentColor) {
+                JiveUiItemRowIcon(
+                    icon = item.icon,
+                    serverConfig = serverConfig,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(1F)
+                )
+            }
         }
 
         Row(
@@ -73,6 +84,7 @@ fun JiveUiItemGridCell(
                     text = item.title,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    color = colors.contentColor,
                     style = MaterialTheme.typography.bodyMediumEmphasized,
                     modifier = Modifier
                         .align(Alignment.CenterHorizontally)
@@ -83,6 +95,7 @@ fun JiveUiItemGridCell(
                         text = item.subText,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
+                        color = colors.supportingContentColor,
                         style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier
                             .align(Alignment.CenterHorizontally)
@@ -90,15 +103,17 @@ fun JiveUiItemGridCell(
                 }
             }
 
-            val trailingWidgetModifier = Modifier.align(Alignment.CenterVertically)
-            if (busy) {
-                JiveUiItemRowBusyIndicator(modifier = trailingWidgetModifier)
-            } else if (item.trailingWidget != null) {
-                JiveUiItemRowTrailingWidget(
-                    widget = item.trailingWidget,
-                    onContextMenuSelected = onContextMenuSelected,
-                    modifier = trailingWidgetModifier
-                )
+            CompositionLocalProvider(LocalContentColor provides colors.trailingContentColor) {
+                val trailingWidgetModifier = Modifier.align(Alignment.CenterVertically)
+                if (busy) {
+                    JiveUiItemRowBusyIndicator(modifier = trailingWidgetModifier)
+                } else if (item.trailingWidget != null) {
+                    JiveUiItemRowTrailingWidget(
+                        widget = item.trailingWidget,
+                        onContextMenuSelected = onContextMenuSelected,
+                        modifier = trailingWidgetModifier
+                    )
+                }
             }
         }
     }

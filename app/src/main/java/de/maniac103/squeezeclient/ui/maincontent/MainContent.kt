@@ -112,6 +112,8 @@ fun MainContent(
         entryProvider = entryProvider {
             JiveHomeMenuNavEntry(
                 serverConfig = serverConfig,
+                useGridIfPossible = useGridForSlimBrowseItemsState,
+                gridCellMinSize = slimBrowseMinGridCellSize,
                 pagePadding = pagePadding,
                 appBarState = appBarState,
                 onItemSelected = viewModel::onHomeItemSelected

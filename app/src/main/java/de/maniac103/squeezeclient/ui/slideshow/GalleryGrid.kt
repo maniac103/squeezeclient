@@ -37,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
 import coil3.request.ImageRequest
@@ -48,13 +49,14 @@ import de.maniac103.squeezeclient.model.SlideshowImage
 fun GalleryGrid(
     items: List<SlideshowImage>,
     serverConfig: ServerConfiguration?,
+    minCellSize: Dp,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
     state: LazyStaggeredGridState = rememberLazyStaggeredGridState(),
     onItemSelected: (SlideshowImage) -> Unit = {}
 ) = LazyVerticalStaggeredGrid(
     state = state,
-    columns = StaggeredGridCells.Adaptive(150.dp),
+    columns = StaggeredGridCells.Adaptive(minCellSize),
     contentPadding = contentPadding,
     modifier = modifier
 ) {

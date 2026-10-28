@@ -99,9 +99,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.max
 import androidx.compose.ui.util.fastAny
 import androidx.compose.ui.util.fastForEach
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -931,15 +933,22 @@ private fun PlaylistSheet(
                     }
                 }
                 .graphicsLayer {
-                    val corner = layoutSpec.cornerSize.at(playlistProgress.value).toPx()
+                    val interpolateCorner = { getter: (CornerSizes) -> Morph<Dp> ->
+                        val npCorner = getter(layoutSpec.nowPlayingCornerSizes)
+                            .at(nowPlayingProgress.value)
+                        val playlistCorner = getter(layoutSpec.playlistCornerSizes)
+                            .at(playlistProgress.value)
+                        max(npCorner, playlistCorner).toPx()
+                    }
+
                     scaleX = 1F - 0.1F * backState.progress
                     scaleY = 1F - 0.02F * backState.progress
                     transformOrigin = TransformOrigin(0.5F, 1F)
                     shape = RoundedCornerShape(
-                        topStart = corner,
-                        topEnd = corner,
-                        bottomEnd = 0F,
-                        bottomStart = 0F
+                        topStart = interpolateCorner { it.topStart },
+                        topEnd = interpolateCorner { it.topEnd },
+                        bottomStart = interpolateCorner { it.bottomStart },
+                        bottomEnd = interpolateCorner { it.bottomEnd }
                     )
                     clip = true
                 }

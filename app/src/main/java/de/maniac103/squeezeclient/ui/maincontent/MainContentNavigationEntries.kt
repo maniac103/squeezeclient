@@ -53,7 +53,7 @@ import de.maniac103.squeezeclient.ui.contextmenu.ContextMenuViewModel
 import de.maniac103.squeezeclient.ui.contextmenu.ItemAction
 import de.maniac103.squeezeclient.ui.contextmenu.ItemActionsMenuSheetContent
 import de.maniac103.squeezeclient.ui.contextmenu.ItemActionsViewModel
-import de.maniac103.squeezeclient.ui.itemlist.JiveHomeItemList
+import de.maniac103.squeezeclient.ui.itemlist.JiveHomeItemListOrGrid
 import de.maniac103.squeezeclient.ui.itemlist.JiveHomeItemListViewModel
 import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseItemListOrGrid
 import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseItemListViewModel
@@ -72,23 +72,28 @@ import org.koin.core.parameter.parametersOf
 @Composable
 internal fun EntryProviderScope<NavKey>.JiveHomeMenuNavEntry(
     serverConfig: State<ServerConfiguration?>,
+    useGridIfPossible: State<Boolean>,
+    gridCellMinSize: Dp,
     pagePadding: PaddingValues,
     appBarState: TopAppBarState?,
     onItemSelected: (JiveHomeMenuItem, WindowStyle?) -> Unit
 ) = entry<MainContentNavigation.JiveHomeMenuPage> { route ->
     val viewModel = koinViewModel<JiveHomeItemListViewModel> { parametersOf(route.nodeId) }
-    val listState = rememberLazyListState()
-    val showIcons = route.windowStyle != WindowStyle.TextOnlyList
+    val nodesEligibleForGrid = listOf("home", "myMusic", "radios")
+    val mode = rememberSlimBrowseItemListMode(
+        useGrid = useGridIfPossible.value && route.nodeId in nodesEligibleForGrid,
+        showIcons = route.windowStyle != WindowStyle.TextOnlyList,
+        gridCellMinSize = gridCellMinSize
+    )
 
     MainContentPage(
         appBarState = appBarState,
-        indicatorState = listState.scrollIndicatorState
+        indicatorState = mode.scrollIndicatorState
     ) {
-        JiveHomeItemList(
-            state = listState,
+        JiveHomeItemListOrGrid(
+            mode = mode,
             serverConfig = serverConfig.value,
             viewModel = viewModel,
-            showIcons = showIcons,
             contentPadding = pagePadding,
             onItemSelected = { item -> onItemSelected(item, route.windowStyle) }
         )

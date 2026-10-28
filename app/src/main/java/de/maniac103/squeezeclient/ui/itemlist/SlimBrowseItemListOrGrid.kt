@@ -38,6 +38,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.ui.composables.ScrollIndicator
+import de.maniac103.squeezeclient.ui.composables.ensureMinimum
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.Job
 import my.nanihadesuka.compose.LazyColumnScrollbar
@@ -76,10 +77,14 @@ fun SlimBrowseItemListOrGrid(
 
     when (mode) {
         is SlimBrowseItemListMode.Grid -> {
+            val gridContentPadding = contentPadding.ensureMinimum(
+                start = 8.dp,
+                end = 8.dp
+            )
             LazyVerticalGrid(
                 state = mode.gridState,
                 columns = GridCells.Adaptive(mode.cellMinSize),
-                contentPadding = contentPadding,
+                contentPadding = gridContentPadding,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = modifier

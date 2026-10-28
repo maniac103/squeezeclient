@@ -17,22 +17,23 @@
 
 package de.maniac103.squeezeclient.ui.prefs
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import de.maniac103.squeezeclient.Preferences
 import de.maniac103.squeezeclient.R
+import de.maniac103.squeezeclient.ui.composables.NavigationBarScrim
 import de.maniac103.squeezeclient.ui.composables.ResourceIconButton
 
 @Composable
@@ -40,203 +41,239 @@ fun SettingsScreen(
     preferences: Preferences,
     onGoBack: () -> Unit,
     onCheckNotificationsPermissionForLocalPlayer: suspend () -> Boolean
-) = Scaffold(
-    topBar = {
-        TopAppBar(
-            title = { Text(stringResource(R.string.app_name)) },
-            subtitle = { Text(stringResource(R.string.settings_title)) },
-            titleHorizontalAlignment = Alignment.CenterHorizontally,
-            navigationIcon = {
-                ResourceIconButton(
-                    drawableResId = R.drawable.ic_arrow_left_24dp,
-                    contentDescriptionResId = R.string.content_description_appbar_back,
-                    onClick = onGoBack
-                )
+) {
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.app_name)) },
+                subtitle = { Text(stringResource(R.string.settings_title)) },
+                titleHorizontalAlignment = Alignment.CenterHorizontally,
+                scrollBehavior = scrollBehavior,
+                navigationIcon = {
+                    ResourceIconButton(
+                        drawableResId = R.drawable.ic_arrow_left_24dp,
+                        contentDescriptionResId = R.string.content_description_appbar_back,
+                        onClick = onGoBack
+                    )
+                }
+            )
+        }
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            LazyColumn(
+                contentPadding = innerPadding,
+                modifier = Modifier
+                    .nestedScroll(scrollBehavior.nestedScrollConnection)
+            ) {
+                item {
+                    DisplaySettingsGroup(preferences)
+                }
+                item {
+                    PlaybackSettingsGroup(preferences)
+                }
+                item {
+                    DownloadSettingsGroup(preferences)
+                }
+                item {
+                    LocalPlaybackSettingsGroup(
+                        preferences,
+                        onCheckNotificationsPermissionForLocalPlayer
+                    )
+                }
             }
+
+            NavigationBarScrim(
+                color = MaterialTheme.colorScheme.surface,
+                insets = innerPadding
+            )
+        }
+    }
+}
+
+@Composable
+private fun DisplaySettingsGroup(preferences: Preferences) = PreferenceGroup(
+    title = stringResource(R.string.settings_category_display)
+) {
+    entry { position ->
+        val mapLabelResId = { value: Preferences.AppThemeMode ->
+            when (value) {
+                Preferences.AppThemeMode.Light ->
+                    R.string.settings_theme_light
+
+                Preferences.AppThemeMode.Dark ->
+                    R.string.settings_theme_dark
+
+                Preferences.AppThemeMode.SystemDefault ->
+                    R.string.settings_theme_follow_system
+            }
+        }
+
+        ListPreference(
+            position = position,
+            title = stringResource(R.string.settings_theme_title),
+            labelProvider = { value -> stringResource(mapLabelResId(value)) },
+            summaryProvider = { value -> stringResource(mapLabelResId(value)) },
+            preference = preferences.appTheme
         )
     }
-) { innerPadding ->
-    Column(
-        modifier = Modifier
-            .padding(innerPadding)
-            .verticalScroll(rememberScrollState())
-            .nestedScroll(rememberNestedScrollInteropConnection())
-    ) {
-        PreferenceGroup(
-            title = stringResource(R.string.settings_category_display)
-        ) {
-            entry { position ->
-                val mapLabelResId = { value: Preferences.AppThemeMode ->
-                    when (value) {
-                        Preferences.AppThemeMode.Light ->
-                            R.string.settings_theme_light
 
-                        Preferences.AppThemeMode.Dark ->
-                            R.string.settings_theme_dark
-
-                        Preferences.AppThemeMode.SystemDefault ->
-                            R.string.settings_theme_follow_system
-                    }
+    entry { position ->
+        SwitchPreference(
+            position = position,
+            title = stringResource(R.string.settings_force_grid_title),
+            summaryProvider = { enabled ->
+                val resId = when {
+                    enabled -> R.string.settings_force_grid_summary_on
+                    else -> R.string.settings_force_grid_summary_off
                 }
+                stringResource(resId)
+            },
+            preference = preferences.forceGridLayout
+        )
+    }
+}
 
-                ListPreference(
-                    position = position,
-                    title = stringResource(R.string.settings_theme_title),
-                    labelProvider = { value -> stringResource(mapLabelResId(value)) },
-                    summaryProvider = { value -> stringResource(mapLabelResId(value)) },
-                    preference = preferences.appTheme
-                )
-            }
+@Composable
+fun PlaybackSettingsGroup(preferences: Preferences) = PreferenceGroup(
+    title = stringResource(R.string.settings_category_playback)
+) {
+    entry { position ->
+        SwitchPreference(
+            position = position,
+            title = stringResource(R.string.settings_volume_buttons_title),
+            summaryProvider = { _ ->
+                stringResource(R.string.settings_volume_buttons_summary)
+            },
+            preference = preferences.useVolumeButtonsForPlayerVolume
+        )
+    }
 
-            entry { position ->
-                SwitchPreference(
-                    position = position,
-                    title = stringResource(R.string.settings_force_grid_title),
-                    summaryProvider = { enabled ->
-                        val resId = when {
-                            enabled -> R.string.settings_force_grid_summary_on
-                            else -> R.string.settings_force_grid_summary_off
-                        }
-                        stringResource(resId)
-                    },
-                    preference = preferences.forceGridLayout
-                )
-            }
-        }
+    entry { position ->
+        SliderPreference(
+            position = position,
+            title = stringResource(R.string.settings_volume_step_size_title),
+            summaryProvider = { value ->
+                stringResource(R.string.settings_volume_step_size_summary, value)
+            },
+            minValue = 1,
+            maxValue = 10,
+            preference = preferences.volumeStepSize
+        )
+    }
 
-        PreferenceGroup(
-            title = stringResource(R.string.settings_category_playback)
-        ) {
-            entry { position ->
-                SwitchPreference(
-                    position = position,
-                    title = stringResource(R.string.settings_volume_buttons_title),
-                    summaryProvider = { _ ->
-                        stringResource(R.string.settings_volume_buttons_summary)
-                    },
-                    preference = preferences.useVolumeButtonsForPlayerVolume
-                )
-            }
+    entry { position ->
+        SliderPreference(
+            position = position,
+            title = stringResource(R.string.settings_fade_in_seconds_title),
+            summaryProvider = { value ->
+                when (value) {
+                    0 -> stringResource(R.string.settings_fade_in_seconds_summary_disabled)
 
-            entry { position ->
-                SliderPreference(
-                    position = position,
-                    title = stringResource(R.string.settings_volume_step_size_title),
-                    summaryProvider = { value ->
-                        stringResource(R.string.settings_volume_step_size_summary, value)
-                    },
-                    minValue = 1,
-                    maxValue = 10,
-                    preference = preferences.volumeStepSize
-                )
-            }
-
-            entry { position ->
-                SliderPreference(
-                    position = position,
-                    title = stringResource(R.string.settings_fade_in_seconds_title),
-                    summaryProvider = { value ->
-                        when (value) {
-                            0 -> stringResource(R.string.settings_fade_in_seconds_summary_disabled)
-
-                            else -> pluralStringResource(
-                                R.plurals.settings_fade_in_seconds_summary,
-                                value,
-                                value
-                            )
-                        }
-                    },
-                    minValue = 0,
-                    maxValue = 10,
-                    preference = preferences.fadeInDurationInSeconds
-                )
-            }
-        }
-
-        PreferenceGroup(
-            title = stringResource(R.string.settings_category_download)
-        ) {
-            entry { position ->
-                val mapLabelResId = { value: Preferences.DownloadFolderStructure ->
-                    when (value) {
-                        Preferences.DownloadFolderStructure.AsOnServer ->
-                            R.string.settings_download_path_structure_entry_as_server
-
-                        Preferences.DownloadFolderStructure.AlbumUnderArtist ->
-                            R.string.settings_download_path_structure_entry_album_under_artist
-
-                        Preferences.DownloadFolderStructure.ArtistAlbum ->
-                            R.string.settings_download_path_structure_entry_artist_album
-
-                        Preferences.DownloadFolderStructure.Album ->
-                            R.string.settings_download_path_structure_entry_album
-
-                        Preferences.DownloadFolderStructure.Artist ->
-                            R.string.settings_download_path_structure_entry_artist
-                    }
+                    else -> pluralStringResource(
+                        R.plurals.settings_fade_in_seconds_summary,
+                        value,
+                        value
+                    )
                 }
+            },
+            minValue = 0,
+            maxValue = 10,
+            preference = preferences.fadeInDurationInSeconds
+        )
+    }
+}
 
-                ListPreference(
-                    position = position,
-                    title = stringResource(R.string.settings_download_path_structure_title),
-                    labelProvider = { value -> stringResource(mapLabelResId(value)) },
-                    summaryProvider = { value -> stringResource(mapLabelResId(value)) },
-                    preference = preferences.downloadFolderStructure
-                )
+@Composable
+fun DownloadSettingsGroup(preferences: Preferences) = PreferenceGroup(
+    title = stringResource(R.string.settings_category_download)
+) {
+    entry { position ->
+        val mapLabelResId = { value: Preferences.DownloadFolderStructure ->
+            when (value) {
+                Preferences.DownloadFolderStructure.AsOnServer ->
+                    R.string.settings_download_path_structure_entry_as_server
+
+                Preferences.DownloadFolderStructure.AlbumUnderArtist ->
+                    R.string.settings_download_path_structure_entry_album_under_artist
+
+                Preferences.DownloadFolderStructure.ArtistAlbum ->
+                    R.string.settings_download_path_structure_entry_artist_album
+
+                Preferences.DownloadFolderStructure.Album ->
+                    R.string.settings_download_path_structure_entry_album
+
+                Preferences.DownloadFolderStructure.Artist ->
+                    R.string.settings_download_path_structure_entry_artist
             }
         }
 
-        PreferenceGroup(
-            title = stringResource(R.string.settings_category_local_player)
-        ) {
-            entry { position ->
-                SwitchPreference(
-                    position = position,
-                    title = stringResource(R.string.settings_local_player_enabled_title),
-                    summaryProvider = { _ ->
-                        stringResource(R.string.settings_local_player_enabled_summary)
-                    },
-                    onInterceptValueChange = { newValue ->
-                        !newValue || onCheckNotificationsPermissionForLocalPlayer()
-                    },
-                    preference = preferences.localPlayerEnabled
-                )
-            }
+        ListPreference(
+            position = position,
+            title = stringResource(R.string.settings_download_path_structure_title),
+            labelProvider = { value -> stringResource(mapLabelResId(value)) },
+            summaryProvider = { value -> stringResource(mapLabelResId(value)) },
+            preference = preferences.downloadFolderStructure
+        )
+    }
+}
 
-            entry { position ->
-                ListPreference(
-                    position = position,
-                    title = stringResource(R.string.settings_local_player_volume_mode_title),
-                    labelProvider = { value ->
-                        val resId = when (value) {
-                            Preferences.LocalPlayerVolumeMode.PlayerOnly ->
-                                R.string.settings_local_player_volume_mode_player_only
+@Composable
+private fun LocalPlaybackSettingsGroup(
+    preferences: Preferences,
+    onCheckNotificationsPermissionForLocalPlayer: suspend () -> Boolean
+) = PreferenceGroup(
+    title = stringResource(R.string.settings_category_local_player)
+) {
+    entry { position ->
+        SwitchPreference(
+            position = position,
+            title = stringResource(R.string.settings_local_player_enabled_title),
+            summaryProvider = { _ ->
+                stringResource(R.string.settings_local_player_enabled_summary)
+            },
+            onInterceptValueChange = { newValue ->
+                !newValue || onCheckNotificationsPermissionForLocalPlayer()
+            },
+            preference = preferences.localPlayerEnabled
+        )
+    }
 
-                            Preferences.LocalPlayerVolumeMode.Device ->
-                                R.string.settings_local_player_volume_mode_device
+    entry { position ->
+        ListPreference(
+            position = position,
+            title = stringResource(R.string.settings_local_player_volume_mode_title),
+            labelProvider = { value ->
+                val resId = when (value) {
+                    Preferences.LocalPlayerVolumeMode.PlayerOnly ->
+                        R.string.settings_local_player_volume_mode_player_only
 
-                            Preferences.LocalPlayerVolumeMode.DeviceWhilePlaying ->
-                                R.string.settings_local_player_volume_mode_device_while_playing
-                        }
-                        stringResource(resId)
-                    },
-                    summaryProvider = { value ->
-                        val resId = when (value) {
-                            Preferences.LocalPlayerVolumeMode.PlayerOnly ->
-                                R.string.settings_local_player_volume_mode_summary_player_only
+                    Preferences.LocalPlayerVolumeMode.Device ->
+                        R.string.settings_local_player_volume_mode_device
 
-                            Preferences.LocalPlayerVolumeMode.Device ->
-                                R.string.settings_local_player_volume_mode_summary_device
+                    Preferences.LocalPlayerVolumeMode.DeviceWhilePlaying ->
+                        R.string.settings_local_player_volume_mode_device_while_playing
+                }
+                stringResource(resId)
+            },
+            summaryProvider = { value ->
+                val resId = when (value) {
+                    Preferences.LocalPlayerVolumeMode.PlayerOnly ->
+                        R.string.settings_local_player_volume_mode_summary_player_only
 
-                            Preferences.LocalPlayerVolumeMode.DeviceWhilePlaying ->
-                                R.string
-                                    .settings_local_player_volume_mode_summary_device_while_playing
-                        }
-                        stringResource(resId)
-                    },
-                    preference = preferences.localPlayerVolumeMode
-                )
-            }
-        }
+                    Preferences.LocalPlayerVolumeMode.Device ->
+                        R.string.settings_local_player_volume_mode_summary_device
+
+                    Preferences.LocalPlayerVolumeMode.DeviceWhilePlaying ->
+                        R.string
+                            .settings_local_player_volume_mode_summary_device_while_playing
+                }
+                stringResource(resId)
+            },
+            preference = preferences.localPlayerVolumeMode
+        )
     }
 }

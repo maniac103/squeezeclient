@@ -116,6 +116,7 @@ import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import de.maniac103.squeezeclient.ui.bottomsheets.InputBottomSheetContent
 import de.maniac103.squeezeclient.ui.composables.ArtworkImage
+import de.maniac103.squeezeclient.ui.composables.NavigationBarScrim
 import de.maniac103.squeezeclient.ui.composables.ResourceIcon
 import de.maniac103.squeezeclient.ui.composables.ResourceIconButton
 import de.maniac103.squeezeclient.ui.composables.toTextResource
@@ -964,18 +965,28 @@ private fun PlaylistSheet(
                 )
             }
 
-            val sheetScope = PlaylistSheetScope(
-                listState = playlistState,
-                sheetColor = sheetColor,
-                contentPadding = layoutSpec.padding - topPadding,
-                listModifier = Modifier
-                    .fade(playlistProgress, layoutSpec.contentAlpha)
+            Box(
+                modifier = Modifier
                     .fillMaxWidth()
                     .weight(1F)
-            )
+            ) {
+                val sheetScope = PlaylistSheetScope(
+                    listState = playlistState,
+                    sheetColor = sheetColor,
+                    contentPadding = layoutSpec.padding - topPadding,
+                    listModifier = Modifier
+                        .fade(playlistProgress, layoutSpec.contentAlpha)
+                        .fillMaxSize()
+                )
 
-            with(sheetScope) {
-                playlistContent()
+                with(sheetScope) {
+                    playlistContent()
+                }
+
+                NavigationBarScrim(
+                    color = sheetColor,
+                    insets = layoutSpec.padding
+                )
             }
         }
     }

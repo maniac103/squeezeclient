@@ -24,7 +24,6 @@ import android.os.Bundle
 import android.view.KeyEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -32,6 +31,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import de.maniac103.squeezeclient.Preferences
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.cometd.ConnectionHelper
+import de.maniac103.squeezeclient.extfuncs.enableEdgeToEdge
 import de.maniac103.squeezeclient.extfuncs.requestPermission
 import de.maniac103.squeezeclient.model.DownloadRequestData
 import de.maniac103.squeezeclient.service.DownloadWorker
@@ -62,8 +62,8 @@ class MainActivity : ComponentActivity() {
     private var selectedPlayerActiveState: SelectedPlayerActiveState? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
 
         if (preferences.serverConfig.value == null) {
             val intent = ServerSetupActivity.createIntent(this, false)

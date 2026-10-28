@@ -103,6 +103,7 @@ import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlideshowImage
 import de.maniac103.squeezeclient.ui.ActivePlayerScope
+import de.maniac103.squeezeclient.ui.composables.NavigationBarScrim
 import de.maniac103.squeezeclient.ui.composables.ResourceIconButton
 import de.maniac103.squeezeclient.ui.displaystatus.DisplayStatusIndicator
 import de.maniac103.squeezeclient.ui.nowplaying.NowPlayingScreen
@@ -559,6 +560,7 @@ private fun MainActivityPlayerContent(
                             ),
                             onOpenSearch = searchViewModel::open,
                             contentPadding = layout.toolbarContentPadding,
+                            windowInsets = WindowInsets(),
                             modifier = Modifier.padding(layout.toolbarPadding)
                         )
                     }
@@ -581,29 +583,37 @@ private fun MainActivityPlayerContent(
                                 .padding(layout.breadcrumbsPadding)
                         )
 
-                        MainContent(
-                            viewModel = mainContentViewModel,
-                            serverConfig = serverConfigState,
-                            useGridForSlimBrowseItemsState = useGridForSlimBrowseItemsState,
-                            slimBrowseMinGridCellSize = layout.slimBrowseGridCellMinSize,
-                            pagePadding = layout.mainContentPagePadding,
-                            compensateBottomPagePaddingDuringAnimation =
-                                layout.compensateMainContentBottomPagePaddingDuringAnimation,
-                            appBarState = scrollBehavior.state,
-                            navigationBackEnabled = !searchOpen,
-                            onGalleryItemSelected = onGalleryItemSelected,
-                            onDownloadSelected = onDownloadSelected,
-                            onWebLinkSelected = onWebLinkSelected,
-                            onGoToNowPlaying = {
-                                scope.launch {
-                                    nowPlayingMotionState.nowPlaying.expand()
-                                }
-                            },
-                            modifier = Modifier
-                                .weight(1F)
-                                .padding(layout.mainContentPadding)
-                                .nestedScroll(scrollBehavior.nestedScrollConnection)
-                        )
+                        Box(
+                            modifier = Modifier.weight(1F)
+                        ) {
+                            MainContent(
+                                viewModel = mainContentViewModel,
+                                serverConfig = serverConfigState,
+                                useGridForSlimBrowseItemsState = useGridForSlimBrowseItemsState,
+                                slimBrowseMinGridCellSize = layout.slimBrowseGridCellMinSize,
+                                pagePadding = layout.mainContentPagePadding,
+                                compensateBottomPagePaddingDuringAnimation =
+                                    layout.compensateMainContentBottomPagePaddingDuringAnimation,
+                                appBarState = scrollBehavior.state,
+                                navigationBackEnabled = !searchOpen,
+                                onGalleryItemSelected = onGalleryItemSelected,
+                                onDownloadSelected = onDownloadSelected,
+                                onWebLinkSelected = onWebLinkSelected,
+                                onGoToNowPlaying = {
+                                    scope.launch {
+                                        nowPlayingMotionState.nowPlaying.expand()
+                                    }
+                                },
+                                modifier = Modifier
+                                    .padding(layout.mainContentPadding)
+                                    .nestedScroll(scrollBehavior.nestedScrollConnection)
+                            )
+
+                            NavigationBarScrim(
+                                color = MaterialTheme.colorScheme.surface,
+                                insets = layout.mainContentPagePadding
+                            )
+                        }
                     }
                 }
 
@@ -651,6 +661,7 @@ private fun MainActivityAppBar(
     drawerState: DrawerState,
     selectedPlayer: Player?,
     modifier: Modifier = Modifier,
+    windowInsets: WindowInsets = TopAppBarDefaults.windowInsets,
     scrollBehavior: TopAppBarScrollBehavior? = null,
     colors: TopAppBarColors = TopAppBarDefaults.topAppBarColors(),
     onOpenSearch: (() -> Unit)?,
@@ -686,6 +697,7 @@ private fun MainActivityAppBar(
                 )
             }
         },
+        windowInsets = windowInsets,
         contentPadding = contentPadding,
         modifier = modifier
     )
@@ -768,6 +780,11 @@ private fun determineMainLayout(
                 start = insets.calculateStartPadding(layoutDirection),
                 end = insets.calculateEndPadding(layoutDirection)
             )
+            val toolbarContentPadding = PaddingValues(
+                top = insets.calculateTopPadding(),
+                start = insets.calculateStartPadding(layoutDirection),
+                end = insets.calculateEndPadding(layoutDirection)
+            )
             MainLayout.Portrait(
                 containerSize = containerSize,
                 mainContentPadding = mainContentPadding,
@@ -775,7 +792,7 @@ private fun determineMainLayout(
                 breadcrumbsPadding = breadcrumbsPadding,
                 searchBoxPadding = searchBoxPadding,
                 toolbarPadding = PaddingValues(),
-                toolbarContentPadding = PaddingValues(),
+                toolbarContentPadding = toolbarContentPadding,
                 collapsedNowPlayingHeight = collapsedNowPlayingHeight,
                 nowPlayingCornerSize = nowPlayingCornerSize
             )
@@ -784,7 +801,7 @@ private fun determineMainLayout(
         else -> {
             val collapsedNowPlayingWidth = 320.dp
             val mainContentPadding = PaddingValues(
-                end = collapsedNowPlayingWidth + insets.calculateEndPadding(layoutDirection)
+                end = collapsedNowPlayingWidth
             )
             val mainContentPagePadding = PaddingValues(
                 start = insets.calculateStartPadding(layoutDirection),
@@ -804,6 +821,8 @@ private fun determineMainLayout(
                 end = collapsedNowPlayingWidth - nowPlayingCornerSize
             )
             val toolbarContentPadding = PaddingValues(
+                top = insets.calculateTopPadding(),
+                start = insets.calculateStartPadding(layoutDirection),
                 end = nowPlayingCornerSize
             )
             MainLayout.Landscape(

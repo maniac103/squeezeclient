@@ -140,6 +140,7 @@ sealed interface MainLayout {
     val nowPlayingCornerSize: Dp
     val useGridForSlimBrowseItemsByDefault: Boolean
     val slimBrowseGridCellMinSize: Dp
+    val galleryGridCellMinSize: Dp
 
     data class Portrait(
         override val containerSize: DpSize,
@@ -151,11 +152,11 @@ sealed interface MainLayout {
         override val toolbarPadding: PaddingValues,
         override val toolbarContentPadding: PaddingValues,
         val collapsedNowPlayingHeight: Dp,
-        override val nowPlayingCornerSize: Dp
-    ) : MainLayout {
-        override val useGridForSlimBrowseItemsByDefault = false
-        override val slimBrowseGridCellMinSize = 120.dp
-    }
+        override val nowPlayingCornerSize: Dp,
+        override val useGridForSlimBrowseItemsByDefault: Boolean,
+        override val slimBrowseGridCellMinSize: Dp,
+        override val galleryGridCellMinSize: Dp
+    ) : MainLayout
 
     data class Landscape(
         override val containerSize: DpSize,
@@ -171,6 +172,7 @@ sealed interface MainLayout {
     ) : MainLayout {
         override val useGridForSlimBrowseItemsByDefault = true
         override val slimBrowseGridCellMinSize = 160.dp
+        override val galleryGridCellMinSize = 180.dp
     }
 }
 
@@ -592,6 +594,7 @@ private fun MainActivityPlayerContent(
                                 serverConfig = serverConfigState,
                                 useGridForSlimBrowseItemsState = useGridForSlimBrowseItemsState,
                                 slimBrowseMinGridCellSize = layout.slimBrowseGridCellMinSize,
+                                galleryMinGridCellSize = layout.galleryGridCellMinSize,
                                 pagePadding = layout.mainContentPagePadding,
                                 compensateBottomPagePaddingDuringAnimation =
                                     layout.compensateMainContentBottomPagePaddingDuringAnimation,
@@ -786,6 +789,7 @@ private fun determineMainLayout(
                 start = insets.calculateStartPadding(layoutDirection),
                 end = insets.calculateEndPadding(layoutDirection)
             )
+            val isLargeContainer = containerSize.width >= 480.dp
             MainLayout.Portrait(
                 containerSize = containerSize,
                 mainContentPadding = mainContentPadding,
@@ -795,7 +799,10 @@ private fun determineMainLayout(
                 toolbarPadding = PaddingValues(),
                 toolbarContentPadding = toolbarContentPadding,
                 collapsedNowPlayingHeight = collapsedNowPlayingHeight,
-                nowPlayingCornerSize = nowPlayingCornerSize
+                nowPlayingCornerSize = nowPlayingCornerSize,
+                useGridForSlimBrowseItemsByDefault = isLargeContainer,
+                slimBrowseGridCellMinSize = if (isLargeContainer) 160.dp else 120.dp,
+                galleryGridCellMinSize = if (isLargeContainer) 180.dp else 150.dp
             )
         }
 

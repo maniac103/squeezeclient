@@ -126,7 +126,8 @@ internal fun JiveUiItemRowBusyIndicator(modifier: Modifier = Modifier) = Circula
 internal fun JiveUiItemRowTrailingWidget(
     widget: JiveUiItemTrailingWidget,
     onContextMenuSelected: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    contextMenuModifier: Modifier = modifier
 ) = when (widget) {
     is JiveUiItemTrailingWidget.Choice -> {
         Text(
@@ -157,7 +158,7 @@ internal fun JiveUiItemRowTrailingWidget(
             drawableResId = R.drawable.ic_menu_overflow,
             contentDescriptionResId = R.string.content_description_context_menu,
             onClick = onContextMenuSelected,
-            modifier = modifier
+            modifier = contextMenuModifier
         )
     }
 }

@@ -93,6 +93,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.max
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.rememberViewModelStoreOwner
@@ -799,7 +800,7 @@ private fun determineMainLayout(
         }
 
         else -> {
-            val collapsedNowPlayingWidth = 320.dp
+            val collapsedNowPlayingWidth = max(containerSize.width * 0.3F, 320.dp)
             val mainContentPadding = PaddingValues(
                 end = collapsedNowPlayingWidth
             )

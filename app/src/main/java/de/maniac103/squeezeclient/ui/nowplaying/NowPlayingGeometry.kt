@@ -19,6 +19,7 @@ package de.maniac103.squeezeclient.ui.nowplaying
 
 import androidx.compose.animation.core.EaseInCubic
 import androidx.compose.animation.core.EaseInOutCubic
+import androidx.compose.animation.core.EaseOutCubic
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
@@ -168,7 +169,8 @@ private fun calculatePlayerGeometry(
             hasArtist = hasArtist,
             collapsedTitleSize = 18.sp,
             expandedTitleSize = if (isLarge) 24.sp else 20.sp,
-            secondaryTextSize = if (isLarge) 18.sp else 16.sp,
+            collapsedSecondaryTextSize = if (isLarge) 18.sp else 16.sp,
+            expandedSecondaryTextSize = if (isLarge) 20.sp else 16.sp,
             collapsedArtworkHeightFraction = if (isLarge) 0.2F else 0.3F,
             expandedArtworkHeightFraction = if (isLarge) 0.5F else 0.35F,
             collapsedPlaylistHeightFraction = if (isLarge) 0.5F else 0.0F,
@@ -566,7 +568,8 @@ private fun calculateLandscapeGeometry(
     hasArtist: Boolean,
     collapsedTitleSize: TextUnit,
     expandedTitleSize: TextUnit,
-    secondaryTextSize: TextUnit,
+    collapsedSecondaryTextSize: TextUnit,
+    expandedSecondaryTextSize: TextUnit,
     collapsedArtworkHeightFraction: Float,
     expandedArtworkHeightFraction: Float,
     collapsedPlaylistHeightFraction: Float,
@@ -611,10 +614,10 @@ private fun calculateLandscapeGeometry(
     )
 
     val collapsedTitleHeight = collapsedTitleSize.estimateLayoutHeight(density)
-    val secondaryTextHeight = secondaryTextSize.estimateLayoutHeight(density)
-    val albumHeight = if (hasAlbum) secondaryTextHeight else 0.dp
-    val artistHeight = if (hasArtist) secondaryTextHeight else 0.dp
-    val collapsedTextHeight = collapsedTitleHeight + albumHeight + artistHeight
+    val collapsedSecondaryTextHeight = collapsedSecondaryTextSize.estimateLayoutHeight(density)
+    val collapsedAlbumHeight = if (hasAlbum) collapsedSecondaryTextHeight else 0.dp
+    val collapsedArtistHeight = if (hasArtist) collapsedSecondaryTextHeight else 0.dp
+    val collapsedTextHeight = collapsedTitleHeight + collapsedAlbumHeight + collapsedArtistHeight
 
     val collapsedArtworkSize = collapsedContent.height * collapsedArtworkHeightFraction
     val collapsedItemVertSpacing = (
@@ -652,13 +655,13 @@ private fun calculateLandscapeGeometry(
         start = collapsedTextStart,
         top = collapsedTitle.bottom,
         width = collapsedTextWidth,
-        height = artistHeight
+        height = collapsedArtistHeight
     )
     val collapsedAlbum = Bounds(
         start = collapsedTextStart,
         top = collapsedArtist.bottom,
         width = collapsedTextWidth,
-        height = albumHeight
+        height = collapsedAlbumHeight
     )
 
     val collapsedControlsPadding =
@@ -782,7 +785,10 @@ private fun calculateLandscapeGeometry(
     )
 
     val expandedTitleHeight = expandedTitleSize.estimateLayoutHeight(density)
-    val expandedTextHeight = expandedTitleHeight + albumHeight + artistHeight
+    val expandedSecondaryTextHeight = expandedSecondaryTextSize.estimateLayoutHeight(density)
+    val expandedAlbumHeight = if (hasAlbum) expandedSecondaryTextHeight else 0.dp
+    val expandedArtistHeight = if (hasArtist) expandedSecondaryTextHeight else 0.dp
+    val expandedTextHeight = expandedTitleHeight + expandedArtistHeight + expandedAlbumHeight
     val expandedTextSpacing = (expandedArtwork.height - expandedTextHeight) / 2
     val expandedTextStart = expandedArtwork.end + 8.dp
     val expandedTextWidth = expandedContent.end - expandedTextStart - 8.dp
@@ -797,13 +803,13 @@ private fun calculateLandscapeGeometry(
         start = expandedTextStart,
         top = expandedTitle.bottom,
         width = expandedTextWidth,
-        height = artistHeight
+        height = expandedArtistHeight
     )
     val expandedAlbum = Bounds(
         start = expandedTextStart,
         top = expandedArtist.bottom,
         width = expandedTextWidth,
-        height = albumHeight
+        height = expandedAlbumHeight
     )
 
     return PlayerGeometry(
@@ -822,7 +828,11 @@ private fun calculateLandscapeGeometry(
         ),
 
         playlist = PlaylistLayoutSpec(
-            bounds = morph(collapsedPlaylist, expandedPlaylist),
+            bounds = morph(
+                collapsedPlaylist,
+                expandedPlaylist,
+                WindowEasing(0.7F, 1F, EaseOutCubic)
+            ),
             padding = PaddingValues(
                 top = topInset,
                 end = endInset,
@@ -854,12 +864,12 @@ private fun calculateLandscapeGeometry(
 
         progress = ProgressLayoutSpec(
             full = ControlLayoutSpec(
-                bounds = constant(expandedProgress),
-                alpha = morph(0F, 1F, WindowEasing(0.7F, 0.9F))
+                bounds = morph(collapsedProgress, expandedProgress),
+                alpha = morph(0F, 1F, WindowEasing(0.9F, 1F, EaseInCubic))
             ),
             mini = ControlLayoutSpec(
                 bounds = constant(collapsedProgress),
-                alpha = morph(1F, 0F, WindowEasing(0.0F, 0.3F))
+                alpha = morph(1F, 0F, WindowEasing(0.0F, 0.2F))
             )
         ),
 
@@ -872,7 +882,7 @@ private fun calculateLandscapeGeometry(
                     height = 64.dp + topInset
                 )
             ),
-            alpha = morph(0F, 1F, WindowEasing(0.5F, 0.7F))
+            alpha = morph(0F, 1F, WindowEasing(0.7F, 0.9F))
         ),
 
         artwork = ArtworkLayoutSpec(
@@ -887,39 +897,76 @@ private fun calculateLandscapeGeometry(
         ),
 
         title = TextLayoutSpec(
-            bounds = morph(collapsedTitle, expandedTitle),
+            bounds = morph(
+                collapsedTitle,
+                expandedTitle,
+                topEasing = EaseInCubic
+            ),
             fontSize = morph(collapsedTitleSize, expandedTitleSize)
         ),
         artist = TextLayoutSpec(
-            bounds = morph(collapsedArtist, expandedArtist),
-            fontSize = constant(secondaryTextSize)
+            bounds = morph(
+                collapsedArtist,
+                expandedArtist,
+                topEasing = EaseInCubic
+            ),
+            fontSize = morph(collapsedSecondaryTextSize, expandedSecondaryTextSize)
         ),
         album = TextLayoutSpec(
-            bounds = morph(collapsedAlbum, expandedAlbum),
-            fontSize = constant(secondaryTextSize)
+            bounds = morph(
+                collapsedAlbum,
+                expandedAlbum,
+                topEasing = EaseInCubic
+            ),
+            fontSize = morph(collapsedSecondaryTextSize, expandedSecondaryTextSize)
         ),
 
         textAlignmentProgress = constant(0.5F), // always center aligned
 
         controls = ControlsLayoutSpec(
             repeat = ControlLayoutSpec(
-                bounds = morph(collapsedRepeat, expandedRepeat),
+                bounds = morph(
+                    collapsedRepeat,
+                    expandedRepeat,
+                    startEasing = EaseInCubic,
+                    topEasing = EaseInCubic
+                ),
                 alpha = constant(1F)
             ),
             prevTrack = ControlLayoutSpec(
-                bounds = morph(collapsedPrevTrack, expandedPrevTrack),
+                bounds = morph(
+                    collapsedPrevTrack,
+                    expandedPrevTrack,
+                    startEasing = EaseInCubic,
+                    topEasing = EaseInCubic
+                ),
                 alpha = constant(1F)
             ),
             playPause = ControlLayoutSpec(
-                bounds = morph(collapsedPlayPause, expandedPlayPause),
+                bounds = morph(
+                    collapsedPlayPause,
+                    expandedPlayPause,
+                    startEasing = EaseInCubic,
+                    topEasing = EaseInCubic
+                ),
                 alpha = constant(1F)
             ),
             nextTrack = ControlLayoutSpec(
-                bounds = morph(collapsedNextTrack, expandedNextTrack),
+                bounds = morph(
+                    collapsedNextTrack,
+                    expandedNextTrack,
+                    startEasing = EaseInCubic,
+                    topEasing = EaseInCubic
+                ),
                 alpha = constant(1F)
             ),
             shuffle = ControlLayoutSpec(
-                bounds = morph(collapsedShuffle, expandedShuffle),
+                bounds = morph(
+                    collapsedShuffle,
+                    expandedShuffle,
+                    startEasing = EaseInCubic,
+                    topEasing = EaseInCubic
+                ),
                 alpha = constant(1F)
             )
         ).let {

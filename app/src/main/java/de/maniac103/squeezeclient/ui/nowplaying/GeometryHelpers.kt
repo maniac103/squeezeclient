@@ -93,6 +93,9 @@ internal fun morph(
     heightEasing: Easing = LinearEasing
 ): Morph<Bounds> = InterpolatedBounds(start, end, startEasing, topEasing, widthEasing, heightEasing)
 
+internal fun morph(start: Bounds, end: Bounds, easing: Easing) =
+    InterpolatedBounds(start, end, easing, easing, easing, easing)
+
 internal fun morph(start: Dp, end: Dp, easing: Easing = LinearEasing): Morph<Dp> =
     Interpolated(easing) { fraction -> lerp(start, end, fraction) }
 

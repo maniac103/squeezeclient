@@ -168,6 +168,7 @@ internal fun EntryProviderScope<NavKey>.SlimBrowseSubItemsNavEntry(
 @Composable
 internal fun EntryProviderScope<NavKey>.GalleryNavEntry(
     serverConfig: State<ServerConfiguration?>,
+    minCellSize: Dp,
     pagePadding: PaddingValues,
     appBarState: TopAppBarState?,
     onItemSelected: (SlideshowImage) -> Unit
@@ -182,6 +183,7 @@ internal fun EntryProviderScope<NavKey>.GalleryNavEntry(
             state = gridState,
             items = route.items,
             serverConfig = serverConfig.value,
+            minCellSize = minCellSize,
             contentPadding = pagePadding,
             onItemSelected = onItemSelected
         )

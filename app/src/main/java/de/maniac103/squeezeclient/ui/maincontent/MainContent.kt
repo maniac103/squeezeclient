@@ -74,6 +74,7 @@ fun MainContent(
     serverConfig: State<ServerConfiguration?>,
     useGridForSlimBrowseItemsState: State<Boolean>,
     slimBrowseMinGridCellSize: Dp,
+    galleryMinGridCellSize: Dp,
     pagePadding: PaddingValues,
     compensateBottomPagePaddingDuringAnimation: Boolean,
     navigationBackEnabled: Boolean,
@@ -137,6 +138,7 @@ fun MainContent(
 
             GalleryNavEntry(
                 serverConfig = serverConfig,
+                minCellSize = galleryMinGridCellSize,
                 pagePadding = pagePadding,
                 appBarState = appBarState,
                 onItemSelected = onGalleryItemSelected

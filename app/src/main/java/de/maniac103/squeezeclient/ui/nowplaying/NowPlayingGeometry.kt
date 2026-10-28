@@ -62,8 +62,9 @@ internal data class PlaylistLayoutSpec(
     // driven by now playing progress
     val bounds: Morph<Bounds>,
     val alpha: Morph<Float>,
+    val nowPlayingCornerSizes: CornerSizes,
     // driven by playlist progress
-    val cornerSize: Morph<Dp>,
+    val playlistCornerSizes: CornerSizes,
     val contentAlpha: Morph<Float>,
     // static
     val padding: PaddingValues,
@@ -460,7 +461,18 @@ private fun calculatePortraitGeometry(
         playlist = PlaylistLayoutSpec(
             bounds = morph(collapsedPlaylist, expandedPlaylist),
             alpha = morph(0F, 1F, easing = WindowEasing(0.7F, 1F)),
-            cornerSize = morph(input.cornerSize, 0.dp),
+            nowPlayingCornerSizes = CornerSizes(
+                topStart = constant(0.dp),
+                topEnd = constant(0.dp),
+                bottomStart = constant(0.dp),
+                bottomEnd = constant(0.dp)
+            ),
+            playlistCornerSizes = CornerSizes(
+                topStart = morph(input.cornerSize, 0.dp),
+                topEnd = morph(input.cornerSize, 0.dp),
+                bottomStart = constant(0.dp),
+                bottomEnd = constant(0.dp)
+            ),
             contentAlpha = morph(0f, 1f),
             padding = PaddingValues(start = startInset, end = endInset, bottom = bottomInset),
             handleHeight = playlistHandleHeight,
@@ -821,7 +833,22 @@ private fun calculateLandscapeGeometry(
             } else {
                 morph(0F, 1F, WindowEasing(0.8F, 1F))
             },
-            cornerSize = constant(0.dp),
+            nowPlayingCornerSizes = CornerSizes(
+                topStart = constant(0.dp),
+                topEnd = constant(0.dp),
+                bottomStart = if (collapsedPlaylistHeightFraction > 0) {
+                    morph(input.cornerSize, 0.dp)
+                } else {
+                    constant(0.dp)
+                },
+                bottomEnd = constant(0.dp)
+            ),
+            playlistCornerSizes = CornerSizes(
+                topStart = constant(0.dp),
+                topEnd = constant(0.dp),
+                bottomStart = constant(0.dp),
+                bottomEnd = constant(0.dp)
+            ),
             contentAlpha = constant(1F)
         ),
 

@@ -44,6 +44,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -65,7 +67,8 @@ internal fun PlayerList(
     onChangePlaybackState: (PlayerId, PlayerStatus.PlayState) -> Unit,
     onSync: (PlayerId, PlayerId) -> Unit,
     onUnsync: (PlayerId) -> Unit,
-    contentPadding: PaddingValues
+    contentPadding: PaddingValues,
+    scrollConnection: NestedScrollConnection
 ) {
     val listState = rememberLazyListState()
     val dragState = remember { PlayerDragState() }
@@ -109,6 +112,7 @@ internal fun PlayerList(
             contentPadding = contentPadding,
             modifier = Modifier
                 .fillMaxSize()
+                .nestedScroll(scrollConnection)
                 .playerDragGestures(
                     dragState = dragState,
                     listState = listState,

@@ -20,11 +20,11 @@ package de.maniac103.squeezeclient.ui.playermanagement
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import de.maniac103.squeezeclient.Preferences
+import de.maniac103.squeezeclient.extfuncs.enableEdgeToEdge
 import de.maniac103.squeezeclient.ui.theme.AppTheme
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.Job

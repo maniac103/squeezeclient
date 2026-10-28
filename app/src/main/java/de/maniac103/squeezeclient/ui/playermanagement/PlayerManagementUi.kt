@@ -21,9 +21,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -32,52 +34,64 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.maniac103.squeezeclient.R
+import de.maniac103.squeezeclient.ui.composables.NavigationBarScrim
 import de.maniac103.squeezeclient.ui.composables.ResourceIconButton
 
 @Composable
-fun PlayerManagementUi(viewModel: PlayerManagementViewModel, onGoBack: () -> Unit) = Scaffold(
-    topBar = {
-        TopAppBar(
-            title = { Text(stringResource(R.string.app_name)) },
-            subtitle = { Text(stringResource(R.string.player_management_title)) },
-            titleHorizontalAlignment = Alignment.CenterHorizontally,
-            navigationIcon = {
-                ResourceIconButton(
-                    drawableResId = R.drawable.ic_arrow_left_24dp,
-                    contentDescriptionResId = R.string.content_description_appbar_back,
-                    onClick = onGoBack
-                )
-            }
-        )
-    }
-) { innerPadding ->
-    val state by viewModel.uiStateFlow.collectAsStateWithLifecycle()
+fun PlayerManagementUi(viewModel: PlayerManagementViewModel, onGoBack: () -> Unit) {
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
 
-    Box(
-        modifier = Modifier.fillMaxSize()
-    ) {
-        when (val state = state) {
-            is PlayerManagementUiState.Loading, is PlayerManagementUiState.Disconnected -> {
-                CircularProgressIndicator(
-                    strokeWidth = 6.dp,
-                    modifier = Modifier
-                        .size(128.dp)
-                        .align(Alignment.Center)
-                )
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.app_name)) },
+                subtitle = { Text(stringResource(R.string.player_management_title)) },
+                titleHorizontalAlignment = Alignment.CenterHorizontally,
+                scrollBehavior = scrollBehavior,
+                navigationIcon = {
+                    ResourceIconButton(
+                        drawableResId = R.drawable.ic_arrow_left_24dp,
+                        contentDescriptionResId = R.string.content_description_appbar_back,
+                        onClick = onGoBack
+                    )
+                }
+            )
+        }
+    ) { innerPadding ->
+        val state by viewModel.uiStateFlow.collectAsStateWithLifecycle()
+
+        Box(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            when (val state = state) {
+                is PlayerManagementUiState.Loading, is PlayerManagementUiState.Disconnected -> {
+                    CircularProgressIndicator(
+                        strokeWidth = 6.dp,
+                        modifier = Modifier
+                            .size(128.dp)
+                            .align(Alignment.Center)
+                    )
+                }
+
+                is PlayerManagementUiState.Ready -> {
+                    PlayerList(
+                        players = state.players,
+                        slavesByMaster = state.slavesByMaster,
+                        contentPadding = innerPadding,
+                        scrollConnection = scrollBehavior.nestedScrollConnection,
+                        onChangeVolume = viewModel::setPlayerVolume,
+                        onTogglePower = viewModel::togglePlayerPower,
+                        onChangePlaybackState = viewModel::setPlayerPlayState,
+                        onSync = viewModel::syncPlayers,
+                        onUnsync = viewModel::unsyncPlayer
+                    )
+                }
             }
 
-            is PlayerManagementUiState.Ready -> {
-                PlayerList(
-                    players = state.players,
-                    slavesByMaster = state.slavesByMaster,
-                    contentPadding = innerPadding,
-                    onChangeVolume = viewModel::setPlayerVolume,
-                    onTogglePower = viewModel::togglePlayerPower,
-                    onChangePlaybackState = viewModel::setPlayerPlayState,
-                    onSync = viewModel::syncPlayers,
-                    onUnsync = viewModel::unsyncPlayer
-                )
-            }
+            NavigationBarScrim(
+                color = MaterialTheme.colorScheme.surface,
+                insets = innerPadding
+            )
         }
     }
 }

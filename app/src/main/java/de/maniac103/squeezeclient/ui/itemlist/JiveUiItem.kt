@@ -147,9 +147,15 @@ internal fun SlimBrowseItemList.SlimBrowseItem.toUiItem(): SlimBrowseUiItem {
         }
     }
 
+    val subtext = when {
+        extraInfo.isNullOrEmpty() -> subText
+        subText.isNullOrEmpty() -> extraInfo
+        else -> "$extraInfo · $subText"
+    }
+
     val uiItem = JiveUiItem(
         title = title,
-        subText = subText ?: extraInfo,
+        subText = subtext,
         icon = toUiIcon(),
         trailingWidget = trailingWidget
     )

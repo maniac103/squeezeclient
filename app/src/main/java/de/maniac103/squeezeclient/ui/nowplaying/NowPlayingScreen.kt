@@ -323,6 +323,7 @@ internal fun NowPlayingScreen(
                     .dragHandle(
                         orientation = geometry.content.dragDirection,
                         progress = motionState.nowPlaying,
+                        enabled = uiState.canExpand,
                         canClickToClose = false,
                         dragDistance = geometry.content.dragDistance,
                         scope = scope
@@ -634,10 +635,10 @@ private fun PlaybackControls(
     PlaybackToggleButton(
         iconResId = state.repeatIconResId,
         contentDescriptionResId = state.repeatContentDescriptionResId,
-        checked = state.repeatEnabled,
+        checked = state.repeatChecked,
         layoutSpec = layoutSpec.repeat,
         progress = progress,
-        enabled = state.isPowered,
+        enabled = state.playbackControlsEnabled,
         onClick = onToggleRepeat
     )
 
@@ -646,7 +647,7 @@ private fun PlaybackControls(
         contentDescriptionResId = R.string.content_description_nowplaying_prev,
         layoutSpec = layoutSpec.prevTrack,
         progress = progress,
-        enabled = state.playlistPosition > 1,
+        enabled = state.playbackControlsEnabled && state.playlistPosition > 1,
         onClick = onPrevious
     )
 
@@ -656,7 +657,7 @@ private fun PlaybackControls(
     FilledIconToggleButton(
         checked = state.isPlaying,
         onCheckedChange = onSetPlayingOrPaused,
-        enabled = state.playPauseEnabled,
+        enabled = state.playbackControlsEnabled && state.playPauseEnabled,
         shapes = IconButtonDefaults.toggleableShapes(),
         modifier = Modifier
             .bounds(progress, layoutSpec.playPause.bounds)
@@ -688,17 +689,17 @@ private fun PlaybackControls(
         contentDescriptionResId = R.string.content_description_nowplaying_next,
         layoutSpec = layoutSpec.nextTrack,
         progress = progress,
-        enabled = state.playlistPosition < state.playlistLength,
+        enabled = state.playbackControlsEnabled && state.playlistPosition < state.playlistLength,
         onClick = onNext
     )
 
     PlaybackToggleButton(
         iconResId = state.shuffleIconResId,
         contentDescriptionResId = state.shuffleContentDescriptionResId,
-        checked = state.shuffleEnabled,
+        checked = state.shuffleChecked,
         layoutSpec = layoutSpec.shuffle,
         progress = progress,
-        enabled = state.isPowered,
+        enabled = state.playbackControlsEnabled,
         onClick = onToggleShuffle
     )
 }
@@ -1046,6 +1047,7 @@ private fun PlaylistHandle(
             .dragHandle(
                 orientation = Orientation.Vertical,
                 progress = progress,
+                enabled = true,
                 canClickToClose = true,
                 dragDistance = dragDistance,
                 scope = scope
@@ -1134,6 +1136,7 @@ internal fun Modifier.alignHorizontally(progress: MotionProgress, alignment: Mor
 internal fun Modifier.dragHandle(
     orientation: Orientation,
     progress: MotionProgress,
+    enabled: Boolean,
     canClickToClose: Boolean,
     dragDistance: Float,
     scope: CoroutineScope
@@ -1153,11 +1156,13 @@ internal fun Modifier.dragHandle(
                     }
                 }
             },
+            enabled = enabled,
             interactionSource = remember { MutableInteractionSource() },
             indication = null
         )
         .anchoredDraggable(
             state = progress.anchoredState(),
+            enabled = enabled,
             orientation = orientation
         )
 }
@@ -1199,15 +1204,16 @@ fun NowPlayingPreview() {
         playPosition = 35F,
         durationSeconds = 290F,
         isPlaying = true,
-        isPowered = true,
         playPauseEnabled = true,
+        playbackControlsEnabled = true,
         repeatIconResId = R.drawable.ic_repeat_off_24dp,
         repeatContentDescriptionResId = R.string.content_description_nowplaying_repeat_off,
-        repeatEnabled = false,
+        repeatChecked = false,
         shuffleIconResId = R.drawable.ic_shuffle_off_24dp,
         shuffleContentDescriptionResId = R.string.content_description_nowplaying_shuffle_off,
-        shuffleEnabled = false,
+        shuffleChecked = false,
         canSeek = true,
+        canExpand = true,
         playlistPosition = 8,
         playlistLength = 15,
         playerName = "Some player",

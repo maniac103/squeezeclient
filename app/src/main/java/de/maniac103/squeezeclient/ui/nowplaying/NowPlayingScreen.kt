@@ -324,13 +324,14 @@ internal fun NowPlayingScreen(
                     .dragHandle(
                         orientation = geometry.content.dragDirection,
                         progress = motionState.nowPlaying,
-                        enabled = uiState.canExpand,
+                        enabled = uiState.canExpand && motionState.playlist.isCollapsed,
                         canClickToClose = false,
                         dragDistance = geometry.content.dragDistance,
                         scope = scope
                     ),
                 onNavigateUp = {
                     scope.launch {
+                        motionState.playlist.collapse()
                         motionState.nowPlaying.collapse()
                     }
                 },

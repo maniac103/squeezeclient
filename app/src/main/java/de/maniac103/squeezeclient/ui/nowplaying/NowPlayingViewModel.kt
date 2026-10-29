@@ -188,15 +188,16 @@ data class NowPlayingUiState(
     private val playPosition: Float,
     val durationSeconds: Float,
     val isPlaying: Boolean,
-    val isPowered: Boolean,
+    val playbackControlsEnabled: Boolean,
     val playPauseEnabled: Boolean,
     val repeatIconResId: Int,
     val repeatContentDescriptionResId: Int,
-    val repeatEnabled: Boolean,
+    val repeatChecked: Boolean,
     val shuffleIconResId: Int,
     val shuffleContentDescriptionResId: Int,
-    val shuffleEnabled: Boolean,
+    val shuffleChecked: Boolean,
     val canSeek: Boolean,
+    val canExpand: Boolean,
     val playlistPosition: Int,
     val playlistLength: Int,
     val playerName: String,
@@ -240,8 +241,8 @@ fun PlayerStatus.toNowPlayingUiState() = NowPlayingUiState(
         ?.toFloat()
         ?: 0.1F,
     isPlaying = playbackState == PlayState.Playing,
-    isPowered = powered,
     playPauseEnabled = playlist.nowPlaying != null,
+    playbackControlsEnabled = powered && playlist.trackCount > 0,
     repeatIconResId = when (repeatState) {
         RepeatState.RepeatTitle -> R.drawable.ic_repeat_one_24dp
         RepeatState.RepeatAll -> R.drawable.ic_repeat_24dp
@@ -252,7 +253,7 @@ fun PlayerStatus.toNowPlayingUiState() = NowPlayingUiState(
         RepeatState.RepeatAll -> R.string.content_description_nowplaying_repeat_all
         RepeatState.Off -> R.string.content_description_nowplaying_repeat_off
     },
-    repeatEnabled = repeatState != RepeatState.Off,
+    repeatChecked = repeatState != RepeatState.Off,
     shuffleIconResId = when (shuffleState) {
         ShuffleState.ShuffleAlbum -> R.drawable.ic_shuffle_album_24dp
         ShuffleState.ShuffleSong -> R.drawable.ic_shuffle_song_24dp
@@ -263,8 +264,9 @@ fun PlayerStatus.toNowPlayingUiState() = NowPlayingUiState(
         ShuffleState.ShuffleSong -> R.string.content_description_nowplaying_shuffle_songs
         ShuffleState.Off -> R.string.content_description_nowplaying_shuffle_off
     },
-    shuffleEnabled = shuffleState != ShuffleState.Off,
+    shuffleChecked = shuffleState != ShuffleState.Off,
     canSeek = playbackState != PlayState.Stopped && currentSongDuration != null,
+    canExpand = playlist.trackCount > 0,
     playlistPosition = playlist.currentPosition,
     playlistLength = playlist.trackCount,
     playerName = playerName,

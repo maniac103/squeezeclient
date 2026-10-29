@@ -49,7 +49,6 @@ fun ResourceIconButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     colors: IconButtonColors = IconButtonDefaults.iconButtonColors(),
-    iconTint: Color = LocalContentColor.current,
     enabled: Boolean = true
 ) = IconButton(
     onClick = onClick,
@@ -59,7 +58,6 @@ fun ResourceIconButton(
 ) {
     ResourceIcon(
         drawableResId = drawableResId,
-        contentDescriptionResId = contentDescriptionResId,
-        tint = iconTint
+        contentDescriptionResId = contentDescriptionResId
     )
 }

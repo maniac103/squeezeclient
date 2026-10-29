@@ -35,6 +35,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
@@ -226,15 +227,19 @@ internal fun PlayerRow(
                     )
                 }
                 if (player.canPowerOff) {
+                    val iconButtonColors = IconButtonDefaults.iconButtonColors()
                     ResourceIconButton(
                         drawableResId = R.drawable.ic_power_24dp,
                         contentDescriptionResId = when (player.powered) {
                             true -> R.string.content_description_player_power_off
                             false -> R.string.content_description_player_power_on
                         },
-                        iconTint = when (player.powered) {
-                            true -> MaterialTheme.colorScheme.onSurface
-                            false -> MaterialTheme.colorScheme.onSurfaceVariant
+                        colors = when (player.powered) {
+                            true -> iconButtonColors
+
+                            false -> iconButtonColors.copy(
+                                contentColor = iconButtonColors.disabledContentColor
+                            )
                         },
                         onClick = { onTogglePower(player.playerId) }
                     )

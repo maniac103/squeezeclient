@@ -303,7 +303,8 @@ internal fun NowPlayingScreen(
                 title = stringResource(R.string.playlist_save_title),
                 busy = busy,
                 minLength = 1,
-                onSubmit = onSavePlaylistNameEntered
+                onSubmit = onSavePlaylistNameEntered,
+                modifier = Modifier.padding(16.dp)
             )
         }
     }

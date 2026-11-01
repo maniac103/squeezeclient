@@ -1,3 +1,4 @@
+
 /*
  * This file is part of Squeeze Client, an Android client for the LMS music server.
  * Copyright (c) 2026 Danny Baumann
@@ -108,11 +109,13 @@ class MediaService :
             .setDisplayName(getString(R.string.notif_action_player_power))
             .setCustomIconResId(R.drawable.ic_power_24dp)
             .setSessionCommand(SessionCommand(SESSION_ACTION_POWER, bundleOf()))
+            .setSlots(CommandButton.SLOT_OVERFLOW)
             .build()
         val disconnectButton = CommandButton.Builder(CommandButton.ICON_UNDEFINED)
             .setDisplayName(getString(R.string.notif_action_disconnect))
             .setCustomIconResId(R.drawable.ic_disconnect_24dp)
             .setSessionCommand(SessionCommand(SESSION_ACTION_DISCONNECT, bundleOf()))
+            .setSlots(CommandButton.SLOT_OVERFLOW)
             .build()
 
         val activityIntent = PendingIntent.getActivity(
@@ -131,7 +134,7 @@ class MediaService :
             .build()
         mediaSession = MediaSession.Builder(this, player)
             .setCallback(this)
-            .setCustomLayout(listOf(powerButton, disconnectButton))
+            .setMediaButtonPreferences(listOf(powerButton, disconnectButton))
             .setSessionActivity(activityIntent)
             .setBitmapLoader(CacheBitmapLoader(bitmapLoader))
             .build()
@@ -186,6 +189,7 @@ class MediaService :
             .build()
         return MediaSession.ConnectionResult.AcceptedResultBuilder(session, controller)
             .setAvailableSessionCommands(sessionCommands)
+            .setAvailablePlayerCommands(MediaSession.ConnectionResult.DEFAULT_PLAYER_COMMANDS)
             .build()
     }
 

@@ -47,7 +47,6 @@ androidx-fragment = { module = "androidx.fragment:fragment", version.ref = "andr
 androidx-fragment-ktx = { module = "androidx.fragment:fragment-ktx", version.ref = "androidx-fragment" }
 androidx-lifecycle-process = { module = "androidx.lifecycle:lifecycle-process", version.ref = "androidx-lifecycle" }
 androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "androidx-lifecycle" }
-androidx-lifecycle-service = { module = "androidx.lifecycle:lifecycle-service", version.ref = "androidx-lifecycle" }
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "androidx-lifecycle" }
 androidx-material-icons-extended-android = { module = "androidx.compose.material:material-icons-extended-android", version.ref = "androidx-compose-material" }
 androidx-media3-session = { module = "androidx.media3:media3-session", version.ref = "androidx-media3" }

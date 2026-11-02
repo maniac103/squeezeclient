@@ -22,13 +22,10 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.os.IBinder
 import androidx.annotation.OptIn
 import androidx.core.content.IntentCompat
 import androidx.core.os.bundleOf
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.ServiceLifecycleDispatcher
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.Player
@@ -66,10 +63,7 @@ import kotlinx.coroutines.launch
 @OptIn(UnstableApi::class, ExperimentalTime::class)
 class MediaService :
     MediaSessionService(),
-    LifecycleOwner,
     MediaSession.Callback {
-    private val dispatcher = ServiceLifecycleDispatcher(this)
-    override val lifecycle: Lifecycle get() = dispatcher.lifecycle
     private lateinit var player: SqueezeboxMediaPlayer
     private lateinit var mediaSession: MediaSession
     private var lastDisconnectionTime = Clock.System.now()
@@ -77,7 +71,6 @@ class MediaService :
 
     @OptIn(UnstableApi::class)
     override fun onCreate() {
-        dispatcher.onServicePreSuperOnCreate()
         super.onCreate()
         player = SqueezeboxMediaPlayer(applicationContext, connectionHelper, lifecycle)
 
@@ -141,13 +134,7 @@ class MediaService :
         addSession(mediaSession)
     }
 
-    override fun onBind(intent: Intent?): IBinder? {
-        dispatcher.onServicePreSuperOnBind()
-        return super.onBind(intent)
-    }
-
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        dispatcher.onServicePreSuperOnStart()
         if (intent?.action == ACTION_START_WITH_PLAYER) {
             val playerId = requireNotNull(
                 IntentCompat.getParcelableExtra(intent, "playerId", PlayerId::class.java)
@@ -156,7 +143,6 @@ class MediaService :
             if (player.currentPlayer == null || forcePlayerChange) {
                 player.currentPlayer = playerId
             }
-            return START_STICKY
         }
         return super.onStartCommand(intent, flags, startId)
     }
@@ -170,7 +156,6 @@ class MediaService :
 
     @OptIn(UnstableApi::class)
     override fun onDestroy() {
-        dispatcher.onServicePreSuperOnDestroy()
         player.release()
         mediaSession.release()
         super.onDestroy()

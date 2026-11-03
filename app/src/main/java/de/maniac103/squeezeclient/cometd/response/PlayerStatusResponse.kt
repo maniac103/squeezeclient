@@ -118,8 +118,12 @@ data class PlayerStatusResponse(
             playerName,
             connected,
             powered,
-            currentVolume?.absoluteValue?.roundToInt(),
-            currentVolume?.let { it < 0 },
+            currentVolume?.absoluteValue
+                ?.takeIf { digitalVolumeControl != true }
+                ?.roundToInt(),
+            currentVolume
+                ?.takeIf { digitalVolumeControl != true }
+                ?.let { it < 0 },
             syncMaster,
             syncSlaves,
             eventTimestamp

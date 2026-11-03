@@ -18,9 +18,7 @@
 package de.maniac103.squeezeclient.ui.itemlist
 
 import androidx.lifecycle.ViewModel
-import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.cometd.ConnectionHelper
-import de.maniac103.squeezeclient.model.JiveHomeMenuItem
 import de.maniac103.squeezeclient.model.PlayerId
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flatMapLatest

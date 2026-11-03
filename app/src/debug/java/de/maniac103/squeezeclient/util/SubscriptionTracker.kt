@@ -34,7 +34,7 @@ class SubscriptionTracker {
 
     @OptIn(ExperimentalStdlibApi::class)
     internal operator fun get(tag: String) =
-        instances.getOrPutIfMissing(tag, { SubscriptionTrackerInstance(tag) })
+        instances.getOrPutIfMissing(tag) { SubscriptionTrackerInstance(tag) }
 
     fun dumpActive() {
         instances.values.forEach { it.dumpActive() }

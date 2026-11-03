@@ -152,7 +152,7 @@ class LocalPlaybackService :
         GlobalScope.launch {
             slimproto.disconnect()
         }
-        player.stop()
+        player.release()
         super.onDestroy()
     }
 

@@ -228,6 +228,10 @@ class LocalPlayer(
         player.stop()
     }
 
+    fun release() {
+        player.release()
+    }
+
     @OptIn(UnstableApi::class)
     fun skipAhead(duration: Duration) {
         audioProcessor.skipAhead(duration)

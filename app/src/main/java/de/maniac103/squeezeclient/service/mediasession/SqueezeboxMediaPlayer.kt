@@ -170,37 +170,55 @@ class SqueezeboxMediaPlayer(
         val currentSong = playerState.currentSong
             ?: return State.Builder().setPlaybackState(STATE_IDLE).build()
         val unacknowledgedChange = unacknowledgedStateChange
-
         val currentSongDurationUs =
             playerState.currentSongDuration?.toLong(DurationUnit.MICROSECONDS)
-        val (playlist, currentIndex) = playerState.playlist?.let { list ->
-            val currentPosition = when {
-                unacknowledgedChange?.absolutePlaylistPosition != null ->
-                    unacknowledgedChange.absolutePlaylistPosition
 
-                unacknowledgedChange?.playlistPositionOffset != null ->
-                    playerState.playlistPosition + unacknowledgedChange.playlistPositionOffset
+        data class PlaylistInfo(
+            val playlist: List<MediaItemData>,
+            val position: Int,
+            val canDoPrev: Boolean,
+            val canDoNext: Boolean
+        )
 
-                else -> playerState.playlistPosition
-            }
-            val mediaList: List<MediaItemData> = list.items.mapIndexed { index, item ->
-                val builder = if (index + list.offset == currentPosition) {
-                    // Prefer current song from status over playlist item, because the former
-                    // may be more up to date (e.g. in case of radio streams)
-                    currentSong.toMediaItemDataBuilder(index).apply {
-                        currentSongDurationUs?.let { setDurationUs(it) }
-                    }
-                } else {
-                    item.toMediaItemDataBuilder(index)
+        val playlistInfo = playerState.playlist
+            ?.takeIf { it.items.isNotEmpty() }
+            ?.let { list ->
+                val currentPositionUnsafe = when {
+                    unacknowledgedChange?.absolutePlaylistPosition != null ->
+                        unacknowledgedChange.absolutePlaylistPosition
+
+                    unacknowledgedChange?.playlistPositionOffset != null ->
+                        playerState.playlistPosition + unacknowledgedChange.playlistPositionOffset
+
+                    else -> playerState.playlistPosition
                 }
-                builder.build()
+                val currentPosition = currentPositionUnsafe
+                    .coerceIn(list.offset, list.offset + list.items.size - 1)
+
+                val mediaList = list.items.mapIndexed { index, item ->
+                    val builder = if (index + list.offset == currentPosition) {
+                        // Prefer current song from status over playlist item, because the former
+                        // may be more up to date (e.g. in case of radio streams)
+                        currentSong.toMediaItemDataBuilder(index).apply {
+                            currentSongDurationUs?.let { setDurationUs(it) }
+                        }
+                    } else {
+                        item.toMediaItemDataBuilder(index)
+                    }
+                    builder.build()
+                }
+                PlaylistInfo(
+                    playlist = mediaList,
+                    position = currentPosition - list.offset,
+                    canDoPrev = currentPosition > 0,
+                    canDoNext = currentPosition + 1 < list.totalCount
+                )
             }
-            Pair(mediaList, currentPosition - list.offset)
-        } ?: currentSong.let { song ->
-            val builder = song.toMediaItemDataBuilder(0)
-            currentSongDurationUs?.let { builder.setDurationUs(it) }
-            Pair(listOf(builder.build()), 0)
-        }
+            ?: currentSong.let { song ->
+                val builder = song.toMediaItemDataBuilder(0)
+                currentSongDurationUs?.let { builder.setDurationUs(it) }
+                PlaylistInfo(listOf(builder.build()), 0, false, false)
+            }
 
         val commandsBuilder = Player.Commands.Builder().apply {
             add(COMMAND_GET_CURRENT_MEDIA_ITEM)
@@ -213,11 +231,17 @@ class SqueezeboxMediaPlayer(
                 add(COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM)
             }
             add(COMMAND_SEEK_TO_MEDIA_ITEM)
-            add(COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)
-            add(COMMAND_SEEK_TO_NEXT)
-            add(COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)
-            add(COMMAND_SEEK_TO_PREVIOUS)
             add(COMMAND_STOP)
+
+            if (playlistInfo.canDoPrev) {
+                add(COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)
+                add(COMMAND_SEEK_TO_PREVIOUS)
+            }
+            if (playlistInfo.canDoNext) {
+                add(COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)
+                add(COMMAND_SEEK_TO_NEXT)
+            }
+
             if (playerState.currentVolume != null) {
                 add(COMMAND_ADJUST_DEVICE_VOLUME_WITH_FLAGS)
                 add(COMMAND_GET_DEVICE_VOLUME)
@@ -247,8 +271,8 @@ class SqueezeboxMediaPlayer(
                     ?: C.TIME_UNSET
             )
             .setPlayWhenReady(playWhenReady, PLAY_WHEN_READY_CHANGE_REASON_REMOTE)
-            .setPlaylist(playlist)
-            .setCurrentMediaItemIndex(currentIndex)
+            .setPlaylist(playlistInfo.playlist)
+            .setCurrentMediaItemIndex(playlistInfo.position)
 
         playerState.currentVolume?.let {
             builder.setDeviceVolume(it)

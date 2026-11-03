@@ -223,10 +223,10 @@ class MediaService :
         player.isConnectedToServer = true
         lastDisconnectionTime = null
         player.currentPlayer?.let { playerId ->
-            if (status.players.any { it.id == playerId }) {
-                playerDisappearanceTime = null
+            playerDisappearanceTime = if (status.players.any { it.id == playerId }) {
+                null
             } else {
-                playerDisappearanceTime = Clock.System.now()
+                Clock.System.now()
             }
         }
         scheduleShutdownIfNeeded()

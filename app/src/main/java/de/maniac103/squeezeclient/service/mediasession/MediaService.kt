@@ -54,6 +54,7 @@ import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
@@ -63,16 +64,21 @@ import kotlinx.coroutines.launch
 @OptIn(UnstableApi::class, ExperimentalTime::class)
 class MediaService :
     MediaSessionService(),
+    Player.Listener,
     MediaSession.Callback {
     private lateinit var player: SqueezeboxMediaPlayer
     private lateinit var mediaSession: MediaSession
-    private var lastDisconnectionTime = Clock.System.now()
+    private var lastDisconnectionTime: Instant? = null
+    private var playerDisappearanceTime: Instant? = null
+    private var lastPlayStopTime: Instant? = null
     private var delayedShutdownJob: Job? = null
 
     @OptIn(UnstableApi::class)
     override fun onCreate() {
         super.onCreate()
-        player = SqueezeboxMediaPlayer(applicationContext, connectionHelper, lifecycle)
+        player = SqueezeboxMediaPlayer(applicationContext, connectionHelper, lifecycle).apply {
+            addListener(this@MediaService)
+        }
 
         val channelInfo = NotificationIds.CHANNEL_MEDIA_CONTROL
         setMediaNotificationProvider(
@@ -200,24 +206,27 @@ class MediaService :
         SessionResult(result)
     }
 
+    override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+        handlePlaybackStateChange()
+    }
+
+    override fun onPlaybackStateChanged(playbackState: Int) {
+        handlePlaybackStateChange()
+    }
+
     private fun handleConnection(status: ConnectionState.Connected) {
         // Update connection status first, because currentPlayer checked below
         // is updated on status changes
         player.isConnectedToServer = true
+        lastDisconnectionTime = null
         player.currentPlayer?.let { playerId ->
             if (status.players.any { it.id == playerId }) {
-                delayedShutdownJob?.cancel()
-                delayedShutdownJob = null
-            } else if (delayedShutdownJob == null) {
-                // The player disappeared from the server's player list. That happens briefly
-                // when a player (e.g. this device's local player on a mobile connection)
-                // reconnects, so keep the media session for a while before giving it up.
-                delayedShutdownJob = lifecycleScope.launch {
-                    delay(30.seconds)
-                    stopSelf()
-                }
+                playerDisappearanceTime = null
+            } else {
+                playerDisappearanceTime = Clock.System.now()
             }
         }
+        scheduleShutdownIfNeeded()
     }
 
     private fun handleDisconnection() {
@@ -226,18 +235,57 @@ class MediaService :
             player.isConnectedToServer = false
         }
         // Try reconnecting for some amount of time to handle short interruptions. If we can't
-        // connect for longer amounts of time (using 15 minutes as an arbitrarily chosen timeout),
-        // stop retrying and shut down the service (which in turn removes the media notification)
-        val retryTime = Clock.System.now() - lastDisconnectionTime
-        if (retryTime < 15.minutes) {
-            connectionHelper.connect()
-        } else {
-            stopSelf()
+        // connect for longer amounts of time, stop retrying and shut down the service
+        // (which in turn removes the media notification)
+        connectionHelper.connect()
+        scheduleShutdownIfNeeded()
+    }
+
+    private fun handlePlaybackStateChange() {
+        if (player.isPlaying) {
+            lastPlayStopTime = null
+        } else if (lastPlayStopTime == null) {
+            lastPlayStopTime = Clock.System.now()
+        }
+
+        scheduleShutdownIfNeeded()
+    }
+
+    private fun scheduleShutdownIfNeeded() {
+        delayedShutdownJob?.cancel()
+        delayedShutdownJob = null
+
+        val shutdownDelayForDisappearedPlayer = playerDisappearanceTime?.let {
+            PLAYER_DISAPPEAR_SHUTDOWN_DELAY - (Clock.System.now() - it)
+        }
+        val shutdownDelayForStoppedPlayer = lastPlayStopTime?.let {
+            PLAYER_STOP_SHUTDOWN_DELAY - (Clock.System.now() - it)
+        }
+        val shutdownDelayForDisconnection = lastDisconnectionTime?.let {
+            DISCONNECT_SHUTDOWN_DELAY - (Clock.System.now() - it)
+        }
+
+        val shutdownDelay = when {
+            shutdownDelayForDisconnection != null -> shutdownDelayForDisconnection
+            shutdownDelayForDisappearedPlayer != null -> shutdownDelayForDisappearedPlayer
+            shutdownDelayForStoppedPlayer != null -> shutdownDelayForStoppedPlayer
+            else -> null
+        }
+
+        if (shutdownDelay != null) {
+            delayedShutdownJob = lifecycleScope.launch {
+                delay(shutdownDelay)
+                stopSelf()
+            }
         }
     }
 
     companion object {
         private val ACTION_START_WITH_PLAYER = MediaService::class.java.name + ".startWithPlayer"
+
+        private val DISCONNECT_SHUTDOWN_DELAY = 10.minutes
+        private val PLAYER_STOP_SHUTDOWN_DELAY = 20.minutes
+        private val PLAYER_DISAPPEAR_SHUTDOWN_DELAY = 30.seconds
 
         private const val SESSION_ACTION_POWER = "power"
         private const val SESSION_ACTION_DISCONNECT = "disconnect"

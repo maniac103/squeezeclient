@@ -20,7 +20,6 @@ package de.maniac103.squeezeclient.service.localplayer
 import android.net.Uri
 import android.util.Log
 import androidx.core.net.toUri
-import de.maniac103.squeezeclient.Preferences
 import de.maniac103.squeezeclient.extfuncs.putAsAscii
 import de.maniac103.squeezeclient.extfuncs.readRemainderAsArray
 import de.maniac103.squeezeclient.extfuncs.readString
@@ -42,10 +41,10 @@ import okio.buffer
 import okio.sink
 import okio.source
 
-class SlimprotoSocket(preferences: Preferences) {
-    val host: String? = preferences.serverConfig.value?.url?.host
-    private val deviceIdentifier: UUID = preferences.getOrCreateDeviceIdentifier()
+class SlimprotoSocket(val host: String?, private val deviceIdentifier: UUID) {
     private var socket: SocketHolder? = null
+    var useFixedVolume = false
+        private set
 
     private val playerMac get() = ByteArray(6) { i ->
         (deviceIdentifier.leastSignificantBits shr (i * 8)).toByte()
@@ -61,7 +60,10 @@ class SlimprotoSocket(preferences: Preferences) {
         "strm" to this::parseStreamPacket
     )
 
-    suspend fun connect() = connectInternal(false)
+    suspend fun connect(useFixedVolume: Boolean): Boolean {
+        this.useFixedVolume = useFixedVolume
+        return connectInternal(false)
+    }
     suspend fun reconnect() = connectInternal(true)
 
     private suspend fun connectInternal(reconnect: Boolean): Boolean {
@@ -289,11 +291,14 @@ class SlimprotoSocket(preferences: Preferences) {
 
     private suspend fun sendHello(reconnect: Boolean) {
         val supportedFormats = listOf("mp3", "aac", "ogg", "flc")
-        val supportedCapabilities = listOf(
-            "Model=squeezeclient",
-            "AccuratePlayPoints=1",
-            "CanHTTPS=1"
-        )
+        val supportedCapabilities = buildList {
+            add("Model=squeezeclient")
+            add("AccuratePlayPoints=1")
+            add("CanHTTPS=1")
+            if (useFixedVolume) {
+                add("HasDigitalOut=1")
+            }
+        }
         val capabilityString = (supportedFormats + supportedCapabilities).joinToString(",")
         val payload = ByteBuffer.allocate(36 + capabilityString.length).apply {
             put(12) // device ID

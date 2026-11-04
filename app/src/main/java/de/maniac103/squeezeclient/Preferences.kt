@@ -139,7 +139,8 @@ class Preferences(appContext: Application) {
     enum class LocalPlayerVolumeMode(val prefValue: String) {
         PlayerOnly("playeronly"),
         Device("device"),
-        DeviceWhilePlaying("devicewhileplaying")
+        DeviceWhilePlaying("devicewhileplaying"),
+        Fixed("fixed")
     }
 
     val localPlayerVolumeMode: Preference<LocalPlayerVolumeMode> get() = TransformingPreferenceImpl(

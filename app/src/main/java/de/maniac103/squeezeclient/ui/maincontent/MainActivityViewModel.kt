@@ -111,16 +111,17 @@ class MainActivityViewModel(
             initialValue = MainActivityState.Loading(null, null)
         )
 
-    val selectedPlayerActiveStateFlow = stateFlow
+    val selectedPlayerStateFlow = stateFlow
         .flatMapLatest { state ->
             (state as? MainActivityState.Connected)?.selectedPlayer?.id
                 ?.let { playerId ->
                     connectionHelper.playerState(playerId)
                         .flatMapLatest { it.playStatus }
                         .map {
-                            SelectedPlayerActiveState(
-                                playerId,
-                                it.playbackState == PlayerStatus.PlayState.Playing
+                            SelectedPlayerState(
+                                playerId = playerId,
+                                isPlaying = it.playbackState == PlayerStatus.PlayState.Playing,
+                                hasVolumeControl = it.volume != null
                             )
                         }
                 }
@@ -181,4 +182,8 @@ sealed interface MainActivityState {
     ) : MainActivityState
 }
 
-data class SelectedPlayerActiveState(val playerId: PlayerId, val isPlaying: Boolean)
+data class SelectedPlayerState(
+    val playerId: PlayerId,
+    val isPlaying: Boolean,
+    val hasVolumeControl: Boolean
+)

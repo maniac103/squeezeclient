@@ -72,6 +72,9 @@ data class PlayerStatusResponse(
     @SerialName("digital_volume_control")
     @Serializable(with = BooleanAsIntSerializer::class)
     val digitalVolumeControl: Boolean? = null,
+    @SerialName("use_volume_control")
+    @Serializable(with = BooleanAsIntSerializer::class)
+    val useVolumeControl: Boolean? = null,
     @SerialName("player_name")
     val playerName: String,
     @SerialName("player_connected")
@@ -103,6 +106,7 @@ data class PlayerStatusResponse(
             ?.times(1000)
             ?.roundToLong()
             ?.toDuration(DurationUnit.MILLISECONDS)
+        val canControlVolume = useVolumeControl ?: digitalVolumeControl ?: true
         return PlayerStatus(
             state,
             PlayerStatus.PlaylistInfo(
@@ -119,10 +123,10 @@ data class PlayerStatusResponse(
             connected,
             powered,
             currentVolume?.absoluteValue
-                ?.takeIf { digitalVolumeControl != true }
+                ?.takeIf { canControlVolume }
                 ?.roundToInt(),
             currentVolume
-                ?.takeIf { digitalVolumeControl != true }
+                ?.takeIf { canControlVolume }
                 ?.let { it < 0 },
             syncMaster,
             syncSlaves,

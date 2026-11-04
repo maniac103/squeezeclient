@@ -18,21 +18,18 @@
 package de.maniac103.squeezeclient.service.localplayer
 
 import android.annotation.SuppressLint
-import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.net.Uri
 import android.os.Build
-import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.PendingIntentCompat
 import androidx.core.app.ServiceCompat
 import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.ServiceLifecycleDispatcher
+import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.util.UnstableApi
@@ -43,7 +40,10 @@ import androidx.work.OutOfQuotaPolicy
 import androidx.work.WorkManager
 import de.maniac103.squeezeclient.Preferences
 import de.maniac103.squeezeclient.R
+import de.maniac103.squeezeclient.cometd.ConnectionHelper
+import de.maniac103.squeezeclient.cometd.ConnectionState
 import de.maniac103.squeezeclient.extfuncs.getOrCreateNotificationChannel
+import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.service.NotificationIds
 import de.maniac103.squeezeclient.service.mediasession.MediaService
 import de.maniac103.squeezeclient.ui.MainActivity
@@ -60,37 +60,38 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import okhttp3.Response
 import org.koin.android.ext.android.inject
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
 
-class LocalPlaybackService :
-    Service(),
-    LifecycleOwner {
-    private val dispatcher = ServiceLifecycleDispatcher(this)
+class LocalPlaybackService : LifecycleService() {
     private val preferences: Preferences by inject()
     private lateinit var slimproto: SlimprotoSocket
     private lateinit var player: LocalPlayer
 
     private var startupTimestampNanos = 0L
 
-    override val lifecycle get() = dispatcher.lifecycle
-
     private var slimprotoJob: Job? = null
-    private var stateListenerJob: Job? = null
     private var statusUpdateJob: Job? = null
     private val slimprotoStateFlow = MutableStateFlow<SlimprotoState>(SlimprotoState.Disconnected)
 
     private var sentTrackStartStatus = false
     private var sentBufferReady = false
 
+    @OptIn(FlowPreview::class)
     override fun onCreate() {
-        dispatcher.onServicePreSuperOnCreate()
         super.onCreate()
-        slimproto = SlimprotoSocket(preferences)
+
+        slimproto = SlimprotoSocket(
+            host = preferences.serverConfig.value?.url?.host,
+            deviceIdentifier = preferences.getOrCreateDeviceIdentifier()
+        )
         player = LocalPlayer(
             this,
             onPlaybackReady = { buffering -> onPlaybackReady(buffering) },
@@ -105,48 +106,40 @@ class LocalPlaybackService :
             onMetadataReceived = { title, artworkUri -> onMetadataReceived(title, artworkUri) }
         )
         startupTimestampNanos = System.nanoTime()
-    }
 
-    override fun onBind(intent: Intent?): IBinder? {
-        dispatcher.onServicePreSuperOnBind()
-        return null
-    }
+        runSlimproto()
 
-    @OptIn(FlowPreview::class)
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        dispatcher.onServicePreSuperOnStart()
-
-        if (slimprotoJob == null) {
-            slimprotoJob = connectAndRunSlimproto().also {
-                it.invokeOnCompletion { slimprotoJob = null }
-            }
-        }
-
-        if (stateListenerJob == null) {
-            stateListenerJob = lifecycleScope.launch {
-                repeatOnLifecycle(Lifecycle.State.STARTED) {
-                    slimprotoStateFlow
-                        .debounce(500.milliseconds)
-                        .collectLatest { state ->
-                            updateForegroundNotification(state)
-                            if (state is SlimprotoState.PlayingOrPaused && !state.paused) {
-                                MediaService.start(
-                                    this@LocalPlaybackService,
-                                    slimproto.playerId,
-                                    false
-                                )
-                            }
-                        }
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                preferences.localPlayerVolumeMode.asFlow().collectLatest { volumeMode ->
+                    val isFixedVolume = volumeMode == Preferences.LocalPlayerVolumeMode.Fixed
+                    if (isFixedVolume != slimproto.useFixedVolume) {
+                        restartSlimproto()
+                    }
                 }
             }
         }
 
-        return START_STICKY
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                slimprotoStateFlow
+                    .debounce(500.milliseconds)
+                    .collectLatest { state ->
+                        updateForegroundNotification(state)
+                        if (state is SlimprotoState.PlayingOrPaused && !state.paused) {
+                            MediaService.start(
+                                this@LocalPlaybackService,
+                                slimproto.playerId,
+                                false
+                            )
+                        }
+                    }
+            }
+        }
     }
 
     @OptIn(DelicateCoroutinesApi::class)
     override fun onDestroy() {
-        dispatcher.onServicePreSuperOnDestroy()
         GlobalScope.launch {
             slimproto.disconnect()
         }
@@ -231,13 +224,32 @@ class LocalPlaybackService :
         }
     }
 
+    private suspend fun restartSlimproto() {
+        slimproto.disconnect()
+        slimprotoJob?.cancel()
+        slimprotoJob?.join()
+        runSlimproto()
+    }
+
+    private fun runSlimproto() {
+        if (slimprotoJob != null) {
+            throw IllegalStateException("Attempt to restart running slimproto")
+        }
+        slimprotoJob = connectAndRunSlimproto().also {
+            it.invokeOnCompletion { slimprotoJob = null }
+        }
+    }
+
     private fun connectAndRunSlimproto() = lifecycleScope.launch {
+        val useFixedVolume =
+            preferences.localPlayerVolumeMode.value == Preferences.LocalPlayerVolumeMode.Fixed
+
         slimprotoStateFlow.emit(SlimprotoState.Disconnected)
         while (isActive) {
             var connected = false
             // Attempt server connection
             while (isActive && !connected) {
-                connected = slimproto.connect()
+                connected = slimproto.connect(useFixedVolume)
                 if (!connected) {
                     delay(10.seconds)
                 }
@@ -245,16 +257,35 @@ class LocalPlaybackService :
 
             // We're connected, send notification and start reading commands
             slimprotoStateFlow.emit(SlimprotoState.Stopped)
+
+            // Make sure the server side volume control mode matches ours
+            launch {
+                updateVolumeControlPref(slimproto.playerId, useFixedVolume)
+            }
+
             while (isActive && connected) {
                 slimproto.readNextCommand()
                     .onSuccess { handleCommand(it) }
                     .onFailure {
                         Log.d(TAG, "Could not read command from socket", it)
-                        connected = slimproto.reconnect()
+                        connected = isActive && slimproto.reconnect()
                     }
             }
             statusUpdateJob?.cancel()
             slimprotoStateFlow.emit(SlimprotoState.Disconnected)
+        }
+    }
+
+    private suspend fun updateVolumeControlPref(playerId: PlayerId, fixedVolume: Boolean) {
+        val connectionHelper by inject<ConnectionHelper>()
+        connectionHelper.connect()
+        val connectedState = withTimeoutOrNull(2.seconds) {
+            connectionHelper.state
+                .filterIsInstance<ConnectionState.Connected>()
+                .firstOrNull { state -> state.players.any { it.id == playerId } }
+        }
+        if (connectedState != null) {
+            connectionHelper.setVolumeControlEnabled(playerId, !fixedVolume)
         }
     }
 

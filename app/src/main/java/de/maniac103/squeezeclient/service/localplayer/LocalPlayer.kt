@@ -330,29 +330,37 @@ class LocalPlayer(
         // once playback actually stops or pauses.
         val playbackOngoing = readyForPlaybackOrBuffering && !paused
         val mode = preferences.localPlayerVolumeMode.value
-        when {
-            isSetVolume && mode == Preferences.LocalPlayerVolumeMode.PlayerOnly -> {
-                playerInternalVolume = volume
-                player.volume = volume * currentReplayGain
-            }
 
+        val modeControlsDeviceVolume = mode == Preferences.LocalPlayerVolumeMode.Device ||
+            mode == Preferences.LocalPlayerVolumeMode.DeviceWhilePlaying
+
+        when {
             isSetVolume && mode == Preferences.LocalPlayerVolumeMode.Device -> {
                 applyVolumeAsDeviceVolume(volume)
             }
 
             playbackOngoing && mode == Preferences.LocalPlayerVolumeMode.DeviceWhilePlaying -> {
-                if (player.deviceInfo.maxVolume > 0) {
-                    if (lastSavedDeviceVolume == null) {
-                        lastSavedDeviceVolume = player.deviceVolume
+                if (lastSavedDeviceVolume == null) {
+                    lastSavedDeviceVolume = player.deviceVolume.takeIf {
+                        player.deviceInfo.maxVolume > 0
                     }
-                    applyVolumeAsDeviceVolume(volume)
                 }
+                applyVolumeAsDeviceVolume(volume)
             }
 
-            !playbackOngoing && lastSavedDeviceVolume != null -> {
-                player.setDeviceVolume(lastSavedDeviceVolume!!, 0)
-                lastSavedDeviceVolume = null
+            !playbackOngoing || !modeControlsDeviceVolume -> {
+                lastSavedDeviceVolume
+                    ?.let { player.setDeviceVolume(it, 0) }
+                    ?.also { lastSavedDeviceVolume = null }
             }
+        }
+
+        if (isSetVolume) {
+            playerInternalVolume = when (mode) {
+                Preferences.LocalPlayerVolumeMode.PlayerOnly -> volume
+                else -> 1F
+            }
+            player.volume = playerInternalVolume * currentReplayGain
         }
     }
 

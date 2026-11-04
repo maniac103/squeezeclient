@@ -139,13 +139,14 @@ class Preferences(appContext: Application) {
     enum class LocalPlayerVolumeMode(val prefValue: String) {
         PlayerOnly("playeronly"),
         Device("device"),
-        DeviceWhilePlaying("devicewhileplaying")
+        DeviceWhilePlaying("devicewhileplaying"),
+        Fixed("fixed")
     }
 
     val localPlayerVolumeMode: Preference<LocalPlayerVolumeMode> get() = TransformingPreferenceImpl(
         stringPreference(
             "local_player_volume_mode",
-            LocalPlayerVolumeMode.DeviceWhilePlaying.prefValue
+            LocalPlayerVolumeMode.Fixed.prefValue
         ),
         transformGet = { value -> LocalPlayerVolumeMode.entries.first { value == it.prefValue } },
         transformWrite = { value -> value.prefValue }

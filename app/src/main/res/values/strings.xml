@@ -141,9 +141,11 @@
     <string name="settings_local_player_volume_mode_player_only">In-app only</string>
     <string name="settings_local_player_volume_mode_device">Use device volume</string>
     <string name="settings_local_player_volume_mode_device_while_playing">Device volume while playing</string>
+    <string name="settings_local_player_volume_mode_fixed">Fixed at 100%</string>
     <string name="settings_local_player_volume_mode_summary_player_only">Server side volume only controls the in-app player. Final volume will depend on server volume and media volume set on device.</string>
     <string name="settings_local_player_volume_mode_summary_device">Server side volume controls the device media volume. The volume set thus will also affect other apps.</string>
     <string name="settings_local_player_volume_mode_summary_device_while_playing">Server side volume controls the device media volume during playback. When playback ends, volume is restored to its state at playback start.</string>
+    <string name="settings_local_player_volume_mode_summary_fixed">Server side volume controls are disabled and playback volume is solely controlled by the device media volume.</string>
 
     <string name="content_description_appbar_back">Go back</string>
     <string name="content_description_appbar_drawer">Open side menu</string>

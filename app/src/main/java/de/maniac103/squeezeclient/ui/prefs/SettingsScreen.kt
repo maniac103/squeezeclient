@@ -256,6 +256,9 @@ private fun LocalPlaybackSettingsGroup(
 
                     Preferences.LocalPlayerVolumeMode.DeviceWhilePlaying ->
                         R.string.settings_local_player_volume_mode_device_while_playing
+
+                    Preferences.LocalPlayerVolumeMode.Fixed ->
+                        R.string.settings_local_player_volume_mode_fixed
                 }
                 stringResource(resId)
             },
@@ -268,8 +271,10 @@ private fun LocalPlaybackSettingsGroup(
                         R.string.settings_local_player_volume_mode_summary_device
 
                     Preferences.LocalPlayerVolumeMode.DeviceWhilePlaying ->
-                        R.string
-                            .settings_local_player_volume_mode_summary_device_while_playing
+                        R.string.settings_local_player_volume_mode_summary_device_while_playing
+
+                    Preferences.LocalPlayerVolumeMode.Fixed ->
+                        R.string.settings_local_player_volume_mode_summary_fixed
                 }
                 stringResource(resId)
             },

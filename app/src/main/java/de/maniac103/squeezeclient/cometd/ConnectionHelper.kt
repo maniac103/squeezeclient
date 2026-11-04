@@ -43,6 +43,7 @@ import de.maniac103.squeezeclient.cometd.request.ServerStatusRequest
 import de.maniac103.squeezeclient.cometd.request.SetMuteStateRequest
 import de.maniac103.squeezeclient.cometd.request.SetPlaybackPositionRequest
 import de.maniac103.squeezeclient.cometd.request.SetPlaylistPositionRequest
+import de.maniac103.squeezeclient.cometd.request.SetVolumeControlEnabledRequest
 import de.maniac103.squeezeclient.cometd.request.SetVolumeRequest
 import de.maniac103.squeezeclient.cometd.request.SyncPlayersRequest
 import de.maniac103.squeezeclient.cometd.request.UnsyncPlayerRequest
@@ -135,8 +136,8 @@ class ConnectionHelper(
     private var nextRequestId = 1
 
     fun connect() {
-        if (connectionScope != null) {
-            // already connected
+        if (client != null) {
+            // already connecting or connected
             return
         }
         val client = preferences.serverConfig.value?.let { CometdClient(httpClient, json, it) }
@@ -320,9 +321,10 @@ class ConnectionHelper(
 
     suspend fun setMuteState(playerId: PlayerId, muted: Boolean) =
         publishOneShotRequest(SetMuteStateRequest(playerId, muted))
-
     suspend fun setVolume(playerId: PlayerId, volume: Int) =
         publishOneShotRequest(SetVolumeRequest(playerId, volume))
+    suspend fun setVolumeControlEnabled(playerId: PlayerId, enabled: Boolean) =
+        publishOneShotRequest(SetVolumeControlEnabledRequest(playerId, enabled))
 
     suspend fun togglePower(playerId: PlayerId) =
         publishOneShotRequest(PlayerPowerRequest(playerId, null))

@@ -140,10 +140,11 @@
     <string name="settings_local_player_volume_mode_player_only">Nur in App</string>
     <string name="settings_local_player_volume_mode_device">Gerätelautstärke verwenden</string>
     <string name="settings_local_player_volume_mode_device_while_playing">Gerätelautstärke während der Wiedergabe</string>
+    <string name="settings_local_player_volume_mode_fixed">Immer 100% Lautstärke</string>
     <string name="settings_local_player_volume_mode_summary_player_only">Der vom Server gesetzte Lautstärkewert steuert nur die Lautstärke der Wiedergabe in der App. Die finale Wiedgergabelautstärke hängt sowohl von der serverseitigen Lautstärke als auch von der eingestellten Medienlautstärke des Gerätes ab.</string>
     <string name="settings_local_player_volume_mode_summary_device">Die Medienlautstärke des Gerätes wird auf die vom Server gesetzte Lautstärke gesetzt. Dadurch wird dieser Wert auch für andere Apps verwendet.</string>
     <string name="settings_local_player_volume_mode_summary_device_while_playing">Die Medienlautstärke des Gerätes wird während der Wiedergabe auf die vom Server gesetzte Lautstärke gesetzt. Bei Ende der Wiedergabe wird die zuvor eingestellte Lautstärke wiederhergestellt.</string>
-
+    <string name="settings_local_player_volume_mode_summary_fixed">Deaktiviert die serverseitige Lautstärkesteuerung. Die Wiedergabelautstärke wird ausschließlich von der Medienlautstärke des Gerätes bestimmt.</string>
 
     <string name="content_description_appbar_back">Zurück</string>
     <string name="content_description_appbar_drawer">Seitenmenü öffnen</string>

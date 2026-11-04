@@ -40,7 +40,7 @@ import de.maniac103.squeezeclient.service.mediasession.MediaService
 import de.maniac103.squeezeclient.ui.composables.DialogHost
 import de.maniac103.squeezeclient.ui.maincontent.MainActivityUi
 import de.maniac103.squeezeclient.ui.maincontent.MainActivityViewModel
-import de.maniac103.squeezeclient.ui.maincontent.SelectedPlayerActiveState
+import de.maniac103.squeezeclient.ui.maincontent.SelectedPlayerState
 import de.maniac103.squeezeclient.ui.playermanagement.PlayerManagementActivity
 import de.maniac103.squeezeclient.ui.prefs.SettingsActivity
 import de.maniac103.squeezeclient.ui.serversetup.ServerSetupActivity
@@ -59,7 +59,7 @@ class MainActivity : ComponentActivity() {
     private val dialogHost = DialogHost()
     private val viewModel by viewModel<MainActivityViewModel>()
 
-    private var selectedPlayerActiveState: SelectedPlayerActiveState? = null
+    private var selectedPlayerState: SelectedPlayerState? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -104,8 +104,8 @@ class MainActivity : ComponentActivity() {
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.selectedPlayerActiveStateFlow.collect { state ->
-                    selectedPlayerActiveState = state
+                viewModel.selectedPlayerStateFlow.collect { state ->
+                    selectedPlayerState = state
                 }
             }
         }
@@ -117,22 +117,24 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onStop() {
-        val selectedPlayerActive = selectedPlayerActiveState
-        if (selectedPlayerActive?.isPlaying == true && !isChangingConfigurations) {
-            MediaService.start(this, selectedPlayerActive.playerId, true)
+        val selectedPlayerState = selectedPlayerState
+        if (selectedPlayerState?.isPlaying == true && !isChangingConfigurations) {
+            MediaService.start(this, selectedPlayerState.playerId, true)
         }
         super.onStop()
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
         val useVolumeKeys = preferences.useVolumeButtonsForPlayerVolume.value
+        val hasVolumeControl = selectedPlayerState?.hasVolumeControl == true
+
         return when (keyCode) {
-            KeyEvent.KEYCODE_VOLUME_UP if useVolumeKeys -> {
+            KeyEvent.KEYCODE_VOLUME_UP if useVolumeKeys && hasVolumeControl -> {
                 adjustVolume(1)
                 true
             }
 
-            KeyEvent.KEYCODE_VOLUME_DOWN if useVolumeKeys -> {
+            KeyEvent.KEYCODE_VOLUME_DOWN if useVolumeKeys && hasVolumeControl -> {
                 adjustVolume(-1)
                 true
             }

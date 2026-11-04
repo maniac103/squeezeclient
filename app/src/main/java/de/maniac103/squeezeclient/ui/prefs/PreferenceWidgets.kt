@@ -235,20 +235,23 @@ inline fun <reified T : Enum<T>> ListPreference(
                         .padding(8.dp)
                 )
                 enumEntries<T>().forEach { entry ->
+                    val applyValue = {
+                        scope.launch {
+                            preference.update(entry)
+                            selectionShown = false
+                        }
+                        Unit
+                    }
+
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable {
-                                scope.launch {
-                                    preference.update(entry)
-                                    selectionShown = false
-                                }
-                            }
+                            .clickable(onClick = applyValue)
                     ) {
                         RadioButton(
                             selected = value == entry,
-                            onClick = {}
+                            onClick = applyValue
                         )
                         Text(
                             text = labelProvider(entry)

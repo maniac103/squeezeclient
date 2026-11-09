@@ -44,6 +44,7 @@ import de.maniac103.squeezeclient.cometd.ConnectionHelper
 import de.maniac103.squeezeclient.cometd.ConnectionState
 import de.maniac103.squeezeclient.extfuncs.getOrCreateNotificationChannel
 import de.maniac103.squeezeclient.model.PlayerId
+import de.maniac103.squeezeclient.model.PlayerStatus
 import de.maniac103.squeezeclient.service.NotificationIds
 import de.maniac103.squeezeclient.service.mediasession.MediaService
 import de.maniac103.squeezeclient.ui.MainActivity
@@ -100,6 +101,8 @@ class LocalPlaybackService : LifecycleService() {
             onPlaybackError = { onPlaybackError() },
             onPauseStateChanged = { paused -> onPauseStateChanged(paused) },
             onAudioStreamFlushed = { onAudioStreamFlushed() },
+            onAudioFocusLost = { onAudioFocusLost() },
+            onPlaybackSuppressionChanged = { onPlaybackSuppressionChanged() },
             onDecoderLoadFinished = { onDecoderLoadFinished() },
             onDecodingFinished = { onDecodingFinished() },
             onHeadersReceived = { resp -> onHeadersReceived(resp) },
@@ -209,6 +212,16 @@ class LocalPlaybackService : LifecycleService() {
         sendStatus(SlimprotoSocket.StatusType.AudioFlushed)
     }
 
+    private fun onAudioFocusLost() = lifecycleScope.launch {
+        executeLocalPlayerRequest("audio focus loss") { helper, playerId ->
+            helper.changePlaybackState(playerId, PlayerStatus.PlayState.Paused)
+        }
+    }
+
+    private fun onPlaybackSuppressionChanged() = lifecycleScope.launch {
+        sendStatus(SlimprotoSocket.StatusType.Timer(0))
+    }
+
     private fun onDecoderLoadFinished() = lifecycleScope.launch {
         slimproto.sendDisconnect()
     }
@@ -260,7 +273,9 @@ class LocalPlaybackService : LifecycleService() {
 
             // Make sure the server side volume control mode matches ours
             launch {
-                updateVolumeControlPref(slimproto.playerId, useFixedVolume)
+                executeLocalPlayerRequest("update volume mode") { helper, playerId ->
+                    helper.setVolumeControlEnabled(playerId, !useFixedVolume)
+                }
             }
 
             while (isActive && connected) {
@@ -276,7 +291,11 @@ class LocalPlaybackService : LifecycleService() {
         }
     }
 
-    private suspend fun updateVolumeControlPref(playerId: PlayerId, fixedVolume: Boolean) {
+    private suspend fun executeLocalPlayerRequest(
+        tag: String,
+        block: suspend (ConnectionHelper, PlayerId) -> Unit
+    ) {
+        val playerId = slimproto.playerId
         val connectionHelper by inject<ConnectionHelper>()
         connectionHelper.connect()
         val connectedState = withTimeoutOrNull(2.seconds) {
@@ -285,7 +304,9 @@ class LocalPlaybackService : LifecycleService() {
                 .firstOrNull { state -> state.players.any { it.id == playerId } }
         }
         if (connectedState != null) {
-            connectionHelper.setVolumeControlEnabled(playerId, !fixedVolume)
+            block(connectionHelper, playerId)
+        } else {
+            Log.w(TAG, "Could not connect to server for local player request $tag")
         }
     }
 
@@ -371,7 +392,7 @@ class LocalPlaybackService : LifecycleService() {
 
         // Make sure we send an update at least once per second while playing
         statusUpdateJob?.cancel()
-        if (player.isPlaying) {
+        if (player.readyForPlayback && !player.paused) {
             statusUpdateJob = lifecycleScope.launch {
                 delay(1.seconds)
                 sendStatus(SlimprotoSocket.StatusType.Timer(0))

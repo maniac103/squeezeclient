@@ -22,6 +22,7 @@ import android.media.AudioTimestamp
 import android.net.Uri
 import android.util.Log
 import androidx.annotation.OptIn
+import androidx.media3.common.AudioAttributes
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackParameters
@@ -69,6 +70,8 @@ class LocalPlayer(
     private val onDecoderLoadFinished: () -> Unit = {},
     onDecodingFinished: () -> Unit = {},
     onAudioStreamFlushed: () -> Unit = {},
+    private val onAudioFocusLost: () -> Unit = {},
+    private val onPlaybackSuppressionChanged: (suppressed: Boolean) -> Unit = {},
     private val onHeadersReceived: (response: Response) -> Unit = {},
     private val onMetadataReceived: (title: CharSequence, artworkUri: Uri?) -> Unit = { _, _ -> }
 ) : Player.Listener,
@@ -98,7 +101,7 @@ class LocalPlayer(
     val readyForPlaybackOrBuffering get() =
         player.playbackState == Player.STATE_READY || player.playbackState == Player.STATE_BUFFERING
     val readyForPlayback get() = player.playbackState == Player.STATE_READY
-    val isPlaying get() = player.playbackState == Player.STATE_READY && player.playWhenReady
+    val isPlaying get() = player.isPlaying
 
     var volume: Float
         get() = lastSetVolume ?: 0F
@@ -156,6 +159,7 @@ class LocalPlayer(
             )
             .build()
         val player = ExoPlayer.Builder(context)
+            .setAudioAttributes(AudioAttributes.DEFAULT, true)
             .setMediaSourceFactory(DefaultMediaSourceFactory(dataSourceFactory))
             .setRenderersFactory(AudioSinkOverridingFactory(context))
             .setLoadControl(loadControl)
@@ -244,8 +248,12 @@ class LocalPlayer(
             .latestAudioTrack
             ?.takeIf { readyForPlaybackOrBuffering && audioProcessor.hasProcessedData }
         if (track?.getTimestamp(playbackPositionTimestamp) == true) {
-            val timestampAge = (nowNanos - playbackPositionTimestamp.nanoTime)
-                .toDuration(DurationUnit.NANOSECONDS)
+            val timestampAge = if (player.isPlaying) {
+                (nowNanos - playbackPositionTimestamp.nanoTime)
+                    .toDuration(DurationUnit.NANOSECONDS)
+            } else {
+                Duration.ZERO
+            }
             val framesElapsed =
                 playbackPositionTimestamp.framePosition + audioProcessor.skippedFrames
             val position = framesElapsed / track.sampleRate.toDouble()
@@ -314,7 +322,14 @@ class LocalPlayer(
         if (readyForPlayback) {
             onPauseStateChanged(!playWhenReady)
         }
+        if (!playWhenReady && reason == Player.PLAY_WHEN_READY_CHANGE_REASON_AUDIO_FOCUS_LOSS) {
+            onAudioFocusLost()
+        }
         updatePlayerVolume(false)
+    }
+
+    override fun onPlaybackSuppressionReasonChanged(reason: Int) {
+        onPlaybackSuppressionChanged(reason != Player.PLAYBACK_SUPPRESSION_REASON_NONE)
     }
 
     override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {

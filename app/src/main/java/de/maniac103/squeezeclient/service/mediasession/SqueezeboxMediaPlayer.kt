@@ -249,13 +249,16 @@ class SqueezeboxMediaPlayer(
             }
         }
 
-        val playWhenReady = playerState.playbackState == PlayerStatus.PlayState.Playing
+        val reportedInternalState =
+            unacknowledgedStateChange?.playState ?: playerState.playbackState
+        val playWhenReady = reportedInternalState == PlayerStatus.PlayState.Playing
+
         val playbackState = when {
             !isConnectedToServer -> STATE_BUFFERING
 
             !playerState.powered -> STATE_IDLE
 
-            else -> when (unacknowledgedChange?.playState ?: playerState.playbackState) {
+            else -> when (reportedInternalState) {
                 PlayerStatus.PlayState.Playing -> STATE_READY
                 PlayerStatus.PlayState.Paused -> STATE_READY
                 PlayerStatus.PlayState.Stopped -> STATE_IDLE

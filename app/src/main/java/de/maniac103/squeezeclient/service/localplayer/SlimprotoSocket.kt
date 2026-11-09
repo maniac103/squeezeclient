@@ -242,13 +242,15 @@ class SlimprotoSocket(prefs: SharedPreferences) {
                         val splitted = it.split(':', limit = 2)
                         splitted[0] to splitted.getOrElse(1) { "" }
                     }
-                val useSsl = (flags.toInt() and 0x20) != 0
-                val uriString = if (requestParts[1].startsWith("/")) {
-                    val scheme = if (useSsl) "https" else "http"
-                    val actualHost = headers.getOrDefault("Host", host).trim()
-                    "$scheme://$actualHost:$port${requestParts[1]}"
+                val uri = if (requestParts[1].startsWith("/")) {
+                    pathToAbsoluteUri(
+                        pathParam = requestParts[1],
+                        hostLine = headers.getOrDefault("Host", host).trim(),
+                        fallbackPort = port,
+                        useSsl = (flags.toInt() and 0x20) != 0
+                    )
                 } else {
-                    requestParts[1]
+                    requestParts[1].toUri()
                 }
                 val replayGain = replayGainOrValue
                     .takeIf { it != 0 }
@@ -256,13 +258,13 @@ class SlimprotoSocket(prefs: SharedPreferences) {
                     ?: 1F
 
                 CommandPacket.StreamStart(
-                    uriString.toUri(),
-                    requestParts[0],
-                    headers,
-                    autostart,
-                    directStreaming,
-                    mimeType,
-                    replayGain
+                    uri = uri,
+                    method = requestParts[0],
+                    headers = headers,
+                    autoStart = autostart,
+                    directStreaming = directStreaming,
+                    mimeType = mimeType,
+                    replayGain = replayGain
                 )
             }
 
@@ -288,6 +290,22 @@ class SlimprotoSocket(prefs: SharedPreferences) {
 
             else -> throw IllegalArgumentException("Unexpected STRM command $commandByte")
         }
+    }
+
+    private fun pathToAbsoluteUri(
+        pathParam: String,
+        hostLine: String,
+        fallbackPort: Int,
+        useSsl: Boolean
+    ): Uri {
+        val uriForHostLine = "dummy://$hostLine".toUri()
+        val host = requireNotNull(uriForHostLine.host) { "Missing host in request" }
+        val port = uriForHostLine.port.takeIf { it > 0 } ?: fallbackPort
+        return Uri.Builder()
+            .scheme(if (useSsl) "https" else "http")
+            .encodedAuthority("$host:$port")
+            .encodedPath(pathParam)
+            .build()
     }
 
     private suspend fun sendHello(reconnect: Boolean) {

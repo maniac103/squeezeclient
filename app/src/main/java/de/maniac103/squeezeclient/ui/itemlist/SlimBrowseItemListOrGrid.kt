@@ -36,7 +36,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import de.maniac103.squeezeclient.model.ServerConfiguration
-import de.maniac103.squeezeclient.model.SlimBrowseItemList
+import de.maniac103.squeezeclient.model.SlimBrowseItem
 import de.maniac103.squeezeclient.ui.composables.ScrollIndicator
 import de.maniac103.squeezeclient.ui.composables.ensureMinimum
 import kotlin.time.Duration.Companion.seconds
@@ -48,13 +48,13 @@ import my.nanihadesuka.compose.ScrollbarSettings
 @Composable
 fun SlimBrowseItemListOrGrid(
     entries: LazyPagingItems<SlimBrowseUiItem>,
-    busyItem: SlimBrowseItemList.SlimBrowseItem?,
+    busyItem: SlimBrowseItem?,
     serverConfig: ServerConfiguration?,
     contentPadding: PaddingValues,
     mode: SlimBrowseItemListMode,
     modifier: Modifier = Modifier,
-    onItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {},
-    onItemContextMenuSelected: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {}
+    onItemSelected: (SlimBrowseItem) -> Unit = {},
+    onItemContextMenuSelected: (SlimBrowseItem) -> Unit = {}
 ) {
     if (!entries.loadState.isIdle) {
         Box {
@@ -162,8 +162,8 @@ fun SlimBrowseItemListOrGrid(
     contentPadding: PaddingValues,
     mode: SlimBrowseItemListMode,
     modifier: Modifier = Modifier,
-    onItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job? = { null },
-    onItemContextMenuSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job? = { null }
+    onItemSelected: (SlimBrowseItem) -> Job? = { null },
+    onItemContextMenuSelected: (SlimBrowseItem) -> Job? = { null }
 ) {
     val entries = viewModel.itemsFlow.collectAsLazyPagingItems()
     val busyItem by viewModel.busyItemFlow.collectAsStateWithLifecycle()

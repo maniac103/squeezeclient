@@ -24,7 +24,7 @@ import de.maniac103.squeezeclient.cometd.ConnectionHelper
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
-import de.maniac103.squeezeclient.model.SlimBrowseItemList
+import de.maniac103.squeezeclient.model.SlimBrowseItem
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -34,17 +34,17 @@ import kotlinx.serialization.Serializable
 class ContextMenuViewModel(
     private val connectionHelper: ConnectionHelper,
     private val playerId: PlayerId,
-    initialItems: List<SlimBrowseItemList.SlimBrowseItem>,
-    val parentItem: SlimBrowseItemList.SlimBrowseItem
+    initialItems: List<SlimBrowseItem>,
+    val parentItem: SlimBrowseItem
 ) : ViewModel() {
     private val pageStackInternal =
         MutableStateFlow(listOf(Page(parentItem, initialItems, false)))
-    private val busyItemInternal = MutableStateFlow<SlimBrowseItemList.SlimBrowseItem?>(null)
+    private val busyItemInternal = MutableStateFlow<SlimBrowseItem?>(null)
 
     val pageStackFlow = pageStackInternal.asStateFlow()
     val busyItemFlow = busyItemInternal.asStateFlow()
 
-    fun pushPage(item: SlimBrowseItemList.SlimBrowseItem, fetchAction: JiveAction) {
+    fun pushPage(item: SlimBrowseItem, fetchAction: JiveAction) {
         val job = viewModelScope.launch {
             val newItems = connectionHelper.fetchItemsForAction(
                 playerId,
@@ -67,7 +67,7 @@ class ContextMenuViewModel(
         pageStackInternal.value = newStack
     }
 
-    fun setItemBusy(item: SlimBrowseItemList.SlimBrowseItem, job: Job) {
+    fun setItemBusy(item: SlimBrowseItem, job: Job) {
         busyItemInternal.value = item
         job.invokeOnCompletion {
             busyItemInternal.value = null
@@ -76,8 +76,8 @@ class ContextMenuViewModel(
 
     @Serializable
     data class Page(
-        val parent: SlimBrowseItemList.SlimBrowseItem,
-        val items: List<SlimBrowseItemList.SlimBrowseItem>,
+        val parent: SlimBrowseItem,
+        val items: List<SlimBrowseItem>,
         val canGoBack: Boolean
     ) : NavKey
 }

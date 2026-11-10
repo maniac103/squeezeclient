@@ -20,7 +20,7 @@ package de.maniac103.squeezeclient.ui.itemlist
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.model.ArtworkItem
 import de.maniac103.squeezeclient.model.JiveHomeMenuItem
-import de.maniac103.squeezeclient.model.SlimBrowseItemList
+import de.maniac103.squeezeclient.model.SlimBrowseItem
 
 sealed interface JiveUiItemTrailingWidget {
     data class Choice(val label: String) : JiveUiItemTrailingWidget
@@ -44,7 +44,7 @@ data class JiveUiItem(
 
 data class JiveHomeMenuUiItem(val uiItem: JiveUiItem, val source: JiveHomeMenuItem)
 
-data class SlimBrowseUiItem(val uiItem: JiveUiItem, val source: SlimBrowseItemList.SlimBrowseItem)
+data class SlimBrowseUiItem(val uiItem: JiveUiItem, val source: SlimBrowseItem)
 
 private val JIVE_HOME_ICON_MAPPING = mapOf(
     "advancedSettings" to R.drawable.hm_advancedsettings,
@@ -127,7 +127,7 @@ fun ArtworkItem.toUiIcon() = extractIconUrl()
     ?.let { JiveUiItemIcon.Icon(it.iconResId) }
     ?: JiveUiItemIcon.Artwork(this)
 
-internal fun SlimBrowseItemList.SlimBrowseItem.toUiItem(): SlimBrowseUiItem {
+internal fun SlimBrowseItem.toUiItem(): SlimBrowseUiItem {
     val trailingWidget = actions?.let { actions ->
         when {
             actions.checkbox != null ->

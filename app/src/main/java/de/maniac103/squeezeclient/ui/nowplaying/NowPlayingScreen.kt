@@ -115,7 +115,7 @@ import de.maniac103.squeezeclient.model.JiveActions
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.Playlist
 import de.maniac103.squeezeclient.model.ServerConfiguration
-import de.maniac103.squeezeclient.model.SlimBrowseItemList
+import de.maniac103.squeezeclient.model.SlimBrowseItem
 import de.maniac103.squeezeclient.ui.bottomsheets.InputBottomSheetContent
 import de.maniac103.squeezeclient.ui.composables.ArtworkImage
 import de.maniac103.squeezeclient.ui.composables.NavigationBarScrim
@@ -152,8 +152,8 @@ internal fun NowPlayingScreen(
     onShowVolumePopup: () -> Unit,
     onInfoMenuItemGoAction: (
         action: JiveAction,
-        parentItem: SlimBrowseItemList.SlimBrowseItem,
-        contextItem: SlimBrowseItemList.SlimBrowseItem
+        parentItem: SlimBrowseItem,
+        contextItem: SlimBrowseItem
     ) -> Job?,
     modifier: Modifier = Modifier
 ) {
@@ -249,8 +249,8 @@ internal fun NowPlayingScreen(
     onSeek: (position: Int) -> Unit = {},
     onShowInfoMenu: (NowPlayingContextMenuData) -> Unit = {},
     onInfoMenuItemSelected: (
-        parentItem: SlimBrowseItemList.SlimBrowseItem,
-        contextItem: SlimBrowseItemList.SlimBrowseItem
+        parentItem: SlimBrowseItem,
+        contextItem: SlimBrowseItem
     ) -> Job? = { _, _ -> null },
     onInfoMenuDismissed: () -> Unit = {},
     onShowSavePlaylistNameInput: () -> Unit = {},

@@ -36,7 +36,7 @@ data class Playlist(
         override val iconId: String? = null,
         override val icon: String? = null
     ) : ParcelableArtworkItem {
-        fun asSlimbrowseItem() = SlimBrowseItemList.SlimBrowseItem(
+        fun asSlimbrowseItem() = SlimBrowseItem(
             listPosition = 0,
             title = title,
             subText = null,

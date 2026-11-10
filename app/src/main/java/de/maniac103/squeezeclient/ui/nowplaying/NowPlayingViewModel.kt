@@ -31,7 +31,7 @@ import de.maniac103.squeezeclient.model.PlayerStatus
 import de.maniac103.squeezeclient.model.PlayerStatus.PlayState
 import de.maniac103.squeezeclient.model.PlayerStatus.RepeatState
 import de.maniac103.squeezeclient.model.PlayerStatus.ShuffleState
-import de.maniac103.squeezeclient.model.SlimBrowseItemList
+import de.maniac103.squeezeclient.model.SlimBrowseItem
 import de.maniac103.squeezeclient.ui.composables.TextResource
 import de.maniac103.squeezeclient.ui.composables.toTextResource
 import kotlin.time.Clock
@@ -126,9 +126,7 @@ class NowPlayingViewModel(private val connectionHelper: ConnectionHelper, val pl
         )
     }
 
-    fun onContextMenuItemSelected(
-        contextItem: SlimBrowseItemList.SlimBrowseItem
-    ): ContextMenuItemResult {
+    fun onContextMenuItemSelected(contextItem: SlimBrowseItem): ContextMenuItemResult {
         val actions = contextItem.actions
         return when {
             actions?.doAction != null -> {
@@ -160,10 +158,8 @@ sealed interface ContextMenuItemResult {
 sealed interface NowPlayingContextMenuState {
     object Idle : NowPlayingContextMenuState
     object Loading : NowPlayingContextMenuState
-    data class Show(
-        val items: List<SlimBrowseItemList.SlimBrowseItem>,
-        val parentItem: SlimBrowseItemList.SlimBrowseItem
-    ) : NowPlayingContextMenuState
+    data class Show(val items: List<SlimBrowseItem>, val parentItem: SlimBrowseItem) :
+        NowPlayingContextMenuState
 }
 
 enum class PlaylistSaveEditorState {
@@ -173,10 +169,7 @@ enum class PlaylistSaveEditorState {
 }
 
 @Immutable
-data class NowPlayingContextMenuData(
-    val item: SlimBrowseItemList.SlimBrowseItem,
-    val action: JiveAction
-)
+data class NowPlayingContextMenuData(val item: SlimBrowseItem, val action: JiveAction)
 
 @Stable
 data class NowPlayingUiState(

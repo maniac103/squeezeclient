@@ -103,7 +103,7 @@ fun PlaylistItemRowPreview() {
         "Song title",
         "Artist",
         "Album",
-        JiveActions(null, null, null, null, null, null, null, null, null, null, null, null, null)
+        JiveActions.EMPTY
     )
     PlaylistItemRow(item, false, null)
 }

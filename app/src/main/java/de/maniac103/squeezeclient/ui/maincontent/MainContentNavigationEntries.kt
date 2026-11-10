@@ -41,7 +41,7 @@ import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.JiveHomeMenuItem
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlideshowImage
-import de.maniac103.squeezeclient.model.SlimBrowseItemList
+import de.maniac103.squeezeclient.model.SlimBrowseItem
 import de.maniac103.squeezeclient.model.WindowStyle
 import de.maniac103.squeezeclient.ui.bottomsheets.BottomSheetContentWrapper
 import de.maniac103.squeezeclient.ui.bottomsheets.ChoicesBottomSheetContent
@@ -108,8 +108,8 @@ internal fun EntryProviderScope<NavKey>.SlimBrowseNavEntry(
     gridCellMinSize: Dp,
     pagePadding: PaddingValues,
     appBarState: TopAppBarState?,
-    onItemSelected: (SlimBrowseItemList.SlimBrowseItem, JiveAction, WindowStyle?) -> Job?,
-    onItemContextMenuSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job?
+    onItemSelected: (SlimBrowseItem, JiveAction, WindowStyle?) -> Job?,
+    onItemContextMenuSelected: (SlimBrowseItem) -> Job?
 ) = entry<MainContentNavigation.SlimBrowseItemPage> { route ->
     val viewModel = koinViewModel<SlimBrowseItemListViewModel> { parametersOf(route.fetchAction) }
     val windowStyle = route.windowStyle ?: WindowStyle.TextOnlyList
@@ -147,8 +147,8 @@ internal fun EntryProviderScope<NavKey>.SlimBrowseSubItemsNavEntry(
     serverConfig: State<ServerConfiguration?>,
     pagePadding: PaddingValues,
     appBarState: TopAppBarState?,
-    onItemSelected: (SlimBrowseItemList.SlimBrowseItem, JiveAction, WindowStyle?) -> Job?,
-    onItemContextMenuSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job?
+    onItemSelected: (SlimBrowseItem, JiveAction, WindowStyle?) -> Job?,
+    onItemContextMenuSelected: (SlimBrowseItem) -> Job?
 ) = entry<MainContentNavigation.SlimBrowseSubItemPage> { route ->
     val viewModel = koinViewModel<SlimBrowseSubItemListViewModel> {
         parametersOf(route.fetchAction, route.position)
@@ -202,8 +202,8 @@ internal fun EntryProviderScope<NavKey>.LocalSearchResultsNavKey(
     gridCellMinSize: Dp,
     pagePadding: PaddingValues,
     appBarState: TopAppBarState?,
-    onItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job?,
-    onItemContextMenuSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job?
+    onItemSelected: (SlimBrowseItem) -> Job?,
+    onItemContextMenuSelected: (SlimBrowseItem) -> Job?
 ) = entry<MainContentNavigation.LocalSearchResults> { route ->
     val viewModel = koinViewModel<LibrarySearchResultsViewModel> {
         parametersOf(route.searchTerm, route.mode)
@@ -232,8 +232,8 @@ internal fun EntryProviderScope<NavKey>.RadioSearchResultsNavKey(
     gridCellMinSize: Dp,
     pagePadding: PaddingValues,
     appBarState: TopAppBarState?,
-    onItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job?,
-    onItemContextMenuSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job?
+    onItemSelected: (SlimBrowseItem) -> Job?,
+    onItemContextMenuSelected: (SlimBrowseItem) -> Job?
 ) = entry<MainContentNavigation.RadioSearchResults> { route ->
     val viewModel = koinViewModel<RadioSearchResultsViewModel> {
         parametersOf(route.searchTerm)
@@ -293,11 +293,7 @@ internal fun EntryProviderScope<NavKey>.HomeMenuTimePickerNavEntry(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun EntryProviderScope<NavKey>.SlimBrowseInputNavEntry(
-    onInputSubmitted: (
-        item: SlimBrowseItemList.SlimBrowseItem,
-        action: JiveAction,
-        isGoAction: Boolean
-    ) -> Job?,
+    onInputSubmitted: (item: SlimBrowseItem, action: JiveAction, isGoAction: Boolean) -> Job?,
     onDone: (NavKey) -> Unit
 ) = entry<MainContentNavigation.SlimBrowseInput>(
     metadata = BottomSheetSceneStrategy.bottomSheet()
@@ -314,11 +310,7 @@ internal fun EntryProviderScope<NavKey>.SlimBrowseInputNavEntry(
 
 @Composable
 internal fun EntryProviderScope<NavKey>.SlimBrowseTimePickerNavEntry(
-    onInputSubmitted: (
-        item: SlimBrowseItemList.SlimBrowseItem,
-        action: JiveAction,
-        isGoAction: Boolean
-    ) -> Job?,
+    onInputSubmitted: (item: SlimBrowseItem, action: JiveAction, isGoAction: Boolean) -> Job?,
     onDone: (NavKey) -> Unit
 ) = entry<MainContentNavigation.SlimBrowseTimePicker>(
     metadata = DialogSceneStrategy.dialog()
@@ -372,7 +364,7 @@ internal fun EntryProviderScope<NavKey>.HomeMenuChoicesNavEntry(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun EntryProviderScope<NavKey>.SlimBrowseChoicesNavEntry(
-    onChoiceSelected: (JiveAction, SlimBrowseItemList.SlimBrowseItem) -> Job?,
+    onChoiceSelected: (JiveAction, SlimBrowseItem) -> Job?,
     onDone: (NavKey) -> Unit
 ) = entry<MainContentNavigation.SlimBrowseChoices>(
     metadata = BottomSheetSceneStrategy.bottomSheet()
@@ -412,10 +404,7 @@ internal fun EntryProviderScope<NavKey>.InfoNavEntry() = entry<MainContentNaviga
 @Composable
 internal fun EntryProviderScope<NavKey>.ContextMenuNavEntry(
     serverConfig: State<ServerConfiguration?>,
-    onItemSelected: (
-        item: SlimBrowseItemList.SlimBrowseItem,
-        parentItem: SlimBrowseItemList.SlimBrowseItem?
-    ) -> Job?,
+    onItemSelected: (item: SlimBrowseItem, parentItem: SlimBrowseItem?) -> Job?,
     onDone: (NavKey) -> Unit
 ) = entry<MainContentNavigation.ContextMenu>(
     metadata = BottomSheetSceneStrategy.bottomSheet()
@@ -439,7 +428,7 @@ internal fun EntryProviderScope<NavKey>.ContextMenuNavEntry(
 internal fun EntryProviderScope<NavKey>.ItemActionsNavEntry(
     serverConfig: State<ServerConfiguration?>,
     onDownloadSelected: (DownloadRequestData) -> Unit,
-    onActionSelected: (JiveAction, SlimBrowseItemList.SlimBrowseItem) -> Job?,
+    onActionSelected: (JiveAction, SlimBrowseItem) -> Job?,
     onDone: (NavKey) -> Unit
 ) = entry<MainContentNavigation.ItemActions>(
     metadata = BottomSheetSceneStrategy.bottomSheet()

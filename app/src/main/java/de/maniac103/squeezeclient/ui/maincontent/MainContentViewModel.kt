@@ -30,9 +30,10 @@ import de.maniac103.squeezeclient.model.ArtworkItem
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.JiveActions
 import de.maniac103.squeezeclient.model.JiveHomeMenuItem
+import de.maniac103.squeezeclient.model.NextWindow
 import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
-import de.maniac103.squeezeclient.model.SlimBrowseItemList
+import de.maniac103.squeezeclient.model.SlimBrowseItem
 import de.maniac103.squeezeclient.model.WindowStyle
 import de.maniac103.squeezeclient.ui.composables.TextResource
 import kotlin.math.max
@@ -128,8 +129,8 @@ class MainContentViewModel(
 
     fun onNowPlayingContextMenuAction(
         action: JiveAction,
-        contextItem: SlimBrowseItemList.SlimBrowseItem,
-        parentItem: SlimBrowseItemList.SlimBrowseItem
+        contextItem: SlimBrowseItem,
+        parentItem: SlimBrowseItem
     ) = onHandleDoOrGoAction(action, true, contextItem, parentItem, null)
 
     fun onHomeItemSelected(item: JiveHomeMenuItem, windowStyle: WindowStyle?) =
@@ -188,7 +189,7 @@ class MainContentViewModel(
     }
 
     fun onSlimBrowseItemSelected(
-        item: SlimBrowseItemList.SlimBrowseItem,
+        item: SlimBrowseItem,
         subItemFetchAction: JiveAction?,
         windowStyle: WindowStyle?
     ) = item.actions?.let { actions ->
@@ -259,54 +260,48 @@ class MainContentViewModel(
         }
     }
 
-    fun onSlimBrowseContextMenu(item: SlimBrowseItemList.SlimBrowseItem) =
-        item.actions?.let { actions ->
-            when {
-                actions.moreAction != null -> viewModelScope.launch {
-                    val itemList = loadContextMenuItems(actions.moreAction, actions)
-                    navigationFlowInternal.emit(MainContentNavigation.ContextMenu(item, itemList))
-                }
-
-                actions.hasContextMenu -> viewModelScope.launch {
-                    navigationFlowInternal.emit(MainContentNavigation.ItemActions(item))
-                }
-
-                else -> null
+    fun onSlimBrowseContextMenu(item: SlimBrowseItem) = item.actions?.let { actions ->
+        when {
+            actions.moreAction != null -> viewModelScope.launch {
+                val itemList = loadContextMenuItems(actions.moreAction, actions)
+                navigationFlowInternal.emit(MainContentNavigation.ContextMenu(item, itemList))
             }
+
+            actions.hasContextMenu -> viewModelScope.launch {
+                navigationFlowInternal.emit(MainContentNavigation.ItemActions(item))
+            }
+
+            else -> null
         }
+    }
 
-    fun onSlimBrowseInputSubmitted(
-        item: SlimBrowseItemList.SlimBrowseItem,
-        action: JiveAction,
-        isGoAction: Boolean
-    ) = onHandleDoOrGoAction(action, isGoAction, item, null, null)
+    fun onSlimBrowseInputSubmitted(item: SlimBrowseItem, action: JiveAction, isGoAction: Boolean) =
+        onHandleDoOrGoAction(action, isGoAction, item, null, null)
 
-    fun onSlimBrowseChoiceSelected(choice: JiveAction, item: SlimBrowseItemList.SlimBrowseItem) =
+    fun onSlimBrowseChoiceSelected(choice: JiveAction, item: SlimBrowseItem) =
         onHandleDoOrGoAction(choice, false, item, null, null)
 
     fun onSliderValueChanged(action: JiveAction) = viewModelScope.launch {
         connectionHelper.executeAction(playerId, action)
     }
 
-    fun extractDownloadDataForContextMenuItem(item: SlimBrowseItemList.SlimBrowseItem) =
+    fun extractDownloadDataForContextMenuItem(item: SlimBrowseItem) =
         item.actions?.downloadData?.takeIf { item.tag == "download" }
 
-    fun onContextMenuItemSelected(
-        item: SlimBrowseItemList.SlimBrowseItem,
-        parentItem: SlimBrowseItemList.SlimBrowseItem?
-    ) = item.actions?.let { actions ->
-        when {
-            actions.doAction != null ->
-                onHandleDoOrGoAction(actions.doAction, false, item, parentItem, null)
+    fun onContextMenuItemSelected(item: SlimBrowseItem, parentItem: SlimBrowseItem?) =
+        item.actions?.let { actions ->
+            when {
+                actions.doAction != null ->
+                    onHandleDoOrGoAction(actions.doAction, false, item, parentItem, null)
 
-            actions.goAction != null ->
-                onHandleDoOrGoAction(actions.goAction, true, item, parentItem, null)
+                actions.goAction != null ->
+                    onHandleDoOrGoAction(actions.goAction, true, item, parentItem, null)
 
-            else -> null
+                else -> null
+            }
         }
-    }
 
-    fun onItemActionSelected(action: JiveAction, item: SlimBrowseItemList.SlimBrowseItem) =
+    fun onItemActionSelected(action: JiveAction, item: SlimBrowseItem) =
         onHandleDoOrGoAction(action, false, item, null, null)
 
     fun onBreadcrumbsChanged(backStack: List<NavKey>, transition: NavigationEventTransitionState) =
@@ -334,7 +329,7 @@ class MainContentViewModel(
     private suspend fun loadContextMenuItems(
         action: JiveAction,
         actions: JiveActions
-    ): List<SlimBrowseItemList.SlimBrowseItem> {
+    ): List<SlimBrowseItem> {
         val loadedItems = connectionHelper.fetchItemsForAction(
             playerId,
             action,
@@ -350,7 +345,7 @@ class MainContentViewModel(
                 // - Go action must not point to a context menu
                 // - Download data must match that of the base item
                 // - Tag must match the expectation of onContextItemSelected
-                val item = SlimBrowseItemList.SlimBrowseItem(
+                val item = SlimBrowseItem(
                     listPosition = size,
                     title = application.getString(R.string.action_download),
                     subText = null,
@@ -360,21 +355,7 @@ class MainContentViewModel(
                     trackType = null,
                     icon = null,
                     iconId = null,
-                    actions = JiveActions(
-                        goAction = JiveAction(emptyList(), emptyMap(), null, null),
-                        doAction = null,
-                        moreAction = null,
-                        playAction = null,
-                        addAction = null,
-                        insertAction = null,
-                        downloadData = actions.downloadData,
-                        checkbox = null,
-                        choices = null,
-                        radio = null,
-                        input = null,
-                        slider = null,
-                        onClickRefresh = null
-                    ),
+                    actions = JiveActions.EMPTY.copy(downloadData = actions.downloadData),
                     nextWindow = null,
                     subItems = null,
                     webLink = null,
@@ -388,8 +369,8 @@ class MainContentViewModel(
     private fun onHandleDoOrGoAction(
         action: JiveAction,
         isGoAction: Boolean,
-        item: SlimBrowseItemList.SlimBrowseItem,
-        parentItem: SlimBrowseItemList.SlimBrowseItem?,
+        item: SlimBrowseItem,
+        parentItem: SlimBrowseItem?,
         parentWindowStyle: WindowStyle?
     ): Job? {
         // The logic below both translates nextWindow to adjust for whether it came from a
@@ -412,24 +393,14 @@ class MainContentViewModel(
         // RefreshGrandParent   3 levels                    2 levels
         val nextWindow = action.nextWindow ?: item.nextWindow
         val actualNextWindow = when (nextWindow) {
-            SlimBrowseItemList.NextWindow.Parent if parentItem != null ->
-                null
-
-            SlimBrowseItemList.NextWindow.GrandParent if parentItem != null ->
-                SlimBrowseItemList.NextWindow.Parent
-
-            SlimBrowseItemList.NextWindow.ParentWithRefresh ->
-                if (parentItem != null) null else SlimBrowseItemList.NextWindow.Parent
-
+            NextWindow.Parent if parentItem != null -> null
+            NextWindow.GrandParent if parentItem != null -> NextWindow.Parent
+            NextWindow.ParentWithRefresh -> if (parentItem != null) null else NextWindow.Parent
             else -> nextWindow
         }
         val refreshLevelsFromNextWindow = when (nextWindow) {
-            SlimBrowseItemList.NextWindow.RefreshSelf if parentItem == null ->
-                1
-
-            SlimBrowseItemList.NextWindow.ParentWithRefresh ->
-                if (parentItem != null) 1 else 2
-
+            NextWindow.RefreshSelf if parentItem == null -> 1
+            NextWindow.ParentWithRefresh -> if (parentItem != null) 1 else 2
             else -> 0
         }
         val refreshLevelsFromRefresh = when (item.actions?.onClickRefresh) {
@@ -455,14 +426,14 @@ class MainContentViewModel(
             viewModelScope.launch {
                 connectionHelper.executeAction(playerId, action)
                 val navigation = when (actualNextWindow) {
-                    SlimBrowseItemList.NextWindow.Parent -> MainContentNavigation.GoBack(1)
+                    NextWindow.Parent -> MainContentNavigation.GoBack(1)
 
-                    SlimBrowseItemList.NextWindow.GrandParent -> MainContentNavigation.GoBack(2)
+                    NextWindow.GrandParent -> MainContentNavigation.GoBack(2)
 
-                    SlimBrowseItemList.NextWindow.Home,
-                    SlimBrowseItemList.NextWindow.MyMusic -> MainContentNavigation.Home
+                    NextWindow.Home,
+                    NextWindow.MyMusic -> MainContentNavigation.Home
 
-                    SlimBrowseItemList.NextWindow.NowPlaying -> MainContentNavigation.NowPlaying
+                    NextWindow.NowPlaying -> MainContentNavigation.NowPlaying
 
                     else -> null
                 }
@@ -477,8 +448,8 @@ class MainContentViewModel(
     @Suppress("IntroduceWhenSubject")
     private fun handleGoAction(
         title: String,
-        item: SlimBrowseItemList.SlimBrowseItem?,
-        parentItem: SlimBrowseItemList.SlimBrowseItem?,
+        item: SlimBrowseItem?,
+        parentItem: SlimBrowseItem?,
         action: JiveAction,
         parentWindowStyle: WindowStyle?
     ): Job? {

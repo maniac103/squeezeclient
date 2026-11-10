@@ -46,7 +46,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.model.ServerConfiguration
-import de.maniac103.squeezeclient.model.SlimBrowseItemList
+import de.maniac103.squeezeclient.model.SlimBrowseItem
 import de.maniac103.squeezeclient.ui.composables.ArtworkImage
 import de.maniac103.squeezeclient.ui.composables.ResourceIconButton
 import kotlinx.coroutines.Job
@@ -55,7 +55,7 @@ import kotlinx.coroutines.Job
 fun ContextMenuBottomSheetContent(
     viewModel: ContextMenuViewModel,
     serverConfig: ServerConfiguration?,
-    onItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job? = { null }
+    onItemSelected: (SlimBrowseItem) -> Job? = { null }
 ) {
     val pageStack by viewModel.pageStackFlow.collectAsStateWithLifecycle()
     val busyItem by viewModel.busyItemFlow.collectAsStateWithLifecycle()
@@ -82,10 +82,10 @@ fun ContextMenuBottomSheetContent(
 @Composable
 fun ContextMenuBottomSheetContent(
     pageStack: List<ContextMenuViewModel.Page>,
-    parentItem: SlimBrowseItemList.SlimBrowseItem,
-    busyItem: SlimBrowseItemList.SlimBrowseItem?,
+    parentItem: SlimBrowseItem,
+    busyItem: SlimBrowseItem?,
     serverConfig: ServerConfiguration?,
-    onItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Unit = {},
+    onItemSelected: (SlimBrowseItem) -> Unit = {},
     onNavigateBack: () -> Unit = {}
 ) {
     Column(
@@ -160,10 +160,7 @@ private fun contextMenuPageExit(direction: Int) = slideOutHorizontally(
 )
 
 @Composable
-private fun ContextMenuHeader(
-    item: SlimBrowseItemList.SlimBrowseItem,
-    serverConfig: ServerConfiguration?
-) = Row(
+private fun ContextMenuHeader(item: SlimBrowseItem, serverConfig: ServerConfiguration?) = Row(
     modifier = Modifier.padding(horizontal = 16.dp)
 ) {
     if (item.isValidIcon) {

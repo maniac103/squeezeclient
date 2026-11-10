@@ -21,6 +21,8 @@ import de.maniac103.squeezeclient.cometd.BooleanAsIntSerializer
 import de.maniac103.squeezeclient.model.DownloadRequestData
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.JiveActions
+import de.maniac103.squeezeclient.model.NextWindow
+import de.maniac103.squeezeclient.model.SlimBrowseItem
 import de.maniac103.squeezeclient.model.SlimBrowseItemList
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -62,9 +64,9 @@ data class SlimBrowseListResponse(
         @SerialName("icon-id")
         val iconId: String? = null,
         val icon: String? = null,
-        val type: SlimBrowseItemList.ItemType? = null,
-        val trackType: SlimBrowseItemList.TrackType? = null,
-        val nextWindow: SlimBrowseItemList.NextWindow? = null,
+        val type: SlimBrowseItem.ItemType? = null,
+        val trackType: SlimBrowseItem.TrackType? = null,
+        val nextWindow: NextWindow? = null,
         @SerialName("item_loop")
         val subItems: List<JsonObject>? = null,
         @SerialName("weblink")
@@ -84,7 +86,7 @@ data class SlimBrowseListResponse(
             val actions = json.combineItemAndBaseActions(itemObject, base)
             val nextWindow = item.nextWindow
                 ?: base?.get("nextWindow")?.let {
-                    json.decodeFromJsonElement<SlimBrowseItemList.NextWindow>(it)
+                    json.decodeFromJsonElement<NextWindow>(it)
                 }
             val subItems = item.subItems?.let {
                 SlimBrowseListResponse(items = it).asModelItems(json, infoProvider).items
@@ -92,7 +94,7 @@ data class SlimBrowseListResponse(
             val extraInfo = (itemObject["commonParams"] as? JsonObject)
                 ?.let { infoProvider(it) }
 
-            SlimBrowseItemList.SlimBrowseItem(
+            SlimBrowseItem(
                 offset + index,
                 textLines[0],
                 textLines.elementAtOrNull(1),
@@ -155,7 +157,7 @@ fun Json.combineItemAndBaseActions(item: JsonObject, base: JsonObject?): JiveAct
             decodeFromJsonElement<SlimBrowseListResponse.ActionWindow>(it)
         }
         val nextWindow = actionObj["nextWindow"]?.let {
-            decodeFromJsonElement<SlimBrowseItemList.NextWindow>(it)
+            decodeFromJsonElement<NextWindow>(it)
         }
         val mergedParams: MutableMap<String, String?> = mutableMapOf("useContextMenu" to "1")
         // Include params from action object itself
@@ -201,7 +203,8 @@ fun Json.combineItemAndBaseActions(item: JsonObject, base: JsonObject?): JiveAct
     val goActionName = item["goAction"]?.jsonPrimitive?.content ?: "go"
     val doAction = actionMap["do"]
     val goAction = actionMap[goActionName]
-    val input = item["input"]?.let { decodeFromJsonElement<SlimBrowseInputResponse>(it) }
+    val input = item["input"]
+        ?.let { decodeFromJsonElement<SlimBrowseInputResponse>(it) }
         ?.toJiveInput(doAction, goAction)
 
     // https://wiki.slimdevices.com/index.php/SBS_SqueezePlay_interface.html#Choices_array_in_Do_action

@@ -116,7 +116,8 @@ fun MainContent(
                 gridCellMinSize = slimBrowseMinGridCellSize,
                 pagePadding = pagePadding,
                 appBarState = appBarState,
-                onItemSelected = viewModel::onHomeItemSelected
+                onItemSelected = viewModel::onHomeItemSelected,
+                onItemContextMenuSelected = viewModel::onHomeContextMenu
             )
 
             SlimBrowseNavEntry(
@@ -166,11 +167,11 @@ fun MainContent(
             )
 
             HomeMenuInputNavEntry(
-                onInputSubmitted = viewModel::onHomeItemInputSubmitted,
+                onInputSubmitted = viewModel::onHomeInputSubmitted,
                 onDone = removeFromBackStack
             )
             HomeMenuTimePickerNavEntry(
-                onInputSubmitted = viewModel::onHomeItemInputSubmitted,
+                onInputSubmitted = viewModel::onHomeInputSubmitted,
                 onDone = removeFromBackStack
             )
             SlimBrowseInputNavEntry(
@@ -186,11 +187,11 @@ fun MainContent(
                 onDone = removeFromBackStack
             )
             HomeMenuChoicesNavEntry(
-                onChoiceSelected = viewModel::onHomeItemChoiceSelected,
+                onChoiceSelected = viewModel::onHomeActionSelected,
                 onDone = removeFromBackStack
             )
             SlimBrowseChoicesNavEntry(
-                onChoiceSelected = viewModel::onSlimBrowseChoiceSelected,
+                onChoiceSelected = viewModel::onSlimBrowseActionSelected,
                 onDone = removeFromBackStack
             )
             InfoNavEntry()
@@ -209,10 +210,15 @@ fun MainContent(
                 onDone = removeFromBackStack
             )
 
-            ItemActionsNavEntry(
+            HomeMenuItemActionsNavEntry(
+                serverConfig = serverConfig,
+                onActionSelected = viewModel::onHomeActionSelected,
+                onDone = removeFromBackStack
+            )
+            SlimBrowseItemActionsNavEntry(
                 serverConfig = serverConfig,
                 onDownloadSelected = onDownloadSelected,
-                onActionSelected = viewModel::onItemActionSelected,
+                onActionSelected = viewModel::onSlimBrowseActionSelected,
                 onDone = removeFromBackStack
             )
         }

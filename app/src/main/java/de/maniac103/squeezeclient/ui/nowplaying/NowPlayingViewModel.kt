@@ -129,14 +129,14 @@ class NowPlayingViewModel(private val connectionHelper: ConnectionHelper, val pl
     fun onContextMenuItemSelected(contextItem: SlimBrowseItem): ContextMenuItemResult {
         val actions = contextItem.actions
         return when {
-            actions?.doAction != null -> {
+            actions.doAction != null -> {
                 val job = viewModelScope.launch {
                     connectionHelper.executeAction(playerId, actions.doAction)
                 }
                 ContextMenuItemResult.DoAction(job)
             }
 
-            actions?.goAction != null -> {
+            actions.goAction != null -> {
                 ContextMenuItemResult.GoAction(actions.goAction)
             }
 

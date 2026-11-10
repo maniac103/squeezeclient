@@ -19,6 +19,7 @@ package de.maniac103.squeezeclient.ui
 
 import de.maniac103.squeezeclient.cometd.request.LibrarySearchRequest
 import de.maniac103.squeezeclient.model.JiveAction
+import de.maniac103.squeezeclient.model.JiveActions
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.SlimBrowseItem
 import de.maniac103.squeezeclient.ui.contextmenu.ContextMenuViewModel
@@ -137,6 +138,6 @@ val viewModelModule = module {
     }
 
     viewModel { params ->
-        ItemActionsViewModel(item = params.get<SlimBrowseItem>())
+        ItemActionsViewModel(actions = params.get<JiveActions>())
     }
 }

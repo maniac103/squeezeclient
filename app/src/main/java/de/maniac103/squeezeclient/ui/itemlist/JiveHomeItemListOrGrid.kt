@@ -41,7 +41,8 @@ fun JiveHomeItemListOrGrid(
     contentPadding: PaddingValues,
     mode: SlimBrowseItemListMode,
     modifier: Modifier = Modifier,
-    onItemSelected: (JiveHomeMenuItem) -> Unit = {}
+    onItemSelected: (JiveHomeMenuItem) -> Unit = {},
+    onItemContextMenuSelected: (JiveHomeMenuItem) -> Unit = {}
 ) {
     val menuEntries by viewModel.homeMenuItemsFlow.collectAsStateWithLifecycle(emptyList())
 
@@ -58,7 +59,8 @@ fun JiveHomeItemListOrGrid(
                         serverConfig = serverConfig,
                         showIcon = mode.showIcons,
                         busy = false,
-                        modifier = Modifier.clickable { onItemSelected(entry.source) }
+                        modifier = Modifier.clickable { onItemSelected(entry.source) },
+                        onContextMenuSelected = { onItemContextMenuSelected(entry.source) }
                     )
                 }
             }
@@ -82,7 +84,8 @@ fun JiveHomeItemListOrGrid(
                         item = entry.uiItem,
                         serverConfig = serverConfig,
                         busy = false,
-                        modifier = Modifier.clickable { onItemSelected(entry.source) }
+                        modifier = Modifier.clickable { onItemSelected(entry.source) },
+                        onContextMenuSelected = { onItemContextMenuSelected(entry.source) }
                     )
                 }
             }

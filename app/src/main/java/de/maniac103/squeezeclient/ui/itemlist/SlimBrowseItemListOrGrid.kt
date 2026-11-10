@@ -74,6 +74,9 @@ fun SlimBrowseItemListOrGrid(
         top = contentPadding.calculateTopPadding(),
         bottom = contentPadding.calculateBottomPadding()
     )
+    val textKeyForIndex = { index: Int ->
+        if (index < entries.itemCount) entries[index]?.source?.textKey else null
+    }
 
     when (mode) {
         is SlimBrowseItemListMode.Grid -> {
@@ -109,7 +112,7 @@ fun SlimBrowseItemListOrGrid(
                 state = mode.gridState,
                 settings = scrollbarSettings,
                 indicatorContent = { index, isThumbSelected ->
-                    ScrollIndicator(entries[index]?.source?.textKey, isThumbSelected)
+                    ScrollIndicator(textKeyForIndex(index), isThumbSelected)
                 },
                 content = {},
                 modifier = scrollbarModifier
@@ -143,7 +146,7 @@ fun SlimBrowseItemListOrGrid(
                 state = mode.listState,
                 settings = scrollbarSettings,
                 indicatorContent = { index, isThumbSelected ->
-                    ScrollIndicator(entries[index]?.source?.textKey, isThumbSelected)
+                    ScrollIndicator(textKeyForIndex(index), isThumbSelected)
                 },
                 content = {},
                 modifier = scrollbarModifier

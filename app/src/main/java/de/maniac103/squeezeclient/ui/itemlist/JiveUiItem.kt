@@ -19,6 +19,7 @@ package de.maniac103.squeezeclient.ui.itemlist
 
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.model.ArtworkItem
+import de.maniac103.squeezeclient.model.JiveActions
 import de.maniac103.squeezeclient.model.JiveHomeMenuItem
 import de.maniac103.squeezeclient.model.SlimBrowseItem
 
@@ -110,14 +111,13 @@ private val SLIMBROWSE_ICON_MAPPING: List<SlimBrowseIconMatcher> = listOf(
 
 internal fun JiveHomeMenuItem.toUiItem(): JiveHomeMenuUiItem {
     val iconResourceId = JIVE_HOME_ICON_MAPPING[id]
-    val choiceLabel = choices?.let { it.items[it.selectedIndex].title }
     val uiItem = JiveUiItem(
         title = title,
         subText = subText,
         icon = iconResourceId
             ?.let { JiveUiItemIcon.Icon(it) }
             ?: JiveUiItemIcon.Spacer,
-        trailingWidget = choiceLabel?.let { JiveUiItemTrailingWidget.Choice(it) }
+        trailingWidget = actions.toTrailingWidget()
     )
     return JiveHomeMenuUiItem(uiItem, this)
 }
@@ -127,26 +127,27 @@ fun ArtworkItem.toUiIcon() = extractIconUrl()
     ?.let { JiveUiItemIcon.Icon(it.iconResId) }
     ?: JiveUiItemIcon.Artwork(this)
 
-internal fun SlimBrowseItem.toUiItem(): SlimBrowseUiItem {
-    val trailingWidget = actions?.let { actions ->
-        when {
-            actions.checkbox != null ->
-                JiveUiItemTrailingWidget.Checkbox(actions.checkbox.state)
+fun JiveActions?.toTrailingWidget() = this?.let { actions ->
+    when {
+        actions.checkbox != null ->
+            JiveUiItemTrailingWidget.Checkbox(actions.checkbox.state)
 
-            actions.radio != null ->
-                JiveUiItemTrailingWidget.Radio(actions.radio.state)
+        actions.radio != null ->
+            JiveUiItemTrailingWidget.Radio(actions.radio.state)
 
-            actions.choices != null ->
-                JiveUiItemTrailingWidget.Choice(
-                    actions.choices.items[actions.choices.selectedIndex].title
-                )
+        actions.choices != null ->
+            JiveUiItemTrailingWidget.Choice(
+                actions.choices.items[actions.choices.selectedIndex].title
+            )
 
-            actions.hasContextMenu -> JiveUiItemTrailingWidget.ContextMenu
+        actions.hasContextMenu -> JiveUiItemTrailingWidget.ContextMenu
 
-            else -> null
-        }
+        else -> null
     }
+}
 
+internal fun SlimBrowseItem.toUiItem(): SlimBrowseUiItem {
+    val trailingWidget = actions.toTrailingWidget()
     val subtext = when {
         extraInfo.isNullOrEmpty() -> subText
         subText.isNullOrEmpty() -> extraInfo

@@ -76,7 +76,8 @@ internal fun EntryProviderScope<NavKey>.JiveHomeMenuNavEntry(
     gridCellMinSize: Dp,
     pagePadding: PaddingValues,
     appBarState: TopAppBarState?,
-    onItemSelected: (JiveHomeMenuItem, WindowStyle?) -> Unit
+    onItemSelected: (JiveHomeMenuItem, WindowStyle?) -> Unit,
+    onItemContextMenuSelected: (JiveHomeMenuItem) -> Unit
 ) = entry<MainContentNavigation.JiveHomeMenuPage> { route ->
     val viewModel = koinViewModel<JiveHomeItemListViewModel> { parametersOf(route.nodeId) }
     val nodesEligibleForGrid = listOf("home", "myMusic", "radios")
@@ -95,7 +96,8 @@ internal fun EntryProviderScope<NavKey>.JiveHomeMenuNavEntry(
             serverConfig = serverConfig.value,
             viewModel = viewModel,
             contentPadding = pagePadding,
-            onItemSelected = { item -> onItemSelected(item, route.windowStyle) }
+            onItemSelected = { item -> onItemSelected(item, route.windowStyle) },
+            onItemContextMenuSelected = onItemContextMenuSelected
         )
     }
 }
@@ -346,16 +348,16 @@ internal fun EntryProviderScope<NavKey>.SliderInputNavEntry(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun EntryProviderScope<NavKey>.HomeMenuChoicesNavEntry(
-    onChoiceSelected: (JiveAction) -> Job?,
+    onChoiceSelected: (JiveAction, JiveHomeMenuItem) -> Job?,
     onDone: (NavKey) -> Unit
 ) = entry<MainContentNavigation.HomeMenuChoices>(
     metadata = BottomSheetSceneStrategy.bottomSheet()
 ) { route ->
     ChoicesBottomSheetContent(
-        title = route.parentTitle,
+        title = route.item.title,
         choices = route.choices,
         onChoiceSelected = { action ->
-            onChoiceSelected(action)
+            onChoiceSelected(action, route.item)
                 .also { it.invokeOnDoneOrNull { onDone(route) } }
         }
     )
@@ -425,17 +427,47 @@ internal fun EntryProviderScope<NavKey>.ContextMenuNavEntry(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun EntryProviderScope<NavKey>.ItemActionsNavEntry(
+internal fun EntryProviderScope<NavKey>.HomeMenuItemActionsNavEntry(
+    serverConfig: State<ServerConfiguration?>,
+    onActionSelected: (JiveAction, JiveHomeMenuItem) -> Unit,
+    onDone: (NavKey) -> Unit
+) = entry<MainContentNavigation.HomeMenuItemActions>(
+    metadata = BottomSheetSceneStrategy.bottomSheet()
+) { route ->
+    val viewModel = koinViewModel<ItemActionsViewModel> { parametersOf(route.item.actions) }
+
+    ItemActionsMenuSheetContent(
+        title = route.item.title,
+        subText = route.item.subText,
+        artwork = null,
+        viewModel = viewModel,
+        serverConfig = serverConfig.value,
+        onActionSelected = { action ->
+            if (action is ItemAction.Action) {
+                onActionSelected(action.action, route.item)
+            }
+            onDone(route)
+            null
+        }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun EntryProviderScope<NavKey>.SlimBrowseItemActionsNavEntry(
     serverConfig: State<ServerConfiguration?>,
     onDownloadSelected: (DownloadRequestData) -> Unit,
     onActionSelected: (JiveAction, SlimBrowseItem) -> Job?,
     onDone: (NavKey) -> Unit
-) = entry<MainContentNavigation.ItemActions>(
+) = entry<MainContentNavigation.SlimBrowseItemActions>(
     metadata = BottomSheetSceneStrategy.bottomSheet()
 ) { route ->
-    val viewModel = koinViewModel<ItemActionsViewModel> { parametersOf(route.item) }
+    val viewModel = koinViewModel<ItemActionsViewModel> { parametersOf(route.item.actions) }
 
     ItemActionsMenuSheetContent(
+        title = route.item.title,
+        subText = route.item.subText,
+        artwork = route.item,
         viewModel = viewModel,
         serverConfig = serverConfig.value,
         onActionSelected = { action ->

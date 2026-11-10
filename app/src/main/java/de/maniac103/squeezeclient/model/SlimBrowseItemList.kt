@@ -34,7 +34,7 @@ data class SlimBrowseItem(
     val trackType: TrackType?,
     override val icon: String?,
     override val iconId: String?,
-    val actions: JiveActions?,
+    val actions: JiveActions,
     val nextWindow: NextWindow?,
     val subItems: List<SlimBrowseItem>?,
     val webLink: String?,

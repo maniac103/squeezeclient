@@ -22,6 +22,7 @@ import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.model.JiveActions
 import de.maniac103.squeezeclient.model.JiveHomeMenuItem
 import de.maniac103.squeezeclient.model.JiveWindow
+import de.maniac103.squeezeclient.model.NextWindow
 import de.maniac103.squeezeclient.model.WindowStyle
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -47,7 +48,8 @@ data class JiveHomeItemListResponse(
         val text: String = "",
         val weight: Float = 0F,
         val window: Window? = null,
-        val windowStyle: WindowStyle? = null
+        val windowStyle: WindowStyle? = null,
+        val nextWindow: NextWindow? = null
         // All action related attributes are handled manually. This includes:
         // actions, choiceStrings, selectedIndex, input
     ) {
@@ -60,10 +62,8 @@ data class JiveHomeItemListResponse(
                 id, node, weight, textLines[0], textLines.elementAtOrNull(1),
                 window?.let { JiveWindow(it.titleStyle) },
                 windowStyle ?: fallbackWindowStyle,
-                actions?.goAction,
-                actions?.doAction,
-                actions?.input,
-                actions?.choices
+                actions,
+                nextWindow
             )
         }
     }
@@ -94,17 +94,15 @@ private object FixedHomeMenuItems {
         val windowStyle: WindowStyle?
     ) {
         fun asModelItem(context: Context) = JiveHomeMenuItem(
-            id,
-            node,
-            weight.toFloat(),
-            context.getString(titleResId),
-            null,
-            null,
-            windowStyle,
-            null,
-            null,
-            null,
-            null
+            id = id,
+            node = node,
+            sortWeight = weight.toFloat(),
+            title = context.getString(titleResId),
+            subText = null,
+            window = null,
+            windowStyle = windowStyle,
+            actions = null,
+            nextWindow = null
         )
     }
 

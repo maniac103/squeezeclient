@@ -67,7 +67,7 @@ fun ContextMenuBottomSheetContent(
         serverConfig = serverConfig,
         onNavigateBack = viewModel::popPage,
         onItemSelected = { item ->
-            val goAction = item.actions?.goAction
+            val goAction = item.actions.goAction
             val job = if (goAction?.isContextMenu == true) {
                 viewModel.pushPage(item, goAction)
                 null
@@ -131,7 +131,7 @@ fun ContextMenuBottomSheetContent(
                             ContextMenuItemRow(
                                 title = item.title,
                                 busy = item == busyItem,
-                                selectable = item.actions?.goAction != null,
+                                selectable = item.actions.goAction != null,
                                 modifier = Modifier
                                     .clickable(onClick = { onItemSelected(item) })
                             )

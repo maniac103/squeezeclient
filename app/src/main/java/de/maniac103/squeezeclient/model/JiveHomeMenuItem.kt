@@ -31,8 +31,6 @@ data class JiveHomeMenuItem(
     val subText: String?,
     val window: JiveWindow?,
     val windowStyle: WindowStyle?,
-    val goAction: JiveAction?,
-    val doAction: JiveAction?,
-    val input: JiveActions.Input?,
-    val choices: JiveActions.Choices?
+    val actions: JiveActions?,
+    val nextWindow: NextWindow?
 ) : Parcelable

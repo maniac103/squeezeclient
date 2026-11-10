@@ -32,6 +32,7 @@ import de.maniac103.squeezeclient.model.JiveActions
 import de.maniac103.squeezeclient.model.JiveHomeMenuItem
 import de.maniac103.squeezeclient.model.NextWindow
 import de.maniac103.squeezeclient.model.PagingParams
+import de.maniac103.squeezeclient.model.ParcelableArtworkItem
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.SlimBrowseItem
 import de.maniac103.squeezeclient.model.WindowStyle
@@ -131,36 +132,33 @@ class MainContentViewModel(
         action: JiveAction,
         contextItem: SlimBrowseItem,
         parentItem: SlimBrowseItem
-    ) = onHandleDoOrGoAction(action, true, contextItem, parentItem, null)
+    ) = handleSlimBrowseDoOrGoAction(action, true, contextItem, parentItem, null)
 
     fun onHomeItemSelected(item: JiveHomeMenuItem, windowStyle: WindowStyle?) =
         viewModelScope.launch {
             when {
-                item.input != null -> {
-                    val route = when (item.input.type) {
+                item.actions?.input != null -> {
+                    val route = when (item.actions.input.type) {
                         JiveActions.Input.Type.Time ->
-                            MainContentNavigation.HomeMenuTimePicker(item, item.input)
+                            MainContentNavigation.HomeMenuTimePicker(item, item.actions.input)
 
-                        else -> MainContentNavigation.HomeMenuInput(item, item.input)
+                        else -> MainContentNavigation.HomeMenuInput(item, item.actions.input)
                     }
                     navigationFlowInternal.emit(route)
                 }
 
-                item.choices != null -> {
+                item.actions?.choices != null -> {
                     navigationFlowInternal.emit(
-                        MainContentNavigation.HomeMenuChoices(
-                            item.title,
-                            item.choices
-                        )
+                        MainContentNavigation.HomeMenuChoices(item, item.actions.choices)
                     )
                 }
 
-                item.doAction != null -> viewModelScope.launch {
-                    connectionHelper.executeAction(playerId, item.doAction)
+                item.actions?.goAction != null -> {
+                    handleHomeDoOrGoAction(item.actions.goAction, true, item, windowStyle)
                 }
 
-                item.goAction != null -> {
-                    handleGoAction(item.title, null, null, item.goAction, windowStyle)
+                item.actions?.doAction != null -> {
+                    handleHomeDoOrGoAction(item.actions.doAction, false, item, windowStyle)
                 }
 
                 else -> {
@@ -175,134 +173,115 @@ class MainContentViewModel(
             }
         }
 
-    fun onHomeItemInputSubmitted(item: JiveHomeMenuItem, action: JiveAction, isGoAction: Boolean) =
-        if (isGoAction) {
-            handleGoAction(item.title, null, null, action, item.windowStyle)
-        } else {
-            viewModelScope.launch {
-                connectionHelper.executeAction(playerId, action)
-            }
-        }
-
-    fun onHomeItemChoiceSelected(choice: JiveAction) = viewModelScope.launch {
-        connectionHelper.executeAction(playerId, choice)
+    fun onHomeContextMenu(item: JiveHomeMenuItem) = viewModelScope.launch {
+        navigationFlowInternal.emit(MainContentNavigation.HomeMenuItemActions(item))
     }
+
+    fun onHomeInputSubmitted(item: JiveHomeMenuItem, action: JiveAction, isGoAction: Boolean) =
+        handleHomeDoOrGoAction(action, isGoAction, item)
+
+    fun onHomeActionSelected(action: JiveAction, item: JiveHomeMenuItem) =
+        handleHomeDoOrGoAction(action, false, item)
 
     fun onSlimBrowseItemSelected(
         item: SlimBrowseItem,
         subItemFetchAction: JiveAction?,
         windowStyle: WindowStyle?
-    ) = item.actions?.let { actions ->
-        when {
-            actions.input != null -> viewModelScope.launch {
-                val route = when (actions.input.type) {
-                    JiveActions.Input.Type.Time ->
-                        MainContentNavigation.SlimBrowseTimePicker(item, actions.input)
+    ) = when {
+        item.actions.input != null -> viewModelScope.launch {
+            val route = when (item.actions.input.type) {
+                JiveActions.Input.Type.Time ->
+                    MainContentNavigation.SlimBrowseTimePicker(item, item.actions.input)
 
-                    else -> MainContentNavigation.SlimBrowseInput(item, actions.input)
-                }
-                navigationFlowInternal.emit(route)
+                else -> MainContentNavigation.SlimBrowseInput(item, item.actions.input)
             }
-
-            actions.choices != null -> viewModelScope.launch {
-                navigationFlowInternal.emit(
-                    MainContentNavigation.SlimBrowseChoices(
-                        item,
-                        actions.choices
-                    )
-                )
-            }
-
-            actions.checkbox != null -> {
-                val action = if (actions.checkbox.state) {
-                    actions.checkbox.offAction
-                } else {
-                    actions.checkbox.onAction
-                }
-                onHandleDoOrGoAction(action, false, item, null, null)
-            }
-
-            actions.radio != null -> {
-                onHandleDoOrGoAction(actions.radio.action, false, item, null, null)
-            }
-
-            item.webLink != null -> viewModelScope.launch {
-                navigationFlowInternal.emit(
-                    MainContentNavigation.WebLink(
-                        item.title,
-                        item.webLink
-                    )
-                )
-            }
-
-            item.subItems != null -> subItemFetchAction?.let { fetchAction ->
-                viewModelScope.launch {
-                    navigationFlowInternal.emit(
-                        MainContentNavigation.SlimBrowseSubItemPage(
-                            item.title,
-                            fetchAction,
-                            item.listPosition,
-                            windowStyle
-                        )
-                    )
-                }
-            }
-
-            actions.goAction != null -> {
-                onHandleDoOrGoAction(actions.goAction, true, item, null, windowStyle)
-            }
-
-            actions.doAction != null -> {
-                onHandleDoOrGoAction(actions.doAction, false, item, null, windowStyle)
-            }
-
-            else -> null
+            navigationFlowInternal.emit(route)
         }
+
+        item.actions.choices != null -> viewModelScope.launch {
+            navigationFlowInternal.emit(
+                MainContentNavigation.SlimBrowseChoices(item, item.actions.choices)
+            )
+        }
+
+        item.actions.checkbox != null -> {
+            val action = if (item.actions.checkbox.state) {
+                item.actions.checkbox.offAction
+            } else {
+                item.actions.checkbox.onAction
+            }
+            handleSlimBrowseDoOrGoAction(action, false, item, null, null)
+        }
+
+        item.actions.radio != null -> {
+            handleSlimBrowseDoOrGoAction(item.actions.radio.action, false, item, null, null)
+        }
+
+        item.webLink != null -> viewModelScope.launch {
+            navigationFlowInternal.emit(
+                MainContentNavigation.WebLink(item.title, item.webLink)
+            )
+        }
+
+        item.subItems != null -> subItemFetchAction?.let { fetchAction ->
+            viewModelScope.launch {
+                navigationFlowInternal.emit(
+                    MainContentNavigation.SlimBrowseSubItemPage(
+                        item.title,
+                        fetchAction,
+                        item.listPosition,
+                        windowStyle
+                    )
+                )
+            }
+        }
+
+        item.actions.goAction != null -> {
+            handleSlimBrowseDoOrGoAction(item.actions.goAction, true, item, null, windowStyle)
+        }
+
+        item.actions.doAction != null -> {
+            handleSlimBrowseDoOrGoAction(item.actions.doAction, false, item, null, windowStyle)
+        }
+
+        else -> null
     }
 
-    fun onSlimBrowseContextMenu(item: SlimBrowseItem) = item.actions?.let { actions ->
-        when {
-            actions.moreAction != null -> viewModelScope.launch {
-                val itemList = loadContextMenuItems(actions.moreAction, actions)
-                navigationFlowInternal.emit(MainContentNavigation.ContextMenu(item, itemList))
-            }
-
-            actions.hasContextMenu -> viewModelScope.launch {
-                navigationFlowInternal.emit(MainContentNavigation.ItemActions(item))
-            }
-
-            else -> null
+    fun onSlimBrowseContextMenu(item: SlimBrowseItem) = when {
+        item.actions.moreAction != null -> viewModelScope.launch {
+            val itemList = loadContextMenuItems(item.actions.moreAction, item.actions)
+            navigationFlowInternal.emit(MainContentNavigation.ContextMenu(item, itemList))
         }
+
+        item.actions.hasContextMenu -> viewModelScope.launch {
+            navigationFlowInternal.emit(MainContentNavigation.SlimBrowseItemActions(item))
+        }
+
+        else -> null
     }
 
     fun onSlimBrowseInputSubmitted(item: SlimBrowseItem, action: JiveAction, isGoAction: Boolean) =
-        onHandleDoOrGoAction(action, isGoAction, item, null, null)
+        handleSlimBrowseDoOrGoAction(action, isGoAction, item, null, null)
 
-    fun onSlimBrowseChoiceSelected(choice: JiveAction, item: SlimBrowseItem) =
-        onHandleDoOrGoAction(choice, false, item, null, null)
+    fun onSlimBrowseActionSelected(action: JiveAction, item: SlimBrowseItem) =
+        handleSlimBrowseDoOrGoAction(action, false, item, null, null)
 
     fun onSliderValueChanged(action: JiveAction) = viewModelScope.launch {
         connectionHelper.executeAction(playerId, action)
     }
 
     fun extractDownloadDataForContextMenuItem(item: SlimBrowseItem) =
-        item.actions?.downloadData?.takeIf { item.tag == "download" }
+        item.actions.downloadData?.takeIf { item.tag == "download" }
 
-    fun onContextMenuItemSelected(item: SlimBrowseItem, parentItem: SlimBrowseItem?) =
-        item.actions?.let { actions ->
-            when {
-                actions.doAction != null ->
-                    onHandleDoOrGoAction(actions.doAction, false, item, parentItem, null)
+    fun onContextMenuItemSelected(item: SlimBrowseItem, parentItem: SlimBrowseItem?) = when {
+        item.actions.doAction != null ->
+            handleSlimBrowseDoOrGoAction(item.actions.doAction, false, item, parentItem, null)
 
-                actions.goAction != null ->
-                    onHandleDoOrGoAction(actions.goAction, true, item, parentItem, null)
+        item.actions.goAction != null ->
+            handleSlimBrowseDoOrGoAction(item.actions.goAction, true, item, parentItem, null)
 
-                else -> null
-            }
-        }
-
-    fun onItemActionSelected(action: JiveAction, item: SlimBrowseItem) =
-        onHandleDoOrGoAction(action, false, item, null, null)
+        else -> null
+    }
 
     fun onBreadcrumbsChanged(backStack: List<NavKey>, transition: NavigationEventTransitionState) =
         viewModelScope.launch {
@@ -366,12 +345,36 @@ class MainContentViewModel(
         }
     }
 
-    private fun onHandleDoOrGoAction(
+    private fun handleHomeDoOrGoAction(
+        action: JiveAction,
+        isGoAction: Boolean,
+        item: JiveHomeMenuItem,
+        windowStyle: WindowStyle? = null
+    ): Job? {
+        val nextWindow = action.nextWindow ?: item.nextWindow
+        val refreshLevels = when (nextWindow) {
+            NextWindow.RefreshSelf -> 1
+            NextWindow.ParentWithRefresh -> 2
+            else -> 0
+        }
+        return handleDoOrGoAction(
+            action = action,
+            title = item.title,
+            parentTitle = null,
+            icon = null,
+            isGoAction = isGoAction,
+            nextWindow = nextWindow,
+            windowStyle = windowStyle ?: item.windowStyle,
+            refreshLevels = refreshLevels
+        )
+    }
+
+    private fun handleSlimBrowseDoOrGoAction(
         action: JiveAction,
         isGoAction: Boolean,
         item: SlimBrowseItem,
         parentItem: SlimBrowseItem?,
-        parentWindowStyle: WindowStyle?
+        windowStyle: WindowStyle?
     ): Job? {
         // The logic below both translates nextWindow to adjust for whether it came from a
         // context menu or not, and splits navigation and refresh which are combined in the
@@ -403,54 +406,63 @@ class MainContentViewModel(
             NextWindow.ParentWithRefresh -> if (parentItem != null) 1 else 2
             else -> 0
         }
-        val refreshLevelsFromRefresh = when (item.actions?.onClickRefresh) {
-            JiveActions.RefreshBehavior.RefreshSelf ->
-                if (parentItem != null) 0 else 1
+        val refreshLevelsFromRefresh = when (item.actions.onClickRefresh) {
+            JiveActions.RefreshBehavior.RefreshSelf -> if (parentItem != null) 0 else 1
 
-            JiveActions.RefreshBehavior.RefreshParent ->
-                if (parentItem != null) 1 else 2
+            JiveActions.RefreshBehavior.RefreshParent -> if (parentItem != null) 1 else 2
 
-            JiveActions.RefreshBehavior.RefreshGrandParent ->
-                if (parentItem != null) 2 else 3
+            JiveActions.RefreshBehavior.RefreshGrandParent -> if (parentItem != null) 2 else 3
 
-            null ->
-                // fall back to refreshing the page for do actions without next window, since
-                // choices and checkboxes usually do not have that
-                if (isGoAction) 0 else 1
+            // fall back to refreshing the page for do actions without next window, since
+            // choices and checkboxes usually do not have that
+            null -> if (isGoAction) 0 else 1
         }
-        val refreshLevels = max(refreshLevelsFromNextWindow, refreshLevelsFromRefresh)
+        return handleDoOrGoAction(
+            action = action,
+            title = item.title,
+            parentTitle = parentItem?.title,
+            icon = item,
+            nextWindow = actualNextWindow,
+            isGoAction = isGoAction,
+            windowStyle = windowStyle,
+            refreshLevels = max(refreshLevelsFromNextWindow, refreshLevelsFromRefresh)
+        )
+    }
 
-        return if (isGoAction && nextWindow == null) {
-            handleGoAction(item.title, item, parentItem, action, parentWindowStyle)
-        } else {
-            viewModelScope.launch {
-                connectionHelper.executeAction(playerId, action)
-                val navigation = when (actualNextWindow) {
-                    NextWindow.Parent -> MainContentNavigation.GoBack(1)
-
-                    NextWindow.GrandParent -> MainContentNavigation.GoBack(2)
-
-                    NextWindow.Home,
-                    NextWindow.MyMusic -> MainContentNavigation.Home
-
-                    NextWindow.NowPlaying -> MainContentNavigation.NowPlaying
-
-                    else -> null
-                }
-                navigation?.let { navigationFlowInternal.emit(it) }
-                refreshLevels
-                    .takeIf { it > 0 }
-                    ?.let { navigationFlowInternal.emit(MainContentNavigation.RefreshContent(it)) }
+    private fun handleDoOrGoAction(
+        action: JiveAction,
+        title: String,
+        parentTitle: String?,
+        icon: ParcelableArtworkItem?,
+        nextWindow: NextWindow?,
+        isGoAction: Boolean,
+        windowStyle: WindowStyle?,
+        refreshLevels: Int
+    ): Job? = if (isGoAction && nextWindow == null) {
+        handleGoAction(action, title, parentTitle, icon, windowStyle)
+    } else {
+        viewModelScope.launch {
+            connectionHelper.executeAction(playerId, action)
+            val navigation = when (nextWindow) {
+                NextWindow.Parent -> MainContentNavigation.GoBack(1)
+                NextWindow.GrandParent -> MainContentNavigation.GoBack(2)
+                NextWindow.Home, NextWindow.MyMusic -> MainContentNavigation.Home
+                NextWindow.NowPlaying -> MainContentNavigation.NowPlaying
+                else -> null
             }
+            navigation?.let { navigationFlowInternal.emit(it) }
+            refreshLevels
+                .takeIf { it > 0 }
+                ?.let { navigationFlowInternal.emit(MainContentNavigation.RefreshContent(it)) }
         }
     }
 
     @Suppress("IntroduceWhenSubject")
     private fun handleGoAction(
-        title: String,
-        item: SlimBrowseItem?,
-        parentItem: SlimBrowseItem?,
         action: JiveAction,
+        title: String,
+        parentTitle: String?,
+        icon: ParcelableArtworkItem?,
         parentWindowStyle: WindowStyle?
     ): Job? {
         pendingNavigation?.cancel()
@@ -458,11 +470,7 @@ class MainContentViewModel(
             if (action.isSlideshow) {
                 val items = connectionHelper.fetchSlideshowImages(playerId, action)
                 navigationFlowInternal.emit(
-                    MainContentNavigation.GalleryPage(
-                        items,
-                        title,
-                        parentItem?.title
-                    )
+                    MainContentNavigation.GalleryPage(items, title, parentTitle)
                 )
                 return@launch
             }
@@ -489,11 +497,11 @@ class MainContentViewModel(
 
                 else -> {
                     MainContentNavigation.SlimBrowseItemPage(
-                        title,
-                        parentItem?.title,
-                        parentItem ?: item,
-                        action,
-                        result.window?.windowStyle ?: parentWindowStyle
+                        title = title,
+                        parentTitle = parentTitle,
+                        icon = icon,
+                        fetchAction = action,
+                        windowStyle = result.window?.windowStyle ?: parentWindowStyle
                     )
                 }
             }

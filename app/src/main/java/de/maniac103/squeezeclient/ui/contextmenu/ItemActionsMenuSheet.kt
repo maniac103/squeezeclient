@@ -35,17 +35,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import de.maniac103.squeezeclient.model.ArtworkItem
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.ui.composables.ArtworkImage
 import kotlinx.coroutines.Job
 
 @Composable
 fun ItemActionsMenuSheetContent(
+    title: String,
+    subText: String?,
+    artwork: ArtworkItem?,
     viewModel: ItemActionsViewModel,
     serverConfig: ServerConfiguration?,
     onActionSelected: (ItemAction) -> Job?
 ) {
-    val item = viewModel.item
     val actions by viewModel.actionsFlow.collectAsStateWithLifecycle(emptyList())
     val busyAction by viewModel.busyActionFlow.collectAsStateWithLifecycle(null)
 
@@ -55,9 +58,9 @@ fun ItemActionsMenuSheetContent(
                 modifier = Modifier
                     .padding(horizontal = 16.dp)
             ) {
-                if (viewModel.item.isValidIcon) {
+                if (artwork?.isValidIcon == true) {
                     ArtworkImage(
-                        artwork = item,
+                        artwork = artwork,
                         serverConfig = serverConfig,
                         placeholderDrawableResId = null,
                         modifier = Modifier
@@ -70,14 +73,14 @@ fun ItemActionsMenuSheetContent(
                         .align(Alignment.CenterVertically)
                 ) {
                     Text(
-                        text = item.title,
+                        text = title,
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.SemiBold
                         )
                     )
-                    if (!item.subText.isNullOrEmpty()) {
+                    if (!subText.isNullOrEmpty()) {
                         Text(
-                            text = item.subText,
+                            text = subText,
                             maxLines = 2,
                             overflow = TextOverflow.Ellipsis,
                             style = MaterialTheme.typography.titleSmall

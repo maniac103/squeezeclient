@@ -119,7 +119,7 @@ sealed class MainContentNavigation : NavKey {
         MainContentNavigation()
 
     @Serializable
-    data class HomeMenuChoices(val parentTitle: String, val choices: JiveActions.Choices) :
+    data class HomeMenuChoices(val item: JiveHomeMenuItem, val choices: JiveActions.Choices) :
         MainContentNavigation()
 
     @Serializable
@@ -134,7 +134,10 @@ sealed class MainContentNavigation : NavKey {
         MainContentNavigation()
 
     @Serializable
-    data class ItemActions(val item: SlimBrowseItem) : MainContentNavigation()
+    data class HomeMenuItemActions(val item: JiveHomeMenuItem) : MainContentNavigation()
+
+    @Serializable
+    data class SlimBrowseItemActions(val item: SlimBrowseItem) : MainContentNavigation()
 
     @Serializable
     data class WebLink(val title: String, val link: String) : MainContentNavigation()

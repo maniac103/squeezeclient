@@ -96,6 +96,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.Constraints
@@ -492,7 +493,10 @@ private fun PlayerToolbar(
                 Text(stringResource(R.string.now_playing))
             },
             subtitle = {
-                Text(state.toolbarSubtitle.resolve())
+                Text(
+                    text = state.toolbarSubtitle.resolve(),
+                    textAlign = TextAlign.Center
+                )
             },
             navigationIcon = {
                 ResourceIconButton(

@@ -27,7 +27,7 @@ import kotlinx.serialization.Serializable
 data class JiveAction(
     val cmd: List<String>,
     val params: @RawValue Map<String, String?>,
-    val nextWindow: SlimBrowseItemList.NextWindow?,
+    val nextWindow: NextWindow?,
     private val windowIsContextMenu: Boolean?
 ) : Parcelable {
     val isContextMenu get() = params.containsKey("isContextMenu") || windowIsContextMenu == true

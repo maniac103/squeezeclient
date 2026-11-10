@@ -24,7 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
 import de.maniac103.squeezeclient.model.ServerConfiguration
-import de.maniac103.squeezeclient.model.SlimBrowseItemList
+import de.maniac103.squeezeclient.model.SlimBrowseItem
 import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseItemListMode
 import de.maniac103.squeezeclient.ui.itemlist.SlimBrowseItemListOrGrid
 import kotlinx.coroutines.Job
@@ -36,8 +36,8 @@ fun RadioSearchResultsItemList(
     contentPadding: PaddingValues,
     mode: SlimBrowseItemListMode,
     modifier: Modifier = Modifier,
-    onItemSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job? = { null },
-    onItemContextMenuSelected: (SlimBrowseItemList.SlimBrowseItem) -> Job? = { null }
+    onItemSelected: (SlimBrowseItem) -> Job? = { null },
+    onItemContextMenuSelected: (SlimBrowseItem) -> Job? = { null }
 ) {
     val entries = viewModel.itemsFlow.collectAsLazyPagingItems()
     val busyItem by viewModel.busyItemFlow.collectAsStateWithLifecycle()

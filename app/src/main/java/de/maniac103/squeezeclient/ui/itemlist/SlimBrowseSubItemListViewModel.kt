@@ -23,7 +23,7 @@ import de.maniac103.squeezeclient.cometd.ConnectionHelper
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
-import de.maniac103.squeezeclient.model.SlimBrowseItemList
+import de.maniac103.squeezeclient.model.SlimBrowseItem
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -37,7 +37,7 @@ class SlimBrowseSubItemListViewModel(
     private val parentFetchAction: JiveAction,
     private val parentItemPosition: Int
 ) : ViewModel() {
-    private val busyItemInternal = MutableStateFlow<SlimBrowseItemList.SlimBrowseItem?>(null)
+    private val busyItemInternal = MutableStateFlow<SlimBrowseItem?>(null)
     val busyItemFlow = busyItemInternal.asStateFlow()
 
     val itemsFlow = flow {
@@ -46,10 +46,7 @@ class SlimBrowseSubItemListViewModel(
     }
         .shareIn(viewModelScope, SharingStarted.Lazily)
 
-    internal fun handleItemSelection(
-        item: SlimBrowseItemList.SlimBrowseItem,
-        handler: (SlimBrowseItemList.SlimBrowseItem) -> Job?
-    ) {
+    internal fun handleItemSelection(item: SlimBrowseItem, handler: (SlimBrowseItem) -> Job?) {
         handler(item)?.also { job ->
             busyItemInternal.value = item
             job.invokeOnCompletion {
@@ -58,7 +55,7 @@ class SlimBrowseSubItemListViewModel(
         }
     }
 
-    private suspend fun loadItems(): List<SlimBrowseItemList.SlimBrowseItem> {
+    private suspend fun loadItems(): List<SlimBrowseItem> {
         val page = PagingParams(parentItemPosition, 1)
         val parentItemList = connectionHelper.fetchItemsForAction(
             playerId,

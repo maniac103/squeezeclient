@@ -25,7 +25,7 @@ import de.maniac103.squeezeclient.model.JiveActions
 import de.maniac103.squeezeclient.model.JiveHomeMenuItem
 import de.maniac103.squeezeclient.model.ParcelableArtworkItem
 import de.maniac103.squeezeclient.model.SlideshowImage
-import de.maniac103.squeezeclient.model.SlimBrowseItemList
+import de.maniac103.squeezeclient.model.SlimBrowseItem
 import de.maniac103.squeezeclient.model.WindowStyle
 import de.maniac103.squeezeclient.ui.composables.TextResource
 import de.maniac103.squeezeclient.ui.composables.toTextResource
@@ -107,16 +107,12 @@ sealed class MainContentNavigation : NavKey {
         MainContentNavigation()
 
     @Serializable
-    data class SlimBrowseInput(
-        val item: SlimBrowseItemList.SlimBrowseItem,
-        val input: JiveActions.Input
-    ) : MainContentNavigation()
+    data class SlimBrowseInput(val item: SlimBrowseItem, val input: JiveActions.Input) :
+        MainContentNavigation()
 
     @Serializable
-    data class SlimBrowseTimePicker(
-        val item: SlimBrowseItemList.SlimBrowseItem,
-        val input: JiveActions.Input
-    ) : MainContentNavigation()
+    data class SlimBrowseTimePicker(val item: SlimBrowseItem, val input: JiveActions.Input) :
+        MainContentNavigation()
 
     @Serializable
     data class SliderInput(val title: String, val slider: JiveActions.Slider) :
@@ -127,22 +123,18 @@ sealed class MainContentNavigation : NavKey {
         MainContentNavigation()
 
     @Serializable
-    data class SlimBrowseChoices(
-        val item: SlimBrowseItemList.SlimBrowseItem,
-        val choices: JiveActions.Choices
-    ) : MainContentNavigation()
+    data class SlimBrowseChoices(val item: SlimBrowseItem, val choices: JiveActions.Choices) :
+        MainContentNavigation()
 
     @Serializable
     data class Info(val title: String, val info: String) : MainContentNavigation()
 
     @Serializable
-    data class ContextMenu(
-        val item: SlimBrowseItemList.SlimBrowseItem,
-        val menuItems: List<SlimBrowseItemList.SlimBrowseItem>
-    ) : MainContentNavigation()
+    data class ContextMenu(val item: SlimBrowseItem, val menuItems: List<SlimBrowseItem>) :
+        MainContentNavigation()
 
     @Serializable
-    data class ItemActions(val item: SlimBrowseItemList.SlimBrowseItem) : MainContentNavigation()
+    data class ItemActions(val item: SlimBrowseItem) : MainContentNavigation()
 
     @Serializable
     data class WebLink(val title: String, val link: String) : MainContentNavigation()

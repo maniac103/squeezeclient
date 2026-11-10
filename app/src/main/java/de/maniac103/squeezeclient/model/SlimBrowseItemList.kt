@@ -19,68 +19,27 @@ package de.maniac103.squeezeclient.model
 
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonNames
 
+@Serializable
 @Parcelize
-data class SlimBrowseItemList(
-    override val items: List<SlimBrowseItem>,
-    override val offset: Int,
-    override val totalCount: Int,
-    val title: String?,
-    val window: Window? = null
-) : ListResponse<SlimBrowseItemList.SlimBrowseItem>,
-    Parcelable {
-    @Serializable
-    @Parcelize
-    data class SlimBrowseItem(
-        val listPosition: Int,
-        val title: String,
-        val subText: String?,
-        val extraInfo: String?,
-        val textKey: String?,
-        val type: ItemType?,
-        val trackType: TrackType?,
-        override val icon: String?,
-        override val iconId: String?,
-        val actions: JiveActions?,
-        val nextWindow: NextWindow?,
-        val subItems: List<SlimBrowseItem>?,
-        val webLink: String?,
-        val tag: String? = null
-    ) : ParcelableArtworkItem
-
-    @Serializable
-    @OptIn(ExperimentalSerializationApi::class)
-    @Suppress("unused")
-    enum class NextWindow {
-        @SerialName("home")
-        Home,
-
-        @JsonNames("parent", "parentNoRefresh")
-        Parent,
-
-        @SerialName("grandparent")
-        GrandParent,
-
-        @SerialName("nowPlaying")
-        NowPlaying,
-
-        @SerialName("refresh")
-        RefreshSelf,
-
-        @SerialName("myMusic")
-        MyMusic,
-
-        @SerialName("refreshOrigin")
-        ParentWithRefresh,
-
-        @SerialName("presets")
-        Presets
-    }
-
+data class SlimBrowseItem(
+    val listPosition: Int,
+    val title: String,
+    val subText: String?,
+    val extraInfo: String?,
+    val textKey: String?,
+    val type: ItemType?,
+    val trackType: TrackType?,
+    override val icon: String?,
+    override val iconId: String?,
+    val actions: JiveActions?,
+    val nextWindow: NextWindow?,
+    val subItems: List<SlimBrowseItem>?,
+    val webLink: String?,
+    val tag: String? = null
+) : ParcelableArtworkItem {
     @Serializable
     @Suppress("unused")
     enum class ItemType {
@@ -124,6 +83,17 @@ data class SlimBrowseItemList(
         @SerialName("radio")
         Radio
     }
+}
+
+@Parcelize
+data class SlimBrowseItemList(
+    override val items: List<SlimBrowseItem>,
+    override val offset: Int,
+    override val totalCount: Int,
+    val title: String?,
+    val window: Window? = null
+) : ListResponse<SlimBrowseItem>,
+    Parcelable {
 
     @Serializable
     @Parcelize

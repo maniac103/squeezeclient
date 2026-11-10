@@ -21,13 +21,13 @@ import androidx.lifecycle.ViewModel
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.model.DownloadRequestData
 import de.maniac103.squeezeclient.model.JiveAction
-import de.maniac103.squeezeclient.model.SlimBrowseItemList
+import de.maniac103.squeezeclient.model.SlimBrowseItem
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flowOf
 
-class ItemActionsViewModel(val item: SlimBrowseItemList.SlimBrowseItem) : ViewModel() {
+class ItemActionsViewModel(val item: SlimBrowseItem) : ViewModel() {
     private val busyActionFlowInternal = MutableStateFlow<ActionItem?>(null)
 
     val actionsFlow = flowOf(

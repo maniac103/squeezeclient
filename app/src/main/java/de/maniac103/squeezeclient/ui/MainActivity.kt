@@ -119,7 +119,7 @@ class MainActivity : ComponentActivity() {
     override fun onStop() {
         val selectedPlayerState = selectedPlayerState
         if (selectedPlayerState?.isPlaying == true && !isChangingConfigurations) {
-            MediaService.start(this, selectedPlayerState.playerId, true)
+            MediaService.start(this, selectedPlayerState.playerId, false)
         }
         super.onStop()
     }

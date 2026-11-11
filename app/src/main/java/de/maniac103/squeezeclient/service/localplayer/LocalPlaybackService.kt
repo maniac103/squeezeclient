@@ -132,7 +132,7 @@ class LocalPlaybackService : LifecycleService() {
                             MediaService.start(
                                 this@LocalPlaybackService,
                                 slimproto.playerId,
-                                false
+                                true
                             )
                         }
                     }

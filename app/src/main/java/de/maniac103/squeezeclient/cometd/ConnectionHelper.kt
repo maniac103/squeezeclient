@@ -21,7 +21,11 @@ import android.util.Log
 import de.maniac103.squeezeclient.SqueezeClientApplication
 import de.maniac103.squeezeclient.cometd.request.ChangePlaybackStateRequest
 import de.maniac103.squeezeclient.cometd.request.ClearPlaylistRequest
+import de.maniac103.squeezeclient.cometd.request.CurrentTrackInfoRequest
 import de.maniac103.squeezeclient.cometd.request.ExecuteActionRequest
+import de.maniac103.squeezeclient.cometd.request.FavoritesAddRequest
+import de.maniac103.squeezeclient.cometd.request.FavoritesDeleteRequest
+import de.maniac103.squeezeclient.cometd.request.FavoritesExistsRequest
 import de.maniac103.squeezeclient.cometd.request.FetchAlbumInfoRequest
 import de.maniac103.squeezeclient.cometd.request.FetchHomeMenuRequest
 import de.maniac103.squeezeclient.cometd.request.FetchItemsForActionRequest
@@ -48,8 +52,10 @@ import de.maniac103.squeezeclient.cometd.request.UnsyncPlayerRequest
 import de.maniac103.squeezeclient.cometd.request.UpdateDisplayStatusSubscriptionRequest
 import de.maniac103.squeezeclient.cometd.request.UpdatePlayerStatusSubscriptionRequest
 import de.maniac103.squeezeclient.cometd.response.AlbumInfoListResponse
+import de.maniac103.squeezeclient.cometd.response.CurrentTrackInfoResponse
 import de.maniac103.squeezeclient.cometd.response.DisplayStatusResponse
 import de.maniac103.squeezeclient.cometd.response.DownloadSongInfoListResponse
+import de.maniac103.squeezeclient.cometd.response.FavoritesExistsResponse
 import de.maniac103.squeezeclient.cometd.response.JiveHomeItemListResponse
 import de.maniac103.squeezeclient.cometd.response.LocalSearchResultsResponse
 import de.maniac103.squeezeclient.cometd.response.PlayerStatusResponse
@@ -314,6 +320,18 @@ class ConnectionHelper(private val appContext: SqueezeClientApplication) {
 
     suspend fun setVolume(playerId: PlayerId, volume: Int) =
         publishOneShotRequest(SetVolumeRequest(playerId, volume))
+
+    suspend fun getCurrentTrackInfo(playerId: PlayerId) =
+        doRequestWithResult<CurrentTrackInfoResponse>(CurrentTrackInfoRequest(playerId)).current
+
+    suspend fun isFavorite(playerId: PlayerId, url: String) =
+        doRequestWithResult<FavoritesExistsResponse>(FavoritesExistsRequest(playerId, url)).exists
+
+    suspend fun addFavorite(playerId: PlayerId, url: String, title: String) =
+        publishOneShotRequest(FavoritesAddRequest(playerId, url, title))
+
+    suspend fun removeFavorite(playerId: PlayerId, url: String, title: String) =
+        publishOneShotRequest(FavoritesDeleteRequest(playerId, url, title))
 
     suspend fun togglePower(playerId: PlayerId) =
         publishOneShotRequest(PlayerPowerRequest(playerId, null))

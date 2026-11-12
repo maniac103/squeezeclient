@@ -82,6 +82,15 @@
     <string name="download_permission_rationale_cancel">Cancel download</string>
     <string name="permission_rationale_allow">Allow</string>
 
+    <string name="browse_favorites">Favorites</string>
+    <string name="browse_library">Library</string>
+    <string name="browse_radio">Radio</string>
+    <string name="browse_random_play">Random</string>
+    <string name="browse_play_all">Play all</string>
+
+    <string name="browse_no_player_title">No player found</string>
+    <string name="browse_no_player_subtitle">Ensure you have a working network connection and there is at least one player registered to the server.</string>
+
     <string name="local_player_notification_title_disconnected">Local player disconnected</string>
     <string name="local_player_notification_title_stopped">Local player ready</string>
     <string name="local_player_notification_title_playing">Local player playing</string>

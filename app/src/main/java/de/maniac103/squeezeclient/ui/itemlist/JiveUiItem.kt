@@ -84,7 +84,18 @@ private val JIVE_HOME_ICON_MAPPING = mapOf(
     "settingsRepeat" to R.drawable.hm_repeat,
     "settingsShuffle" to R.drawable.hm_shuffle,
     "settingsSleep" to R.drawable.hm_sleep,
-    "settingsSync" to R.drawable.hm_sync
+    "settingsSync" to R.drawable.hm_sync,
+    // Radio has both home menu items and a slimbrowse fetch command, so map both
+    "opmlpresets" to R.drawable.sb_radio_presets,
+    "opmllocal" to R.drawable.sb_radio_local,
+    "opmlmusic" to R.drawable.sb_radio_music,
+    "opmlsports" to R.drawable.sb_radio_sports,
+    "opmlnews" to R.drawable.sb_radio_news,
+    "opmltalk" to R.drawable.sb_radio_talk,
+    "opmllanguage" to R.drawable.sb_radio_world,
+    "opmllocation" to R.drawable.sb_radio_world,
+    "opmlsearch" to R.drawable.sb_search,
+    "opmlpodcast" to  R.drawable.sb_podcast
 )
 
 private interface SlimBrowseIconMatcher {

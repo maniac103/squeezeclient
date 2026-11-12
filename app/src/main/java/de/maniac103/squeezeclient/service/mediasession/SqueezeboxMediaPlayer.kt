@@ -173,7 +173,8 @@ class SqueezeboxMediaPlayer(
         val playerState = playerState
             ?: return waitingForPlayerState()
         val currentSong = playerState.currentSong
-            ?: return State.Builder().setPlaybackState(STATE_IDLE).build()
+            ?: return idleState()
+
         val unacknowledgedChange = unacknowledgedStateChange
         val currentSongDurationUs =
             playerState.currentSongDuration?.toLong(DurationUnit.MICROSECONDS)
@@ -236,6 +237,8 @@ class SqueezeboxMediaPlayer(
                 add(COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM)
             }
             add(COMMAND_SEEK_TO_MEDIA_ITEM)
+            add(COMMAND_SET_MEDIA_ITEM)
+            add(COMMAND_CHANGE_MEDIA_ITEMS)
             add(COMMAND_STOP)
 
             if (playlistInfo.canDoPrev) {
@@ -357,6 +360,21 @@ class SqueezeboxMediaPlayer(
             .setPlayWhenReady(true, PLAY_WHEN_READY_CHANGE_REASON_REMOTE)
             .setPlaylist(listOf(placeholder))
             .setCurrentMediaItemIndex(0)
+            .build()
+    }
+
+    private fun idleState(): State {
+        val commands = Player.Commands.Builder()
+            .add(COMMAND_GET_CURRENT_MEDIA_ITEM)
+            .add(COMMAND_GET_METADATA)
+            .add(COMMAND_GET_TIMELINE)
+            .add(COMMAND_SET_MEDIA_ITEM)
+            .add(COMMAND_CHANGE_MEDIA_ITEMS)
+            .add(COMMAND_PLAY_PAUSE)
+            .build()
+        return State.Builder()
+            .setAvailableCommands(commands)
+            .setPlaybackState(STATE_IDLE)
             .build()
     }
 

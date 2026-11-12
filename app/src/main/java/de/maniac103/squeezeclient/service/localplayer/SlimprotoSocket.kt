@@ -24,7 +24,7 @@ import de.maniac103.squeezeclient.extfuncs.putAsAscii
 import de.maniac103.squeezeclient.extfuncs.readRemainderAsArray
 import de.maniac103.squeezeclient.extfuncs.readString
 import de.maniac103.squeezeclient.extfuncs.skip
-import de.maniac103.squeezeclient.model.PlayerId
+import de.maniac103.squeezeclient.service.LocalPlayerId
 import java.io.Closeable
 import java.io.IOException
 import java.net.InetSocketAddress
@@ -41,16 +41,16 @@ import okio.buffer
 import okio.sink
 import okio.source
 
-class SlimprotoSocket(val host: String?, private val deviceIdentifier: UUID) {
+class SlimprotoSocket(
+    val host: String?,
+    private val localPlayerId: LocalPlayerId,
+    private val deviceIdentifier: UUID
+) {
     private var socket: SocketHolder? = null
     var useFixedVolume = false
         private set
 
-    private val playerMac get() = ByteArray(6) { i ->
-        (deviceIdentifier.leastSignificantBits shr (i * 8)).toByte()
-    }
-
-    val playerId get() = PlayerId(playerMac.joinToString(":") { "%02x".format(it) })
+    val playerId get() = localPlayerId.playerId
 
     private val packetParsers: Map<String, (ByteBuffer) -> CommandPacket> = mapOf(
         "aude" to this::parseAudioEnablePacket,
@@ -321,7 +321,7 @@ class SlimprotoSocket(val host: String?, private val deviceIdentifier: UUID) {
         val payload = ByteBuffer.allocate(36 + capabilityString.length).apply {
             put(12) // device ID
             put(1) // revision
-            put(playerMac) // MAC
+            put(localPlayerId.mac) // MAC
             putLong(deviceIdentifier.mostSignificantBits) // UUID
             putLong(deviceIdentifier.leastSignificantBits)
             putShort(if (reconnect) 0x4000 else 0) // WLAN channel list

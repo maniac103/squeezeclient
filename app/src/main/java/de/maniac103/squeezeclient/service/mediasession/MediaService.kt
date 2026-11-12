@@ -177,12 +177,16 @@ class MediaService :
         session: MediaSession,
         controller: MediaSession.ControllerInfo
     ): MediaSession.ConnectionResult {
-        val sessionCommands = MediaSession.ConnectionResult.DEFAULT_SESSION_COMMANDS.buildUpon()
-            .add(SessionCommand(SESSION_ACTION_POWER, Bundle.EMPTY))
-            .add(SessionCommand(SESSION_ACTION_DISCONNECT, Bundle.EMPTY))
-            .build()
+        val sessionCommandsBuilder = MediaSession.ConnectionResult.DEFAULT_SESSION_COMMANDS
+            .buildUpon()
+
+        if (!player.isLocalPlayer) {
+            sessionCommandsBuilder.add(SessionCommand(SESSION_ACTION_POWER, Bundle.EMPTY))
+            sessionCommandsBuilder.add(SessionCommand(SESSION_ACTION_DISCONNECT, Bundle.EMPTY))
+        }
+
         return MediaSession.ConnectionResult.AcceptedResultBuilder(session, controller)
-            .setAvailableSessionCommands(sessionCommands)
+            .setAvailableSessionCommands(sessionCommandsBuilder.build())
             .setAvailablePlayerCommands(MediaSession.ConnectionResult.DEFAULT_PLAYER_COMMANDS)
             .build()
     }

@@ -46,6 +46,7 @@ import de.maniac103.squeezeclient.extfuncs.getOrCreateNotificationChannel
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.PlayerStatus
 import de.maniac103.squeezeclient.service.NotificationIds
+import de.maniac103.squeezeclient.service.getOrCreateLocalPlayerId
 import de.maniac103.squeezeclient.service.mediasession.MediaService
 import de.maniac103.squeezeclient.ui.MainActivity
 import de.maniac103.squeezeclient.ui.prefs.SettingsActivity
@@ -91,6 +92,7 @@ class LocalPlaybackService : LifecycleService() {
 
         slimproto = SlimprotoSocket(
             host = preferences.serverConfig.value?.url?.host,
+            localPlayerId = preferences.getOrCreateLocalPlayerId(),
             deviceIdentifier = preferences.getOrCreateDeviceIdentifier()
         )
         player = LocalPlayer(

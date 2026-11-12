@@ -36,6 +36,7 @@ import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.PlayerStatus
 import de.maniac103.squeezeclient.model.Playlist
+import de.maniac103.squeezeclient.service.getOrCreateLocalPlayerId
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -60,6 +61,7 @@ class SqueezeboxMediaPlayer(
             if (field != value) {
                 field = value
                 updatePlayer(value)
+                invalidateState()
             }
         }
     var isConnectedToServer: Boolean = true
@@ -77,6 +79,9 @@ class SqueezeboxMediaPlayer(
                 }
             }
         }
+
+    val isLocalPlayer get() = currentPlayer == localPlayerId
+
     private var pendingPlayerState = PendingPlayerState()
     private var playerState: PlayerState? = null
     private var unacknowledgedStateChange: UnacknowledgedPlayerStateChange? = null
@@ -84,6 +89,8 @@ class SqueezeboxMediaPlayer(
     private var playlistFetchJob: Job? = null
     private var delayedStateUpdateJob: Job? = null
     private var unacknowledgedStateRevertJob: Job? = null
+
+    private val localPlayerId by lazy { preferences.getOrCreateLocalPlayerId() }
 
     override fun handleSetDeviceVolume(deviceVolume: Int, flags: Int) = future {
         val playerId = currentPlayer ?: return@future
@@ -275,16 +282,18 @@ class SqueezeboxMediaPlayer(
             .setPlaylist(playlistInfo.playlist)
             .setCurrentMediaItemIndex(playlistInfo.position)
 
+        val deviceInfoBuilder = DeviceInfo.Builder(
+            if (isLocalPlayer) DeviceInfo.PLAYBACK_TYPE_LOCAL else DeviceInfo.PLAYBACK_TYPE_REMOTE
+        )
+
         playerState.currentVolume?.let {
             builder.setDeviceVolume(it.volume)
             builder.setIsDeviceMuted(it.muted)
-            builder.setDeviceInfo(
-                DeviceInfo.Builder(DeviceInfo.PLAYBACK_TYPE_REMOTE)
-                    .setMinVolume(0)
-                    .setMaxVolume(100)
-                    .build()
-            )
+            deviceInfoBuilder.setMinVolume(0)
+            deviceInfoBuilder.setMaxVolume(100)
         }
+
+        builder.setDeviceInfo(deviceInfoBuilder.build())
 
         return builder.build()
     }

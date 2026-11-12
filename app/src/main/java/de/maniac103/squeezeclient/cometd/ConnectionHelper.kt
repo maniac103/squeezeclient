@@ -385,8 +385,8 @@ class ConnectionHelper(
 
     private suspend fun publishOneShotRequest(request: Request): JsonElement {
         val client = client
-        val clientId = client?.clientId ?: throw IllegalStateException()
-        val scope = connectionScope ?: throw IllegalStateException()
+        val clientId = client?.clientId ?: throw CometdClient.CometdException("Not connected")
+        val scope = connectionScope ?: throw CometdClient.CometdException("Not connected")
 
         return try {
             publishSingleOneShotRequestAttempt(client, clientId, scope, request)

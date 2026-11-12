@@ -28,6 +28,7 @@ import androidx.core.os.bundleOf
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSourceBitmapLoader
@@ -36,10 +37,13 @@ import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.session.CacheBitmapLoader
 import androidx.media3.session.CommandButton
 import androidx.media3.session.DefaultMediaNotificationProvider
+import androidx.media3.session.LibraryResult
+import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
-import androidx.media3.session.MediaSessionService
 import androidx.media3.session.SessionCommand
+import androidx.media3.session.SessionError
 import androidx.media3.session.SessionResult
+import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import de.maniac103.squeezeclient.Preferences
 import de.maniac103.squeezeclient.R
@@ -63,14 +67,16 @@ import org.koin.android.ext.android.inject
 
 @OptIn(UnstableApi::class, ExperimentalTime::class)
 class MediaService :
-    MediaSessionService(),
+    MediaLibraryService(),
     Player.Listener,
-    MediaSession.Callback {
+    MediaLibraryService.MediaLibrarySession.Callback {
     private val connectionHelper: ConnectionHelper by inject()
     private val preferences: Preferences by inject()
     private val httpClient: OkHttpClient by inject()
     private lateinit var player: SqueezeboxMediaPlayer
-    private lateinit var mediaSession: MediaSession
+    private lateinit var mediaSession: MediaLibrarySession
+    private lateinit var libraryTree: LibraryTree
+    private lateinit var subscriptions: LibrarySubscriptions
     private var lastDisconnectionTime: Instant? = null
     private var playerDisappearanceTime: Instant? = null
     private var lastPlayStopTime: Instant? = null
@@ -134,12 +140,15 @@ class MediaService :
         val bitmapLoader = DataSourceBitmapLoader.Builder(this)
             .setDataSourceFactory(dataSourceFactory)
             .build()
-        mediaSession = MediaSession.Builder(this, player)
-            .setCallback(this)
+        mediaSession = MediaLibrarySession.Builder(this, player, this)
             .setMediaButtonPreferences(listOf(powerButton, disconnectButton))
             .setSessionActivity(activityIntent)
             .setBitmapLoader(CacheBitmapLoader(bitmapLoader))
             .build()
+
+        subscriptions = LibrarySubscriptions(mediaSession)
+        libraryTree = LibraryTree(this, connectionHelper, preferences, subscriptions)
+
         addSession(mediaSession)
     }
 
@@ -151,6 +160,7 @@ class MediaService :
             val forcePlayerChange = intent.getBooleanExtra("forcePlayerChange", true)
             if (player.currentPlayer == null || forcePlayerChange) {
                 player.currentPlayer = playerId
+                libraryTree.connectedPlayer = playerId.takeIf { player.isConnectedToServer }
             }
         }
         return super.onStartCommand(intent, flags, startId)
@@ -177,8 +187,8 @@ class MediaService :
         session: MediaSession,
         controller: MediaSession.ControllerInfo
     ): MediaSession.ConnectionResult {
-        val sessionCommandsBuilder = MediaSession.ConnectionResult.DEFAULT_SESSION_COMMANDS
-            .buildUpon()
+        val sessionCommandsBuilder =
+            MediaSession.ConnectionResult.DEFAULT_SESSION_AND_LIBRARY_COMMANDS.buildUpon()
 
         if (!player.isLocalPlayer) {
             sessionCommandsBuilder.add(SessionCommand(SESSION_ACTION_POWER, Bundle.EMPTY))
@@ -221,18 +231,125 @@ class MediaService :
         handlePlaybackStateChange()
     }
 
+    override fun onGetLibraryRoot(
+        session: MediaLibrarySession,
+        browser: MediaSession.ControllerInfo,
+        params: LibraryParams?
+    ) = lifecycleScope.future {
+        if (preferences.serverConfig.value == null) {
+            LibraryResult.ofError(SessionError.ERROR_SESSION_SETUP_REQUIRED)
+        } else {
+            LibraryResult.ofItem(libraryTree.rootItem(), params)
+        }
+    }
+
+    override fun onGetChildren(
+        session: MediaLibrarySession,
+        browser: MediaSession.ControllerInfo,
+        parentId: String,
+        page: Int,
+        pageSize: Int,
+        params: LibraryParams?
+    ) = lifecycleScope.future {
+        libraryTree.getChildren(parentId, page, pageSize)
+    }
+
+    override fun onGetItem(
+        session: MediaLibrarySession,
+        browser: MediaSession.ControllerInfo,
+        mediaId: String
+    ): ListenableFuture<LibraryResult<MediaItem>> =
+        Futures.immediateFuture(libraryTree.getItem(mediaId))
+
+    override fun onSubscribe(
+        session: MediaLibrarySession,
+        browser: MediaSession.ControllerInfo,
+        parentId: String,
+        params: LibraryParams?
+    ): ListenableFuture<LibraryResult<Void>> {
+        val result = if (subscriptions.add(browser, parentId)) {
+            LibraryResult.ofVoid(params)
+        } else {
+            LibraryResult.ofError(SessionError.ERROR_BAD_VALUE)
+        }
+        return Futures.immediateFuture(result)
+    }
+
+    override fun onUnsubscribe(
+        session: MediaLibrarySession,
+        browser: MediaSession.ControllerInfo,
+        parentId: String
+    ): ListenableFuture<LibraryResult<Void>> {
+        subscriptions.remove(browser, parentId)
+        return Futures.immediateFuture(LibraryResult.ofVoid())
+    }
+
+    override fun onDisconnected(session: MediaSession, controller: MediaSession.ControllerInfo) {
+        subscriptions.removeAll(controller)
+    }
+
+    override fun onSearch(
+        session: MediaLibrarySession,
+        browser: MediaSession.ControllerInfo,
+        query: String,
+        params: LibraryParams?
+    ): ListenableFuture<LibraryResult<Void>> = lifecycleScope.future {
+        val count = libraryTree.searchCount(query)
+        session.notifySearchResultChanged(browser, query, count, params)
+        LibraryResult.ofVoid(params)
+    }
+
+    override fun onGetSearchResult(
+        session: MediaLibrarySession,
+        browser: MediaSession.ControllerInfo,
+        query: String,
+        page: Int,
+        pageSize: Int,
+        params: LibraryParams?
+    ) = lifecycleScope.future {
+        libraryTree.getSearchResult(query, page, pageSize)
+    }
+
+    override fun onSetMediaItems(
+        mediaSession: MediaSession,
+        controller: MediaSession.ControllerInfo,
+        mediaItems: List<MediaItem>,
+        startIndex: Int,
+        startPositionMs: Long
+    ) = lifecycleScope.future {
+        libraryTree.processSetMediaItems(mediaItems, startIndex)
+    }
+
+    override fun onAddMediaItems(
+        mediaSession: MediaSession,
+        controller: MediaSession.ControllerInfo,
+        mediaItems: List<MediaItem>
+    ) = lifecycleScope.future {
+        libraryTree.processAddMediaItems(mediaItems)
+    }
+
     private fun handleConnection(status: ConnectionState.Connected) {
         // Update connection status first, because currentPlayer checked below
         // is updated on status changes
         player.isConnectedToServer = true
         lastDisconnectionTime = null
-        player.currentPlayer?.let { playerId ->
-            playerDisappearanceTime = if (status.players.any { it.id == playerId }) {
-                null
-            } else {
-                Clock.System.now()
-            }
+
+        val connectedPlayers = status.players.filter { it.connected }
+        val activePlayer = player.currentPlayer
+            ?.takeIf { id -> connectedPlayers.any { it.id == id } }
+
+        when {
+            activePlayer == null && connectedPlayers.isNotEmpty() ->
+                player.currentPlayer = connectedPlayers[0].id
+
+            activePlayer != null && connectedPlayers.any { it.id == activePlayer } ->
+                playerDisappearanceTime = null
+
+            activePlayer != null && playerDisappearanceTime == null ->
+                playerDisappearanceTime = Clock.System.now()
         }
+
+        libraryTree.connectedPlayer = player.currentPlayer
         scheduleShutdownIfNeeded()
     }
 
@@ -240,6 +357,7 @@ class MediaService :
         if (player.isConnectedToServer) {
             lastDisconnectionTime = Clock.System.now()
             player.isConnectedToServer = false
+            libraryTree.connectedPlayer = null
         }
         // Try reconnecting for some amount of time to handle short interruptions. If we can't
         // connect for longer amounts of time, stop retrying and shut down the service

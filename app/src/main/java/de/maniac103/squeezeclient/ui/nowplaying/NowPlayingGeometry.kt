@@ -64,11 +64,12 @@ internal data class PlaylistLayoutSpec(
     val bounds: Morph<Bounds>,
     val alpha: Morph<Float>,
     val nowPlayingCornerSizes: CornerSizes,
+    val topSpacing: Morph<Dp>,
     // driven by playlist progress
     val playlistCornerSizes: CornerSizes,
     val contentAlpha: Morph<Float>,
     // static
-    val padding: PaddingValues,
+    val contentPadding: PaddingValues,
     val handleHeight: Dp = Dp.Unspecified,
     val handleDragDistance: Float = 0F
 ) {
@@ -476,7 +477,9 @@ private fun calculatePortraitGeometry(
                 bottomEnd = constant(0.dp)
             ),
             contentAlpha = morph(0f, 1f),
-            padding = PaddingValues(start = startInset, end = endInset, bottom = bottomInset),
+            contentPadding =
+                PaddingValues(start = startInset, end = endInset, bottom = bottomInset),
+            topSpacing = constant(0.dp),
             handleHeight = playlistHandleHeight,
             handleDragDistance = density.run {
                 (expandedPlaylist.height - playlistHandleHeight).toPx()
@@ -610,7 +613,8 @@ private fun calculateLandscapeGeometry(
         start = 0.dp,
         top = topInset,
         width = input.collapsedWidth - endInset,
-        height = collapsedContentHeight - topInset - bottomInset
+        height = collapsedContentHeight - topInset -
+            (if (collapsedContentHeight != containerSize.height) 0.dp else bottomInset)
     )
 
     val collapsedTitleHeight = collapsedTitleSize.estimateLayoutHeight(density)
@@ -833,11 +837,11 @@ private fun calculateLandscapeGeometry(
                 expandedPlaylist,
                 WindowEasing(0.7F, 1F, EaseOutCubic)
             ),
-            padding = PaddingValues(
-                top = topInset,
+            contentPadding = PaddingValues(
                 end = endInset,
                 bottom = bottomInset
             ),
+            topSpacing = morph(0.dp, topInset),
             alpha = if (collapsedPlaylistHeightFraction > 0) {
                 constant(1F)
             } else {

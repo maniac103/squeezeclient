@@ -34,9 +34,9 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.minus
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListState
@@ -419,7 +419,6 @@ private fun PlayerSurface(
             onClearPlaylist = onClearPlaylist,
             onShowVolumePopup = onShowVolumePopup
         )
-
         PlayerArtwork(
             state = state,
             serverConfig = serverConfig,
@@ -966,21 +965,22 @@ private fun PlaylistSheet(
                 .background(sheetColor)
                 .then(nestedScrollModifier)
         ) {
-            val topPadding = PaddingValues(
-                top = layoutSpec.padding.calculateTopPadding()
+            Spacer(
+                modifier = Modifier.layout { _, constraints ->
+                    val h = layoutSpec.topSpacing.at(nowPlayingProgress.value).roundToPx()
+                    layout(constraints.maxWidth, h) {}
+                }
             )
 
             if (needsHandle) {
                 PlaylistHandle(
                     progress = playlistProgress,
-                    dragDistance = layoutSpec.handleDragDistance,
-                    modifier = Modifier.padding(topPadding)
+                    dragDistance = layoutSpec.handleDragDistance
                 )
             } else {
                 PlaylistTitle(
                     modifier = Modifier
-                        .padding(topPadding)
-                        .padding(bottom = 4.dp)
+                        .padding(vertical = 4.dp)
                         .align(Alignment.CenterHorizontally)
                 )
             }
@@ -993,7 +993,7 @@ private fun PlaylistSheet(
                 val sheetScope = PlaylistSheetScope(
                     listState = playlistState,
                     sheetColor = sheetColor,
-                    contentPadding = layoutSpec.padding - topPadding,
+                    contentPadding = layoutSpec.contentPadding,
                     listModifier = Modifier
                         .fade(playlistProgress, layoutSpec.contentAlpha)
                         .fillMaxSize()
@@ -1005,7 +1005,7 @@ private fun PlaylistSheet(
 
                 NavigationBarScrim(
                     color = sheetColor,
-                    insets = layoutSpec.padding
+                    insets = layoutSpec.contentPadding
                 )
             }
         }

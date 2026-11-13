@@ -34,12 +34,19 @@ class LocalPlayerAudioProcessor(
         private set
     var skippedFrames = 0L
         private set
-    private var remainingFramesToSkip = 0L
+    private var pendingSkipTimeUs = 0L
+    private var remainingFramesToSkip = 0
     private var bytesPerFrame = 0
+    private var sampleRate = 0
 
-    fun skipAhead(duration: Duration) {
-        remainingFramesToSkip =
-            duration.inWholeMicroseconds * inputAudioFormat.sampleRate / 1000000L
+    fun skipAhead(duration: Duration) = synchronized(this) {
+        pendingSkipTimeUs = duration.inWholeMicroseconds
+        convertSkipTimeIfPossible()
+    }
+
+    fun cancelSkip() = synchronized(this) {
+        pendingSkipTimeUs = 0L
+        remainingFramesToSkip = 0
     }
 
     override fun onConfigure(audioFormat: AudioProcessor.AudioFormat) = when {
@@ -49,15 +56,22 @@ class LocalPlayerAudioProcessor(
 
     override fun onFlush(streamMetadata: AudioProcessor.StreamMetadata) {
         super.onFlush(streamMetadata)
-        skippedFrames = 0L
-        remainingFramesToSkip = 0L
-        bytesPerFrame = inputAudioFormat.bytesPerFrame
+        synchronized(this) {
+            bytesPerFrame = inputAudioFormat.bytesPerFrame
+            skippedFrames = 0L
+            sampleRate = inputAudioFormat.sampleRate
+            convertSkipTimeIfPossible()
+        }
     }
 
     override fun onReset() {
-        hasProcessedData = false
         super.onReset()
         resetCallback()
+        synchronized(this) {
+            hasProcessedData = false
+            bytesPerFrame = 0
+            sampleRate = 0
+        }
     }
 
     override fun onQueueEndOfStream() {
@@ -66,19 +80,28 @@ class LocalPlayerAudioProcessor(
     }
 
     override fun queueInput(inputBuffer: ByteBuffer) {
-        if (inputBuffer.hasRemaining()) {
-            hasProcessedData = true
-        }
-        if (remainingFramesToSkip > 0 && bytesPerFrame > 0) {
-            val framesInBuffer = (inputBuffer.remaining() / bytesPerFrame).toLong()
-            val skipFrames = min(framesInBuffer, remainingFramesToSkip)
-            val skipBytes = skipFrames * bytesPerFrame
-            inputBuffer.position(inputBuffer.position() + skipBytes.toInt())
-            skippedFrames += skipFrames
-            remainingFramesToSkip -= skipFrames
+        synchronized(this) {
+            if (inputBuffer.hasRemaining()) {
+                hasProcessedData = true
+            }
+            if (remainingFramesToSkip > 0 && bytesPerFrame > 0) {
+                val framesInBuffer = inputBuffer.remaining() / bytesPerFrame
+                val skipFrames = min(framesInBuffer, remainingFramesToSkip)
+                val skipBytes = skipFrames * bytesPerFrame
+                inputBuffer.position(inputBuffer.position() + skipBytes)
+                skippedFrames += skipFrames
+                remainingFramesToSkip -= skipFrames
+            }
         }
         if (inputBuffer.hasRemaining() && !hasPendingOutput()) {
             replaceOutputBuffer(inputBuffer.remaining()).put(inputBuffer).flip()
+        }
+    }
+
+    private fun convertSkipTimeIfPossible() {
+        if (sampleRate > 0) {
+            remainingFramesToSkip = (pendingSkipTimeUs * sampleRate / 1_000_000L).toInt()
+            pendingSkipTimeUs = 0L
         }
     }
 }

@@ -92,6 +92,7 @@ fun ArtworkImage(
             contentScale = ContentScale.Fit,
             placeholder = placeholder,
             fallback = fallback,
+            error = fallback,
             onLoading = updateAspectRatio,
             onSuccess = updateAspectRatio,
             onError = updateAspectRatio,

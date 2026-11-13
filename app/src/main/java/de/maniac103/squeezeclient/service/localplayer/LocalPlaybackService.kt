@@ -179,8 +179,8 @@ class LocalPlaybackService : LifecycleService() {
     }
 
     private fun onPlaybackAdvancedToNextTrack() = lifecycleScope.launch {
-        sendStatus(SlimprotoSocket.StatusType.TrackStarted)
-        sentTrackStartStatus = true
+        sentTrackStartStatus = false
+        handlePlaybackStart()
     }
 
     private fun onPauseStateChanged(paused: Boolean) = lifecycleScope.launch {
@@ -226,7 +226,7 @@ class LocalPlaybackService : LifecycleService() {
     }
 
     private suspend fun handlePlaybackStart() {
-        if (!sentTrackStartStatus) {
+        if (!sentTrackStartStatus && player.readyForPlayback && !player.paused) {
             sendStatus(SlimprotoSocket.StatusType.TrackStarted)
             sentTrackStartStatus = true
         }
@@ -412,8 +412,11 @@ class LocalPlaybackService : LifecycleService() {
 
             is SlimprotoSocket.CommandPacket.StreamStart -> {
                 sendStatus(SlimprotoSocket.StatusType.Connecting)
-                sentTrackStartStatus = false // new strm-s requires new STMs to be sent
-                sentBufferReady = command.autoStart
+                if (!player.hasActiveStream) {
+                    // new strm-s that replaces playback requires new STMs / STMl
+                    sentTrackStartStatus = false
+                    sentBufferReady = command.autoStart
+                }
                 player.play(
                     command.uri,
                     command.mimeType,

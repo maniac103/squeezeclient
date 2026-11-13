@@ -100,7 +100,8 @@ class LocalPlayer(
     val readyForPlaybackOrBuffering get() =
         player.playbackState == Player.STATE_READY || player.playbackState == Player.STATE_BUFFERING
     val readyForPlayback get() = player.playbackState == Player.STATE_READY
-    val isPlaying get() = player.isPlaying
+    val hasActiveStream get() =
+        player.playbackState != Player.STATE_IDLE && player.playbackState != Player.STATE_ENDED
 
     var volume: Float
         get() = lastSetVolume ?: 0F
@@ -218,7 +219,7 @@ class LocalPlayer(
 
         currentReplayGain = replayGain
 
-        if (player.playbackState == Player.STATE_IDLE) {
+        if (!hasActiveStream) {
             player.setMediaSource(mediaSource)
             player.prepare()
             player.playWhenReady = autoStart
@@ -288,7 +289,7 @@ class LocalPlayer(
         ) {
             player.volume = playerInternalVolume * currentReplayGain
         }
-        if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO && readyForPlayback && !paused) {
+        if (reason == Player.MEDIA_ITEM_TRANSITION_REASON_AUTO) {
             onPlaybackAdvancedToNextTrack()
         }
     }

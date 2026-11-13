@@ -229,8 +229,10 @@ class LocalPlayer(
         }
     }
 
+    @OptIn(UnstableApi::class)
     fun stop() {
         player.stop()
+        audioProcessor.cancelSkip()
     }
 
     fun release() {

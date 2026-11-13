@@ -26,10 +26,8 @@ import kotlin.math.min
 import kotlin.time.Duration
 
 @UnstableApi
-class LocalPlayerAudioProcessor(
-    private val resetCallback: () -> Unit = {},
-    private val endOfStreamCallback: () -> Unit = {}
-) : BaseAudioProcessor() {
+class LocalPlayerAudioProcessor(private val endOfStreamCallback: () -> Unit = {}) :
+    BaseAudioProcessor() {
     var hasProcessedData = false
         private set
     var skippedFrames = 0L
@@ -66,7 +64,6 @@ class LocalPlayerAudioProcessor(
 
     override fun onReset() {
         super.onReset()
-        resetCallback()
         synchronized(this) {
             hasProcessedData = false
             bytesPerFrame = 0

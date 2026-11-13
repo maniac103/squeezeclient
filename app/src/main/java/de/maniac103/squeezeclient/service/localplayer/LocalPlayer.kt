@@ -69,7 +69,6 @@ class LocalPlayer(
     private val onPlaybackError: () -> Unit = {},
     private val onDecoderLoadFinished: () -> Unit = {},
     onDecodingFinished: () -> Unit = {},
-    onAudioStreamFlushed: () -> Unit = {},
     private val onAudioFocusLost: () -> Unit = {},
     private val onPlaybackSuppressionChanged: (suppressed: Boolean) -> Unit = {},
     private val onHeadersReceived: (response: Response) -> Unit = {},
@@ -117,7 +116,6 @@ class LocalPlayer(
 
     @UnstableApi
     private val audioProcessor = LocalPlayerAudioProcessor(
-        resetCallback = onAudioStreamFlushed,
         endOfStreamCallback = onDecodingFinished
     )
     private val audioOutputProvider = LocalPlayerAudioOutputProvider(
@@ -232,6 +230,7 @@ class LocalPlayer(
     @OptIn(UnstableApi::class)
     fun stop() {
         player.stop()
+        player.clearMediaItems()
         audioProcessor.cancelSkip()
     }
 

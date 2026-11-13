@@ -100,7 +100,6 @@ class LocalPlaybackService : LifecycleService() {
             onPlaybackEnded = { streamEnded -> onPlaybackEnded(streamEnded) },
             onPlaybackError = { onPlaybackError() },
             onPauseStateChanged = { paused -> onPauseStateChanged(paused) },
-            onAudioStreamFlushed = { onAudioStreamFlushed() },
             onAudioFocusLost = { onAudioFocusLost() },
             onPlaybackSuppressionChanged = { onPlaybackSuppressionChanged() },
             onDecoderLoadFinished = { onDecoderLoadFinished() },
@@ -206,10 +205,6 @@ class LocalPlaybackService : LifecycleService() {
     private fun onPlaybackError() = lifecycleScope.launch {
         sentTrackStartStatus = false
         sendStatus(SlimprotoSocket.StatusType.StreamingFailed)
-    }
-
-    private fun onAudioStreamFlushed() = lifecycleScope.launch {
-        sendStatus(SlimprotoSocket.StatusType.AudioFlushed)
     }
 
     private fun onAudioFocusLost() = lifecycleScope.launch {
@@ -457,8 +452,13 @@ class LocalPlaybackService : LifecycleService() {
                 player.skipAhead(command.skipOverInterval)
             }
 
-            is SlimprotoSocket.CommandPacket.StreamStop -> {
+            is SlimprotoSocket.CommandPacket.StreamStop,
+            is SlimprotoSocket.CommandPacket.StreamFlush -> {
+                statusUpdateJob?.cancel()
                 player.stop()
+                sentTrackStartStatus = false
+                sentBufferReady = false
+                sendStatus(SlimprotoSocket.StatusType.AudioFlushed)
             }
 
             is SlimprotoSocket.CommandPacket.StreamStatus -> {

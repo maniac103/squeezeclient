@@ -273,13 +273,17 @@ internal fun NowPlayingScreen(
     )
 
     (infoMenu as? NowPlayingContextMenuState.Show)?.let { menuState ->
-        val sheetState = rememberBottomSheetState(initialValue = SheetValue.Expanded)
+        val sheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden)
         ModalBottomSheet(
             onDismissRequest = onInfoMenuDismissed,
             sheetState = sheetState
         ) {
             val viewModel = koinViewModel<ContextMenuViewModel> {
                 parametersOf(playerId, menuState.items, menuState.parentItem)
+            }
+
+            LaunchedEffect(Unit) {
+                sheetState.show()
             }
 
             ContextMenuBottomSheetContent(

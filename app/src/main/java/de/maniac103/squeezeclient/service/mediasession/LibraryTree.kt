@@ -52,17 +52,8 @@ import kotlinx.coroutines.withTimeoutOrNull
 class LibraryTree(
     private val context: Context,
     private val connectionHelper: ConnectionHelper,
-    private val preferences: Preferences,
-    private val subscriptions: LibrarySubscriptions
+    private val preferences: Preferences
 ) {
-    var connectedPlayer: PlayerId? = null
-        set(value) {
-            if (field != value) {
-                field = value
-                subscriptions.notifyChange()
-            }
-        }
-
     fun rootItem(): MediaItem = folderItem(
         node = LibraryTreeNode.Root,
         title = context.getString(R.string.app_name),
@@ -70,6 +61,7 @@ class LibraryTree(
     )
 
     suspend fun getChildren(
+        playerId: PlayerId?,
         parentId: String,
         page: Int,
         pageSize: Int
@@ -77,8 +69,8 @@ class LibraryTree(
         val node = parentId.toTreeNode()
             ?: return LibraryResult.ofError(SessionError.ERROR_BAD_VALUE)
 
-        val playerId = connectedPlayer
-            ?: return if (node == LibraryTreeNode.Root) {
+        if (playerId == null) {
+            return if (node == LibraryTreeNode.Root) {
                 val noServerInfo = infoItem(
                     titleResId = R.string.browse_no_player_title,
                     subTitleResId = R.string.browse_no_player_subtitle
@@ -87,6 +79,7 @@ class LibraryTree(
             } else {
                 LibraryResult.ofError(SessionError.ERROR_SESSION_DISCONNECTED)
             }
+        }
 
         return when (node) {
             LibraryTreeNode.Root -> LibraryResult.ofItemList(rootChildren(), null)
@@ -160,12 +153,14 @@ class LibraryTree(
     }
 
     suspend fun getSearchResult(
+        playerId: PlayerId?,
         query: String,
         page: Int,
         pageSize: Int
     ): LibraryResult<ImmutableList<MediaItem>> {
-        val playerId = connectedPlayer
-            ?: return LibraryResult.ofError(SessionError.ERROR_SESSION_DISCONNECTED)
+        if (playerId == null) {
+            return LibraryResult.ofError(SessionError.ERROR_SESSION_DISCONNECTED)
+        }
 
         val result = runCatching {
             searchItems(playerId, query, page, pageSize)
@@ -177,10 +172,10 @@ class LibraryTree(
     }
 
     suspend fun processSetMediaItems(
+        playerId: PlayerId?,
         inputItems: List<MediaItem>,
         startIndex: Int
     ): MediaSession.MediaItemsWithStartPosition {
-        val playerId = connectedPlayer
         if (playerId == null || inputItems.isEmpty()) {
             return MediaSession.MediaItemsWithStartPosition(
                 emptyList(),
@@ -204,10 +199,13 @@ class LibraryTree(
         return MediaSession.MediaItemsWithStartPosition(resolvedItems, 0, C.TIME_UNSET)
     }
 
-    suspend fun processAddMediaItems(inputItems: List<MediaItem>): List<MediaItem> {
-        val playerId = connectedPlayer
-            ?: return emptyList()
-        return handleIncomingItems(playerId, inputItems, false)
+    suspend fun processAddMediaItems(
+        playerId: PlayerId?,
+        inputItems: List<MediaItem>
+    ) = if (playerId == null) {
+        emptyList()
+    } else {
+        handleIncomingItems(playerId, inputItems, false)
     }
 
     private suspend fun handleIncomingItems(

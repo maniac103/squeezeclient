@@ -36,7 +36,6 @@ import de.maniac103.squeezeclient.model.PagingParams
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.PlayerStatus
 import de.maniac103.squeezeclient.model.Playlist
-import de.maniac103.squeezeclient.service.getOrCreateLocalPlayerId
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -45,79 +44,95 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.guava.future
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @UnstableApi
 class SqueezeboxMediaPlayer(
     private val preferences: Preferences,
     private val connectionHelper: ConnectionHelper,
-    private val lifecycle: Lifecycle
+    private val lifecycle: Lifecycle,
+    private val currentPlayerFlow: StateFlow<CurrentPlayerState>,
+    private val connectedToServerFlow: StateFlow<Boolean>
 ) : SimpleBasePlayer(Looper.getMainLooper()),
     CoroutineScope by lifecycle.coroutineScope {
-    var currentPlayer: PlayerId? = null
-        set(value) {
-            if (field != value) {
-                field = value
-                updatePlayer(value)
-                invalidateState()
-            }
+    private val reportedConnectedFlow = connectedToServerFlow
+        .transformLatest { connected ->
+            if (!connected) delay(2.seconds)
+            emit(connected)
         }
-    var isConnectedToServer: Boolean = true
-        set(value) {
-            if (field != value) {
-                field = value
-                updatePlayer(currentPlayer)
-                launch {
-                    if (!value) {
-                        // Don't report loss of connection immediately: reconnection may already
-                        // be happening, and we do not want to report intermediate states
-                        delay(2.seconds)
-                    }
-                    invalidateState()
-                }
-            }
-        }
+        .stateIn(this, SharingStarted.Eagerly, true)
 
-    val isLocalPlayer get() = currentPlayer == localPlayerId
+    private val activePlayer get() =
+        currentPlayerFlow.value.playerId?.takeIf { connectedToServerFlow.value }
 
     private var pendingPlayerState = PendingPlayerState()
     private var playerState: PlayerState? = null
     private var unacknowledgedStateChange: UnacknowledgedPlayerStateChange? = null
-    private var statusSubscription: Job? = null
     private var playlistFetchJob: Job? = null
     private var delayedStateUpdateJob: Job? = null
     private var unacknowledgedStateRevertJob: Job? = null
 
-    private val localPlayerId by lazy { preferences.getOrCreateLocalPlayerId() }
+    init {
+        launch {
+            lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                currentPlayerFlow
+                    .flatMapLatest { playerState ->
+                        resetPlayerDependentState()
+                        connectedToServerFlow.flatMapLatest { connected ->
+                            playerState.playerId
+                                ?.takeIf { connected }
+                                ?.let { connectionHelper.playerState(it) }
+                                ?.flatMapLatest { it.playStatus }
+                                ?.map { playerState.playerId to it }
+                                ?: emptyFlow()
+                        }
+                    }
+                    .collect { (id, status) -> handlePlayerStatusUpdate(id, status) }
+            }
+        }
+        launch {
+            reportedConnectedFlow
+                .drop(1)
+                .collect { invalidateState() }
+        }
+    }
 
     override fun handleSetDeviceVolume(deviceVolume: Int, flags: Int) = future {
-        val playerId = currentPlayer ?: return@future
+        val playerId = activePlayer ?: return@future
         connectionHelper.setVolume(playerId, deviceVolume)
     }
 
     override fun handleIncreaseDeviceVolume(flags: Int) = future {
-        val playerId = currentPlayer ?: return@future
+        val playerId = activePlayer ?: return@future
         val currentVolume = playerState?.currentVolume ?: return@future
         val stepSize = preferences.volumeStepSize.value
         connectionHelper.setVolume(playerId, currentVolume.volume + stepSize)
     }
 
     override fun handleDecreaseDeviceVolume(flags: Int) = future {
-        val playerId = currentPlayer ?: return@future
+        val playerId = activePlayer ?: return@future
         val currentVolume = playerState?.currentVolume ?: return@future
         val stepSize = preferences.volumeStepSize.value
         connectionHelper.setVolume(playerId, currentVolume.volume - stepSize)
     }
 
     override fun handleSetDeviceMuted(muted: Boolean, flags: Int) = future {
-        val playerId = currentPlayer ?: return@future
+        val playerId = activePlayer ?: return@future
         connectionHelper.setMuteState(playerId, muted)
     }
 
     override fun handleSetPlayWhenReady(playWhenReady: Boolean) = future {
-        val playerId = currentPlayer ?: return@future
+        val playerId = activePlayer ?: return@future
         val newState = when {
             playWhenReady -> PlayerStatus.PlayState.Playing
             else -> PlayerStatus.PlayState.Paused
@@ -127,7 +142,7 @@ class SqueezeboxMediaPlayer(
     }
 
     override fun handleSeek(mediaItemIndex: Int, positionMs: Long, seekCommand: Int) = future {
-        val playerId = currentPlayer ?: return@future
+        val playerId = activePlayer ?: return@future
         when (seekCommand) {
             COMMAND_SEEK_TO_NEXT_MEDIA_ITEM, COMMAND_SEEK_TO_NEXT -> {
                 updateUnacknowledgedState(playlistPositionOffset = 1)
@@ -164,7 +179,7 @@ class SqueezeboxMediaPlayer(
     }
 
     override fun handleStop() = future {
-        val playerId = currentPlayer ?: return@future
+        val playerId = activePlayer ?: return@future
         updateUnacknowledgedState(playState = PlayerStatus.PlayState.Stopped)
         connectionHelper.changePlaybackState(playerId, PlayerStatus.PlayState.Stopped)
     }
@@ -262,7 +277,7 @@ class SqueezeboxMediaPlayer(
         val playWhenReady = reportedInternalState == PlayerStatus.PlayState.Playing
 
         val playbackState = when {
-            !isConnectedToServer -> STATE_BUFFERING
+            !reportedConnectedFlow.value -> STATE_BUFFERING
 
             !playerState.powered -> STATE_IDLE
 
@@ -286,7 +301,10 @@ class SqueezeboxMediaPlayer(
             .setCurrentMediaItemIndex(playlistInfo.position)
 
         val deviceInfoBuilder = DeviceInfo.Builder(
-            if (isLocalPlayer) DeviceInfo.PLAYBACK_TYPE_LOCAL else DeviceInfo.PLAYBACK_TYPE_REMOTE
+            when (currentPlayerFlow.value.isLocalPlayer) {
+                true -> DeviceInfo.PLAYBACK_TYPE_LOCAL
+                false -> DeviceInfo.PLAYBACK_TYPE_REMOTE
+            }
         )
 
         playerState.currentVolume?.let {
@@ -380,19 +398,17 @@ class SqueezeboxMediaPlayer(
             .build()
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private fun updatePlayer(playerId: PlayerId?) {
-        statusSubscription?.cancel()
-        if (playerId == null || !isConnectedToServer) {
-            return
-        }
-        statusSubscription = launch {
-            lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                connectionHelper.playerState(playerId)
-                    .flatMapLatest { it.playStatus }
-                    .collect { status -> handlePlayerStatusUpdate(playerId, status) }
-            }
-        }
+    private fun resetPlayerDependentState() {
+        playlistFetchJob?.cancel()
+        playlistFetchJob = null
+        delayedStateUpdateJob?.cancel()
+        delayedStateUpdateJob = null
+        unacknowledgedStateRevertJob?.cancel()
+        unacknowledgedStateRevertJob = null
+        pendingPlayerState = PendingPlayerState()
+        playerState = null
+        unacknowledgedStateChange = null
+        invalidateState()
     }
 
     private fun handlePlayerStatusUpdate(playerId: PlayerId, status: PlayerStatus) {

@@ -165,11 +165,12 @@ class SqueezeboxMediaPlayer(
     }
 
     override fun getState(): State {
+        val unacknowledgedChange = unacknowledgedStateChange
         val playerState = playerState
             ?: return waitingForPlayerState()
         val currentSong = playerState.currentSong
             ?: return State.Builder().setPlaybackState(STATE_IDLE).build()
-        val unacknowledgedChange = unacknowledgedStateChange
+
         val currentSongDurationUs =
             playerState.currentSongDuration?.toLong(DurationUnit.MICROSECONDS)
 
@@ -292,6 +293,7 @@ class SqueezeboxMediaPlayer(
     }
 
     private fun updateUnacknowledgedState(
+        currentSong: Playlist.PlaylistItem? = null,
         absolutePlaylistPosition: Int? = null,
         playlistPositionOffset: Int? = null,
         positionInTrack: Duration? = null,
@@ -316,6 +318,7 @@ class SqueezeboxMediaPlayer(
         val playlistLength = pendingPlayerState.playlist?.totalCount ?: Int.MAX_VALUE
 
         unacknowledgedStateChange = UnacknowledgedPlayerStateChange(
+            currentSong ?: unacknowledgedStateChange?.currentSong,
             newAbsolutePosition
                 ?.plus(playlistPositionOffset ?: 0)
                 ?.coerceIn(0, playlistLength),
@@ -475,6 +478,7 @@ class SqueezeboxMediaPlayer(
     }
 
     private data class UnacknowledgedPlayerStateChange(
+        val currentSong: Playlist.PlaylistItem? = null,
         val absolutePlaylistPosition: Int? = null,
         val playlistPositionOffset: Int? = null,
         val positionInTrack: Duration? = null,

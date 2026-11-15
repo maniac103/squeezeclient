@@ -143,15 +143,15 @@ class SqueezeboxMediaPlayer(
             }
 
             COMMAND_SEEK_TO_MEDIA_ITEM -> {
-                val positionSeconds = ((positionMs + 500) / 1000).toInt()
+                val positionSeconds = positionMs
+                    .takeIf { it != C.TIME_UNSET && it > 0 }
+                    ?.let { ((it + 500) / 1000).toInt() }
                 updateUnacknowledgedState(
                     absolutePlaylistPosition = mediaItemIndex,
-                    positionInTrack = positionMs.milliseconds
+                    positionInTrack = positionSeconds?.seconds
                 )
                 connectionHelper.advanceToPlaylistPosition(playerId, mediaItemIndex)
-                if (positionSeconds > 0) {
-                    connectionHelper.updatePlaybackPosition(playerId, positionSeconds)
-                }
+                positionSeconds?.let { connectionHelper.updatePlaybackPosition(playerId, it) }
             }
 
             else -> {}

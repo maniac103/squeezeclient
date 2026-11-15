@@ -199,14 +199,12 @@ class LibraryTree(
         return MediaSession.MediaItemsWithStartPosition(resolvedItems, 0, C.TIME_UNSET)
     }
 
-    suspend fun processAddMediaItems(
-        playerId: PlayerId?,
-        inputItems: List<MediaItem>
-    ) = if (playerId == null) {
-        emptyList()
-    } else {
-        handleIncomingItems(playerId, inputItems, false)
-    }
+    suspend fun processAddMediaItems(playerId: PlayerId?, inputItems: List<MediaItem>) =
+        if (playerId == null) {
+            emptyList()
+        } else {
+            handleIncomingItems(playerId, inputItems, false)
+        }
 
     private suspend fun handleIncomingItems(
         playerId: PlayerId,

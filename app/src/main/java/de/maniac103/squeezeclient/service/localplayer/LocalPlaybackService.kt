@@ -132,9 +132,8 @@ class LocalPlaybackService : LifecycleService() {
                         updateForegroundNotification(state)
                         if (state is SlimprotoState.PlayingOrPaused && !state.paused) {
                             MediaService.start(
-                                this@LocalPlaybackService,
-                                slimproto.playerId,
-                                true
+                                context = this@LocalPlaybackService,
+                                reason = MediaService.StartReason.LocalPlayerStart
                             )
                         }
                     }

@@ -23,9 +23,10 @@ import de.maniac103.squeezeclient.R
 
 object NotificationIds {
     const val LOCAL_PLAYBACK = 1001
-    const val MEDIA_CONTTROL_SERVICE = 1002
-    const val DOWNLOAD_WORKER = 1003
-    const val DOWNLOAD_FAILURE = 1004
+    const val MEDIA_CONTROL_REMOTE = 1002
+    const val MEDIA_CONTROL_LOCAL = 1003
+    const val DOWNLOAD_WORKER = 1004
+    const val DOWNLOAD_FAILURE = 1005
 
     data class ChannelInfo(
         val id: String,

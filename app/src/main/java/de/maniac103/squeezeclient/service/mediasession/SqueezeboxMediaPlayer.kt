@@ -61,8 +61,9 @@ class SqueezeboxMediaPlayer(
     private val preferences: Preferences,
     private val connectionHelper: ConnectionHelper,
     private val lifecycle: Lifecycle,
-    private val currentPlayerFlow: StateFlow<CurrentPlayerState>,
-    private val connectedToServerFlow: StateFlow<Boolean>
+    private val currentPlayerFlow: StateFlow<PlayerId?>,
+    private val connectedToServerFlow: StateFlow<Boolean>,
+    private val isLocalPlayer: Boolean
 ) : SimpleBasePlayer(Looper.getMainLooper()),
     CoroutineScope by lifecycle.coroutineScope {
     private val reportedConnectedFlow = connectedToServerFlow
@@ -73,7 +74,7 @@ class SqueezeboxMediaPlayer(
         .stateIn(this, SharingStarted.Eagerly, true)
 
     private val activePlayer get() =
-        currentPlayerFlow.value.playerId?.takeIf { connectedToServerFlow.value }
+        currentPlayerFlow.value?.takeIf { connectedToServerFlow.value }
 
     private var pendingPlayerState = PendingPlayerState()
     private var playerState: PlayerState? = null
@@ -86,14 +87,14 @@ class SqueezeboxMediaPlayer(
         launch {
             lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 currentPlayerFlow
-                    .flatMapLatest { playerState ->
+                    .flatMapLatest { playerId ->
                         resetPlayerDependentState()
                         connectedToServerFlow.flatMapLatest { connected ->
-                            playerState.playerId
+                            playerId
                                 ?.takeIf { connected }
                                 ?.let { connectionHelper.playerState(it) }
                                 ?.flatMapLatest { it.playStatus }
-                                ?.map { playerState.playerId to it }
+                                ?.map { playerId to it }
                                 ?: emptyFlow()
                         }
                     }
@@ -301,7 +302,7 @@ class SqueezeboxMediaPlayer(
             .setCurrentMediaItemIndex(playlistInfo.position)
 
         val deviceInfoBuilder = DeviceInfo.Builder(
-            when (currentPlayerFlow.value.isLocalPlayer) {
+            when (isLocalPlayer) {
                 true -> DeviceInfo.PLAYBACK_TYPE_LOCAL
                 false -> DeviceInfo.PLAYBACK_TYPE_REMOTE
             }

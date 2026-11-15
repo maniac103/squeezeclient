@@ -24,7 +24,8 @@ import java.util.UUID
 
 object NotificationIds {
     const val LOCAL_PLAYBACK = 1001
-    const val MEDIA_CONTTROL_SERVICE = 1002
+    const val MEDIA_CONTROL_REMOTE = 1002
+    const val MEDIA_CONTROL_LOCAL = 1003
     fun forDownloadWork(workId: UUID) = workId.hashCode().or(0x80000000.toInt())
 
     data class ChannelInfo(

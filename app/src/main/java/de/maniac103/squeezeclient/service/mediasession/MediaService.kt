@@ -18,40 +18,28 @@
 
 package de.maniac103.squeezeclient.service.mediasession
 
-import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.os.Bundle
 import androidx.annotation.OptIn
 import androidx.core.content.IntentCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.media3.common.MediaItem
-import androidx.media3.common.Player
+import androidx.media3.common.util.NullableType
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSourceBitmapLoader
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
-import androidx.media3.session.CacheBitmapLoader
-import androidx.media3.session.CommandButton
 import androidx.media3.session.DefaultMediaNotificationProvider
-import androidx.media3.session.LibraryResult
 import androidx.media3.session.MediaLibraryService
 import androidx.media3.session.MediaSession
-import androidx.media3.session.SessionCommand
-import androidx.media3.session.SessionError
-import androidx.media3.session.SessionResult
-import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import de.maniac103.squeezeclient.Preferences
-import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.cometd.ConnectionHelper
 import de.maniac103.squeezeclient.cometd.ConnectionState
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.service.NotificationIds
 import de.maniac103.squeezeclient.service.getOrCreateLocalPlayerId
-import de.maniac103.squeezeclient.ui.MainActivity
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -60,69 +48,83 @@ import kotlin.time.Instant
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.guava.future
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import org.koin.android.ext.android.inject
 
 @OptIn(UnstableApi::class, ExperimentalTime::class)
-class MediaService :
-    MediaLibraryService(),
-    Player.Listener,
-    MediaLibraryService.MediaLibrarySession.Callback {
+class MediaService : MediaLibraryService() {
     private val connectionHelper: ConnectionHelper by inject()
     private val preferences: Preferences by inject()
     private val httpClient: OkHttpClient by inject()
-    private lateinit var player: SqueezeboxMediaPlayer
-    private lateinit var mediaSession: MediaLibrarySession
-    private lateinit var libraryTree: LibraryTree
-    private lateinit var subscriptions: LibrarySubscriptions
     private var lastDisconnectionTime: Instant? = null
     private var playerDisappearanceTime: Instant? = null
-    private var lastPlayStopTime: Instant? = null
     private var delayedShutdownJob: Job? = null
 
-    private val currentPlayerIdFlow = MutableStateFlow(CurrentPlayerState(null, false))
+    private lateinit var selectedSession: PlayerSession
+    private lateinit var localSession: PlayerSession
+
+    private val selectedPlayerIdFlow = MutableStateFlow<PlayerId?>(null)
     private val isConnectedToServerFlow = MutableStateFlow(true)
     private val localPlayerId by lazy { preferences.getOrCreateLocalPlayerId() }
-    private val connectedPlayerFlow = combine(
-        currentPlayerIdFlow,
-        isConnectedToServerFlow
-    ) { playerState, connected -> playerState.playerId?.takeIf { connected } }
-        .stateIn(lifecycleScope, SharingStarted.Eagerly, null)
-
-    private val powerCommand = SessionCommand(SESSION_ACTION_POWER, Bundle.EMPTY)
-    private val disconnectCommand = SessionCommand(SESSION_ACTION_DISCONNECT, Bundle.EMPTY)
-    private lateinit var powerButton: CommandButton
-    private lateinit var disconnectButton: CommandButton
 
     @OptIn(UnstableApi::class)
     override fun onCreate() {
         super.onCreate()
-        player = SqueezeboxMediaPlayer(
-            preferences = preferences,
-            connectionHelper = connectionHelper,
-            lifecycle = lifecycle,
-            currentPlayerFlow = currentPlayerIdFlow.asStateFlow(),
-            connectedToServerFlow = isConnectedToServerFlow.asStateFlow()
-        ).apply {
-            addListener(this@MediaService)
-        }
 
         val channelInfo = NotificationIds.CHANNEL_MEDIA_CONTROL
         setMediaNotificationProvider(
             DefaultMediaNotificationProvider.Builder(this)
-                .setNotificationId(NotificationIds.MEDIA_CONTTROL_SERVICE)
+                .setNotificationIdProvider { session ->
+                    when (session.id) {
+                        localSession.mediaSession.id -> NotificationIds.MEDIA_CONTROL_LOCAL
+                        else -> NotificationIds.MEDIA_CONTROL_REMOTE
+                    }
+                }
                 .setChannelId(channelInfo.id)
                 .setChannelName(channelInfo.nameResId)
                 .build()
+        )
+
+        val dataSourceFactory = DefaultDataSource.Factory(
+            this,
+            OkHttpDataSource.Factory(httpClient)
+        )
+        val bitmapLoader = DataSourceBitmapLoader.Builder(this)
+            .setDataSourceFactory(dataSourceFactory)
+            .build()
+
+        selectedSession = PlayerSession(
+            service = this,
+            bitmapLoader = bitmapLoader,
+            preferences = preferences,
+            connectionHelper = connectionHelper,
+            lifecycle = lifecycle,
+            currentPlayerFlow = selectedPlayerIdFlow.asStateFlow(),
+            connectedToServerFlow = isConnectedToServerFlow.asStateFlow(),
+            isLocalPlayer = false,
+            onPlaybackStateChanged = this::scheduleShutdownIfNeeded,
+            onDisconnectRequested = {
+                removeSession(selectedSession.mediaSession)
+                if (!isSessionAdded(localSession.mediaSession)) {
+                    stopSelf()
+                }
+            }
+        )
+
+        localSession = PlayerSession(
+            service = this,
+            bitmapLoader = bitmapLoader,
+            preferences = preferences,
+            connectionHelper = connectionHelper,
+            lifecycle = lifecycle,
+            currentPlayerFlow = MutableStateFlow(localPlayerId.playerId).asStateFlow(),
+            connectedToServerFlow = isConnectedToServerFlow.asStateFlow(),
+            isLocalPlayer = true,
+            onPlaybackStateChanged = this::scheduleShutdownIfNeeded,
+            onDisconnectRequested = {}
         )
 
         lifecycleScope.launch {
@@ -140,222 +142,93 @@ class MediaService :
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                connectedPlayerFlow.collect { subscriptions.notifyChange() }
+                preferences.lastSelectedPlayer.asFlow().collect { playerId ->
+                    selectedPlayerIdFlow.value = playerId
+                    selectedSession.isRegistered = playerId != localPlayerId.playerId
+                }
             }
         }
-        updateCurrentPlayer(preferences.lastSelectedPlayer.value)
-
-        powerButton = CommandButton.Builder(CommandButton.ICON_UNDEFINED)
-            .setDisplayName(getString(R.string.notif_action_player_power))
-            .setCustomIconResId(R.drawable.ic_power_24dp)
-            .setSessionCommand(powerCommand)
-            .setSlots(CommandButton.SLOT_OVERFLOW)
-            .build()
-        disconnectButton = CommandButton.Builder(CommandButton.ICON_UNDEFINED)
-            .setDisplayName(getString(R.string.notif_action_disconnect))
-            .setCustomIconResId(R.drawable.ic_disconnect_24dp)
-            .setSessionCommand(disconnectCommand)
-            .setSlots(CommandButton.SLOT_OVERFLOW)
-            .build()
-
-        val activityIntent = PendingIntent.getActivity(
-            this,
-            0,
-            Intent(this, MainActivity::class.java).setAction(Intent.ACTION_MAIN),
-            PendingIntent.FLAG_CANCEL_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val dataSourceFactory = DefaultDataSource.Factory(
-            this,
-            OkHttpDataSource.Factory(httpClient)
-        )
-        val bitmapLoader = DataSourceBitmapLoader.Builder(this)
-            .setDataSourceFactory(dataSourceFactory)
-            .build()
-        mediaSession = MediaLibrarySession.Builder(this, player, this)
-            .setMediaButtonPreferences(buildButtonPreferences())
-            .setSessionActivity(activityIntent)
-            .setBitmapLoader(CacheBitmapLoader(bitmapLoader))
-            .build()
-
-        subscriptions = LibrarySubscriptions(mediaSession)
-        libraryTree = LibraryTree(this, connectionHelper, preferences)
-
-        addSession(mediaSession)
 
         lifecycleScope.launch {
+            localSession.isRegistered = preferences.localPlayerEnabled.value
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                currentPlayerIdFlow
-                    .map { it.isLocalPlayer }
-                    .distinctUntilChanged()
-                    .collect { updateCustomCommands() }
+                preferences.localPlayerEnabled.asFlow().collect { enabled ->
+                    localSession.isRegistered = enabled
+                }
             }
         }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == ACTION_START_WITH_PLAYER) {
-            val playerId = requireNotNull(
-                IntentCompat.getParcelableExtra(intent, "playerId", PlayerId::class.java)
-            )
-            val forcePlayerChange = intent.getBooleanExtra("forcePlayerChange", true)
-            if (currentPlayerIdFlow.value.playerId == null || forcePlayerChange) {
-                updateCurrentPlayer(playerId)
+        if (intent?.hasExtra("reason") == true) {
+            val reason = StartReason.entries[intent.getIntExtra("reason", 0)]
+            val playerId = IntentCompat.getParcelableExtra(intent, "playerId", PlayerId::class.java)
+            when (reason) {
+                StartReason.ActivityStop ->
+                    selectedSession.isRegistered =
+                        selectedPlayerIdFlow.value != localPlayerId.playerId
+
+                StartReason.RemotePlayerSwitchRequest if playerId != null -> {
+                    selectedPlayerIdFlow.value = playerId
+                    selectedSession.isRegistered = playerId != localPlayerId.playerId
+                }
+
+                else -> {}
             }
         }
+
         return super.onStartCommand(intent, flags, startId)
     }
 
     @OptIn(UnstableApi::class)
     override fun onTaskRemoved(rootIntent: Intent?) {
-        if (player.playbackState != Player.STATE_READY && !player.playWhenReady) {
+        val localPlaying = isSessionAdded(localSession.mediaSession) && localSession.isPlaying
+        val selectedPlaying =
+            isSessionAdded(selectedSession.mediaSession) && selectedSession.isPlaying
+        if (!localPlaying && !selectedPlaying) {
             stopSelf()
         }
     }
 
     @OptIn(UnstableApi::class)
     override fun onDestroy() {
-        player.release()
-        mediaSession.release()
+        selectedSession.release()
+        localSession.release()
         super.onDestroy()
     }
 
-    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo) = mediaSession
-
-    @OptIn(UnstableApi::class)
-    override fun onConnect(session: MediaSession, controller: MediaSession.ControllerInfo) =
-        MediaSession.ConnectionResult.AcceptedResultBuilder(session, controller)
-            .setAvailableSessionCommands(buildSessionCommands())
-            .setAvailablePlayerCommands(MediaSession.ConnectionResult.DEFAULT_PLAYER_COMMANDS)
-            .build()
-
-    override fun onCustomCommand(
+    override fun onUpdateNotificationAsync(
         session: MediaSession,
-        controller: MediaSession.ControllerInfo,
-        customCommand: SessionCommand,
-        args: Bundle
-    ): ListenableFuture<SessionResult> = lifecycleScope.future {
-        val result = when (customCommand.customAction) {
-            SESSION_ACTION_DISCONNECT -> {
-                stopSelf()
-                SessionResult.RESULT_SUCCESS
-            }
+        startInForegroundRequired: Boolean
+    ): ListenableFuture<@NullableType Void?> {
+        val addedSessions = listOf(selectedSession, localSession)
+            .filter { isSessionAdded(it.mediaSession) }
+        val foregroundSession = addedSessions.firstOrNull { it.isPlaying }
+            ?: addedSessions.firstOrNull()
+        val isSecondarySession =
+            addedSessions.size > 1 && session.id != foregroundSession?.mediaSession?.id
 
-            SESSION_ACTION_POWER -> {
-                connectedPlayerFlow.value?.let {
-                    connectionHelper.togglePower(it)
-                }
-                SessionResult.RESULT_SUCCESS
-            }
+        return super.onUpdateNotificationAsync(
+            session,
+            startInForegroundRequired && !isSecondarySession
+        )
+    }
 
-            else -> SessionResult.RESULT_ERROR_NOT_SUPPORTED
+    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaLibrarySession? {
+        val requestedId = controllerInfo.connectionHints.getString(CONNECTION_HINT_KEY_SESSION_ID)
+        val isAuto = localSession.mediaSession.isAutoCompanionController(controllerInfo)
+        val selected = selectedSession.mediaSession
+        val local = localSession.mediaSession
+
+        return when {
+            requestedId == local.id -> local
+            requestedId == selected.id -> selected
+            isAuto -> local.takeIf { isSessionAdded(it) }
+            isSessionAdded(local) && localSession.isPlaying -> local
+            isSessionAdded(selected) -> selected
+            isSessionAdded(local) -> local
+            else -> null
         }
-        SessionResult(result)
-    }
-
-    override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
-        handlePlaybackStateChange()
-    }
-
-    override fun onPlaybackStateChanged(playbackState: Int) {
-        handlePlaybackStateChange()
-    }
-
-    override fun onGetLibraryRoot(
-        session: MediaLibrarySession,
-        browser: MediaSession.ControllerInfo,
-        params: LibraryParams?
-    ) = lifecycleScope.future {
-        if (preferences.serverConfig.value == null) {
-            LibraryResult.ofError(SessionError.ERROR_SESSION_SETUP_REQUIRED)
-        } else {
-            LibraryResult.ofItem(libraryTree.rootItem(), params)
-        }
-    }
-
-    override fun onGetChildren(
-        session: MediaLibrarySession,
-        browser: MediaSession.ControllerInfo,
-        parentId: String,
-        page: Int,
-        pageSize: Int,
-        params: LibraryParams?
-    ) = lifecycleScope.future {
-        libraryTree.getChildren(connectedPlayerFlow.value, parentId, page, pageSize)
-    }
-
-    override fun onGetItem(
-        session: MediaLibrarySession,
-        browser: MediaSession.ControllerInfo,
-        mediaId: String
-    ): ListenableFuture<LibraryResult<MediaItem>> =
-        Futures.immediateFuture(libraryTree.getItem(mediaId))
-
-    override fun onSubscribe(
-        session: MediaLibrarySession,
-        browser: MediaSession.ControllerInfo,
-        parentId: String,
-        params: LibraryParams?
-    ): ListenableFuture<LibraryResult<Void>> {
-        val result = if (subscriptions.add(browser, parentId)) {
-            LibraryResult.ofVoid(params)
-        } else {
-            LibraryResult.ofError(SessionError.ERROR_BAD_VALUE)
-        }
-        return Futures.immediateFuture(result)
-    }
-
-    override fun onUnsubscribe(
-        session: MediaLibrarySession,
-        browser: MediaSession.ControllerInfo,
-        parentId: String
-    ): ListenableFuture<LibraryResult<Void>> {
-        subscriptions.remove(browser, parentId)
-        return Futures.immediateFuture(LibraryResult.ofVoid())
-    }
-
-    override fun onDisconnected(session: MediaSession, controller: MediaSession.ControllerInfo) {
-        subscriptions.removeAll(controller)
-    }
-
-    override fun onSearch(
-        session: MediaLibrarySession,
-        browser: MediaSession.ControllerInfo,
-        query: String,
-        params: LibraryParams?
-    ): ListenableFuture<LibraryResult<Void>> = lifecycleScope.future {
-        val count = libraryTree.searchCount(query)
-        session.notifySearchResultChanged(browser, query, count, params)
-        LibraryResult.ofVoid(params)
-    }
-
-    override fun onGetSearchResult(
-        session: MediaLibrarySession,
-        browser: MediaSession.ControllerInfo,
-        query: String,
-        page: Int,
-        pageSize: Int,
-        params: LibraryParams?
-    ) = lifecycleScope.future {
-        libraryTree.getSearchResult(connectedPlayerFlow.value, query, page, pageSize)
-    }
-
-    override fun onSetMediaItems(
-        mediaSession: MediaSession,
-        controller: MediaSession.ControllerInfo,
-        mediaItems: List<MediaItem>,
-        startIndex: Int,
-        startPositionMs: Long
-    ) = lifecycleScope.future {
-        libraryTree.processSetMediaItems(connectedPlayerFlow.value, mediaItems, startIndex)
-    }
-
-    override fun onAddMediaItems(
-        mediaSession: MediaSession,
-        controller: MediaSession.ControllerInfo,
-        mediaItems: List<MediaItem>
-    ) = lifecycleScope.future {
-        libraryTree.processAddMediaItems(connectedPlayerFlow.value, mediaItems)
     }
 
     private fun handleConnection(status: ConnectionState.Connected) {
@@ -365,12 +238,12 @@ class MediaService :
         lastDisconnectionTime = null
 
         val connectedPlayers = status.players.filter { it.connected }
-        val activePlayer = currentPlayerIdFlow.value.playerId
+        val activePlayer = selectedPlayerIdFlow.value
             ?.takeIf { id -> connectedPlayers.any { it.id == id } }
 
         when {
             activePlayer == null && connectedPlayers.isNotEmpty() ->
-                updateCurrentPlayer(connectedPlayers[0].id)
+                selectedPlayerIdFlow.value = connectedPlayers[0].id
 
             activePlayer != null && connectedPlayers.any { it.id == activePlayer } ->
                 playerDisappearanceTime = null
@@ -394,96 +267,53 @@ class MediaService :
         scheduleShutdownIfNeeded()
     }
 
-    private fun handlePlaybackStateChange() {
-        if (player.isPlaying) {
-            lastPlayStopTime = null
-        } else if (lastPlayStopTime == null) {
-            lastPlayStopTime = Clock.System.now()
-        }
-
-        scheduleShutdownIfNeeded()
-    }
-
     private fun scheduleShutdownIfNeeded() {
         delayedShutdownJob?.cancel()
         delayedShutdownJob = null
 
-        val shutdownDelayForDisappearedPlayer = playerDisappearanceTime?.let {
-            PLAYER_DISAPPEAR_SHUTDOWN_DELAY - (Clock.System.now() - it)
-        }
-        val shutdownDelayForStoppedPlayer = lastPlayStopTime?.let {
-            PLAYER_STOP_SHUTDOWN_DELAY - (Clock.System.now() - it)
-        }
-        val shutdownDelayForDisconnection = lastDisconnectionTime?.let {
-            DISCONNECT_SHUTDOWN_DELAY - (Clock.System.now() - it)
-        }
+        val shutdownDelayForDisappearedPlayer = playerDisappearanceTime
+            ?.let { PLAYER_DISAPPEAR_SHUTDOWN_DELAY - (Clock.System.now() - it) }
+        val shutdownDelayForStoppedSelectedPlayer = selectedSession.lastPlayStopTime
+            ?.takeIf { isSessionAdded(selectedSession.mediaSession) }
+            ?.let { PLAYER_STOP_SHUTDOWN_DELAY - (Clock.System.now() - it) }
+        val shutdownDelayForStoppedLocalPlayer = localSession.lastPlayStopTime
+            ?.takeIf { isSessionAdded(localSession.mediaSession) }
+            ?.let { PLAYER_STOP_SHUTDOWN_DELAY - (Clock.System.now() - it) }
+        val shutdownDelayForDisconnection = lastDisconnectionTime
+            ?.let { DISCONNECT_SHUTDOWN_DELAY - (Clock.System.now() - it) }
 
-        val shutdownDelay = when {
-            shutdownDelayForDisconnection != null -> shutdownDelayForDisconnection
-            shutdownDelayForDisappearedPlayer != null -> shutdownDelayForDisappearedPlayer
-            shutdownDelayForStoppedPlayer != null -> shutdownDelayForStoppedPlayer
-            else -> null
-        }
+        val shutdownDelays = listOfNotNull(
+            shutdownDelayForDisappearedPlayer,
+            shutdownDelayForStoppedSelectedPlayer,
+            shutdownDelayForStoppedLocalPlayer,
+            shutdownDelayForDisconnection
+        )
 
-        if (shutdownDelay != null) {
+        if (shutdownDelays.isNotEmpty()) {
             delayedShutdownJob = lifecycleScope.launch {
-                delay(shutdownDelay)
+                delay(shutdownDelays.max())
                 stopSelf()
             }
         }
     }
 
-    private fun buildSessionCommands() =
-        MediaSession.ConnectionResult.DEFAULT_SESSION_AND_LIBRARY_COMMANDS
-            .buildUpon()
-            .apply {
-                if (!currentPlayerIdFlow.value.isLocalPlayer) {
-                    add(powerCommand)
-                    add(disconnectCommand)
-                }
-            }
-            .build()
-
-    private fun buildButtonPreferences() = when (currentPlayerIdFlow.value.isLocalPlayer) {
-        true -> emptyList()
-        false -> listOf(powerButton, disconnectButton)
-    }
-
-    private fun updateCustomCommands() {
-        val commands = buildSessionCommands()
-        mediaSession.connectedControllers.forEach { controller ->
-            mediaSession.setAvailableCommands(
-                controller,
-                commands,
-                MediaSession.ConnectionResult.DEFAULT_PLAYER_COMMANDS
-            )
-        }
-        mediaSession.setMediaButtonPreferences(buildButtonPreferences())
-    }
-
-    private fun updateCurrentPlayer(playerId: PlayerId?) {
-        currentPlayerIdFlow.value = CurrentPlayerState(playerId, playerId == localPlayerId)
+    enum class StartReason {
+        ActivityStop,
+        LocalPlayerStart,
+        RemotePlayerSwitchRequest
     }
 
     companion object {
-        private val ACTION_START_WITH_PLAYER = MediaService::class.java.name + ".startWithPlayer"
-
         private val DISCONNECT_SHUTDOWN_DELAY = 10.minutes
         private val PLAYER_STOP_SHUTDOWN_DELAY = 20.minutes
         private val PLAYER_DISAPPEAR_SHUTDOWN_DELAY = 30.seconds
 
-        private const val SESSION_ACTION_POWER = "power"
-        private const val SESSION_ACTION_DISCONNECT = "disconnect"
-
-        fun start(context: Context, playerId: PlayerId, forcePlayerChange: Boolean) {
+        fun start(context: Context, reason: StartReason, playerId: PlayerId? = null) {
             val intent = Intent(context, MediaService::class.java).apply {
-                action = ACTION_START_WITH_PLAYER
+                putExtra("reason", reason.ordinal)
                 putExtra("playerId", playerId)
-                putExtra("forcePlayerChange", forcePlayerChange)
             }
             context.startForegroundService(intent)
         }
     }
 }
-
-data class CurrentPlayerState(val playerId: PlayerId?, val isLocalPlayer: Boolean)

@@ -17,6 +17,7 @@
 
 package de.maniac103.squeezeclient.ui.bottomsheets
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -42,24 +43,28 @@ fun ChoicesBottomSheetContent(
     onChoiceSelected: (JiveAction) -> Job?
 ) {
     var busy by remember { mutableStateOf(false) }
+    val handleChoiceClick = { choice: JiveActions.Choice ->
+        onChoiceSelected(choice.action)?.let { job ->
+            busy = true
+            job.invokeOnCompletion {
+                busy = false
+            }
+        }
+    }
+
     BottomSheetContentWrapper(title, busy) {
         Column {
             choices.items.forEachIndexed { index, choice ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { handleChoiceClick(choice) }
                 ) {
                     RadioButton(
                         selected = index == choices.selectedIndex,
                         enabled = !busy,
-                        onClick = {
-                            onChoiceSelected(choice.action)?.let { job ->
-                                busy = true
-                                job.invokeOnCompletion {
-                                    busy = false
-                                }
-                            }
-                        }
+                        onClick = { handleChoiceClick(choice) }
                     )
                     Text(
                         text = choice.title,

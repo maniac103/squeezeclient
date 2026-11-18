@@ -99,7 +99,11 @@ fun MainContent(
     val currentBackStack by rememberUpdatedState(backStack)
     LaunchedEffect(refreshFlow, refreshTracker) {
         refreshFlow.collect { event ->
-            refreshTracker.markStale(currentBackStack.takeLast(event.levels))
+            refreshTracker.markStale(
+                currentBackStack
+                    .filterIsInstance<MainContentNavigation.SlimBrowseItemPage>()
+                    .takeLast(event.levels)
+            )
         }
     }
 

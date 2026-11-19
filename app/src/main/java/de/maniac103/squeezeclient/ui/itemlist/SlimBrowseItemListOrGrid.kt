@@ -37,6 +37,7 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlimBrowseItem
+import de.maniac103.squeezeclient.ui.composables.DelayedAnimatedVisibility
 import de.maniac103.squeezeclient.ui.composables.ScrollIndicator
 import de.maniac103.squeezeclient.ui.composables.ensureMinimum
 import kotlin.time.Duration.Companion.seconds
@@ -56,15 +57,6 @@ fun SlimBrowseItemListOrGrid(
     onItemSelected: (SlimBrowseItem) -> Unit = {},
     onItemContextMenuSelected: (SlimBrowseItem) -> Unit = {}
 ) {
-    if (!entries.loadState.isIdle) {
-        Box {
-            LinearProgressIndicator(
-                modifier = modifier.fillMaxWidth()
-            )
-        }
-        return
-    }
-
     val scrollbarSettings = ScrollbarSettings.Default.copy(
         thumbSelectedColor = MaterialTheme.colorScheme.primaryContainer,
         thumbUnselectedColor = MaterialTheme.colorScheme.surfaceContainerHighest,
@@ -78,78 +70,92 @@ fun SlimBrowseItemListOrGrid(
         if (index < entries.itemCount) entries[index]?.source?.textKey else null
     }
 
-    when (mode) {
-        is SlimBrowseItemListMode.Grid -> {
-            val gridContentPadding = contentPadding.ensureMinimum(
-                start = 8.dp,
-                end = 8.dp
-            )
-            LazyVerticalGrid(
-                state = mode.gridState,
-                columns = GridCells.Adaptive(mode.cellMinSize),
-                contentPadding = gridContentPadding,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = modifier
-            ) {
-                items(entries.itemCount) { index ->
-                    entries[index]?.let { entry ->
-                        JiveUiItemGridCell(
-                            item = entry.uiItem,
-                            serverConfig = serverConfig,
-                            busy = entry.source == busyItem,
-                            modifier = Modifier.clickable(
-                                onClick = { onItemSelected(entry.source) }
-                            ),
-                            onContextMenuSelected = {
-                                onItemContextMenuSelected(entry.source)
-                            }
-                        )
+    Box(
+        modifier = modifier
+    ) {
+        when (mode) {
+            is SlimBrowseItemListMode.Grid -> {
+                val gridContentPadding = contentPadding.ensureMinimum(
+                    start = 8.dp,
+                    end = 8.dp
+                )
+                LazyVerticalGrid(
+                    state = mode.gridState,
+                    columns = GridCells.Adaptive(mode.cellMinSize),
+                    contentPadding = gridContentPadding,
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = modifier
+                ) {
+                    items(entries.itemCount) { index ->
+                        entries[index]?.let { entry ->
+                            JiveUiItemGridCell(
+                                item = entry.uiItem,
+                                serverConfig = serverConfig,
+                                busy = entry.source == busyItem,
+                                modifier = Modifier.clickable(
+                                    onClick = { onItemSelected(entry.source) }
+                                ),
+                                onContextMenuSelected = {
+                                    onItemContextMenuSelected(entry.source)
+                                }
+                            )
+                        }
                     }
                 }
+                LazyVerticalGridScrollbar(
+                    state = mode.gridState,
+                    settings = scrollbarSettings,
+                    indicatorContent = { index, isThumbSelected ->
+                        ScrollIndicator(textKeyForIndex(index), isThumbSelected)
+                    },
+                    content = {},
+                    modifier = scrollbarModifier
+                )
             }
-            LazyVerticalGridScrollbar(
-                state = mode.gridState,
-                settings = scrollbarSettings,
-                indicatorContent = { index, isThumbSelected ->
-                    ScrollIndicator(textKeyForIndex(index), isThumbSelected)
-                },
-                content = {},
-                modifier = scrollbarModifier
-            )
+
+            is SlimBrowseItemListMode.List -> {
+                LazyColumn(
+                    state = mode.listState,
+                    contentPadding = contentPadding,
+                    modifier = modifier
+                ) {
+                    items(entries.itemCount) { index ->
+                        entries[index]?.let { entry ->
+                            JiveUiItemRow(
+                                item = entry.uiItem,
+                                serverConfig = serverConfig,
+                                showIcon = mode.showIcons,
+                                busy = entry.source == busyItem,
+                                modifier = Modifier.clickable(
+                                    onClick = { onItemSelected(entry.source) }
+                                ),
+                                onContextMenuSelected = {
+                                    onItemContextMenuSelected(entry.source)
+                                }
+                            )
+                        }
+                    }
+                }
+                LazyColumnScrollbar(
+                    state = mode.listState,
+                    settings = scrollbarSettings,
+                    indicatorContent = { index, isThumbSelected ->
+                        ScrollIndicator(textKeyForIndex(index), isThumbSelected)
+                    },
+                    content = {},
+                    modifier = scrollbarModifier
+                )
+            }
         }
 
-        is SlimBrowseItemListMode.List -> {
-            LazyColumn(
-                state = mode.listState,
-                contentPadding = contentPadding,
-                modifier = modifier
-            ) {
-                items(entries.itemCount) { index ->
-                    entries[index]?.let { entry ->
-                        JiveUiItemRow(
-                            item = entry.uiItem,
-                            serverConfig = serverConfig,
-                            showIcon = mode.showIcons,
-                            busy = entry.source == busyItem,
-                            modifier = Modifier.clickable(
-                                onClick = { onItemSelected(entry.source) }
-                            ),
-                            onContextMenuSelected = {
-                                onItemContextMenuSelected(entry.source)
-                            }
-                        )
-                    }
-                }
-            }
-            LazyColumnScrollbar(
-                state = mode.listState,
-                settings = scrollbarSettings,
-                indicatorContent = { index, isThumbSelected ->
-                    ScrollIndicator(textKeyForIndex(index), isThumbSelected)
-                },
-                content = {},
-                modifier = scrollbarModifier
+        DelayedAnimatedVisibility(
+            show = !entries.loadState.isIdle
+        ) {
+            LinearProgressIndicator(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = contentPadding.calculateTopPadding())
             )
         }
     }

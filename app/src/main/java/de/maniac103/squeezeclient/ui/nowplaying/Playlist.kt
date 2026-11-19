@@ -59,6 +59,7 @@ import de.maniac103.squeezeclient.extfuncs.collectAsLazyPagingItemsWithLifecycle
 import de.maniac103.squeezeclient.model.JiveActions
 import de.maniac103.squeezeclient.model.Playlist
 import de.maniac103.squeezeclient.model.ServerConfiguration
+import de.maniac103.squeezeclient.ui.composables.DelayedAnimatedVisibility
 import de.maniac103.squeezeclient.ui.composables.ResourceIcon
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -118,16 +119,6 @@ fun Playlist(
         mutableIntStateOf(uiState.currentPosition)
     }
 
-    if (!pagingItems.loadState.isIdle) {
-        Box {
-            LinearProgressIndicator(
-                modifier = modifier
-                    .fillMaxWidth()
-            )
-        }
-        return
-    }
-
     LaunchedEffect(pagingItems.itemSnapshotList, uiState) {
         if (uiState.pendingMove == null) {
             items.clear()
@@ -148,10 +139,12 @@ fun Playlist(
 
     val hapticFeedback = LocalHapticFeedback.current
     val reorderableLazyListState = rememberReorderableLazyListState(state) { from, to ->
+        val sourcePosition = from.index - 1 // Index includes the loading indicator
+        val targetPosition = to.index - 1
         hapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentTick)
-        items.add(to.index, items.removeAt(from.index))
-        if (selectedItemPosition == from.index) {
-            selectedItemPosition = to.index
+        items.add(targetPosition, items.removeAt(sourcePosition))
+        if (selectedItemPosition == sourcePosition) {
+            selectedItemPosition = targetPosition
         }
     }
 
@@ -160,6 +153,18 @@ fun Playlist(
         contentPadding = contentPadding,
         modifier = modifier
     ) {
+        stickyHeader {
+            DelayedAnimatedVisibility(
+                show = !pagingItems.loadState.isIdle
+            ) {
+                LinearProgressIndicator(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = contentPadding.calculateTopPadding())
+                )
+            }
+        }
+
         items(
             items = items,
             key = { item -> item.hashCode() }

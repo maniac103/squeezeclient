@@ -59,6 +59,7 @@ import de.maniac103.squeezeclient.extfuncs.collectAsLazyPagingItemsWithLifecycle
 import de.maniac103.squeezeclient.model.JiveActions
 import de.maniac103.squeezeclient.model.Playlist
 import de.maniac103.squeezeclient.model.ServerConfiguration
+import de.maniac103.squeezeclient.ui.composables.DelayedAnimatedVisibility
 import de.maniac103.squeezeclient.ui.composables.ResourceIcon
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -118,16 +119,6 @@ fun Playlist(
         mutableIntStateOf(uiState.currentPosition)
     }
 
-    if (!pagingItems.loadState.isIdle) {
-        Box {
-            LinearProgressIndicator(
-                modifier = modifier
-                    .fillMaxWidth()
-            )
-        }
-        return
-    }
-
     LaunchedEffect(pagingItems.itemSnapshotList, uiState) {
         if (uiState.pendingMove == null) {
             items.clear()
@@ -160,6 +151,18 @@ fun Playlist(
         contentPadding = contentPadding,
         modifier = modifier
     ) {
+        stickyHeader {
+            DelayedAnimatedVisibility(
+                show = !pagingItems.loadState.isIdle
+            ) {
+                LinearProgressIndicator(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = contentPadding.calculateTopPadding())
+                )
+            }
+        }
+
         items(
             items = items,
             key = { item -> item.hashCode() }

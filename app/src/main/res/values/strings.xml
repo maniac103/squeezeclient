@@ -27,6 +27,11 @@
     <string name="menu_share">Share</string>
     <string name="menu_player_volume">Player volume</string>
     <string name="menu_song_info">Song information</string>
+    <string name="menu_favorite_add">Add to favorites</string>
+    <string name="menu_favorite_remove">Remove from favorites</string>
+    <string name="favorite_added">Added to favorites</string>
+    <string name="favorite_removed">Removed from favorites</string>
+    <string name="favorite_error">Couldn\'t update favorites</string>
     <string name="now_playing">Now playing</string>
     <string name="playlist">Playlist</string>
     <string name="playlist_save_title">Playlist title</string>

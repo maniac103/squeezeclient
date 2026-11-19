@@ -31,9 +31,11 @@ import de.maniac103.squeezeclient.databinding.FragmentDisplaystatusBinding
 import de.maniac103.squeezeclient.extfuncs.connectionHelper
 import de.maniac103.squeezeclient.extfuncs.getParcelable
 import de.maniac103.squeezeclient.extfuncs.loadArtworkOrPlaceholder
+import de.maniac103.squeezeclient.model.ArtworkItem
 import de.maniac103.squeezeclient.model.DisplayMessage
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.ui.common.ViewBindingFragment
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -66,14 +68,26 @@ class DisplayStatusFragment :
         }
     }
 
+    /**
+     * Shows a message that was not sent by the server, e.g. a confirmation for an action taken by
+     * the app itself.
+     */
+    fun showLocalMessage(vararg text: String) = showMessage(text.toList(), null, null)
+
     private fun showMessage(message: DisplayMessage) {
         if (message.type != DisplayMessage.MessageType.PopupPlay) {
             return
         }
 
-        binding.text.text = message.text.joinToString("\n").trim()
-        binding.icon.loadArtworkOrPlaceholder(message)
-        binding.icon.isGone = message.extractIconUrl(requireContext()) == null
+        showMessage(message.text, message, message.duration)
+    }
+
+    private fun showMessage(text: List<String>, iconItem: ArtworkItem?, duration: Duration?) {
+        binding.text.text = text.joinToString("\n").trim()
+        binding.icon.isGone = iconItem?.extractIconUrl(requireContext()) == null
+        if (iconItem != null) {
+            binding.icon.loadArtworkOrPlaceholder(iconItem)
+        }
 
         if (!isVisible) {
             parentFragmentManager.commitNow {
@@ -83,7 +97,7 @@ class DisplayStatusFragment :
 
         hideJob?.cancel()
         hideJob = lifecycleScope.launch {
-            delay(message.duration ?: 2.seconds)
+            delay(duration ?: 2.seconds)
             parentFragmentManager.commitNow(true) {
                 hide(this@DisplayStatusFragment)
             }

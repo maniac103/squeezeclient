@@ -39,6 +39,7 @@ import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.model.ArtworkItem
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.ui.composables.ArtworkImage
+import de.maniac103.squeezeclient.ui.composables.DelayedAnimatedVisibility
 import de.maniac103.squeezeclient.ui.composables.ResourceIconButton
 
 @Composable
@@ -62,9 +63,10 @@ fun JiveUiItemRow(
             }
         },
     trailingContent = {
-        if (busy) {
+        DelayedAnimatedVisibility(show = busy) {
             JiveUiItemRowBusyIndicator()
-        } else if (item.trailingWidget != null) {
+        }
+        if (!busy && item.trailingWidget != null) {
             JiveUiItemRowTrailingWidget(
                 widget = item.trailingWidget,
                 onContextMenuSelected = onContextMenuSelected

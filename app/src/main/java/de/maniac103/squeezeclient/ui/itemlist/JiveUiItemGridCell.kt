@@ -42,6 +42,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import de.maniac103.squeezeclient.model.ServerConfiguration
+import de.maniac103.squeezeclient.ui.composables.DelayedAnimatedVisibility
 
 @Composable
 fun JiveUiItemGridCell(
@@ -111,9 +112,10 @@ fun JiveUiItemGridCell(
             ) {
                 val trailingWidgetModifier = Modifier
                     .align(Alignment.CenterVertically)
-                if (busy) {
+                DelayedAnimatedVisibility(show = busy) {
                     JiveUiItemRowBusyIndicator(modifier = trailingWidgetModifier)
-                } else if (item.trailingWidget != null) {
+                }
+                if (!busy && item.trailingWidget != null) {
                     JiveUiItemRowTrailingWidget(
                         widget = item.trailingWidget,
                         onContextMenuSelected = onContextMenuSelected,

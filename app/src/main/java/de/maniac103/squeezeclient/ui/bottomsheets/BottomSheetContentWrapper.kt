@@ -33,6 +33,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import de.maniac103.squeezeclient.ui.composables.DelayedAnimatedVisibility
 
 @Composable
 fun BottomSheetContentWrapper(title: String, busy: Boolean, content: @Composable () -> Unit) {
@@ -46,7 +47,7 @@ fun BottomSheetContentWrapper(title: String, busy: Boolean, content: @Composable
                     .weight(1F)
                     .padding(horizontal = 16.dp)
             )
-            if (busy) {
+            DelayedAnimatedVisibility(show = busy) {
                 CircularProgressIndicator(
                     strokeWidth = 3.dp,
                     modifier = Modifier

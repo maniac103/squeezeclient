@@ -17,23 +17,15 @@
 
 package de.maniac103.squeezeclient.ui.bottomsheets
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.JiveActions
+import de.maniac103.squeezeclient.ui.composables.RadioButtonTextRow
 import kotlinx.coroutines.Job
 
 @Composable
@@ -43,35 +35,23 @@ fun ChoicesBottomSheetContent(
     onChoiceSelected: (JiveAction) -> Job?
 ) {
     var busy by remember { mutableStateOf(false) }
-    val handleChoiceClick = { choice: JiveActions.Choice ->
-        onChoiceSelected(choice.action)?.let { job ->
-            busy = true
-            job.invokeOnCompletion {
-                busy = false
-            }
-        }
-    }
 
     BottomSheetContentWrapper(title, busy) {
         Column {
             choices.items.forEachIndexed { index, choice ->
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { handleChoiceClick(choice) }
-                ) {
-                    RadioButton(
-                        selected = index == choices.selectedIndex,
-                        enabled = !busy,
-                        onClick = { handleChoiceClick(choice) }
-                    )
-                    Text(
-                        text = choice.title,
-                        maxLines = 1,
-                        modifier = Modifier.padding(end = 16.dp)
-                    )
-                }
+                RadioButtonTextRow(
+                    text = choice.title,
+                    selected = index == choices.selectedIndex,
+                    enabled = !busy,
+                    onClick = {
+                        onChoiceSelected(choice.action)?.let { job ->
+                            busy = true
+                            job.invokeOnCompletion {
+                                busy = false
+                            }
+                        }
+                    }
+                )
             }
         }
     }

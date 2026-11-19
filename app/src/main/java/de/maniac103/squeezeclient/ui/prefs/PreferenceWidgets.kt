@@ -33,7 +33,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Switch
@@ -60,6 +59,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.maniac103.squeezeclient.Preferences
 import de.maniac103.squeezeclient.R
+import de.maniac103.squeezeclient.ui.composables.RadioButtonTextRow
 import kotlin.enums.enumEntries
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
@@ -235,28 +235,16 @@ inline fun <reified T : Enum<T>> ListPreference(
                         .padding(8.dp)
                 )
                 enumEntries<T>().forEach { entry ->
-                    val applyValue = {
-                        scope.launch {
-                            preference.update(entry)
-                            selectionShown = false
+                    RadioButtonTextRow(
+                        text = labelProvider(entry),
+                        selected = value == entry,
+                        onClick = {
+                            scope.launch {
+                                preference.update(entry)
+                                selectionShown = false
+                            }
                         }
-                        Unit
-                    }
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable(onClick = applyValue)
-                    ) {
-                        RadioButton(
-                            selected = value == entry,
-                            onClick = applyValue
-                        )
-                        Text(
-                            text = labelProvider(entry)
-                        )
-                    }
+                    )
                 }
             }
         }

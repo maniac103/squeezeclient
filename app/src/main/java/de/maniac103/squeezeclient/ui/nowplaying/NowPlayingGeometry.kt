@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isSpecified
 import androidx.compose.ui.unit.max
@@ -44,16 +45,19 @@ import de.maniac103.squeezeclient.ui.maincontent.MainLayout
 internal sealed interface PlayerGeometryInput {
     val containerSize: DpSize
     val cornerSize: Dp
+    val playlistMinSidePadding: Dp
 
     data class Portrait(
         override val containerSize: DpSize,
         override val cornerSize: Dp,
+        override val playlistMinSidePadding: Dp,
         val collapsedHeight: Dp
     ) : PlayerGeometryInput
 
     data class Landscape(
         override val containerSize: DpSize,
         override val cornerSize: Dp,
+        override val playlistMinSidePadding: Dp,
         val collapsedWidth: Dp
     ) : PlayerGeometryInput
 }
@@ -477,8 +481,11 @@ private fun calculatePortraitGeometry(
                 bottomEnd = constant(0.dp)
             ),
             contentAlpha = morph(0f, 1f),
-            contentPadding =
-                PaddingValues(start = startInset, end = endInset, bottom = bottomInset),
+            contentPadding = PaddingValues(
+                start = startInset.coerceAtLeast(input.playlistMinSidePadding),
+                end = endInset.coerceAtLeast(input.playlistMinSidePadding),
+                bottom = bottomInset
+            ),
             topSpacing = constant(0.dp),
             handleHeight = playlistHandleHeight,
             handleDragDistance = density.run {
@@ -838,7 +845,8 @@ private fun calculateLandscapeGeometry(
                 WindowEasing(0.7F, 1F, EaseOutCubic)
             ),
             contentPadding = PaddingValues(
-                end = endInset,
+                start = input.playlistMinSidePadding,
+                end = endInset.coerceAtLeast(input.playlistMinSidePadding),
                 bottom = bottomInset
             ),
             topSpacing = morph(0.dp, topInset),
@@ -984,11 +992,19 @@ private fun TextUnit.estimateLayoutHeight(density: Density) = with(density) {
 }
 
 internal fun MainLayout.toGeometryInput(): PlayerGeometryInput = when (this) {
-    is MainLayout.Portrait ->
-        PlayerGeometryInput.Portrait(containerSize, nowPlayingCornerSize, collapsedNowPlayingHeight)
+    is MainLayout.Portrait -> PlayerGeometryInput.Portrait(
+        containerSize = containerSize,
+        cornerSize = nowPlayingCornerSize,
+        playlistMinSidePadding = listContentMinSidePadding,
+        collapsedHeight = collapsedNowPlayingHeight
+    )
 
-    is MainLayout.Landscape ->
-        PlayerGeometryInput.Landscape(containerSize, nowPlayingCornerSize, collapsedNowPlayingWidth)
+    is MainLayout.Landscape -> PlayerGeometryInput.Landscape(
+        containerSize = containerSize,
+        cornerSize = nowPlayingCornerSize,
+        playlistMinSidePadding = listContentMinSidePadding,
+        collapsedWidth = collapsedNowPlayingWidth
+    )
 }
 
 @Composable

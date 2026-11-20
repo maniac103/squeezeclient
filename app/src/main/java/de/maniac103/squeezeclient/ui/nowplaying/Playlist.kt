@@ -19,7 +19,7 @@ package de.maniac103.squeezeclient.ui.nowplaying
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,11 +27,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.ListItemColors
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxState
 import androidx.compose.material3.SwipeToDismissBoxValue
@@ -45,7 +46,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.tooling.preview.Preview
@@ -71,7 +74,7 @@ import sh.calvin.reorderable.rememberReorderableLazyListState
 @Composable
 fun Playlist(
     viewModel: PlaylistViewModel,
-    surfaceColor: Color,
+    itemColors: ListItemColors,
     serverConfig: ServerConfiguration?,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
@@ -82,7 +85,7 @@ fun Playlist(
         itemsFlow = viewModel.itemsFlow,
         uiStateFlow = viewModel.uiStateFlow,
         scrollRequestFlow = viewModel.scrollRequestFlow,
-        surfaceColor = surfaceColor,
+        itemColors = itemColors,
         serverConfig = serverConfig,
         contentPadding = contentPadding,
         onPlaylistItemSelected = viewModel::setPlaylistPosition,
@@ -97,7 +100,7 @@ fun Playlist(
     itemsFlow: Flow<PagingData<Playlist.PlaylistItem>>,
     uiStateFlow: StateFlow<PlaylistViewModel.UiState>,
     scrollRequestFlow: Flow<Int>,
-    surfaceColor: Color,
+    itemColors: ListItemColors,
     serverConfig: ServerConfiguration?,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
@@ -150,6 +153,7 @@ fun Playlist(
 
     LazyColumn(
         state = state,
+        verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),
         contentPadding = contentPadding,
         modifier = modifier
     ) {
@@ -165,73 +169,77 @@ fun Playlist(
             }
         }
 
-        items(
+        itemsIndexed(
             items = items,
-            key = { item -> item.hashCode() }
-        ) { item ->
+            key = { _, item -> item.hashCode() }
+        ) { index, item ->
             ReorderableItem(
                 reorderableLazyListState,
                 key = item.hashCode()
             ) { isDragging ->
                 val elevation by animateDpAsState(if (isDragging) 4.dp else 0.dp)
+                val shapes = ListItemDefaults.segmentedShapes(index, items.size)
+                val dismissState = rememberSwipeToDismissBoxState()
+                val isSelected = index == selectedItemPosition
+                val backgroundShape = if (isSelected) shapes.selectedShape else shapes.shape
 
-                Surface(
-                    color = surfaceColor,
-                    shadowElevation = elevation
-                ) {
-                    val itemPosition = items.indexOf(item)
-                    val dismissState = rememberSwipeToDismissBoxState()
-
-                    SwipeToDismissBox(
-                        state = dismissState,
-                        enableDismissFromStartToEnd = true,
-                        enableDismissFromEndToStart = true,
-                        onDismiss = { onRemovePlaylistItem(itemPosition) },
-                        backgroundContent = { DeleteBackground(dismissState) },
-                        content = {
-                            PlaylistItemRow(
-                                item = item,
-                                serverConfig = serverConfig,
-                                isSelected = itemPosition == selectedItemPosition,
-                                modifier = Modifier
-                                    .clickable(
-                                        onClick = { onPlaylistItemSelected(itemPosition) }
+                SwipeToDismissBox(
+                    state = dismissState,
+                    enableDismissFromStartToEnd = true,
+                    enableDismissFromEndToStart = true,
+                    onDismiss = { onRemovePlaylistItem(index) },
+                    backgroundContent = {
+                        DeleteBackground(
+                            dismissState = dismissState,
+                            shape = backgroundShape
+                        )
+                    },
+                    content = {
+                        PlaylistItemRow(
+                            item = item,
+                            shapes = shapes,
+                            colors = itemColors,
+                            serverConfig = serverConfig,
+                            isSelected = index == selectedItemPosition,
+                            onClick = { onPlaylistItemSelected(index) },
+                            modifier = Modifier.shadow(
+                                elevation = elevation,
+                                shape = backgroundShape
+                            ),
+                            dragHandleModifier = Modifier.draggableHandle(
+                                onDragStarted = {
+                                    dragStartIndex = index
+                                    hapticFeedback.performHapticFeedback(
+                                        HapticFeedbackType.GestureThresholdActivate
                                     )
-                                    .background(surfaceColor),
-                                dragHandleModifier = Modifier.draggableHandle(
-                                    onDragStarted = {
-                                        dragStartIndex = itemPosition
-                                        hapticFeedback.performHapticFeedback(
-                                            HapticFeedbackType.GestureThresholdActivate
-                                        )
-                                    },
-                                    onDragStopped = {
-                                        hapticFeedback.performHapticFeedback(
-                                            HapticFeedbackType.GestureEnd
-                                        )
+                                },
+                                onDragStopped = {
+                                    hapticFeedback.performHapticFeedback(
+                                        HapticFeedbackType.GestureEnd
+                                    )
 
-                                        dragStartIndex
-                                            .takeIf { it >= 0 }
-                                            ?.let { onMovePlaylistItem(it, items.indexOf(item)) }
-                                        dragStartIndex = -1
-                                    }
-                                )
+                                    dragStartIndex
+                                        .takeIf { it >= 0 }
+                                        ?.let { onMovePlaylistItem(it, items.indexOf(item)) }
+                                    dragStartIndex = -1
+                                }
                             )
-                        }
-                    )
-                }
+                        )
+                    }
+                )
             }
         }
     }
 }
 
 @Composable
-fun DeleteBackground(dismissState: SwipeToDismissBoxState) {
+fun DeleteBackground(dismissState: SwipeToDismissBoxState, shape: Shape) {
     val direction = dismissState.dismissDirection
 
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .clip(shape)
             .background(MaterialTheme.colorScheme.errorContainer)
             .padding(horizontal = 20.dp),
         contentAlignment = when (direction) {
@@ -275,7 +283,7 @@ fun PlaylistItemColumnPreview() {
         itemsFlow = itemsFlow,
         uiStateFlow = uiStateFlow,
         scrollRequestFlow = scrollRequestFlow,
-        surfaceColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+        itemColors = ListItemDefaults.segmentedColors(),
         serverConfig = null
     )
 }

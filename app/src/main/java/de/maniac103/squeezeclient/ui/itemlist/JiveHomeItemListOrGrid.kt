@@ -24,7 +24,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -32,7 +33,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.maniac103.squeezeclient.model.JiveHomeMenuItem
 import de.maniac103.squeezeclient.model.ServerConfiguration
-import de.maniac103.squeezeclient.ui.composables.ensureMinimum
 
 @Composable
 fun JiveHomeItemListOrGrid(
@@ -50,16 +50,19 @@ fun JiveHomeItemListOrGrid(
         is SlimBrowseItemListMode.List -> {
             LazyColumn(
                 state = mode.listState,
+                verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),
                 modifier = modifier,
                 contentPadding = contentPadding
             ) {
-                items(menuEntries) { entry ->
+                itemsIndexed(menuEntries) { index, entry ->
                     JiveUiItemRow(
                         item = entry.uiItem,
+                        index = index,
+                        count = menuEntries.size,
                         serverConfig = serverConfig,
                         showIcon = mode.showIcons,
                         busy = false,
-                        modifier = Modifier.clickable { onItemSelected(entry.source) },
+                        onClick = { onItemSelected(entry.source) },
                         onContextMenuSelected = { onItemContextMenuSelected(entry.source) }
                     )
                 }
@@ -67,14 +70,10 @@ fun JiveHomeItemListOrGrid(
         }
 
         is SlimBrowseItemListMode.Grid -> {
-            val gridContentPadding = contentPadding.ensureMinimum(
-                start = 8.dp,
-                end = 8.dp
-            )
             LazyVerticalGrid(
                 state = mode.gridState,
                 columns = GridCells.Adaptive(mode.cellMinSize),
-                contentPadding = gridContentPadding,
+                contentPadding = contentPadding,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = modifier

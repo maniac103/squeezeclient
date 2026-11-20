@@ -27,6 +27,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -39,7 +40,6 @@ import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlimBrowseItem
 import de.maniac103.squeezeclient.ui.composables.DelayedAnimatedVisibility
 import de.maniac103.squeezeclient.ui.composables.ScrollIndicator
-import de.maniac103.squeezeclient.ui.composables.ensureMinimum
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.Job
 import my.nanihadesuka.compose.LazyColumnScrollbar
@@ -59,7 +59,8 @@ fun SlimBrowseItemListOrGrid(
 ) {
     val scrollbarSettings = ScrollbarSettings.Default.copy(
         thumbSelectedColor = MaterialTheme.colorScheme.primaryContainer,
-        thumbUnselectedColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+        thumbUnselectedColor = MaterialTheme.colorScheme.surfaceTint,
+        scrollbarPadding = 0.dp,
         hideDelayMillis = 2.seconds.inWholeMilliseconds.toInt()
     )
     val scrollbarModifier = Modifier.padding(
@@ -75,14 +76,10 @@ fun SlimBrowseItemListOrGrid(
     ) {
         when (mode) {
             is SlimBrowseItemListMode.Grid -> {
-                val gridContentPadding = contentPadding.ensureMinimum(
-                    start = 8.dp,
-                    end = 8.dp
-                )
                 LazyVerticalGrid(
                     state = mode.gridState,
                     columns = GridCells.Adaptive(mode.cellMinSize),
-                    contentPadding = gridContentPadding,
+                    contentPadding = contentPadding,
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = modifier
@@ -117,6 +114,7 @@ fun SlimBrowseItemListOrGrid(
             is SlimBrowseItemListMode.List -> {
                 LazyColumn(
                     state = mode.listState,
+                    verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),
                     contentPadding = contentPadding,
                     modifier = modifier
                 ) {
@@ -124,12 +122,12 @@ fun SlimBrowseItemListOrGrid(
                         entries[index]?.let { entry ->
                             JiveUiItemRow(
                                 item = entry.uiItem,
+                                index = index,
+                                count = entries.itemCount,
                                 serverConfig = serverConfig,
                                 showIcon = mode.showIcons,
                                 busy = entry.source == busyItem,
-                                modifier = Modifier.clickable(
-                                    onClick = { onItemSelected(entry.source) }
-                                ),
+                                onClick = { onItemSelected(entry.source) },
                                 onContextMenuSelected = {
                                     onItemContextMenuSelected(entry.source)
                                 }

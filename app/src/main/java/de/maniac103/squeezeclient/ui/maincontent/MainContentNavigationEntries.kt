@@ -89,6 +89,7 @@ internal fun EntryProviderScope<NavKey>.JiveHomeMenuNavEntry(
 
     MainContentPage(
         appBarState = appBarState,
+        contentPaddingOfPageContent = pagePadding,
         indicatorState = mode.scrollIndicatorState
     ) {
         JiveHomeItemListOrGrid(
@@ -131,6 +132,7 @@ internal fun EntryProviderScope<NavKey>.SlimBrowseNavEntry(
 
     MainContentPage(
         appBarState = appBarState,
+        contentPaddingOfPageContent = pagePadding,
         indicatorState = mode.scrollIndicatorState
     ) {
         SlimBrowseItemListOrGrid(
@@ -159,6 +161,7 @@ internal fun EntryProviderScope<NavKey>.SlimBrowseSubItemsNavEntry(
 
     MainContentPage(
         appBarState = appBarState,
+        contentPaddingOfPageContent = pagePadding,
         indicatorState = listState.scrollIndicatorState
     ) {
         SlimBrowseSubItemList(
@@ -184,6 +187,7 @@ internal fun EntryProviderScope<NavKey>.GalleryNavEntry(
 
     MainContentPage(
         appBarState = appBarState,
+        contentPaddingOfPageContent = pagePadding,
         indicatorState = gridState.scrollIndicatorState
     ) {
         GalleryGrid(
@@ -214,6 +218,7 @@ internal fun EntryProviderScope<NavKey>.LocalSearchResultsNavKey(
 
     MainContentPage(
         appBarState = appBarState,
+        contentPaddingOfPageContent = pagePadding,
         indicatorState = mode.scrollIndicatorState
     ) {
         LibrarySearchResultsItemList(
@@ -244,6 +249,7 @@ internal fun EntryProviderScope<NavKey>.RadioSearchResultsNavKey(
 
     MainContentPage(
         appBarState = appBarState,
+        contentPaddingOfPageContent = pagePadding,
         indicatorState = mode.scrollIndicatorState
     ) {
         RadioSearchResultsItemList(

@@ -92,6 +92,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -130,6 +131,7 @@ import org.koin.core.annotation.KoinExperimentalAPI
 
 sealed interface MainLayout {
     val containerSize: DpSize
+    val listContentMinSidePadding: Dp
     val mainContentPadding: PaddingValues
     val mainContentPagePadding: PaddingValues
     val compensateMainContentBottomPagePaddingDuringAnimation: Boolean
@@ -144,6 +146,7 @@ sealed interface MainLayout {
 
     data class Portrait(
         override val containerSize: DpSize,
+        override val listContentMinSidePadding: Dp,
         override val mainContentPadding: PaddingValues,
         override val mainContentPagePadding: PaddingValues,
         override val compensateMainContentBottomPagePaddingDuringAnimation: Boolean = true,
@@ -160,6 +163,7 @@ sealed interface MainLayout {
 
     data class Landscape(
         override val containerSize: DpSize,
+        override val listContentMinSidePadding: Dp,
         override val mainContentPadding: PaddingValues,
         override val mainContentPagePadding: PaddingValues,
         override val compensateMainContentBottomPagePaddingDuringAnimation: Boolean = false,
@@ -510,7 +514,11 @@ private fun MainActivityPlayerContent(
             ) {
                 val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
                 val systemInsets = ScaffoldDefaults.contentWindowInsets.asPaddingValues()
-                val appBarColors = TopAppBarDefaults.topAppBarColors()
+                val backgroundColor = MaterialTheme.colorScheme.surfaceContainer
+                val appBarColors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = backgroundColor,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                )
 
                 val targetFraction by remember(scrollBehavior) {
                     derivedStateOf {
@@ -609,12 +617,14 @@ private fun MainActivityPlayerContent(
                                     }
                                 },
                                 modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(backgroundColor)
                                     .padding(layout.mainContentPadding)
                                     .nestedScroll(scrollBehavior.nestedScrollConnection)
                             )
 
                             NavigationBarScrim(
-                                color = MaterialTheme.colorScheme.surface,
+                                color = MaterialTheme.colorScheme.surfaceContainer,
                                 insets = layout.mainContentPagePadding
                             )
                         }
@@ -762,6 +772,7 @@ private fun determineMainLayout(
     layoutDirection: LayoutDirection
 ): MainLayout {
     val nowPlayingCornerSize = 16.dp
+    val listContentSidePadding = 8.dp
 
     return when {
         containerSize.width < containerSize.height -> {
@@ -771,8 +782,10 @@ private fun determineMainLayout(
                     collapsedNowPlayingHeight - nowPlayingCornerSize
             )
             val mainContentPagePadding = PaddingValues(
-                start = insets.calculateStartPadding(layoutDirection),
-                end = insets.calculateEndPadding(layoutDirection),
+                start = insets.calculateStartPadding(layoutDirection)
+                    .coerceAtLeast(listContentSidePadding),
+                end = insets.calculateEndPadding(layoutDirection)
+                    .coerceAtLeast(listContentSidePadding),
                 bottom = nowPlayingCornerSize
             )
             val searchBoxPadding = PaddingValues(
@@ -792,6 +805,7 @@ private fun determineMainLayout(
             val isLargeContainer = containerSize.width >= 480.dp
             MainLayout.Portrait(
                 containerSize = containerSize,
+                listContentMinSidePadding = listContentSidePadding,
                 mainContentPadding = mainContentPadding,
                 mainContentPagePadding = mainContentPagePadding,
                 breadcrumbsPadding = breadcrumbsPadding,
@@ -812,8 +826,9 @@ private fun determineMainLayout(
                 end = collapsedNowPlayingWidth
             )
             val mainContentPagePadding = PaddingValues(
-                start = insets.calculateStartPadding(layoutDirection),
-                end = nowPlayingCornerSize,
+                start = insets.calculateStartPadding(layoutDirection)
+                    .coerceAtLeast(listContentSidePadding),
+                end = listContentSidePadding,
                 bottom = insets.calculateBottomPadding()
             )
             val breadcrumbsPadding = PaddingValues(
@@ -835,6 +850,7 @@ private fun determineMainLayout(
             )
             MainLayout.Landscape(
                 containerSize = containerSize,
+                listContentMinSidePadding = listContentSidePadding,
                 mainContentPadding = mainContentPadding,
                 mainContentPagePadding = mainContentPagePadding,
                 breadcrumbsPadding = breadcrumbsPadding,

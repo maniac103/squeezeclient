@@ -34,8 +34,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
@@ -86,7 +84,6 @@ fun MainContent(
     onGoToNowPlaying: () -> Unit = {}
 ) {
     val backStack = rememberNavBackStack(viewModel.initialPage)
-    val nestedScrollInterop = rememberNestedScrollInteropConnection()
     val refreshTracker = remember { RefreshTracker() }
 
     val removeFromBackStack = { route: NavKey ->
@@ -308,8 +305,8 @@ fun MainContent(
 
     CompositionLocalProvider(LocalMainContentAnimationState provides animationState) {
         Surface(
-            color = MaterialTheme.colorScheme.surfaceContainer,
-            modifier = modifier.nestedScroll(nestedScrollInterop)
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
+            modifier = modifier
         ) {
             NavDisplay(
                 sceneState = sceneState,

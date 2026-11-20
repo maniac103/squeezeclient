@@ -18,13 +18,13 @@
 package de.maniac103.squeezeclient.ui.nowplaying
 
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemColors
 import androidx.compose.material3.ListItemDefaults
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ListItemShapes
+import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import de.maniac103.squeezeclient.R
@@ -37,10 +37,13 @@ import de.maniac103.squeezeclient.ui.composables.ResourceIconButton
 @Composable
 internal fun PlaylistItemRow(
     item: Playlist.PlaylistItem,
+    shapes: ListItemShapes,
+    colors: ListItemColors,
     isSelected: Boolean,
     serverConfig: ServerConfiguration?,
     modifier: Modifier = Modifier,
-    dragHandleModifier: Modifier = Modifier
+    dragHandleModifier: Modifier = Modifier,
+    onClick: () -> Unit = {}
 ) {
     val subtext = when {
         item.artist.isEmpty() -> item.album
@@ -48,7 +51,11 @@ internal fun PlaylistItemRow(
         else -> "${item.artist} · ${item.album}"
     }
 
-    ListItem(
+    SegmentedListItem(
+        shapes = shapes,
+        colors = colors,
+        selected = isSelected,
+        onClick = onClick,
         supportingContent = {
             subtext.takeIf { it.isNotEmpty() }?.let { Text(it) }
         },
@@ -68,28 +75,6 @@ internal fun PlaylistItemRow(
                 modifier = dragHandleModifier
             )
         },
-        colors = ListItemDefaults.colors(
-            containerColor = if (isSelected) {
-                MaterialTheme.colorScheme.primaryContainer
-            } else {
-                Color.Transparent
-            },
-            contentColor = if (isSelected) {
-                MaterialTheme.colorScheme.onPrimaryContainer
-            } else {
-                ListItemDefaults.colors().contentColor
-            },
-            supportingContentColor = if (isSelected) {
-                MaterialTheme.colorScheme.onPrimaryContainer
-            } else {
-                ListItemDefaults.colors().supportingContentColor
-            },
-            trailingContentColor = if (isSelected) {
-                MaterialTheme.colorScheme.onPrimaryContainer
-            } else {
-                ListItemDefaults.colors().trailingContentColor
-            }
-        ),
         modifier = modifier
     ) {
         Text(item.title)
@@ -105,5 +90,11 @@ fun PlaylistItemRowPreview() {
         "Album",
         JiveActions.EMPTY
     )
-    PlaylistItemRow(item, false, null)
+    PlaylistItemRow(
+        item = item,
+        shapes = ListItemDefaults.segmentedShapes(0, 1),
+        colors = ListItemDefaults.segmentedColors(),
+        isSelected = false,
+        serverConfig = null
+    )
 }

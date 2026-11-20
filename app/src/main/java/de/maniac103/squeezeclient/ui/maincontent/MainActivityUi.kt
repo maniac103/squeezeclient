@@ -510,7 +510,11 @@ private fun MainActivityPlayerContent(
             ) {
                 val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
                 val systemInsets = ScaffoldDefaults.contentWindowInsets.asPaddingValues()
-                val appBarColors = TopAppBarDefaults.topAppBarColors()
+                val backgroundColor = MaterialTheme.colorScheme.surfaceContainer
+                val appBarColors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = backgroundColor,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                )
 
                 val targetFraction by remember(scrollBehavior) {
                     derivedStateOf {
@@ -609,12 +613,14 @@ private fun MainActivityPlayerContent(
                                     }
                                 },
                                 modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(backgroundColor)
                                     .padding(layout.mainContentPadding)
                                     .nestedScroll(scrollBehavior.nestedScrollConnection)
                             )
 
                             NavigationBarScrim(
-                                color = MaterialTheme.colorScheme.surface,
+                                color = MaterialTheme.colorScheme.surfaceContainer,
                                 insets = layout.mainContentPagePadding
                             )
                         }

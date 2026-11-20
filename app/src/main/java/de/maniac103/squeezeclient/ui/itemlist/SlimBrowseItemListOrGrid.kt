@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material3.LinearProgressIndicator
@@ -39,6 +38,7 @@ import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlimBrowseItem
 import de.maniac103.squeezeclient.ui.composables.DelayedAnimatedVisibility
 import de.maniac103.squeezeclient.ui.composables.ScrollIndicator
+import de.maniac103.squeezeclient.ui.composables.SegmentedLazyColumn
 import de.maniac103.squeezeclient.ui.composables.ensureMinimum
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.Job
@@ -59,7 +59,8 @@ fun SlimBrowseItemListOrGrid(
 ) {
     val scrollbarSettings = ScrollbarSettings.Default.copy(
         thumbSelectedColor = MaterialTheme.colorScheme.primaryContainer,
-        thumbUnselectedColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+        thumbUnselectedColor = MaterialTheme.colorScheme.surfaceTint,
+        scrollbarPadding = 0.dp,
         hideDelayMillis = 2.seconds.inWholeMilliseconds.toInt()
     )
     val scrollbarModifier = Modifier.padding(
@@ -115,7 +116,7 @@ fun SlimBrowseItemListOrGrid(
             }
 
             is SlimBrowseItemListMode.List -> {
-                LazyColumn(
+                SegmentedLazyColumn(
                     state = mode.listState,
                     contentPadding = contentPadding,
                     modifier = modifier
@@ -124,6 +125,8 @@ fun SlimBrowseItemListOrGrid(
                         entries[index]?.let { entry ->
                             JiveUiItemRow(
                                 item = entry.uiItem,
+                                index = index,
+                                count = entries.itemCount,
                                 serverConfig = serverConfig,
                                 showIcon = mode.showIcons,
                                 busy = entry.source == busyItem,

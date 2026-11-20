@@ -49,6 +49,8 @@ import androidx.compose.material3.FilledIconToggleButton
 import androidx.compose.material3.FilledTonalIconToggleButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.ListItemColors
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -186,7 +188,7 @@ internal fun NowPlayingScreen(
             Playlist(
                 state = listState,
                 viewModel = playlistViewModel,
-                surfaceColor = sheetColor,
+                itemColors = itemColors,
                 serverConfig = serverConfig,
                 contentPadding = contentPadding,
                 modifier = listModifier
@@ -891,7 +893,7 @@ private class PlaylistNestedScrollConnection(
 
 internal data class PlaylistSheetScope(
     val listState: LazyListState,
-    val sheetColor: Color,
+    val itemColors: ListItemColors,
     val contentPadding: PaddingValues,
     val listModifier: Modifier
 )
@@ -906,6 +908,11 @@ private fun PlaylistSheet(
 ) {
     val playlistState = rememberLazyListState()
     val sheetColor = MaterialTheme.colorScheme.surfaceContainerHighest
+    val itemColors = ListItemDefaults.segmentedColors(
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+        selectedLeadingContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+    )
     val velocityThreshold = LocalDensity.current.run { 125.dp.toPx() }
     val needsHandle = layoutSpec.needsHandle
     val nestedScrollModifier = remember(playlistProgress, velocityThreshold, needsHandle) {
@@ -992,7 +999,7 @@ private fun PlaylistSheet(
             ) {
                 val sheetScope = PlaylistSheetScope(
                     listState = playlistState,
-                    sheetColor = sheetColor,
+                    itemColors = itemColors,
                     contentPadding = layoutSpec.contentPadding,
                     listModifier = Modifier
                         .fade(playlistProgress, layoutSpec.contentAlpha)
@@ -1268,7 +1275,7 @@ fun NowPlayingPreview() {
                             itemsFlow = MutableStateFlow(playlistItemData),
                             uiStateFlow = MutableStateFlow(playlistUiState),
                             scrollRequestFlow = flow { },
-                            surfaceColor = sheetColor,
+                            itemColors = itemColors,
                             serverConfig = null,
                             contentPadding = contentPadding,
                             modifier = listModifier

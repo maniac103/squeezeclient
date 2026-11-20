@@ -24,6 +24,7 @@ import androidx.compose.foundation.ScrollIndicatorState
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.TopAppBarState
 import androidx.compose.runtime.Composable
@@ -118,6 +119,7 @@ fun MainContentPage(
             }
             .padding(bottom = animatedBottomPlaceholderCompensation),
         shape = RoundedCornerShape(cornerRadius),
+        color = MaterialTheme.colorScheme.surfaceContainer,
         shadowElevation = elevation,
         content = content
     )

@@ -19,9 +19,8 @@ package de.maniac103.squeezeclient.ui.itemlist
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -29,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlimBrowseItem
+import de.maniac103.squeezeclient.ui.composables.SegmentedLazyColumn
 import kotlinx.coroutines.Job
 
 @Composable
@@ -44,14 +44,16 @@ fun SlimBrowseSubItemList(
     val entries by viewModel.itemsFlow.collectAsStateWithLifecycle(emptyList())
     val busyItem = viewModel.busyItemFlow.collectAsStateWithLifecycle()
 
-    LazyColumn(
+    SegmentedLazyColumn(
         state = state,
         contentPadding = contentPadding,
         modifier = modifier
     ) {
-        items(entries) { entry ->
+        itemsIndexed(entries) { index, entry ->
             JiveUiItemRow(
                 item = entry.uiItem,
+                index = index,
+                count = entries.size,
                 serverConfig = serverConfig,
                 showIcon = false,
                 busy = entry.source == busyItem,

@@ -17,16 +17,19 @@
 
 package de.maniac103.squeezeclient.ui.itemlist
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -46,11 +49,14 @@ import de.maniac103.squeezeclient.ui.composables.ResourceIconButton
 fun JiveUiItemRow(
     item: JiveUiItem,
     serverConfig: ServerConfiguration?,
+    index: Int,
+    count: Int,
     showIcon: Boolean,
     busy: Boolean,
     modifier: Modifier = Modifier,
     onContextMenuSelected: () -> Unit = {}
-) = ListItem(
+) = SegmentedListItem(
+    shapes = ListItemDefaults.segmentedShapes(index, count),
     leadingContent = item.icon
         ?.takeIf { showIcon }
         ?.let { icon ->
@@ -187,10 +193,18 @@ internal fun generateJiveUiPreviewWidgets(): List<Pair<JiveUiItem, Boolean>> {
 @Preview
 @Composable
 fun JiveUiItemRowPreview() {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        generateJiveUiPreviewWidgets().forEach { (item, busy) ->
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap)
+    ) {
+        val widgets = generateJiveUiPreviewWidgets()
+        widgets.forEachIndexed { index, (item, busy) ->
             JiveUiItemRow(
                 item = item,
+                index = index,
+                count = widgets.size,
                 busy = busy,
                 serverConfig = null,
                 showIcon = true

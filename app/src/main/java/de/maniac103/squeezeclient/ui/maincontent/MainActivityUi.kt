@@ -18,9 +18,19 @@
 package de.maniac103.squeezeclient.ui.maincontent
 
 import android.net.Uri
+import androidx.activity.compose.PredictiveBackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.EaseOut
 import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.SeekableTransitionState
+import androidx.compose.animation.core.Transition
+import androidx.compose.animation.core.rememberTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -28,6 +38,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -42,6 +53,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerDefaults
@@ -56,6 +68,7 @@ import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
+import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -67,7 +80,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
-import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.computedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
@@ -78,6 +91,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -99,6 +113,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.rememberViewModelStoreOwner
 import de.maniac103.squeezeclient.R
+import de.maniac103.squeezeclient.cometd.request.LibrarySearchRequest
 import de.maniac103.squeezeclient.model.DownloadRequestData
 import de.maniac103.squeezeclient.model.Player
 import de.maniac103.squeezeclient.model.PlayerId
@@ -115,6 +130,7 @@ import de.maniac103.squeezeclient.ui.search.SearchViewModel
 import de.maniac103.squeezeclient.ui.volume.VolumePopup
 import de.maniac103.squeezeclient.ui.volume.VolumePopupViewModel
 import kotlin.String
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.abs
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.flow.Flow
@@ -252,17 +268,19 @@ fun MainActivityUi(
             modifier = Modifier.fillMaxSize()
         ) {
             state.selectedPlayer?.let { player ->
-                MainActivityPlayerContent(
-                    drawerState = drawerState,
-                    selectedPlayer = player,
-                    serverConfigState = serverConfigState,
-                    visible = state is MainActivityState.Connected,
-                    forceGridForSlimBrowseItemsState = forceGridForSlimBrowseItemsState,
-                    volumeChangeRequestFlow = volumeChangeRequestFlow,
-                    onGalleryItemSelected = onGalleryItemSelected,
-                    onDownloadSelected = onDownloadSelected,
-                    onWebLinkSelected = onWebLinkSelected
-                )
+                SelectedPlayerScope(player.id) {
+                    MainActivityPlayerContent(
+                        drawerState = drawerState,
+                        selectedPlayer = player,
+                        serverConfigState = serverConfigState,
+                        visible = state is MainActivityState.Connected,
+                        forceGridForSlimBrowseItemsState = forceGridForSlimBrowseItemsState,
+                        volumeChangeRequestFlow = volumeChangeRequestFlow,
+                        onGalleryItemSelected = onGalleryItemSelected,
+                        onDownloadSelected = onDownloadSelected,
+                        onWebLinkSelected = onWebLinkSelected
+                    )
+                }
             }
 
             when (val state = state) {
@@ -475,6 +493,24 @@ fun MainDrawerItem(
 
 @OptIn(KoinExperimentalAPI::class)
 @Composable
+private fun SelectedPlayerScope(playerId: PlayerId, content: @Composable () -> Unit) =
+    key(playerId) {
+        val owner = rememberViewModelStoreOwner()
+
+        CompositionLocalProvider(LocalViewModelStoreOwner provides owner) {
+            KoinScope(
+                scopeDefinition = {
+                    getOrCreateScope<ActivePlayerScope>(scopeId = playerId.id).apply {
+                        declare(playerId)
+                    }
+                }
+            ) {
+                content()
+            }
+        }
+    }
+
+@Composable
 private fun MainActivityPlayerContent(
     drawerState: DrawerState,
     selectedPlayer: Player,
@@ -485,187 +521,274 @@ private fun MainActivityPlayerContent(
     onDownloadSelected: (DownloadRequestData) -> Unit,
     onGalleryItemSelected: (SlideshowImage) -> Unit,
     onWebLinkSelected: (title: String, link: Uri) -> Unit
-) = key(selectedPlayer.id) {
-    val owner = rememberViewModelStoreOwner()
+) {
+    val mainContentViewModel = koinViewModel<MainContentViewModel>()
+    val searchViewModel = koinViewModel<SearchViewModel>()
+    val volumeViewModel = koinViewModel<VolumePopupViewModel>()
+    val nowPlayingMotionState = rememberNowPlayingMotionState(false)
+    val scope = rememberCoroutineScope()
 
-    CompositionLocalProvider(LocalViewModelStoreOwner provides owner) {
-        KoinScope(
-            scopeDefinition = {
-                getOrCreateScope<ActivePlayerScope>(scopeId = selectedPlayer.id.id).apply {
-                    declare(selectedPlayer.id)
-                }
-            }
+    LaunchedEffect(volumeChangeRequestFlow, volumeViewModel) {
+        volumeChangeRequestFlow.collect { amount ->
+            volumeViewModel.adjustVolume(amount)
+            volumeViewModel.show(2.seconds)
+        }
+    }
+
+    SharedTransitionLayout {
+        val searchVisible by searchViewModel.visibleFlow.collectAsStateWithLifecycle()
+        val searchTransitionState = remember { SeekableTransitionState(false) }
+        val searchTransition = rememberTransition(searchTransitionState, label = "search")
+
+        BoxWithConstraints(
+            modifier = if (visible) Modifier else Modifier.hideAndBlockInput()
         ) {
-            val mainContentViewModel = koinViewModel<MainContentViewModel>()
-            val searchViewModel = koinViewModel<SearchViewModel>()
-            val volumeViewModel = koinViewModel<VolumePopupViewModel>()
-            val nowPlayingMotionState = rememberNowPlayingMotionState(false)
-            val scope = rememberCoroutineScope()
+            val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+            val systemInsets = ScaffoldDefaults.contentWindowInsets.asPaddingValues()
+            val backgroundColor = MaterialTheme.colorScheme.surfaceContainer
+            val appBarColors = TopAppBarDefaults.topAppBarColors(
+                containerColor = backgroundColor,
+                scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+            )
+            val appBarColor = rememberScrolledAppBarColor(
+                colors = appBarColors,
+                scrollBehavior = scrollBehavior
+            )
 
-            LaunchedEffect(volumeChangeRequestFlow, volumeViewModel) {
-                volumeChangeRequestFlow.collect { amount ->
-                    volumeViewModel.adjustVolume(amount)
-                    volumeViewModel.show(2.seconds)
+            val layout = determineMainLayout(
+                containerSize = DpSize(maxWidth, maxHeight),
+                insets = systemInsets,
+                layoutDirection = LocalLayoutDirection.current
+            )
+
+            val useGridForSlimBrowseItemsState = remember {
+                computedStateOf {
+                    forceGridForSlimBrowseItemsState.value ||
+                        layout.useGridForSlimBrowseItemsByDefault
                 }
             }
 
-            BoxWithConstraints(
-                modifier = if (visible) Modifier else Modifier.hideAndBlockInput()
-            ) {
-                val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
-                val systemInsets = ScaffoldDefaults.contentWindowInsets.asPaddingValues()
-                val backgroundColor = MaterialTheme.colorScheme.surfaceContainer
-                val appBarColors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = backgroundColor,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-                )
-
-                val targetFraction by remember(scrollBehavior) {
-                    derivedStateOf {
-                        FastOutLinearInEasing.transform(scrollBehavior.state.overlappedFraction)
-                    }
+            Scaffold(
+                topBar = {
+                    MainActivityAppBar(
+                        drawerState = drawerState,
+                        scrollBehavior = scrollBehavior,
+                        selectedPlayer = selectedPlayer,
+                        colors = appBarColors.copy(
+                            containerColor = appBarColor,
+                            scrolledContainerColor = appBarColor
+                        ),
+                        actions = {
+                            SearchIcon(
+                                transition = searchTransition,
+                                onClick = searchViewModel::open
+                            )
+                        },
+                        contentPadding = layout.toolbarContentPadding,
+                        windowInsets = WindowInsets(),
+                        modifier = Modifier.padding(layout.toolbarPadding)
+                    )
                 }
-                val shownFraction = remember { Animatable(targetFraction) }
-
-                LaunchedEffect(scrollBehavior) {
-                    snapshotFlow { targetFraction }.collectLatest { target ->
-                        val jump = abs(target - shownFraction.value)
-                        if (jump < 0.2f) {
-                            // normal scrolling: follow the finger exactly
-                            shownFraction.snapTo(target)
-                        } else {
-                            // page switch: ease over to the new value
-                            shownFraction.animateTo(target, tween(durationMillis = 200))
-                        }
-                    }
-                }
-
-                val appBarColor = lerp(
-                    start = appBarColors.containerColor,
-                    stop = appBarColors.scrolledContainerColor,
-                    fraction = shownFraction.value
-                )
-
-                val layout = determineMainLayout(
-                    containerSize = DpSize(maxWidth, maxHeight),
-                    insets = systemInsets,
-                    layoutDirection = LocalLayoutDirection.current
-                )
-
-                val useGridForSlimBrowseItemsState = remember {
-                    derivedStateOf {
-                        forceGridForSlimBrowseItemsState.value ||
-                            layout.useGridForSlimBrowseItemsByDefault
-                    }
-                }
-
-                Scaffold(
-                    topBar = {
-                        MainActivityAppBar(
-                            drawerState = drawerState,
-                            scrollBehavior = scrollBehavior,
-                            selectedPlayer = selectedPlayer,
-                            colors = appBarColors.copy(
-                                containerColor = appBarColor,
-                                scrolledContainerColor = appBarColor
-                            ),
-                            onOpenSearch = searchViewModel::open,
-                            contentPadding = layout.toolbarContentPadding,
-                            windowInsets = WindowInsets(),
-                            modifier = Modifier.padding(layout.toolbarPadding)
-                        )
-                    }
-                ) { innerPadding ->
-                    Column(
+            ) { innerPadding ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(top = innerPadding.calculateTopPadding())
+                ) {
+                    Breadcrumbs(
+                        mainContentViewModel.breadcrumbsFlow,
+                        serverConfig = serverConfigState.value,
+                        onHomeClicked = mainContentViewModel::goToHome,
+                        onGoBack = mainContentViewModel::goBack,
                         modifier = Modifier
-                            .fillMaxSize()
-                            .padding(top = innerPadding.calculateTopPadding())
-                    ) {
-                        val searchOpen by searchViewModel.visibleFlow.collectAsStateWithLifecycle()
+                            .fillMaxWidth()
+                            .background(appBarColor)
+                            .padding(layout.breadcrumbsPadding)
+                    )
 
-                        Breadcrumbs(
-                            mainContentViewModel.breadcrumbsFlow,
-                            serverConfig = serverConfigState.value,
-                            onHomeClicked = mainContentViewModel::goToHome,
-                            onGoBack = mainContentViewModel::goBack,
+                    Box(
+                        modifier = Modifier.weight(1F)
+                    ) {
+                        MainContent(
+                            viewModel = mainContentViewModel,
+                            serverConfig = serverConfigState,
+                            useGridForSlimBrowseItemsState = useGridForSlimBrowseItemsState,
+                            slimBrowseMinGridCellSize = layout.slimBrowseGridCellMinSize,
+                            galleryMinGridCellSize = layout.galleryGridCellMinSize,
+                            pagePadding = layout.mainContentPagePadding,
+                            compensateBottomPagePaddingDuringAnimation =
+                                layout.compensateMainContentBottomPagePaddingDuringAnimation,
+                            appBarState = scrollBehavior.state,
+                            navigationBackEnabled = !searchVisible,
+                            onGalleryItemSelected = onGalleryItemSelected,
+                            onDownloadSelected = onDownloadSelected,
+                            onWebLinkSelected = onWebLinkSelected,
+                            onGoToNowPlaying = {
+                                scope.launch {
+                                    nowPlayingMotionState.nowPlaying.expand()
+                                }
+                            },
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .background(appBarColor)
-                                .padding(layout.breadcrumbsPadding)
+                                .fillMaxSize()
+                                .background(backgroundColor)
+                                .padding(layout.mainContentPadding)
+                                .nestedScroll(scrollBehavior.nestedScrollConnection)
                         )
 
-                        Box(
-                            modifier = Modifier.weight(1F)
-                        ) {
-                            MainContent(
-                                viewModel = mainContentViewModel,
-                                serverConfig = serverConfigState,
-                                useGridForSlimBrowseItemsState = useGridForSlimBrowseItemsState,
-                                slimBrowseMinGridCellSize = layout.slimBrowseGridCellMinSize,
-                                galleryMinGridCellSize = layout.galleryGridCellMinSize,
-                                pagePadding = layout.mainContentPagePadding,
-                                compensateBottomPagePaddingDuringAnimation =
-                                    layout.compensateMainContentBottomPagePaddingDuringAnimation,
-                                appBarState = scrollBehavior.state,
-                                navigationBackEnabled = !searchOpen,
-                                onGalleryItemSelected = onGalleryItemSelected,
-                                onDownloadSelected = onDownloadSelected,
-                                onWebLinkSelected = onWebLinkSelected,
-                                onGoToNowPlaying = {
-                                    scope.launch {
-                                        nowPlayingMotionState.nowPlaying.expand()
-                                    }
-                                },
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(backgroundColor)
-                                    .padding(layout.mainContentPadding)
-                                    .nestedScroll(scrollBehavior.nestedScrollConnection)
-                            )
-
-                            NavigationBarScrim(
-                                color = MaterialTheme.colorScheme.surfaceContainer,
-                                insets = layout.mainContentPagePadding
-                            )
-                        }
+                        NavigationBarScrim(
+                            color = MaterialTheme.colorScheme.surfaceContainer,
+                            insets = layout.mainContentPagePadding
+                        )
                     }
                 }
+            }
 
-                NowPlayingScreen(
-                    playerId = selectedPlayer.id,
-                    layout = layout,
-                    motionState = nowPlayingMotionState,
-                    serverConfig = serverConfigState.value,
-                    insets = systemInsets,
-                    onShowVolumePopup = { volumeViewModel.show(5.seconds) },
-                    onInfoMenuItemGoAction = { action, parentItem, contextItem ->
-                        mainContentViewModel.goToHome()
-                        mainContentViewModel.onNowPlayingContextMenuAction(
-                            action,
-                            contextItem,
-                            parentItem
-                        )
+            NowPlayingScreen(
+                playerId = selectedPlayer.id,
+                layout = layout,
+                motionState = nowPlayingMotionState,
+                serverConfig = serverConfigState.value,
+                insets = systemInsets,
+                onShowVolumePopup = { volumeViewModel.show(5.seconds) },
+                onInfoMenuItemGoAction = { action, parentItem, contextItem ->
+                    mainContentViewModel.goToHome()
+                    mainContentViewModel.onNowPlayingContextMenuAction(
+                        action = action,
+                        contextItem = contextItem,
+                        parentItem = parentItem
+                    )
+                }
+            )
+            SearchOverlay(
+                viewModel = searchViewModel,
+                transition = searchTransition,
+                transitionState = searchTransitionState,
+                modifier = Modifier.padding(layout.searchBoxPadding),
+                onOpenResults = { query, type ->
+                    if (type == null) {
+                        mainContentViewModel.openRadioSearchResults(query)
+                    } else {
+                        mainContentViewModel.openLocalSearchResults(query, type)
                     }
-                )
-                SearchBox(
-                    viewModel = searchViewModel,
-                    pillModifier = Modifier.padding(layout.searchBoxPadding),
-                    onClose = searchViewModel::close,
-                    onOpenResults = { query, type ->
-                        if (type == null) {
-                            mainContentViewModel.openRadioSearchResults(query)
-                        } else {
-                            mainContentViewModel.openLocalSearchResults(query, type)
-                        }
-                    }
-                )
-                VolumePopup(
-                    viewModel = volumeViewModel
-                )
-                DisplayStatusIndicator(
-                    serverConfig = serverConfigState.value
+                }
+            )
+            VolumePopup(
+                viewModel = volumeViewModel
+            )
+            DisplayStatusIndicator(
+                serverConfig = serverConfigState.value
+            )
+        }
+    }
+}
+
+@Composable
+private fun rememberScrolledAppBarColor(
+    colors: TopAppBarColors,
+    scrollBehavior: TopAppBarScrollBehavior
+): Color {
+    val targetFraction by remember(scrollBehavior) {
+        computedStateOf {
+            FastOutLinearInEasing.transform(scrollBehavior.state.overlappedFraction)
+        }
+    }
+    val shownFraction = remember { Animatable(targetFraction) }
+
+    LaunchedEffect(scrollBehavior) {
+        snapshotFlow { targetFraction }.collectLatest { target ->
+            val jump = abs(target - shownFraction.value)
+            if (jump < 0.2f) {
+                // normal scrolling: follow the finger exactly
+                shownFraction.snapTo(target)
+            } else {
+                // page switch: ease over to the new value
+                shownFraction.animateTo(target, tween(durationMillis = 200))
+            }
+        }
+    }
+
+    return lerp(
+        start = colors.containerColor,
+        stop = colors.scrolledContainerColor,
+        fraction = shownFraction.value
+    )
+}
+
+@Composable
+private fun SharedTransitionScope.SearchOverlay(
+    viewModel: SearchViewModel,
+    transition: Transition<Boolean>,
+    transitionState: SeekableTransitionState<Boolean>,
+    onOpenResults: (String, LibrarySearchRequest.Mode?) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val isVisible by viewModel.visibleFlow.collectAsStateWithLifecycle()
+
+    LaunchedEffect(isVisible) {
+        transitionState.animateTo(isVisible)
+    }
+
+    PredictiveBackHandler(enabled = isVisible) { progressFlow ->
+        try {
+            transitionState.snapTo(true)
+            progressFlow.collect { event ->
+                transitionState.seekTo(
+                    fraction = 0.2F * EaseOut.transform(event.progress),
+                    targetState = false
                 )
             }
+            transitionState.animateTo(false)
+            viewModel.close()
+        } catch (_: CancellationException) {
+            transitionState.animateTo(true)
+        }
+    }
+
+    transition.AnimatedVisibility(
+        visible = { it },
+        enter = fadeIn(),
+        exit = fadeOut()
+    ) {
+        SearchBox(
+            viewModel = viewModel,
+            boxModifier = modifier.sharedBounds(
+                sharedContentState = rememberSharedContentState("search"),
+                animatedVisibilityScope = this@AnimatedVisibility,
+                resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
+                clipInOverlayDuringTransition = OverlayClip(SearchBarDefaults.dockedShape)
+            ),
+            onClose = viewModel::close,
+            onOpenResults = onOpenResults
+        )
+    }
+}
+
+@Composable
+private fun SharedTransitionScope.SearchIcon(transition: Transition<Boolean>, onClick: () -> Unit) {
+    transition.AnimatedVisibility(
+        visible = { !it },
+        enter = fadeIn(),
+        exit = fadeOut()
+    ) {
+        Box {
+            // Placeholder just as target reference for the search box animation,
+            // since the actual icon is not supposed to move
+            Spacer(
+                modifier = Modifier
+                    .matchParentSize()
+                    .sharedBounds(
+                        sharedContentState = rememberSharedContentState("search"),
+                        animatedVisibilityScope = this@AnimatedVisibility,
+                        resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
+                        clipInOverlayDuringTransition = OverlayClip(CircleShape)
+                    )
+            )
+
+            ResourceIconButton(
+                drawableResId = R.drawable.ic_search_24dp,
+                contentDescriptionResId = R.string.content_description_appbar_search,
+                onClick = onClick
+            )
         }
     }
 }
@@ -678,7 +801,7 @@ private fun MainActivityAppBar(
     windowInsets: WindowInsets = TopAppBarDefaults.windowInsets,
     scrollBehavior: TopAppBarScrollBehavior? = null,
     colors: TopAppBarColors = TopAppBarDefaults.topAppBarColors(),
-    onOpenSearch: (() -> Unit)?,
+    actions: @Composable RowScope.() -> Unit = {},
     contentPadding: PaddingValues = TopAppBarDefaults.ContentPadding
 ) {
     val scope = rememberCoroutineScope()
@@ -702,15 +825,7 @@ private fun MainActivityAppBar(
                 }
             )
         },
-        actions = {
-            if (onOpenSearch != null) {
-                ResourceIconButton(
-                    drawableResId = R.drawable.ic_search_24dp,
-                    contentDescriptionResId = R.string.content_description_appbar_search,
-                    onClick = onOpenSearch
-                )
-            }
-        },
+        actions = actions,
         windowInsets = windowInsets,
         contentPadding = contentPadding,
         modifier = modifier
@@ -722,8 +837,7 @@ private fun MainActivityLoadingIndicator(drawerState: DrawerState) = Scaffold(
     topBar = {
         MainActivityAppBar(
             drawerState = drawerState,
-            selectedPlayer = null,
-            onOpenSearch = null
+            selectedPlayer = null
         )
     }
 ) { innerPadding ->
@@ -752,8 +866,7 @@ private fun MainActivityErrorContent(
     topBar = {
         MainActivityAppBar(
             drawerState = drawerState,
-            selectedPlayer = null,
-            onOpenSearch = null
+            selectedPlayer = null
         )
     }
 ) { innerPadding ->

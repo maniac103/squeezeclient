@@ -48,6 +48,10 @@ fun PlayerManagementUi(viewModel: PlayerManagementViewModel, onGoBack: () -> Uni
                 subtitle = { Text(stringResource(R.string.player_management_title)) },
                 titleHorizontalAlignment = Alignment.CenterHorizontally,
                 scrollBehavior = scrollBehavior,
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                ),
                 navigationIcon = {
                     ResourceIconButton(
                         drawableResId = R.drawable.ic_arrow_left_24dp,
@@ -56,7 +60,8 @@ fun PlayerManagementUi(viewModel: PlayerManagementViewModel, onGoBack: () -> Uni
                     )
                 }
             )
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.surfaceContainer
     ) { innerPadding ->
         val state by viewModel.uiStateFlow.collectAsStateWithLifecycle()
 

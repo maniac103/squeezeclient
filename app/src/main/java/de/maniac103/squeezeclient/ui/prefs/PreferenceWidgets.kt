@@ -17,22 +17,20 @@
 
 package de.maniac103.squeezeclient.ui.prefs
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Switch
@@ -49,7 +47,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextAlign
@@ -64,10 +61,7 @@ import kotlin.enums.enumEntries
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 
-data class GroupEntryPosition(val index: Int, val size: Int) {
-    val isFirst get() = index == 0
-    val isLast get() = index == size - 1
-}
+data class GroupEntryPosition(val index: Int, val size: Int)
 
 class PreferenceGroupScope {
     val entries = mutableListOf<@Composable (GroupEntryPosition) -> Unit>()
@@ -80,7 +74,7 @@ class PreferenceGroupScope {
 @Composable
 fun PreferenceGroup(title: String, content: PreferenceGroupScope.() -> Unit) = Column(
     verticalArrangement = Arrangement.spacedBy(2.dp),
-    modifier = Modifier.padding(horizontal = 16.dp)
+    modifier = Modifier.padding(horizontal = 8.dp)
 ) {
     val scope = PreferenceGroupScope().apply(content)
     val entries = scope.entries
@@ -99,30 +93,17 @@ fun PreferenceGroup(title: String, content: PreferenceGroupScope.() -> Unit) = C
 }
 
 @Composable
-fun PreferenceCard(
+fun Preference(
     position: GroupEntryPosition,
     modifier: Modifier = Modifier,
+    onClick: () -> Unit = {},
     content: @Composable () -> Unit
-) {
-    val outerRadius = 16.dp
-    val innerRadius = 4.dp
-
-    val shape = RoundedCornerShape(
-        topStart = if (position.isFirst) outerRadius else innerRadius,
-        topEnd = if (position.isFirst) outerRadius else innerRadius,
-        bottomStart = if (position.isLast) outerRadius else innerRadius,
-        bottomEnd = if (position.isLast) outerRadius else innerRadius
-    )
-
-    Box(
-        modifier = Modifier
-            .clip(shape)
-            .background(MaterialTheme.colorScheme.surfaceContainer)
-            .then(modifier)
-    ) {
-        content()
-    }
-}
+) = SegmentedListItem(
+    shapes = ListItemDefaults.segmentedShapes(position.index, position.size),
+    modifier = modifier,
+    onClick = onClick,
+    content = content
+)
 
 @Composable
 fun PreferenceText(title: String, summary: String?, modifier: Modifier = Modifier) = Column(
@@ -160,15 +141,12 @@ fun SwitchPreference(
         }
     }
 
-    PreferenceCard(
+    Preference(
         position = position,
-        modifier = Modifier.clickable {
-            handleUpdate(!checked)
-        }
+        onClick = { handleUpdate(!checked) }
     ) {
         Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(16.dp)
+            verticalAlignment = Alignment.CenterVertically
         ) {
             PreferenceText(
                 title = title,
@@ -206,18 +184,14 @@ inline fun <reified T : Enum<T>> ListPreference(
     var selectionShown by rememberSaveable { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
-    PreferenceCard(
+    Preference(
         position = position,
-        modifier = Modifier.clickable {
-            selectionShown = true
-        }
+        onClick = { selectionShown = true }
     ) {
         PreferenceText(
             title = title,
             summary = summaryProvider(value),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
+            modifier = Modifier.fillMaxWidth()
         )
     }
 
@@ -259,15 +233,13 @@ fun SliderPreference(
     minValue: Int,
     maxValue: Int,
     preference: Preferences.Preference<Int>
-) = PreferenceCard(
+) = Preference(
     position = position
 ) {
     val value by preference.asFlow().collectAsStateWithLifecycle(preference.value)
     val scope = rememberCoroutineScope()
 
-    Column(
-        modifier = Modifier.padding(16.dp)
-    ) {
+    Column {
         PreferenceText(
             title = title,
             summary = summaryProvider(value)

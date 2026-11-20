@@ -75,7 +75,7 @@ fun Breadcrumbs(
                 modifier = Modifier
                     .clip(RoundedCornerShape(8.dp))
                     .clickable(onClick = onHomeClicked)
-                    .padding(8.dp)
+                    .padding(4.dp)
             )
 
             val listState = rememberLazyListState()
@@ -110,7 +110,7 @@ fun Breadcrumbs(
                                 .clickable(
                                     onClick = { onGoBack(items.size - index - 1) }
                                 )
-                                .padding(8.dp)
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
                         ) {
                             item.icon?.toUiIcon()?.let { icon ->
                                 JiveUiItemRowIcon(

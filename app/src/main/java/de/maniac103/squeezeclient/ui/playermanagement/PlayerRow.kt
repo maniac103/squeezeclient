@@ -101,9 +101,9 @@ internal fun DragDropAwareRow(
     )
 
     val background = when (state) {
-        RowState.Idle -> MaterialTheme.colorScheme.surfaceContainerHigh
-        RowState.Dragged -> MaterialTheme.colorScheme.surfaceContainerHighest
-        RowState.DropTarget -> MaterialTheme.colorScheme.secondaryContainer
+        RowState.Idle -> MaterialTheme.colorScheme.surface
+        RowState.Dragged -> MaterialTheme.colorScheme.surfaceVariant
+        RowState.DropTarget -> MaterialTheme.colorScheme.surfaceDim
     }
 
     val isFirst = position == RowPosition.Single || position == RowPosition.First
@@ -338,7 +338,9 @@ fun PlayerRowPreview() {
         master = PlayerId("11:22:33:44:55:66")
     )
 
-    Scaffold { innerPadding ->
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.surfaceContainer
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxWidth()

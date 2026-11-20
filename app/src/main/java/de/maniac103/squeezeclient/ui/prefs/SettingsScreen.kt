@@ -51,6 +51,10 @@ fun SettingsScreen(
                 subtitle = { Text(stringResource(R.string.settings_title)) },
                 titleHorizontalAlignment = Alignment.CenterHorizontally,
                 scrollBehavior = scrollBehavior,
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                ),
                 navigationIcon = {
                     ResourceIconButton(
                         drawableResId = R.drawable.ic_arrow_left_24dp,
@@ -59,7 +63,8 @@ fun SettingsScreen(
                     )
                 }
             )
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.surfaceContainer
     ) { innerPadding ->
         Box(
             modifier = Modifier.fillMaxSize()

@@ -19,7 +19,11 @@ plugins {
 
 android {
     namespace = "de.maniac103.squeezeclient"
-    compileSdk = 37
+    compileSdk {
+        version = release(37) {
+            minorApiLevel = 2
+        }
+    }
 
     defaultConfig {
         applicationId = "de.maniac103.squeezeclient"

@@ -175,7 +175,7 @@ private fun calculatePlayerGeometry(
             collapsedArtworkHeightFraction = if (isLarge) 0.2F else 0.3F,
             expandedArtworkHeightFraction = if (isLarge) 0.5F else 0.35F,
             collapsedPlaylistHeightFraction = if (isLarge) 0.5F else 0.0F,
-            expandedPlaylistWidthFraction = if (isLarge) 0.3F else 0.35F
+            expandedPlaylistWidth = max(input.collapsedWidth, input.containerSize.width * 0.3F)
         )
     }
 }
@@ -576,7 +576,7 @@ private fun calculateLandscapeGeometry(
     collapsedArtworkHeightFraction: Float,
     expandedArtworkHeightFraction: Float,
     collapsedPlaylistHeightFraction: Float,
-    expandedPlaylistWidthFraction: Float
+    expandedPlaylistWidth: Dp
 ): PlayerGeometry {
     val containerSize = input.containerSize
     val topInset = insets.calculateTopPadding()
@@ -712,9 +712,9 @@ private fun calculateLandscapeGeometry(
     )
 
     val expandedPlaylist = Bounds(
-        start = containerSize.width * (1F - expandedPlaylistWidthFraction),
+        start = containerSize.width - expandedPlaylistWidth,
         top = 0.dp,
-        width = containerSize.width * expandedPlaylistWidthFraction,
+        width = expandedPlaylistWidth,
         height = containerSize.height
     )
 

@@ -17,52 +17,38 @@
 
 package de.maniac103.squeezeclient.ui.search
 
-import android.annotation.SuppressLint
-import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.EnterExitState
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.EaseOutQuart
-import androidx.compose.animation.core.animate
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.input.clearText
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.rememberSearchBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -70,64 +56,36 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.cometd.request.LibrarySearchRequest
 import de.maniac103.squeezeclient.ui.composables.ResourceIconButton
-import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.flow.collectLatest
 
 @Composable
 fun SearchBox(
     viewModel: SearchViewModel,
-    @SuppressLint("ModifierParameter") pillModifier: Modifier = Modifier,
+    modifier: Modifier = Modifier,
+    boxModifier: Modifier = Modifier,
     onClose: () -> Unit,
     onOpenResults: (query: String, type: LibrarySearchRequest.Mode?) -> Unit
 ) {
     val queryState by viewModel.queryFlow.collectAsStateWithLifecycle()
     val categories by viewModel.categoriesFlow.collectAsStateWithLifecycle(emptyList())
-    val isVisible by viewModel.visibleFlow.collectAsStateWithLifecycle()
 
-    var backProgress by remember { mutableFloatStateOf(0F) }
-
-    PredictiveBackHandler(enabled = isVisible) { progressFlow ->
-        try {
-            progressFlow.collect { backEvent ->
-                backProgress = EaseOutQuart.transform(0.3F * backEvent.progress)
-            }
-            viewModel.close()
-            animate(backProgress, 1F) { value, _ -> backProgress = value }
-        } catch (_: CancellationException) {
-            animate(backProgress, 0F) { value, _ -> backProgress = value }
-        }
-    }
-
-    AnimatedVisibility(
-        visible = isVisible,
-        enter = fadeIn(),
-        exit = fadeOut()
-    ) {
-        LaunchedEffect(transition.currentState) {
-            if (transition.currentState == EnterExitState.PostExit ||
-                transition.currentState == EnterExitState.PreEnter
-            ) {
-                backProgress = 0F
+    SearchBox(
+        queryText = queryState.text,
+        submittedQueryText = queryState.submitted,
+        categories = categories,
+        modifier = modifier,
+        boxModifier = boxModifier,
+        onQueryTextChanged = { viewModel.updateQuery(it) },
+        onClearQuery = { viewModel.updateQuery("") },
+        onSubmitQuery = { viewModel.submitQueryImmediately() },
+        onClose = onClose,
+        onCategoryClick = { category ->
+            if (!category.busy) {
+                onOpenResults(queryState.text, category.type)
+                viewModel.close()
             }
         }
-
-        SearchBox(
-            queryText = queryState.text,
-            submittedQueryText = queryState.submitted,
-            categories = categories,
-            backgroundAlpha = 1F - backProgress,
-            pillModifier = pillModifier.scale(1F - backProgress),
-            onQueryTextChanged = { viewModel.updateQuery(it) },
-            onClearQuery = { viewModel.updateQuery("") },
-            onSubmitQuery = { viewModel.submitQueryImmediately() },
-            onClose = onClose,
-            onCategoryClick = { category ->
-                if (!category.busy) {
-                    onOpenResults(queryState.text, category.type)
-                    viewModel.close()
-                }
-            }
-        )
-    }
+    )
 }
 
 @Composable
@@ -135,86 +93,92 @@ fun SearchBox(
     queryText: String,
     submittedQueryText: Boolean,
     categories: List<SearchViewModel.Category>,
-    backgroundAlpha: Float = 1F,
-    @SuppressLint("ModifierParameter") pillModifier: Modifier = Modifier,
+    modifier: Modifier = Modifier,
+    boxModifier: Modifier = Modifier,
     onQueryTextChanged: (String) -> Unit = {},
     onSubmitQuery: () -> Unit = {},
     onClearQuery: () -> Unit = {},
     onClose: () -> Unit = {},
     onCategoryClick: (SearchViewModel.Category) -> Unit = {}
 ) {
+    val textFieldState = rememberTextFieldState(queryText)
+    val searchBarState = rememberSearchBarState()
     val focusRequester = remember { FocusRequester() }
+
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
     }
 
+    LaunchedEffect(textFieldState) {
+        snapshotFlow { textFieldState.text.toString() }
+            .collectLatest { onQueryTextChanged(it) }
+    }
+
     Surface(
-        color = MaterialTheme.colorScheme.surface.copy(
-            alpha = 0.7F * backgroundAlpha
-        ),
-        modifier = Modifier
+        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.8F),
+        modifier = modifier
             .fillMaxSize()
-            .clickable(onClick = { onClose() })
+            .clickable(onClick = onClose)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(top = 8.dp, start = 16.dp, end = 16.dp)
         ) {
-            Surface(
-                color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                modifier = pillModifier
+            Column(
+                modifier = boxModifier
                     .align(Alignment.TopCenter)
                     .fillMaxWidth()
-                    .wrapContentHeight()
-                    .animateContentSize()
-                    .clip(RoundedCornerShape(24.dp))
             ) {
-                Column {
-                    Row(
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        ResourceIconButton(
-                            drawableResId = R.drawable.ic_arrow_left_24dp,
-                            contentDescriptionResId = R.string.content_description_search_close,
-                            onClick = onClose,
-                            modifier = Modifier.align(Alignment.CenterVertically)
-                        )
-
-                        TextField(
-                            value = queryText,
-                            placeholder = {
-                                Text(stringResource(R.string.search_editor_hint))
-                            },
-                            onValueChange = { onQueryTextChanged(it) },
-                            colors = TextFieldDefaults.colors().copy(
-                                unfocusedIndicatorColor = Color.Transparent,
-                                focusedIndicatorColor = Color.Transparent
-                            ),
-                            singleLine = true,
-                            modifier = Modifier
-                                .weight(1F)
-                                .onKeyEvent { event ->
-                                    if (event.key == Key.Enter) {
-                                        onSubmitQuery()
-                                        true
-                                    } else {
-                                        false
-                                    }
-                                }
-                                .focusRequester(focusRequester)
-                        )
-                        if (queryText.isNotEmpty()) {
+                Surface(
+                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    shape = SearchBarDefaults.dockedShape
+                ) {
+                    SearchBarDefaults.InputField(
+                        textFieldState = textFieldState,
+                        searchBarState = searchBarState,
+                        onSearch = { _ -> onSubmitQuery() },
+                        placeholder = {
+                            Text(stringResource(R.string.search_editor_hint))
+                        },
+                        leadingIcon = {
                             ResourceIconButton(
-                                drawableResId = R.drawable.ic_close_24dp,
-                                contentDescriptionResId = R.string.content_description_search_clear,
-                                onClick = onClearQuery,
-                                modifier = Modifier.align(Alignment.CenterVertically)
+                                drawableResId = R.drawable.ic_arrow_left_24dp,
+                                contentDescriptionResId = R.string.content_description_search_close,
+                                onClick = onClose
                             )
-                        }
-                    }
-                    if (queryText.isNotEmpty() && submittedQueryText) {
-                        HorizontalDivider()
+                        },
+                        trailingIcon = {
+                            AnimatedVisibility(
+                                visible = queryText.isNotEmpty(),
+                                enter = fadeIn(),
+                                exit = fadeOut()
+                            ) {
+                                ResourceIconButton(
+                                    drawableResId = R.drawable.ic_close_24dp,
+                                    contentDescriptionResId =
+                                        R.string.content_description_search_clear,
+                                    onClick = {
+                                        textFieldState.clearText()
+                                        onClearQuery()
+                                    }
+                                )
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(focusRequester)
+                    )
+                }
+
+                AnimatedVisibility(
+                    visible = queryText.isNotEmpty() && submittedQueryText,
+                    modifier = Modifier.padding(top = SearchBarDefaults.dockedDropdownGapSize)
+                ) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                        shape = SearchBarDefaults.dockedDropdownShape
+                    ) {
                         LazyColumn {
                             items(categories) { category ->
                                 SearchResultCountRow(

@@ -30,6 +30,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import de.maniac103.squeezeclient.Preferences
 import de.maniac103.squeezeclient.R
+import de.maniac103.squeezeclient.collectAsStateWithLifecycle
 import de.maniac103.squeezeclient.cometd.ConnectionHelper
 import de.maniac103.squeezeclient.extfuncs.enableEdgeToEdge
 import de.maniac103.squeezeclient.model.ServerConfiguration
@@ -68,7 +69,8 @@ class ServerSetupActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            AppTheme(preferences.appTheme) {
+            val themeMode by preferences.appTheme.collectAsStateWithLifecycle()
+            AppTheme(themeMode) {
                 val results by discoveryResultsFlow.collectAsState()
                 val progress by discoveryProgressFlow.collectAsState()
 

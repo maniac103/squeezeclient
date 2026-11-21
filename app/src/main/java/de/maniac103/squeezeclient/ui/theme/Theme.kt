@@ -27,11 +27,13 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kmpalette.PaletteState
+import com.materialkolor.PaletteStyle
+import com.materialkolor.material3.toColorScheme
+import com.materialkolor.palette.rememberDynamicScheme
 import de.maniac103.squeezeclient.Preferences
 
 private val lightScheme = lightColorScheme(
@@ -264,27 +266,17 @@ private val highContrastDarkColorScheme = darkColorScheme(
 
 @Composable
 fun AppTheme(
-    themePreference: Preferences.Preference<Preferences.AppThemeMode>,
+    mode: Preferences.AppThemeMode,
+    accentOverride: AppThemeAccentOverride? = null,
     content: @Composable () -> Unit
 ) {
-    val themeSetting by themePreference.asFlow()
-        .collectAsStateWithLifecycle(themePreference.value)
-
-    AppTheme(
-        mode = themeSetting,
-        content = content
-    )
-}
-
-@Composable
-fun AppTheme(mode: Preferences.AppThemeMode, content: @Composable () -> Unit) {
     val darkTheme = when (mode) {
         Preferences.AppThemeMode.Dark -> true
         Preferences.AppThemeMode.Light -> false
         else -> isSystemInDarkTheme()
     }
 
-    val colorScheme = when {
+    val defaultColorScheme = when {
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
@@ -293,6 +285,18 @@ fun AppTheme(mode: Preferences.AppThemeMode, content: @Composable () -> Unit) {
         darkTheme -> darkScheme
 
         else -> lightScheme
+    }
+
+    val colorScheme = if (accentOverride != null) {
+        val scheme = rememberDynamicScheme(
+            palette = accentOverride.palette,
+            fallback = defaultColorScheme.primary,
+            isDark = darkTheme,
+            style = accentOverride.style
+        )
+        scheme.toColorScheme()
+    } else {
+        defaultColorScheme
     }
 
     val view = LocalView.current
@@ -309,3 +313,5 @@ fun AppTheme(mode: Preferences.AppThemeMode, content: @Composable () -> Unit) {
         content = content
     )
 }
+
+data class AppThemeAccentOverride(val palette: PaletteState<*>, val style: PaletteStyle)

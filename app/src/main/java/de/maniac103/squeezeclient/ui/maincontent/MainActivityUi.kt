@@ -83,6 +83,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.computedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
@@ -112,6 +113,7 @@ import androidx.compose.ui.unit.max
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.rememberViewModelStoreOwner
+import de.maniac103.squeezeclient.Preferences
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.cometd.request.LibrarySearchRequest
 import de.maniac103.squeezeclient.model.DownloadRequestData
@@ -198,6 +200,8 @@ sealed interface MainLayout {
 
 @Composable
 fun MainActivityUi(
+    themeModeState: State<Preferences.AppThemeMode>,
+    nowPlayingAccentModeState: State<Preferences.NowPlayingAccentMode>,
     volumeChangeRequestFlow: SharedFlow<Int>,
     onGalleryItemSelected: (SlideshowImage) -> Unit,
     onDownloadSelected: (DownloadRequestData) -> Unit,
@@ -208,6 +212,8 @@ fun MainActivityUi(
 ) {
     val viewModel = koinViewModel<MainActivityViewModel>()
     MainActivityUi(
+        themeModeState = themeModeState,
+        nowPlayingAccentModeState = nowPlayingAccentModeState,
         stateFlow = viewModel.stateFlow,
         forceGridForSlimBrowseItemsFlow = viewModel.forceGridForSlimBrowseItemsFlow,
         localPlaybackEnabledFlow = viewModel.localPlaybackEnabledFlow,
@@ -226,6 +232,8 @@ fun MainActivityUi(
 
 @Composable
 fun MainActivityUi(
+    themeModeState: State<Preferences.AppThemeMode>,
+    nowPlayingAccentModeState: State<Preferences.NowPlayingAccentMode>,
     stateFlow: StateFlow<MainActivityState>,
     forceGridForSlimBrowseItemsFlow: Flow<Boolean>,
     localPlaybackEnabledFlow: Flow<Boolean>,
@@ -270,6 +278,8 @@ fun MainActivityUi(
             state.selectedPlayer?.let { player ->
                 SelectedPlayerScope(player.id) {
                     MainActivityPlayerContent(
+                        themeModeState = themeModeState,
+                        nowPlayingAccentModeState = nowPlayingAccentModeState,
                         drawerState = drawerState,
                         selectedPlayer = player,
                         serverConfigState = serverConfigState,
@@ -515,6 +525,8 @@ private fun MainActivityPlayerContent(
     drawerState: DrawerState,
     selectedPlayer: Player,
     serverConfigState: State<ServerConfiguration?>,
+    themeModeState: State<Preferences.AppThemeMode>,
+    nowPlayingAccentModeState: State<Preferences.NowPlayingAccentMode>,
     visible: Boolean,
     forceGridForSlimBrowseItemsState: State<Boolean>,
     volumeChangeRequestFlow: SharedFlow<Int>,
@@ -647,6 +659,8 @@ private fun MainActivityPlayerContent(
                 playerId = selectedPlayer.id,
                 layout = layout,
                 motionState = nowPlayingMotionState,
+                themeModeState = themeModeState,
+                accentModeState = nowPlayingAccentModeState,
                 serverConfig = serverConfigState.value,
                 insets = systemInsets,
                 onShowVolumePopup = { volumeViewModel.show(5.seconds) },
@@ -1022,7 +1036,12 @@ fun MainActivityUiPreview() {
         selectedPlayer = players[1]
     )
 
+    val themeMode = remember { mutableStateOf(Preferences.AppThemeMode.SystemDefault) }
+    val nowPlayingAccentMode = remember { mutableStateOf(Preferences.NowPlayingAccentMode.Tonal) }
+
     MainActivityUi(
+        themeModeState = themeMode,
+        nowPlayingAccentModeState = nowPlayingAccentMode,
         stateFlow = MutableStateFlow(state),
         forceGridForSlimBrowseItemsFlow = flowOf(false),
         localPlaybackEnabledFlow = flowOf(false),

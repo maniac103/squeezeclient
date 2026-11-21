@@ -128,6 +128,13 @@
     <string name="settings_theme_light">Hell</string>
     <string name="settings_theme_dark">Dunkel</string>
     <string name="settings_theme_follow_system">Systemeinstellung verwenden</string>
+    <string name="settings_now_playing_color_title">Farbe der Wiedergabeansicht</string>
+    <string name="settings_now_playing_color_app">App-Farben verwenden</string>
+    <string name="settings_now_playing_color_tonal">Basierend auf Plattenhülle (ausgewogen)</string>
+    <string name="settings_now_playing_color_vibrant">Basierend auf Plattenhülle (farbenfroh)</string>
+    <string name="settings_now_playing_color_summary_app">Die Wiedergabeansicht verwendet die selben Farben wie der Rest der App.</string>
+    <string name="settings_now_playing_color_summary_tonal">Die Farben der Wiedergabeansicht basieren auf einer ausgewogenen Farbauswahl der Plattenhülle des abgespielten Titels.</string>
+    <string name="settings_now_playing_color_summary_vibrant">Die Farben der Wiedergabeansicht basieren auf einer farbenfrohen Farbauswahl der Plattenhülle des abgespielten Titels.</string>
     <string name="settings_force_grid_title">Listen immer in Gitterform</string>
     <string name="settings_force_grid_summary_off">Bebilderte Listen mit Alben, Titeln usw. in Listen- oder Gitter-Anordnung darstellen, abhängig von Gerätegröße und Ausrichtung.</string>
     <string name="settings_force_grid_summary_on">Bebilderte Listen mit Alben, Titeln usw. immer in Gitter-Anordnung darstellen.</string>

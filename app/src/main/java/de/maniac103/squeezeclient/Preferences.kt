@@ -3,7 +3,9 @@ package de.maniac103.squeezeclient
 import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.compose.runtime.Composable
 import androidx.core.content.edit
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import java.util.UUID
@@ -33,6 +35,18 @@ class Preferences(appContext: Application) {
     val appTheme: Preference<AppThemeMode> get() = TransformingPreferenceImpl(
         base = stringPreference("app_theme", AppThemeMode.SystemDefault.prefValue),
         transformGet = { value -> AppThemeMode.entries.first { value == it.prefValue } },
+        transformWrite = { value -> value.prefValue }
+    )
+
+    enum class NowPlayingAccentMode(val prefValue: String) {
+        AppAccent("app"),
+        Tonal("tonal"),
+        Vibrant("vibrant")
+    }
+
+    val nowPlayingAccentMode: Preference<NowPlayingAccentMode> get() = TransformingPreferenceImpl(
+        base = stringPreference("now_playing_accent", NowPlayingAccentMode.Tonal.prefValue),
+        transformGet = { value -> NowPlayingAccentMode.entries.first { value == it.prefValue } },
         transformWrite = { value -> value.prefValue }
     )
 
@@ -232,3 +246,7 @@ class Preferences(appContext: Application) {
         }
     }
 }
+
+@Composable
+fun <T> Preferences.Preference<T>.collectAsStateWithLifecycle() =
+    asFlow().collectAsStateWithLifecycle(value)

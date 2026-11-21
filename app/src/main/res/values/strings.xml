@@ -132,6 +132,13 @@
     <string name="settings_force_grid_title">Always show list items as grid</string>
     <string name="settings_force_grid_summary_off">Show lists of images (albums, titles etc.) arranged in list or grid form, depending on device size and orientation.</string>
     <string name="settings_force_grid_summary_on">Always show lists of images (albums, titles etc.) arranged in grid form.</string>
+    <string name="settings_now_playing_color_title">Now playing colors</string>
+    <string name="settings_now_playing_color_app">Use app colors</string>
+    <string name="settings_now_playing_color_tonal">Based on artwork (balanced)</string>
+    <string name="settings_now_playing_color_vibrant">Based on artwork (strong)</string>
+    <string name="settings_now_playing_color_summary_app">Now playing uses the same colors as everywhere else in the app.</string>
+    <string name="settings_now_playing_color_summary_tonal">Now playing is colored based on artwork colors, using a soft and balanced color set.</string>
+    <string name="settings_now_playing_color_summary_vibrant">Now playing is colored based on artwork colors, using a colorful color set.</string>
     <string name="settings_download_path_structure_title">Folder hierarchy</string>
     <string name="settings_download_path_structure_entry_as_server">As stored on server</string>
     <string name="settings_download_path_structure_entry_album">Album</string>

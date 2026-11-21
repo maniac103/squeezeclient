@@ -127,6 +127,40 @@ private fun DisplaySettingsGroup(preferences: Preferences) = PreferenceGroup(
     }
 
     entry { position ->
+        ListPreference(
+            position = position,
+            title = stringResource(R.string.settings_now_playing_color_title),
+            labelProvider = { value ->
+                val labelResId = when (value) {
+                    Preferences.NowPlayingAccentMode.AppAccent ->
+                        R.string.settings_now_playing_color_app
+
+                    Preferences.NowPlayingAccentMode.Tonal ->
+                        R.string.settings_now_playing_color_tonal
+
+                    Preferences.NowPlayingAccentMode.Vibrant ->
+                        R.string.settings_now_playing_color_vibrant
+                }
+                stringResource(labelResId)
+            },
+            summaryProvider = { value ->
+                val summaryResId = when (value) {
+                    Preferences.NowPlayingAccentMode.AppAccent ->
+                        R.string.settings_now_playing_color_summary_app
+
+                    Preferences.NowPlayingAccentMode.Tonal ->
+                        R.string.settings_now_playing_color_summary_tonal
+
+                    Preferences.NowPlayingAccentMode.Vibrant ->
+                        R.string.settings_now_playing_color_summary_vibrant
+                }
+                stringResource(summaryResId)
+            },
+            preference = preferences.nowPlayingAccentMode
+        )
+    }
+
+    entry { position ->
         SwitchPreference(
             position = position,
             title = stringResource(R.string.settings_force_grid_title),

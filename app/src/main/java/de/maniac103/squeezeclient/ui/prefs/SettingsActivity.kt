@@ -22,8 +22,10 @@ import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.runtime.getValue
 import de.maniac103.squeezeclient.Preferences
 import de.maniac103.squeezeclient.R
+import de.maniac103.squeezeclient.collectAsStateWithLifecycle
 import de.maniac103.squeezeclient.extfuncs.enableEdgeToEdge
 import de.maniac103.squeezeclient.extfuncs.requestPermission
 import de.maniac103.squeezeclient.ui.composables.DialogHost
@@ -39,7 +41,8 @@ class SettingsActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            AppTheme(preferences.appTheme) {
+            val themeMode by preferences.appTheme.collectAsStateWithLifecycle()
+            AppTheme(themeMode) {
                 SettingsScreen(
                     preferences = preferences,
                     onGoBack = { finish() },

@@ -26,6 +26,7 @@ kotlinx-serialization = "1.13.0"
 kotlinx-coroutines = "1.11.0"
 kotlinx-datetime = "0.8.0"
 lazycolumnscrollbar = "3.0.0"
+materialkolor = "6.0.0"
 okhttp = "5.5.1"
 reorderable = "3.1.0"
 
@@ -68,6 +69,8 @@ kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
 google-play-services-wearable = { module = "com.google.android.gms:play-services-wearable", version.ref = "google-play-services-wearable" }
 lazycolumnscrollbar = { module = "com.github.nanihadesuka.LazyColumnScrollbar:lazycolumnscrollbar", version.ref = "lazycolumnscrollbar" }
+materialkolor-material3 = { module = "com.materialkolor:material-kolor-material3", version.ref = "materialkolor" }
+materialkolor-palette = { module = "com.materialkolor:material-kolor-palette", version.ref = "materialkolor" }
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
 okhttp-logging-interceptor = { module = "com.squareup.okhttp3:logging-interceptor", version.ref = "okhttp" }
 reorderable = { module = "sh.calvin.reorderable:reorderable", version.ref = "reorderable" }

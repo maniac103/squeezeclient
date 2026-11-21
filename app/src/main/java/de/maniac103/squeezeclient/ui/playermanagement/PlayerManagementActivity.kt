@@ -20,10 +20,12 @@ package de.maniac103.squeezeclient.ui.playermanagement
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.runtime.getValue
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import de.maniac103.squeezeclient.Preferences
+import de.maniac103.squeezeclient.collectAsStateWithLifecycle
 import de.maniac103.squeezeclient.extfuncs.enableEdgeToEdge
 import de.maniac103.squeezeclient.ui.theme.AppTheme
 import kotlin.time.Duration.Companion.seconds
@@ -43,7 +45,8 @@ class PlayerManagementActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            AppTheme(preferences.appTheme) {
+            val themeMode by preferences.appTheme.collectAsStateWithLifecycle()
+            AppTheme(themeMode) {
                 PlayerManagementUi(
                     viewModel = viewModel,
                     onGoBack = { finish() }

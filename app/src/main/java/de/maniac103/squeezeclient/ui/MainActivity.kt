@@ -30,6 +30,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import de.maniac103.squeezeclient.Preferences
 import de.maniac103.squeezeclient.R
+import de.maniac103.squeezeclient.collectAsStateWithLifecycle
 import de.maniac103.squeezeclient.cometd.ConnectionHelper
 import de.maniac103.squeezeclient.extfuncs.enableEdgeToEdge
 import de.maniac103.squeezeclient.extfuncs.requestPermission
@@ -73,8 +74,14 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            AppTheme(preferences.appTheme) {
+            val themeModeState = preferences.appTheme.collectAsStateWithLifecycle()
+            val nowPlayingAccentModeState =
+                preferences.nowPlayingAccentMode.collectAsStateWithLifecycle()
+
+            AppTheme(mode = themeModeState.value) {
                 MainActivityUi(
+                    themeModeState = themeModeState,
+                    nowPlayingAccentModeState = nowPlayingAccentModeState,
                     volumeChangeRequestFlow = volumeChangeRequestFlow,
                     onGalleryItemSelected = { image ->
                         val intent = ImageViewActivity.createIntent(this, image)

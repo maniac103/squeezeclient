@@ -82,6 +82,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.computedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -101,6 +102,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
@@ -111,6 +113,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
@@ -132,8 +135,16 @@ import androidx.compose.ui.util.fastAny
 import androidx.compose.ui.util.fastForEach
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.PagingData
+import coil3.SingletonImageLoader
+import coil3.request.ImageRequest
+import coil3.request.SuccessResult
+import coil3.request.allowHardware
+import coil3.toBitmap
+import com.kmpalette.rememberPaletteState
+import com.materialkolor.PaletteStyle
 import de.maniac103.squeezeclient.Preferences
 import de.maniac103.squeezeclient.R
+import de.maniac103.squeezeclient.extfuncs.loadMaybeRelativeUrl
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.JiveActions
 import de.maniac103.squeezeclient.model.PlayerId
@@ -150,6 +161,7 @@ import de.maniac103.squeezeclient.ui.contextmenu.ContextMenuBottomSheetContent
 import de.maniac103.squeezeclient.ui.contextmenu.ContextMenuViewModel
 import de.maniac103.squeezeclient.ui.maincontent.MainLayout
 import de.maniac103.squeezeclient.ui.theme.AppTheme
+import de.maniac103.squeezeclient.ui.theme.AppThemeAccentOverride
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.PI
 import kotlin.math.roundToInt
@@ -174,6 +186,8 @@ internal fun NowPlayingScreen(
     layout: MainLayout,
     motionState: NowPlayingMotionState,
     serverConfig: ServerConfiguration?,
+    themeModeState: State<Preferences.AppThemeMode>,
+    accentModeState: State<Preferences.NowPlayingAccentMode>,
     insets: PaddingValues,
     onShowVolumePopup: () -> Unit,
     onInfoMenuItemGoAction: (
@@ -206,6 +220,8 @@ internal fun NowPlayingScreen(
         playlistSaveInputStateFlow = viewModel.playlistSaveInputStateFlow,
         motionState = motionState,
         serverConfig = serverConfig,
+        themeModeState = themeModeState,
+        accentModeState = accentModeState,
         insets = insets,
         playlistContent = {
             Playlist(
@@ -261,6 +277,8 @@ internal fun NowPlayingScreen(
     stateFlow: StateFlow<NowPlayingUiState?>,
     infoMenuFlow: StateFlow<NowPlayingContextMenuState>,
     playlistSaveInputStateFlow: StateFlow<PlaylistSaveEditorState>,
+    themeModeState: State<Preferences.AppThemeMode>,
+    accentModeState: State<Preferences.NowPlayingAccentMode>,
     serverConfig: ServerConfiguration?,
     insets: PaddingValues,
     motionState: NowPlayingMotionState,
@@ -339,66 +357,103 @@ internal fun NowPlayingScreen(
         }
     }
 
-    CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
-        Box(
-            modifier = modifier.fillMaxSize()
-        ) {
-            PlayerSurface(
-                state = uiState,
-                serverConfig = serverConfig,
-                geometry = geometry,
-                progress = motionState.nowPlaying,
-                playlistExpanded = motionState.playlist.isExpanded,
-                modifier = Modifier
-                    .bounds(motionState.nowPlaying, geometry.content.bounds)
-                    .dragHandle(
-                        orientation = geometry.content.dragDirection,
-                        progress = motionState.nowPlaying,
-                        enabled = uiState.canExpand && motionState.playlist.isCollapsed,
-                        canClickToClose = false,
-                        dragDistance = geometry.content.dragDistance,
-                        scope = scope
-                    ),
-                onNavigateUp = {
-                    scope.launch {
-                        motionState.playlist.collapse()
-                        motionState.nowPlaying.collapse()
-                    }
-                },
-                onPrevious = onPreviousTrack,
-                onNext = onNextTrack,
-                onToggleRepeat = onToggleRepeat,
-                onToggleShuffle = onToggleShuffle,
-                onSetPlayingOrPaused = onSetPlayingOrPaused,
-                onStop = onStop,
-                onSeek = onSeek,
-                onShowInfoMenu = onShowInfoMenu,
-                onShowSavePlaylistNameInput = onShowSavePlaylistNameInput,
-                onClearPlaylist = onClearPlaylist,
-                onShowVolumePopup = onShowVolumePopup
-            )
+    val artworkUrl = uiState.artwork?.extractIconUrl()
+    val context = LocalContext.current
+    val paletteState = rememberPaletteState()
 
-            val playlistBackState = remember { PlaylistBackEffectState() }
+    LaunchedEffect(artworkUrl, context, accentModeState.value) {
+        val url = artworkUrl
+            ?.takeIf { accentModeState.value != Preferences.NowPlayingAccentMode.AppAccent }
+            ?: return@LaunchedEffect
+        val imageLoader = SingletonImageLoader.get(context)
+        val request = ImageRequest.Builder(context)
+            .loadMaybeRelativeUrl(url, serverConfig)
+            .size(128, 128)
+            .allowHardware(false)
+            .build()
 
-            PlaylistSheet(
-                playlistContent = playlistContent,
-                nowPlayingProgress = motionState.nowPlaying,
-                playlistProgress = motionState.playlist,
-                layoutSpec = geometry.playlist,
-                backState = playlistBackState
-            )
+        val result = imageLoader.execute(request)
+        if (result is SuccessResult) {
+            val imageBitmap = result.image.toBitmap().asImageBitmap()
+            paletteState.generate(imageBitmap)
+        }
+    }
 
-            MotionProgressBackHandler(
-                progress = motionState.nowPlaying,
-                enabled = motionState.playlist.isCollapsed || !geometry.playlist.needsHandle,
-                easing = { 0.2F * EaseOutQuart.transform(it) }
-            )
+    val accentOverride = when (accentModeState.value) {
+        Preferences.NowPlayingAccentMode.Tonal if paletteState.palette != null ->
+            AppThemeAccentOverride(paletteState, PaletteStyle.TonalSpot)
 
-            PlaylistSheetBackHandler(
-                progress = motionState.playlist,
-                backState = playlistBackState,
-                enabled = geometry.playlist.needsHandle
-            )
+        Preferences.NowPlayingAccentMode.Vibrant if paletteState.palette != null ->
+            AppThemeAccentOverride(paletteState, PaletteStyle.Vibrant)
+
+        else -> null
+    }
+
+    AppTheme(
+        mode = themeModeState.value,
+        accentOverride = accentOverride
+    ) {
+        CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
+            Box(
+                modifier = modifier.fillMaxSize()
+            ) {
+                PlayerSurface(
+                    state = uiState,
+                    serverConfig = serverConfig,
+                    geometry = geometry,
+                    progress = motionState.nowPlaying,
+                    playlistExpanded = motionState.playlist.isExpanded,
+                    modifier = Modifier
+                        .bounds(motionState.nowPlaying, geometry.content.bounds)
+                        .dragHandle(
+                            orientation = geometry.content.dragDirection,
+                            progress = motionState.nowPlaying,
+                            enabled = uiState.canExpand && motionState.playlist.isCollapsed,
+                            canClickToClose = false,
+                            dragDistance = geometry.content.dragDistance,
+                            scope = scope
+                        ),
+                    onNavigateUp = {
+                        scope.launch {
+                            motionState.playlist.collapse()
+                            motionState.nowPlaying.collapse()
+                        }
+                    },
+                    onPrevious = onPreviousTrack,
+                    onNext = onNextTrack,
+                    onToggleRepeat = onToggleRepeat,
+                    onToggleShuffle = onToggleShuffle,
+                    onSetPlayingOrPaused = onSetPlayingOrPaused,
+                    onStop = onStop,
+                    onSeek = onSeek,
+                    onShowInfoMenu = onShowInfoMenu,
+                    onShowSavePlaylistNameInput = onShowSavePlaylistNameInput,
+                    onClearPlaylist = onClearPlaylist,
+                    onShowVolumePopup = onShowVolumePopup
+                )
+
+                val playlistBackState = remember { PlaylistBackEffectState() }
+
+                PlaylistSheet(
+                    playlistContent = playlistContent,
+                    nowPlayingProgress = motionState.nowPlaying,
+                    playlistProgress = motionState.playlist,
+                    layoutSpec = geometry.playlist,
+                    backState = playlistBackState
+                )
+
+                MotionProgressBackHandler(
+                    progress = motionState.nowPlaying,
+                    enabled = motionState.playlist.isCollapsed || !geometry.playlist.needsHandle,
+                    easing = { 0.2F * EaseOutQuart.transform(it) }
+                )
+
+                PlaylistSheetBackHandler(
+                    progress = motionState.playlist,
+                    backState = playlistBackState,
+                    enabled = geometry.playlist.needsHandle
+                )
+            }
         }
     }
 }
@@ -1443,40 +1498,42 @@ fun NowPlayingPreview() {
     val playlistUiState = PlaylistViewModel.UiState(3, null)
 
     val motionState = rememberNowPlayingMotionState(initiallyExpanded = true)
+    val themeMode = remember { mutableStateOf(Preferences.AppThemeMode.SystemDefault) }
+    val accentMode = remember { mutableStateOf(Preferences.NowPlayingAccentMode.AppAccent) }
 
-    AppTheme(Preferences.AppThemeMode.SystemDefault) {
-        BoxWithConstraints {
-            Scaffold { innerPadding ->
-                val layoutInput = PlayerGeometryInput.Portrait(
-                    containerSize = DpSize(maxWidth, maxHeight),
-                    collapsedHeight = 64.dp,
-                    cornerSize = 16.dp,
-                    playlistMinSidePadding = 8.dp
-                )
+    BoxWithConstraints {
+        Scaffold { innerPadding ->
+            val layoutInput = PlayerGeometryInput.Portrait(
+                containerSize = DpSize(maxWidth, maxHeight),
+                collapsedHeight = 64.dp,
+                cornerSize = 16.dp,
+                playlistMinSidePadding = 8.dp
+            )
 
-                NowPlayingScreen(
-                    playerId = PlayerId("11:22:33:44:55:66"),
-                    layoutInput = layoutInput,
-                    stateFlow = MutableStateFlow(status),
-                    infoMenuFlow = MutableStateFlow(NowPlayingContextMenuState.Idle),
-                    playlistSaveInputStateFlow = MutableStateFlow(PlaylistSaveEditorState.Idle),
-                    motionState = motionState,
-                    serverConfig = null,
-                    insets = innerPadding,
-                    playlistContent = {
-                        Playlist(
-                            state = listState,
-                            itemsFlow = MutableStateFlow(playlistItemData),
-                            uiStateFlow = MutableStateFlow(playlistUiState),
-                            scrollRequestFlow = flow { },
-                            itemColors = itemColors,
-                            serverConfig = null,
-                            contentPadding = contentPadding,
-                            modifier = listModifier
-                        )
-                    }
-                )
-            }
+            NowPlayingScreen(
+                playerId = PlayerId("11:22:33:44:55:66"),
+                layoutInput = layoutInput,
+                stateFlow = MutableStateFlow(status),
+                infoMenuFlow = MutableStateFlow(NowPlayingContextMenuState.Idle),
+                playlistSaveInputStateFlow = MutableStateFlow(PlaylistSaveEditorState.Idle),
+                motionState = motionState,
+                serverConfig = null,
+                themeModeState = themeMode,
+                accentModeState = accentMode,
+                insets = innerPadding,
+                playlistContent = {
+                    Playlist(
+                        state = listState,
+                        itemsFlow = MutableStateFlow(playlistItemData),
+                        uiStateFlow = MutableStateFlow(playlistUiState),
+                        scrollRequestFlow = flow { },
+                        itemColors = itemColors,
+                        serverConfig = null,
+                        contentPadding = contentPadding,
+                        modifier = listModifier
+                    )
+                }
+            )
         }
     }
 }

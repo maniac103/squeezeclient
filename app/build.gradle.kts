@@ -177,6 +177,8 @@ dependencies {
     implementation(libs.kotlinx.datetime)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.lazycolumnscrollbar)
+    implementation(libs.materialkolor.material3)
+    implementation(libs.materialkolor.palette)
     implementation(libs.okhttp)
     implementation(libs.okhttp.logging.interceptor)
     implementation(libs.reorderable)

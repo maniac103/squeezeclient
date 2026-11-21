@@ -520,11 +520,14 @@ private fun PlayerToolbar(
                         )
                     }
 
-                    ResourceIconButton(
-                        drawableResId = R.drawable.ic_volume_24dp,
-                        contentDescriptionResId = R.string.content_description_nowplaying_volume,
-                        onClick = onShowVolumePopup
-                    )
+                    if (state.hasVolumeControl) {
+                        ResourceIconButton(
+                            drawableResId = R.drawable.ic_volume_24dp,
+                            contentDescriptionResId =
+                                R.string.content_description_nowplaying_volume,
+                            onClick = onShowVolumePopup
+                        )
+                    }
                 }
                 if (showPlaylistActions) {
                     var showMenu by remember { mutableStateOf(false) }
@@ -1231,6 +1234,7 @@ fun NowPlayingPreview() {
         shuffleChecked = false,
         canSeek = true,
         canExpand = true,
+        hasVolumeControl = true,
         playlistPosition = 8,
         playlistLength = 15,
         playerName = "Some player",

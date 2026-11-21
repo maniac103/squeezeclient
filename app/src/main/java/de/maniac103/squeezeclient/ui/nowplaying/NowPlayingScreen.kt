@@ -19,8 +19,15 @@ package de.maniac103.squeezeclient.ui.nowplaying
 
 import android.text.format.DateUtils
 import androidx.activity.compose.PredictiveBackHandler
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.EaseOutQuart
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
@@ -28,17 +35,22 @@ import androidx.compose.foundation.gestures.anchoredDraggable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
+import androidx.compose.foundation.interaction.DragInteraction
+import androidx.compose.foundation.interaction.FocusInteraction
+import androidx.compose.foundation.interaction.Interaction
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -57,6 +69,9 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderColors
+import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.SliderState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -67,21 +82,27 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.computedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.drawOutline
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
@@ -130,8 +151,10 @@ import de.maniac103.squeezeclient.ui.contextmenu.ContextMenuViewModel
 import de.maniac103.squeezeclient.ui.maincontent.MainLayout
 import de.maniac103.squeezeclient.ui.theme.AppTheme
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.math.PI
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
+import kotlin.math.sin
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
@@ -793,20 +816,43 @@ private fun ProgressControls(
     val miniVisible by layoutSpec.mini.alpha.rememberIsVisible(progress)
 
     if (fullVisible) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
+        Box(
             modifier = Modifier
                 .bounds(progress, layoutSpec.full.bounds)
                 .fade(progress, layoutSpec.full.alpha)
         ) {
-            Text(
-                text = DateUtils.formatElapsedTime(sliderState.value.roundToLong()),
-                modifier = Modifier.padding(16.dp)
-            )
+            val interactionSource = remember { MutableInteractionSource() }
+            val interactions = remember { mutableStateListOf<Interaction>() }
 
-            Slider(
-                state = sliderState,
+            LaunchedEffect(interactionSource) {
+                interactionSource.interactions.collect { interaction ->
+                    when (interaction) {
+                        is FocusInteraction.Focus -> interactions.add(interaction)
+                        is FocusInteraction.Unfocus -> interactions.remove(interaction.focus)
+                        is PressInteraction.Press -> interactions.add(interaction)
+                        is PressInteraction.Release -> interactions.remove(interaction.press)
+                        is PressInteraction.Cancel -> interactions.remove(interaction.press)
+                        is DragInteraction.Start -> interactions.add(interaction)
+                        is DragInteraction.Stop -> interactions.remove(interaction.start)
+                        is DragInteraction.Cancel -> interactions.remove(interaction.start)
+                    }
+                }
+            }
+
+            val isInteracting = interactions.isNotEmpty()
+            val waveAmplitude = when {
+                !state.isPlaying -> 0.dp
+                isInteracting -> 2.dp
+                else -> 4.dp
+            }
+
+            WavySlider(
+                sliderState = sliderState,
                 enabled = state.canSeek,
+                trackHeight = 6.dp,
+                thumbSize = 24.dp,
+                thumbWidth = if (isInteracting) 8.dp else 24.dp,
+                waveAmplitude = waveAmplitude,
                 onValueChange = {
                     autoAdvanceProgress = false
                     sliderState.value = it
@@ -821,12 +867,26 @@ private fun ProgressControls(
                         autoAdvanceProgress = true
                     }
                 },
-                modifier = Modifier.weight(1f)
+                interactionSource = interactionSource,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.TopCenter)
+            )
+
+            Text(
+                text = DateUtils.formatElapsedTime(sliderState.value.roundToLong()),
+                style = MaterialTheme.typography.labelLargeEmphasized,
+                modifier = Modifier
+                    .align(AbsoluteAlignment.BottomLeft)
+                    .padding(horizontal = 8.dp)
             )
 
             Text(
                 text = DateUtils.formatElapsedTime(state.durationSeconds.roundToLong()),
-                modifier = Modifier.padding(16.dp)
+                style = MaterialTheme.typography.labelLargeEmphasized,
+                modifier = Modifier
+                    .align(AbsoluteAlignment.BottomRight)
+                    .padding(horizontal = 8.dp)
             )
         }
     }
@@ -840,6 +900,135 @@ private fun ProgressControls(
                 .fade(progress, layoutSpec.mini.alpha)
         )
     }
+}
+
+@Composable
+private fun WavySlider(
+    sliderState: SliderState,
+    onValueChange: (Float) -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    onValueChangeFinished: (() -> Unit)? = null,
+    colors: SliderColors = SliderDefaults.colors(),
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    thumbSize: Dp,
+    thumbWidth: Dp,
+    trackHeight: Dp,
+    waveAmplitude: Dp
+) {
+    val waveOffset = remember { Animatable(0f) }
+    val animatedWaveAmplitude = remember { Animatable(0.dp, Dp.VectorConverter) }
+    val waveActive by remember {
+        computedStateOf { animatedWaveAmplitude.value > 0.dp }
+    }
+
+    LaunchedEffect(waveAmplitude) {
+        animatedWaveAmplitude.animateTo(
+            targetValue = waveAmplitude,
+            animationSpec = tween(500)
+        )
+    }
+
+    LaunchedEffect(waveActive) {
+        if (waveActive) {
+            waveOffset.animateTo(
+                targetValue = 2 * PI.toFloat(),
+                animationSpec = infiniteRepeatable(
+                    animation = tween(
+                        durationMillis = 2000,
+                        easing = LinearEasing
+                    ),
+                    repeatMode = RepeatMode.Restart
+                )
+            )
+        } else {
+            waveOffset.snapTo(0F)
+        }
+    }
+
+    val animatedThumbWidth = remember { Animatable(thumbSize, Dp.VectorConverter) }
+    LaunchedEffect(thumbWidth) {
+        animatedThumbWidth.animateTo(
+            targetValue = thumbWidth,
+            animationSpec = tween(500)
+        )
+    }
+
+    Slider(
+        state = sliderState,
+        enabled = enabled,
+        onValueChange = onValueChange,
+        onValueChangeFinished = onValueChangeFinished,
+        interactionSource = interactionSource,
+        modifier = modifier,
+        track = { state ->
+            Canvas(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(thumbSize)
+            ) {
+                val canvasWidth = size.width
+                val canvasHeight = size.height
+                val amplitude = animatedWaveAmplitude.value.toPx()
+                val waveLength = canvasWidth / 10
+                val activeWidth = canvasWidth * state.coercedValueAsFraction
+
+                val path = Path().apply {
+                    for (x in 0..activeWidth.toInt()) {
+                        val angle = ((x / waveLength) * 2 * PI) + waveOffset.value
+                        val y = (canvasHeight / 2) + amplitude * sin(angle).toFloat()
+                        if (x == 0) moveTo(0F, y) else lineTo(x.toFloat(), y)
+                    }
+                }
+
+                val activeColor = when (enabled) {
+                    true -> colors.activeTrackColor
+                    false -> colors.disabledActiveTrackColor
+                }
+                val inactiveColor = when (enabled) {
+                    true -> colors.inactiveTrackColor
+                    false -> colors.disabledInactiveTrackColor
+                }
+
+                drawPath(
+                    path = path,
+                    color = activeColor,
+                    style = Stroke(
+                        width = trackHeight.toPx(),
+                        cap = StrokeCap.Round
+                    )
+                )
+
+                drawLine(
+                    color = inactiveColor,
+                    start = Offset(x = activeWidth, y = canvasHeight / 2),
+                    end = Offset(x = canvasWidth, y = canvasHeight / 2),
+                    strokeWidth = trackHeight.toPx(),
+                    cap = StrokeCap.Round
+                )
+
+                drawCircle(
+                    color = activeColor,
+                    radius = trackHeight.toPx() * 0.4F,
+                    center = Offset(x = canvasWidth, y = canvasHeight / 2)
+                )
+            }
+        },
+        thumb = {
+            val color = if (enabled) colors.thumbColor else colors.disabledThumbColor
+            Box(
+                modifier = Modifier.size(thumbSize),
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .background(color, shape = RoundedCornerShape(percent = 50))
+                        .width(animatedThumbWidth.value)
+                        .height(thumbSize)
+                )
+            }
+        }
+    )
 }
 
 private class PlaylistNestedScrollConnection(

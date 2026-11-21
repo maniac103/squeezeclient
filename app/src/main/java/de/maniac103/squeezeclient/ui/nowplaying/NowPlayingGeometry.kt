@@ -401,9 +401,9 @@ private fun calculatePortraitGeometry(
     )
 
     val expandedFullProgress = Bounds(
-        start = 8.dp,
+        start = 16.dp,
         top = expandedAlbum.bottom + expandedVerticalSpacing,
-        width = expandedContent.width - 16.dp,
+        width = expandedContent.width - 32.dp,
         height = expandedProgressSize
     )
 

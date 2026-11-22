@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isSpecified
 import androidx.compose.ui.unit.max
+import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.sp
 import de.maniac103.squeezeclient.ui.maincontent.MainLayout
 
@@ -411,11 +412,13 @@ private fun calculatePortraitGeometry(
     val expandedOtherControlsTop =
         expandedPlayPauseTop + (expandedPlayPauseSize - expandedOtherControlsSize) / 2
     val expandedControlsWidth = expandedContent.width - expandedControlsPadding * 2
-    val expandedControlsSpacing =
-        (expandedControlsWidth - expandedPlayPauseSize - expandedOtherControlsSize * 4) / 4
+    val expandedControlsSize = expandedPlayPauseSize + expandedOtherControlsSize * 4
+    val expandedControlsSpacing = min((expandedControlsWidth - expandedControlsSize) / 4, 32.dp)
+    val expandedControlsExtraPadding =
+        (expandedControlsWidth - expandedControlsSize - expandedControlsSpacing * 4) / 2
 
     val expandedRepeat = Bounds(
-        start = expandedControlsPadding,
+        start = expandedControlsPadding + expandedControlsExtraPadding,
         top = expandedOtherControlsTop,
         width = expandedOtherControlsSize,
         height = expandedOtherControlsSize
@@ -754,35 +757,37 @@ private fun calculateLandscapeGeometry(
     val expandedPlayPauseTop = expandedProgress.bottom + expandedVertSpacing
     val expandedOtherControlsTop =
         expandedPlayPauseTop + (expandedPlayPauseSize - expandedOtherControlsSize) / 2
-    val expandedControlsHorzSpacing =
-        (expandedControlsWidth - expandedPlayPauseSize - expandedOtherControlsSize * 4) / 4
+    val expandedControlsSize = expandedPlayPauseSize + expandedOtherControlsSize * 4
+    val expandedControlsSpacing = min((expandedControlsWidth - expandedControlsSize) / 4, 48.dp)
+    val expandedControlsExtraPadding =
+        (expandedControlsWidth - expandedControlsSize - expandedControlsSpacing * 4) / 2
 
     val expandedRepeat = Bounds(
-        start = expandedContent.start + expandedControlsPadding,
+        start = expandedContent.start + expandedControlsPadding + expandedControlsExtraPadding,
         top = expandedOtherControlsTop,
         width = expandedOtherControlsSize,
         height = expandedOtherControlsSize
     )
     val expandedPrevTrack = Bounds(
-        start = expandedRepeat.end + expandedControlsHorzSpacing,
+        start = expandedRepeat.end + expandedControlsSpacing,
         top = expandedOtherControlsTop,
         width = expandedOtherControlsSize,
         height = expandedOtherControlsSize
     )
     val expandedPlayPause = Bounds(
-        start = expandedPrevTrack.end + expandedControlsHorzSpacing,
+        start = expandedPrevTrack.end + expandedControlsSpacing,
         top = expandedPlayPauseTop,
         width = expandedPlayPauseSize,
         height = expandedPlayPauseSize
     )
     val expandedNextTrack = Bounds(
-        start = expandedPlayPause.end + expandedControlsHorzSpacing,
+        start = expandedPlayPause.end + expandedControlsSpacing,
         top = expandedOtherControlsTop,
         width = expandedOtherControlsSize,
         height = expandedOtherControlsSize
     )
     val expandedShuffle = Bounds(
-        start = expandedNextTrack.end + expandedControlsHorzSpacing,
+        start = expandedNextTrack.end + expandedControlsSpacing,
         top = expandedOtherControlsTop,
         width = expandedOtherControlsSize,
         height = expandedOtherControlsSize

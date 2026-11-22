@@ -99,6 +99,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.GraphicsLayerScope
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.TransformOrigin
@@ -133,6 +134,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
 import androidx.compose.ui.util.fastAny
 import androidx.compose.ui.util.fastForEach
+import androidx.compose.ui.util.lerp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.PagingData
 import coil3.SingletonImageLoader
@@ -164,6 +166,7 @@ import de.maniac103.squeezeclient.ui.theme.AppTheme
 import de.maniac103.squeezeclient.ui.theme.AppThemeAccentOverride
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.PI
+import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 import kotlin.math.sin
@@ -1205,9 +1208,10 @@ private fun PlaylistSheet(
                         max(npCorner, playlistCorner).toPx()
                     }
 
-                    scaleX = 1F - 0.1F * backState.progress
-                    scaleY = 1F - 0.02F * backState.progress
+                    scaleX = calculateSheetPredictiveBackScaleX(backState.progress)
+                    scaleY = calculateSheetPredictiveBackScaleY(backState.progress)
                     transformOrigin = TransformOrigin(0.5F, 1F)
+
                     shape = RoundedCornerShape(
                         topStart = interpolateCorner { it.topStart },
                         topEnd = interpolateCorner { it.topEnd },
@@ -1251,6 +1255,12 @@ private fun PlaylistSheet(
                     listModifier = Modifier
                         .fade(playlistProgress, layoutSpec.contentAlpha)
                         .fillMaxSize()
+                        .graphicsLayer {
+                            val xScale = calculateSheetPredictiveBackScaleX(backState.progress)
+                            val yScale = calculateSheetPredictiveBackScaleY(backState.progress)
+                            scaleY = if (yScale != 0f) xScale / yScale else 1F
+                            transformOrigin = TransformOrigin(0.5F, 0F)
+                        }
                 )
 
                 with(sheetScope) {
@@ -1263,6 +1273,24 @@ private fun PlaylistSheet(
                 )
             }
         }
+    }
+}
+
+internal fun GraphicsLayerScope.calculateSheetPredictiveBackScaleX(progress: Float): Float {
+    val width = size.width
+    return if (width.isNaN() || width == 0f) {
+        1f
+    } else {
+        1f - lerp(0f, min(48.dp.toPx(), width), progress) / width
+    }
+}
+
+internal fun GraphicsLayerScope.calculateSheetPredictiveBackScaleY(progress: Float): Float {
+    val height = size.height
+    return if (height.isNaN() || height == 0f) {
+        1f
+    } else {
+        1f - lerp(0f, min(24.dp.toPx(), height), progress) / height
     }
 }
 

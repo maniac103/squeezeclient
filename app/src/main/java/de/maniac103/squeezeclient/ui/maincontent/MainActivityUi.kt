@@ -190,11 +190,11 @@ sealed interface MainLayout {
         override val toolbarPadding: PaddingValues,
         override val toolbarContentPadding: PaddingValues,
         val collapsedNowPlayingWidth: Dp,
-        override val nowPlayingCornerSize: Dp
+        override val nowPlayingCornerSize: Dp,
+        override val slimBrowseGridCellMinSize: Dp,
+        override val galleryGridCellMinSize: Dp
     ) : MainLayout {
         override val useGridForSlimBrowseItemsByDefault = true
-        override val slimBrowseGridCellMinSize = 160.dp
-        override val galleryGridCellMinSize = 180.dp
     }
 }
 
@@ -975,6 +975,7 @@ private fun determineMainLayout(
                 start = insets.calculateStartPadding(layoutDirection),
                 end = nowPlayingCornerSize
             )
+            val isLargeContainer = containerSize.height >= 480.dp
             MainLayout.Landscape(
                 containerSize = containerSize,
                 listContentMinSidePadding = listContentSidePadding,
@@ -985,7 +986,9 @@ private fun determineMainLayout(
                 toolbarPadding = toolbarPadding,
                 toolbarContentPadding = toolbarContentPadding,
                 collapsedNowPlayingWidth = collapsedNowPlayingWidth,
-                nowPlayingCornerSize = nowPlayingCornerSize
+                nowPlayingCornerSize = nowPlayingCornerSize,
+                slimBrowseGridCellMinSize = if (isLargeContainer) 160.dp else 120.dp,
+                galleryGridCellMinSize = if (isLargeContainer) 180.dp else 150.dp
             )
         }
     }

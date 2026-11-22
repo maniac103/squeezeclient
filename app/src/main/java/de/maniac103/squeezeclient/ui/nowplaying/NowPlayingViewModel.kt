@@ -240,7 +240,7 @@ fun PlayerStatus.toNowPlayingUiState() = NowPlayingUiState(
     repeatIconResId = when (repeatState) {
         RepeatState.RepeatTitle -> R.drawable.ic_repeat_one_24dp
         RepeatState.RepeatAll -> R.drawable.ic_repeat_24dp
-        RepeatState.Off -> R.drawable.ic_repeat_off_24dp
+        RepeatState.Off -> R.drawable.ic_repeat_24dp
     },
     repeatContentDescriptionResId = when (repeatState) {
         RepeatState.RepeatTitle -> R.string.content_description_nowplaying_repeat_one
@@ -250,8 +250,8 @@ fun PlayerStatus.toNowPlayingUiState() = NowPlayingUiState(
     repeatChecked = repeatState != RepeatState.Off,
     shuffleIconResId = when (shuffleState) {
         ShuffleState.ShuffleAlbum -> R.drawable.ic_shuffle_album_24dp
-        ShuffleState.ShuffleSong -> R.drawable.ic_shuffle_song_24dp
-        ShuffleState.Off -> R.drawable.ic_shuffle_off_24dp
+        ShuffleState.ShuffleSong -> R.drawable.ic_shuffle_24dp
+        ShuffleState.Off -> R.drawable.ic_shuffle_24dp
     },
     shuffleContentDescriptionResId = when (shuffleState) {
         ShuffleState.ShuffleAlbum -> R.string.content_description_nowplaying_shuffle_albums

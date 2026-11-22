@@ -69,7 +69,7 @@ internal fun PlaylistItemRow(
         },
         trailingContent = {
             ResourceIconButton(
-                drawableResId = R.drawable.ic_drag_horizontal_24dp,
+                drawableResId = R.drawable.ic_drag_handle_24dp,
                 contentDescriptionResId = R.string.content_description_drag_playlist_item,
                 onClick = {},
                 modifier = dragHandleModifier

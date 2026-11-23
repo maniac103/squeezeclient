@@ -27,6 +27,9 @@ import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.graphics.res.animatedVectorResource
+import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
+import androidx.compose.animation.graphics.vector.AnimatedImageVector
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -58,7 +61,9 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconToggleButton
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FilledTonalIconToggleButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItemColors
@@ -724,8 +729,6 @@ private fun PlaybackControls(
     onToggleShuffle: () -> Unit,
     onStop: () -> Unit
 ) {
-    val hapticFeedback = LocalHapticFeedback.current
-
     PlaybackToggleButton(
         iconResId = state.repeatIconResId,
         contentDescriptionResId = state.repeatContentDescriptionResId,
@@ -745,38 +748,15 @@ private fun PlaybackControls(
         onClick = onPrevious
     )
 
-    val playbackStopContentDescription =
-        stringResource(R.string.content_description_nowplaying_stop)
-
-    FilledIconToggleButton(
-        checked = state.isPlaying,
-        onCheckedChange = onSetPlayingOrPaused,
+    PlayPauseButton(
+        isPlaying = state.isPlaying,
         enabled = state.playbackControlsEnabled && state.playPauseEnabled,
-        shapes = IconButtonDefaults.toggleableShapes(),
-        modifier = Modifier
-            .bounds(progress, layoutSpec.playPause.bounds)
-            .fade(progress, layoutSpec.playPause.alpha)
-            .then(
-                if (state.playPauseEnabled) {
-                    Modifier
-                        .onLongPressConsumeTap(onStop)
-                        .semantics {
-                            onLongClick(label = playbackStopContentDescription) {
-                                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                                onStop()
-                                true
-                            }
-                        }
-                } else {
-                    Modifier
-                }
-            )
-    ) {
-        ResourceIcon(
-            drawableResId = state.playPauseIconResId,
-            contentDescriptionResId = state.playPauseContentDescriptionResId
-        )
-    }
+        contentDescriptionResId = state.playPauseContentDescriptionResId,
+        layoutSpec = layoutSpec.playPause,
+        progress = progress,
+        onSetPlayingOrPaused = onSetPlayingOrPaused,
+        onStop = onStop
+    )
 
     PlaybackButton(
         iconResId = R.drawable.ic_next_24dp,
@@ -799,6 +779,56 @@ private fun PlaybackControls(
 }
 
 @Composable
+private fun PlayPauseButton(
+    isPlaying: Boolean,
+    enabled: Boolean,
+    contentDescriptionResId: Int,
+    layoutSpec: ControlLayoutSpec,
+    progress: MotionProgress,
+    onSetPlayingOrPaused: (play: Boolean) -> Unit,
+    onStop: () -> Unit
+) {
+    val hapticFeedback = LocalHapticFeedback.current
+    var checked by remember { mutableStateOf(false) }
+    val playbackStopContentDescription =
+        stringResource(R.string.content_description_nowplaying_stop)
+
+    LaunchedEffect(isPlaying) {
+        checked = isPlaying
+    }
+
+    FilledIconToggleButton(
+        checked = checked,
+        onCheckedChange = { value ->
+            checked = value
+            onSetPlayingOrPaused(value)
+        },
+        enabled = enabled,
+        shapes = IconButtonDefaults.toggleableShapes(),
+        modifier = Modifier
+            .bounds(progress, layoutSpec.bounds)
+            .fade(progress, layoutSpec.alpha)
+            .onLongPressConsumeTap(onStop)
+            .semantics {
+                onLongClick(label = playbackStopContentDescription) {
+                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onStop()
+                    true
+                }
+            }
+    ) {
+        val icon = AnimatedImageVector.animatedVectorResource(R.drawable.play_to_pause_anim)
+        Icon(
+            painter = rememberAnimatedVectorPainter(
+                animatedImageVector = icon,
+                atEnd = isPlaying
+            ),
+            contentDescription = stringResource(contentDescriptionResId)
+        )
+    }
+}
+
+@Composable
 private fun PlaybackToggleButton(
     iconResId: Int,
     contentDescriptionResId: Int,
@@ -812,10 +842,6 @@ private fun PlaybackToggleButton(
     checked = checked,
     onCheckedChange = { onClick() },
     enabled = enabled,
-    colors = IconButtonDefaults.filledTonalIconToggleButtonColors().copy(
-        containerColor = Color.Transparent,
-        disabledContainerColor = Color.Transparent
-    ),
     shapes = IconButtonDefaults.toggleableShapes(),
     modifier = modifier
         .bounds(progress, layoutSpec.bounds)
@@ -836,15 +862,18 @@ private fun PlaybackButton(
     enabled: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
-) = ResourceIconButton(
-    drawableResId = iconResId,
-    contentDescriptionResId = contentDescriptionResId,
-    enabled = enabled,
+) = FilledTonalIconButton(
     onClick = onClick,
+    enabled = enabled,
     modifier = modifier
         .bounds(progress, layoutSpec.bounds)
         .fade(progress, layoutSpec.alpha)
-)
+) {
+    ResourceIcon(
+        drawableResId = iconResId,
+        contentDescriptionResId = contentDescriptionResId
+    )
+}
 
 @Composable
 private fun ProgressControls(
@@ -1490,10 +1519,10 @@ fun NowPlayingPreview() {
         isPlaying = true,
         playPauseEnabled = true,
         playbackControlsEnabled = true,
-        repeatIconResId = R.drawable.ic_repeat_off_24dp,
+        repeatIconResId = R.drawable.ic_repeat_24dp,
         repeatContentDescriptionResId = R.string.content_description_nowplaying_repeat_off,
-        repeatChecked = false,
-        shuffleIconResId = R.drawable.ic_shuffle_off_24dp,
+        repeatChecked = true,
+        shuffleIconResId = R.drawable.ic_shuffle_24dp,
         shuffleContentDescriptionResId = R.string.content_description_nowplaying_shuffle_off,
         shuffleChecked = false,
         canSeek = true,

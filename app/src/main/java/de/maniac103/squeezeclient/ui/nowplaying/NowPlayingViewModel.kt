@@ -204,11 +204,6 @@ data class NowPlayingUiState(
         return position.coerceIn(0F, durationSeconds)
     }
 
-    val playPauseIconResId get() = when (isPlaying) {
-        true -> R.drawable.ic_pause_24dp
-        else -> R.drawable.ic_play_24dp
-    }
-
     val playPauseContentDescriptionResId get() = when (isPlaying) {
         true -> R.string.content_description_nowplaying_pause
         false -> R.string.content_description_nowplaying_play

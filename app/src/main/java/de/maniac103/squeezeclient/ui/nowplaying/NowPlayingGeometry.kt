@@ -203,7 +203,8 @@ private fun calculatePortraitGeometry(
     val collapsedArtworkSize = 48.dp
     val toolbarHeight = 64.dp
     val miniProgressHeight = 4.dp
-    val collapsedControlSize = 48.dp
+    val collapsedPlayPauseSize = 48.dp
+    val collapsedOtherControlsSize = 40.dp
     val collapsedControlSpacing = 4.dp
     val expandedProgressSize = 64.dp
     val expandedPlayPauseSize = 72.dp
@@ -250,39 +251,42 @@ private fun calculatePortraitGeometry(
         height = collapsedArtworkSize
     )
 
-    val collapsedControlsWidth = collapsedControlSize * 3 + collapsedControlSpacing * 2
+    val collapsedControlsWidth =
+        collapsedPlayPauseSize + collapsedOtherControlsSize * 2 + collapsedControlSpacing * 2
     val collapsedControlsStart = collapsedContent.width - 8.dp - collapsedControlsWidth
-    val collapsedControlsTop = (collapsedMiniProgress.top - collapsedControlSize) / 2
+    val collapsedPlayPauseTop = (collapsedMiniProgress.top - collapsedPlayPauseSize) / 2
+    val collapsedOtherControlsTop =
+        collapsedPlayPauseTop + (collapsedPlayPauseSize - collapsedOtherControlsSize) / 2
 
     val collapsedRepeat = Bounds(
         start = collapsedControlsStart,
-        top = collapsedControlsTop,
+        top = collapsedOtherControlsTop,
         width = 0.dp,
-        height = collapsedControlSize
+        height = collapsedOtherControlsSize
     )
     val collapsedPrevTrack = Bounds(
         start = collapsedControlsStart,
-        top = collapsedControlsTop,
-        width = collapsedControlSize,
-        height = collapsedControlSize
+        top = collapsedOtherControlsTop,
+        width = collapsedOtherControlsSize,
+        height = collapsedOtherControlsSize
     )
     val collapsedPlayPause = Bounds(
         start = collapsedPrevTrack.end + collapsedControlSpacing,
-        top = collapsedControlsTop,
-        width = collapsedControlSize,
-        height = collapsedControlSize
+        top = collapsedPlayPauseTop,
+        width = collapsedPlayPauseSize,
+        height = collapsedPlayPauseSize
     )
     val collapsedNextTrack = Bounds(
         start = collapsedPlayPause.end + collapsedControlSpacing,
-        top = collapsedControlsTop,
-        width = collapsedControlSize,
-        height = collapsedControlSize
+        top = collapsedOtherControlsTop,
+        width = collapsedOtherControlsSize,
+        height = collapsedOtherControlsSize
     )
     val collapsedShuffle = Bounds(
         start = collapsedNextTrack.end,
-        top = collapsedControlsTop,
+        top = collapsedOtherControlsTop,
         width = 0.dp,
-        height = collapsedControlSize
+        height = collapsedOtherControlsSize
     )
 
     val collapsedTextWidth = collapsedControlsStart - collapsedArtwork.end - 16.dp

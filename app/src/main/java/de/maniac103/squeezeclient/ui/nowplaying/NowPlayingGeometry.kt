@@ -176,7 +176,6 @@ private fun calculatePlayerGeometry(
             expandedTitleSize = if (isLarge) 24.sp else 20.sp,
             collapsedSecondaryTextSize = if (isLarge) 18.sp else 16.sp,
             expandedSecondaryTextSize = if (isLarge) 20.sp else 16.sp,
-            collapsedArtworkHeightFraction = if (isLarge) 0.2F else 0.3F,
             expandedArtworkHeightFraction = if (isLarge) 0.5F else 0.35F,
             collapsedPlaylistHeightFraction = if (isLarge) 0.5F else 0.0F,
             expandedPlaylistWidth = max(input.collapsedWidth, input.containerSize.width * 0.3F)
@@ -359,7 +358,7 @@ private fun calculatePortraitGeometry(
         height = miniProgressHeight
     )
 
-    val expandedArtworkSize = minOf(expandedContent.width, expandedContent.height * 0.4F)
+    val expandedArtworkSize = maxOf(expandedContent.width - 32.dp, expandedContent.height * 0.4F)
     val expandedTitleHeight = expandedTitleSize.estimateLayoutHeight(density)
     val expandedSecondaryHeight = expandedSecondarySize.estimateLayoutHeight(density)
     val expandedArtistHeight = if (hasArtist) expandedSecondaryHeight else 0.dp
@@ -580,7 +579,6 @@ private fun calculateLandscapeGeometry(
     expandedTitleSize: TextUnit,
     collapsedSecondaryTextSize: TextUnit,
     expandedSecondaryTextSize: TextUnit,
-    collapsedArtworkHeightFraction: Float,
     expandedArtworkHeightFraction: Float,
     collapsedPlaylistHeightFraction: Float,
     expandedPlaylistWidth: Dp
@@ -594,8 +592,11 @@ private fun calculateLandscapeGeometry(
     // Constants
     val toolbarHeight = 64.dp
     val collapsedControlSize = 48.dp
-    val collapsedControlSpacing = 4.dp
+    val collapsedControlSpacing = 8.dp
     val collapsedProgressHeight = 8.dp
+    val collapsedProgressBottomSpacing = 8.dp
+    val collapsedMinItemSpacing = 16.dp
+    val collapsedMinArtworkSidePadding = 16.dp
     val expandedPlayPauseSize = 72.dp
     val expandedOtherControlsSize = 48.dp
     val expandedProgressHeight = 64.dp
@@ -630,13 +631,24 @@ private fun calculateLandscapeGeometry(
     val collapsedArtistHeight = if (hasArtist) collapsedSecondaryTextHeight else 0.dp
     val collapsedTextHeight = collapsedTitleHeight + collapsedAlbumHeight + collapsedArtistHeight
 
-    val collapsedArtworkSize = collapsedContent.height * collapsedArtworkHeightFraction
+    val collapsedArtworkAvailableHeight = collapsedContent.height -
+        collapsedTextHeight -
+        collapsedControlSize -
+        collapsedProgressHeight -
+        collapsedProgressBottomSpacing -
+        collapsedMinItemSpacing * 4
+
+    val collapsedArtworkSize = min(
+        collapsedContent.width - collapsedMinArtworkSidePadding * 2,
+        collapsedArtworkAvailableHeight
+    )
     val collapsedItemVertSpacing = (
         collapsedContent.height -
             collapsedArtworkSize -
             collapsedTextHeight -
             collapsedControlSize -
-            collapsedProgressHeight
+            collapsedProgressHeight -
+            collapsedProgressBottomSpacing
         ) / 4
 
     val collapsedArtwork = Bounds(
@@ -648,7 +660,7 @@ private fun calculateLandscapeGeometry(
 
     val collapsedProgress = Bounds(
         start = collapsedContent.start,
-        top = collapsedContent.bottom - 16.dp,
+        top = collapsedContent.bottom - collapsedProgressHeight - collapsedProgressBottomSpacing,
         width = collapsedContent.width,
         height = collapsedProgressHeight
     )

@@ -20,6 +20,9 @@ package de.maniac103.squeezeclient.ui.playermanagement
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.graphics.res.animatedVectorResource
+import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
+import androidx.compose.animation.graphics.vector.AnimatedImageVector
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,12 +38,15 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilledTonalIconToggleButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.rememberSliderState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -48,6 +54,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
@@ -58,7 +67,6 @@ import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.PlayerStatus
 import de.maniac103.squeezeclient.model.Playlist
 import de.maniac103.squeezeclient.ui.composables.ResourceIcon
-import de.maniac103.squeezeclient.ui.composables.ResourceIconButton
 import de.maniac103.squeezeclient.ui.composables.TextResource
 import kotlin.math.roundToInt
 
@@ -208,40 +216,37 @@ internal fun PlayerRow(
             ) {
                 if (isMaster) {
                     val isPlaying = player.playbackState == PlayerStatus.PlayState.Playing
-                    ResourceIconButton(
-                        drawableResId = when {
-                            isPlaying -> R.drawable.ic_pause_24dp
-                            else -> R.drawable.ic_play_24dp
+                    val icon = AnimatedImageVector.animatedVectorResource(
+                        R.drawable.play_to_pause_anim
+                    )
+                    RowActionButton(
+                        checked = isPlaying,
+                        onCheckedChange = { value ->
+                            val newState = when {
+                                value -> PlayerStatus.PlayState.Playing
+                                else -> PlayerStatus.PlayState.Paused
+                            }
+                            onChangePlaybackState(player.playerId, newState)
                         },
+                        iconPainter = rememberAnimatedVectorPainter(
+                            animatedImageVector = icon,
+                            atEnd = isPlaying
+                        ),
                         contentDescriptionResId = when {
                             isPlaying -> R.string.content_description_nowplaying_pause
                             else -> R.string.content_description_nowplaying_play
-                        },
-                        onClick = {
-                            val newState = when {
-                                isPlaying -> PlayerStatus.PlayState.Paused
-                                else -> PlayerStatus.PlayState.Playing
-                            }
-                            onChangePlaybackState(player.playerId, newState)
                         }
                     )
                 }
                 if (player.canPowerOff) {
-                    val iconButtonColors = IconButtonDefaults.iconButtonColors()
-                    ResourceIconButton(
-                        drawableResId = R.drawable.ic_power_24dp,
+                    RowActionButton(
+                        checked = player.powered,
+                        onCheckedChange = { onTogglePower(player.playerId) },
+                        iconPainter = painterResource(R.drawable.ic_power_24dp),
                         contentDescriptionResId = when (player.powered) {
                             true -> R.string.content_description_player_power_off
                             false -> R.string.content_description_player_power_on
-                        },
-                        colors = when (player.powered) {
-                            true -> iconButtonColors
-
-                            false -> iconButtonColors.copy(
-                                contentColor = iconButtonColors.disabledContentColor
-                            )
-                        },
-                        onClick = { onTogglePower(player.playerId) }
+                        }
                     )
                 }
 
@@ -291,6 +296,31 @@ internal fun PlayerRow(
             )
         }
     }
+}
+
+@Composable
+private fun RowActionButton(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    iconPainter: Painter,
+    contentDescriptionResId: Int
+) = FilledTonalIconToggleButton(
+    checked = checked,
+    onCheckedChange = onCheckedChange,
+    shapes = IconButtonDefaults.toggleableShapes(),
+    modifier = Modifier
+        .minimumInteractiveComponentSize()
+        .size(
+            IconButtonDefaults.extraSmallContainerSize(
+                widthOption = IconButtonDefaults.IconButtonWidthOption.Narrow
+            )
+        )
+) {
+    Icon(
+        painter = iconPainter,
+        contentDescription = stringResource(contentDescriptionResId),
+        modifier = Modifier.size(IconButtonDefaults.extraSmallIconSize)
+    )
 }
 
 @Composable

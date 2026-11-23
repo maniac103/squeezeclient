@@ -199,17 +199,21 @@ private fun calculatePortraitGeometry(
     val endInset = insets.calculateEndPadding(layoutDirection)
 
     // Constants
-    val collapsedArtworkSize = 48.dp
     val toolbarHeight = 64.dp
     val miniProgressHeight = 4.dp
+    val collapsedArtworkSize = 48.dp
     val collapsedPlayPauseSize = 48.dp
     val collapsedOtherControlsSize = 40.dp
     val collapsedControlSpacing = 4.dp
+    val collapsedHorizontalSpacing = 8.dp
+    val collapsedTitleSize = 16.sp
+    val collapsedSecondarySize = 14.sp
     val expandedProgressSize = 64.dp
     val expandedPlayPauseSize = 72.dp
     val expandedOtherControlsSize = 48.dp
-    val collapsedTitleSize = 16.sp
-    val collapsedSecondarySize = 14.sp
+    val expandedTextHorizontalPadding = 8.dp
+    val expandedControlsHorizontalPadding = 16.dp
+    val expandedProgressHorizontalPadding = 16.dp
     val expandedTitleSize = 24.sp
     val expandedSecondarySize = 18.sp
 
@@ -244,7 +248,7 @@ private fun calculatePortraitGeometry(
     )
 
     val collapsedArtwork = Bounds(
-        start = 8.dp,
+        start = collapsedHorizontalSpacing,
         top = (collapsedMiniProgress.top - collapsedArtworkSize) / 2,
         width = collapsedArtworkSize,
         height = collapsedArtworkSize
@@ -252,7 +256,8 @@ private fun calculatePortraitGeometry(
 
     val collapsedControlsWidth =
         collapsedPlayPauseSize + collapsedOtherControlsSize * 2 + collapsedControlSpacing * 2
-    val collapsedControlsStart = collapsedContent.width - 8.dp - collapsedControlsWidth
+    val collapsedControlsStart =
+        collapsedContent.width - collapsedHorizontalSpacing - collapsedControlsWidth
     val collapsedPlayPauseTop = (collapsedMiniProgress.top - collapsedPlayPauseSize) / 2
     val collapsedOtherControlsTop =
         collapsedPlayPauseTop + (collapsedPlayPauseSize - collapsedOtherControlsSize) / 2
@@ -288,8 +293,9 @@ private fun calculatePortraitGeometry(
         height = collapsedOtherControlsSize
     )
 
-    val collapsedTextWidth = collapsedControlsStart - collapsedArtwork.end - 16.dp
-    val collapsedTextStart = collapsedArtwork.end + 8.dp
+    val collapsedTextStart = collapsedArtwork.end + collapsedHorizontalSpacing
+    val collapsedTextWidth =
+        collapsedControlsStart - collapsedTextStart - collapsedHorizontalSpacing
     val collapsedTitleHeight = collapsedTitleSize.estimateLayoutHeight(density)
     val collapsedSecondaryHeight = collapsedSecondarySize.estimateLayoutHeight(density)
     val collapsedArtistHeight = if (hasArtist) collapsedSecondaryHeight else 0.dp
@@ -381,47 +387,45 @@ private fun calculatePortraitGeometry(
         height = expandedArtworkSize
     )
 
-    val expandedTextStart = 8.dp
-    val expandedTextWidth = expandedContent.width - 16.dp
+    val expandedTextWidth = expandedContent.width - expandedTextHorizontalPadding * 2
 
     val expandedTitle = Bounds(
-        start = expandedTextStart,
+        start = expandedTextHorizontalPadding,
         top = expandedArtwork.bottom + expandedVerticalSpacing,
         width = expandedTextWidth,
         height = expandedTitleHeight
     )
     val expandedArtist = Bounds(
-        start = expandedTextStart,
+        start = expandedTextHorizontalPadding,
         top = expandedTitle.bottom,
         width = expandedTextWidth,
         height = expandedArtistHeight
     )
     val expandedAlbum = Bounds(
-        start = expandedTextStart,
+        start = expandedTextHorizontalPadding,
         top = expandedArtist.bottom,
         width = expandedTextWidth,
         height = expandedAlbumHeight
     )
 
     val expandedFullProgress = Bounds(
-        start = 16.dp,
+        start = expandedProgressHorizontalPadding,
         top = expandedAlbum.bottom + expandedVerticalSpacing,
-        width = expandedContent.width - 32.dp,
+        width = expandedContent.width - expandedProgressHorizontalPadding * 2,
         height = expandedProgressSize
     )
 
-    val expandedControlsPadding = 16.dp
     val expandedPlayPauseTop = expandedFullProgress.bottom + expandedVerticalSpacing
     val expandedOtherControlsTop =
         expandedPlayPauseTop + (expandedPlayPauseSize - expandedOtherControlsSize) / 2
-    val expandedControlsWidth = expandedContent.width - expandedControlsPadding * 2
+    val expandedControlsWidth = expandedContent.width - expandedControlsHorizontalPadding * 2
     val expandedControlsSize = expandedPlayPauseSize + expandedOtherControlsSize * 4
     val expandedControlsSpacing = min((expandedControlsWidth - expandedControlsSize) / 4, 32.dp)
     val expandedControlsExtraPadding =
         (expandedControlsWidth - expandedControlsSize - expandedControlsSpacing * 4) / 2
 
     val expandedRepeat = Bounds(
-        start = expandedControlsPadding + expandedControlsExtraPadding,
+        start = expandedControlsHorizontalPadding + expandedControlsExtraPadding,
         top = expandedOtherControlsTop,
         width = expandedOtherControlsSize,
         height = expandedOtherControlsSize
@@ -509,7 +513,7 @@ private fun calculatePortraitGeometry(
                     start = startInset,
                     top = 0.dp,
                     width = containerSize.width,
-                    height = 64.dp + topInset
+                    height = toolbarHeight + topInset
                 )
             ),
             alpha = morph(0F, 1F, WindowEasing(0.7F, 0.9F))
@@ -600,6 +604,9 @@ private fun calculateLandscapeGeometry(
     val expandedPlayPauseSize = 72.dp
     val expandedOtherControlsSize = 48.dp
     val expandedProgressHeight = 64.dp
+    val expandedProgressHorizontalPadding = 8.dp
+    val expandedControlsHorizontalPadding = 16.dp
+    val expandedTextHorizontalPadding = 8.dp
 
     // Collapsed state
     val collapsedBackground = Bounds(
@@ -762,14 +769,13 @@ private fun calculateLandscapeGeometry(
     )
 
     val expandedProgress = Bounds(
-        start = expandedContent.start + 8.dp,
+        start = expandedContent.start + expandedProgressHorizontalPadding,
         top = expandedArtwork.bottom + expandedVertSpacing,
-        width = expandedContent.width - 16.dp,
+        width = expandedContent.width - expandedProgressHorizontalPadding * 2,
         height = expandedProgressHeight
     )
 
-    val expandedControlsPadding = 16.dp
-    val expandedControlsWidth = expandedContent.width - expandedControlsPadding * 2
+    val expandedControlsWidth = expandedContent.width - expandedControlsHorizontalPadding * 2
     val expandedPlayPauseTop = expandedProgress.bottom + expandedVertSpacing
     val expandedOtherControlsTop =
         expandedPlayPauseTop + (expandedPlayPauseSize - expandedOtherControlsSize) / 2
@@ -779,7 +785,8 @@ private fun calculateLandscapeGeometry(
         (expandedControlsWidth - expandedControlsSize - expandedControlsSpacing * 4) / 2
 
     val expandedRepeat = Bounds(
-        start = expandedContent.start + expandedControlsPadding + expandedControlsExtraPadding,
+        start = expandedContent.start +
+            expandedControlsHorizontalPadding + expandedControlsExtraPadding,
         top = expandedOtherControlsTop,
         width = expandedOtherControlsSize,
         height = expandedOtherControlsSize
@@ -815,8 +822,8 @@ private fun calculateLandscapeGeometry(
     val expandedArtistHeight = if (hasArtist) expandedSecondaryTextHeight else 0.dp
     val expandedTextHeight = expandedTitleHeight + expandedArtistHeight + expandedAlbumHeight
     val expandedTextSpacing = (expandedArtwork.height - expandedTextHeight) / 2
-    val expandedTextStart = expandedArtwork.end + 8.dp
-    val expandedTextWidth = expandedContent.end - expandedTextStart - 8.dp
+    val expandedTextStart = expandedArtwork.end + expandedTextHorizontalPadding
+    val expandedTextWidth = expandedContent.end - expandedTextStart - expandedTextHorizontalPadding
 
     val expandedTitle = Bounds(
         start = expandedTextStart,
@@ -899,7 +906,7 @@ private fun calculateLandscapeGeometry(
                     start = 0.dp,
                     top = 0.dp,
                     width = containerSize.width - expandedPlaylist.width,
-                    height = 64.dp + topInset
+                    height = toolbarHeight + topInset
                 )
             ),
             alpha = morph(0F, 1F, WindowEasing(0.7F, 0.9F))

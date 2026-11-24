@@ -62,6 +62,13 @@ internal sealed interface PlayerGeometryInput {
         override val playlistMinSidePadding: Dp,
         val collapsedWidth: Dp
     ) : PlayerGeometryInput
+
+    data class Foldable(
+        override val containerSize: DpSize,
+        override val cornerSize: Dp,
+        override val playlistMinSidePadding: Dp,
+        val paneWidth: Dp
+    ) : PlayerGeometryInput
 }
 
 @Immutable
@@ -106,7 +113,7 @@ internal data class CornerSizes(
 internal data class ContentLayoutSpec(
     val bounds: Morph<Bounds>,
     val corners: CornerSizes,
-    val dragDirection: Orientation,
+    val dragDirection: Orientation?,
     val dragDistance: Float
 )
 
@@ -180,6 +187,17 @@ private fun calculatePlayerGeometry(
             expandedArtworkHeightFraction = if (isLarge) 0.5F else 0.35F,
             collapsedPlaylistHeightFraction = if (isLarge) 0.5F else 0.0F,
             expandedPlaylistWidth = max(input.collapsedWidth, input.containerSize.width * 0.3F)
+        )
+    }
+
+    is PlayerGeometryInput.Foldable -> {
+        calculateFoldablePaneGeometry(
+            density = density,
+            layoutDirection = layoutDirection,
+            input = input,
+            insets = insets,
+            hasAlbum = hasAlbum,
+            hasArtist = hasArtist
         )
     }
 }
@@ -1003,6 +1021,248 @@ private fun calculateLandscapeGeometry(
     )
 }
 
+private fun calculateFoldablePaneGeometry(
+    density: Density,
+    layoutDirection: LayoutDirection,
+    input: PlayerGeometryInput.Foldable,
+    insets: PaddingValues,
+    hasAlbum: Boolean,
+    hasArtist: Boolean
+): PlayerGeometry {
+    val containerSize = input.containerSize
+    val topInset = insets.calculateTopPadding()
+    val bottomInset = insets.calculateBottomPadding()
+    val startInset = insets.calculateStartPadding(layoutDirection)
+    val endInset = insets.calculateEndPadding(layoutDirection)
+
+    // Constants
+    val toolbarHeight = 64.dp
+    val progressSize = 64.dp
+    val playPauseSize = 72.dp
+    val otherControlsSize = 48.dp
+    val textHorizontalPadding = 8.dp
+    val controlsHorizontalPadding = 16.dp
+    val progressHorizontalPadding = 16.dp
+    val playlistPeekHeight = 48.dp
+    val titleSize = 24.sp
+    val secondarySize = 18.sp
+
+    val background = Bounds(
+        start = containerSize.width - input.paneWidth,
+        top = 0.dp,
+        width = input.paneWidth,
+        height = containerSize.height
+    )
+
+    val content = Bounds(
+        start = containerSize.width - input.paneWidth,
+        top = topInset,
+        width = containerSize.width - input.paneWidth - endInset,
+        height = containerSize.height - topInset - bottomInset
+    )
+
+    val toolbar = Bounds(
+        start = 0.dp,
+        top = 0.dp,
+        width = background.width,
+        height = toolbarHeight + topInset
+    )
+
+    val playlist = Bounds(
+        start = background.start,
+        top = toolbar.bottom,
+        width = background.width,
+        height = containerSize.height - toolbar.bottom
+    )
+
+    val artworkSize = maxOf(content.width - 32.dp, content.height * 0.4F)
+    val titleHeight = titleSize.estimateLayoutHeight(density)
+    val secondaryHeight = secondarySize.estimateLayoutHeight(density)
+    val artistHeight = if (hasArtist) secondaryHeight else 0.dp
+    val albumHeight = if (hasAlbum) secondaryHeight else 0.dp
+    val textHeight = titleHeight + artistHeight + albumHeight
+    val verticalSpacing = (
+        content.height -
+            toolbarHeight -
+            playlistPeekHeight -
+            artworkSize -
+            textHeight -
+            max(playPauseSize, otherControlsSize) -
+            progressSize
+        ) / 5
+
+    val artwork = Bounds(
+        start = (content.width - artworkSize) / 2,
+        top = toolbar.bottom + verticalSpacing,
+        width = artworkSize,
+        height = artworkSize
+    )
+
+    val textWidth = content.width - textHorizontalPadding * 2
+
+    val title = Bounds(
+        start = textHorizontalPadding,
+        top = artwork.bottom + verticalSpacing,
+        width = textWidth,
+        height = titleHeight
+    )
+    val artist = Bounds(
+        start = textHorizontalPadding,
+        top = title.bottom,
+        width = textWidth,
+        height = artistHeight
+    )
+    val album = Bounds(
+        start = textHorizontalPadding,
+        top = artist.bottom,
+        width = textWidth,
+        height = albumHeight
+    )
+
+    val progress = Bounds(
+        start = progressHorizontalPadding,
+        top = album.bottom + verticalSpacing,
+        width = content.width - progressHorizontalPadding * 2,
+        height = progressSize
+    )
+
+    val playPauseTop = progress.bottom + verticalSpacing
+    val otherControlsTop = playPauseTop + (playPauseSize - otherControlsSize) / 2
+    val controlsWidth = content.width - controlsHorizontalPadding * 2
+    val controlsSize = playPauseSize + otherControlsSize * 4
+    val controlsSpacing = min((controlsWidth - controlsSize) / 4, 32.dp)
+    val controlsExtraPadding = (controlsWidth - controlsSize - controlsSpacing * 4) / 2
+
+    val repeat = Bounds(
+        start = controlsHorizontalPadding + controlsExtraPadding,
+        top = otherControlsTop,
+        width = otherControlsSize,
+        height = otherControlsSize
+    )
+    val prevTrack = Bounds(
+        start = repeat.end + controlsSpacing,
+        top = otherControlsTop,
+        width = otherControlsSize,
+        height = otherControlsSize
+    )
+    val playPause = Bounds(
+        start = prevTrack.end + controlsSpacing,
+        top = playPauseTop,
+        width = playPauseSize,
+        height = playPauseSize
+    )
+    val nextTrack = Bounds(
+        start = playPause.end + controlsSpacing,
+        top = otherControlsTop,
+        width = otherControlsSize,
+        height = otherControlsSize
+    )
+    val shuffle = Bounds(
+        start = nextTrack.end + controlsSpacing,
+        top = otherControlsTop,
+        width = otherControlsSize,
+        height = otherControlsSize
+    )
+
+    val playlistHandleHeight = playlistPeekHeight + bottomInset
+
+    return PlayerGeometry(
+        content = ContentLayoutSpec(
+            bounds = constant(background),
+            corners = CornerSizes(
+                topStart = constant(input.cornerSize),
+                topEnd = constant(0.dp),
+                bottomStart = constant(input.cornerSize),
+                bottomEnd = constant(0.dp)
+            ),
+            dragDirection = null,
+            dragDistance = 0F
+        ),
+
+        playlist = PlaylistLayoutSpec(
+            bounds = constant(playlist),
+            alpha = constant(1F),
+            cornerSizes = CornerSizes(
+                topStart = constant(input.cornerSize),
+                topEnd = constant(input.cornerSize),
+                bottomStart = constant(0.dp),
+                bottomEnd = constant(0.dp)
+            ),
+            contentAlpha = morph(0F, 1F),
+            contentPadding = PaddingValues(
+                start = startInset.coerceAtLeast(input.playlistMinSidePadding),
+                end = endInset.coerceAtLeast(input.playlistMinSidePadding),
+                bottom = bottomInset
+            ),
+            topSpacing = constant(0.dp),
+            handleHeight = playlistHandleHeight,
+            handleDragDistance = density.run {
+                (playlist.height - playlistHandleHeight).toPx()
+            }
+        ),
+
+        progress = ProgressLayoutSpec(
+            full = ControlLayoutSpec(
+                bounds = constant(progress),
+                alpha = constant(1F)
+            ),
+            mini = ControlLayoutSpec(
+                bounds = constant(Bounds(0.dp, 0.dp, 0.dp, 0.dp)),
+                alpha = constant(0F)
+            )
+        ),
+
+        toolbar = ControlLayoutSpec(
+            bounds = constant(toolbar),
+            alpha = constant(1F)
+        ),
+
+        title = TextLayoutSpec(
+            bounds = constant(title),
+            fontSize = constant(titleSize)
+        ),
+        artist = TextLayoutSpec(
+            bounds = constant(artist),
+            fontSize = constant(secondarySize)
+        ),
+        album = TextLayoutSpec(
+            bounds = constant(album),
+            fontSize = constant(secondarySize)
+        ),
+        textAlignmentProgress = constant(0.5F),
+
+        artwork = ArtworkLayoutSpec(
+            bounds = constant(artwork),
+            cornerPercentage = constant(10F)
+        ),
+
+        controls = ControlsLayoutSpec(
+            repeat = ControlLayoutSpec(
+                bounds = constant(repeat),
+                alpha = constant(1F)
+            ),
+            prevTrack = ControlLayoutSpec(
+                bounds = constant(prevTrack),
+                alpha = constant(1F)
+            ),
+            playPause = ControlLayoutSpec(
+                bounds = constant(playPause),
+                alpha = constant(1F)
+            ),
+            nextTrack = ControlLayoutSpec(
+                bounds = constant(nextTrack),
+                alpha = constant(1F)
+            ),
+            shuffle = ControlLayoutSpec(
+                bounds = constant(shuffle),
+                alpha = constant(1F)
+            )
+        ).let {
+            if (layoutDirection == LayoutDirection.Rtl) it.withReversedOrder() else it
+        }
+    )
+}
+
 private fun TextUnit.estimateLayoutHeight(density: Density) = with(density) {
     toDp() * 1.3F
 }
@@ -1020,6 +1280,13 @@ internal fun MainLayout.toGeometryInput(): PlayerGeometryInput = when (this) {
         cornerSize = nowPlayingCornerSize,
         playlistMinSidePadding = listContentMinSidePadding,
         collapsedWidth = collapsedNowPlayingWidth
+    )
+
+    is MainLayout.Foldable -> PlayerGeometryInput.Foldable(
+        containerSize = containerSize,
+        cornerSize = nowPlayingCornerSize,
+        playlistMinSidePadding = listContentMinSidePadding,
+        paneWidth = nowPlayingWidth
     )
 }
 

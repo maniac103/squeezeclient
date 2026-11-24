@@ -412,13 +412,18 @@ internal fun NowPlayingScreen(
                     playlistExpanded = motionState.playlist.isExpanded,
                     modifier = Modifier
                         .bounds(motionState.nowPlaying, geometry.content.bounds)
-                        .dragHandle(
-                            orientation = geometry.content.dragDirection,
-                            progress = motionState.nowPlaying,
-                            enabled = uiState.canExpand && motionState.playlist.isCollapsed,
-                            canClickToClose = false,
-                            dragDistance = geometry.content.dragDistance,
-                            scope = scope
+                        .then(
+                            geometry.content.dragDirection?.let { direction ->
+                                Modifier.dragHandle(
+                                    orientation = direction,
+                                    progress = motionState.nowPlaying,
+                                    enabled = uiState.canExpand && motionState.playlist.isCollapsed,
+                                    canClickToClose = false,
+                                    dragDistance = geometry.content.dragDistance,
+                                    scope = scope
+                                )
+                            }
+                                ?: Modifier
                         ),
                     onNavigateUp = {
                         scope.launch {
@@ -498,6 +503,7 @@ private fun PlayerSurface(
             layoutSpec = geometry.toolbar,
             progress = progress,
             state = state,
+            showCloseIcon = geometry.content.dragDirection != null,
             showNowPlayingActions = !playlistExpanded || !geometry.playlist.needsHandle,
             showPlaylistActions = playlistExpanded || !geometry.playlist.needsHandle,
             onNavigateUp = onNavigateUp,
@@ -565,6 +571,7 @@ private fun PlayerToolbar(
     layoutSpec: ControlLayoutSpec,
     state: NowPlayingUiState,
     progress: MotionProgress,
+    showCloseIcon: Boolean,
     showNowPlayingActions: Boolean,
     showPlaylistActions: Boolean,
     onNavigateUp: () -> Unit,
@@ -589,11 +596,13 @@ private fun PlayerToolbar(
                 )
             },
             navigationIcon = {
-                ResourceIconButton(
-                    drawableResId = R.drawable.ic_chevron_down_24dp,
-                    contentDescriptionResId = R.string.content_description_nowplaying_close,
-                    onClick = onNavigateUp
-                )
+                if (showCloseIcon) {
+                    ResourceIconButton(
+                        drawableResId = R.drawable.ic_chevron_down_24dp,
+                        contentDescriptionResId = R.string.content_description_nowplaying_close,
+                        onClick = onNavigateUp
+                    )
+                }
             },
             actions = {
                 if (showNowPlayingActions) {

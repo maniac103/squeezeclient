@@ -75,6 +75,8 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarColors
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.material3.adaptive.HingeInfo
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -99,11 +101,13 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.LayoutDirection
@@ -113,6 +117,7 @@ import androidx.compose.ui.unit.max
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.rememberViewModelStoreOwner
+import androidx.window.core.layout.WindowSizeClass
 import de.maniac103.squeezeclient.Preferences
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.cometd.request.LibrarySearchRequest
@@ -195,6 +200,24 @@ sealed interface MainLayout {
         override val galleryGridCellMinSize: Dp
     ) : MainLayout {
         override val useGridForSlimBrowseItemsByDefault = true
+    }
+
+    data class Foldable(
+        override val containerSize: DpSize,
+        override val listContentMinSidePadding: Dp,
+        override val mainContentPadding: PaddingValues,
+        override val mainContentPagePadding: PaddingValues,
+        override val compensateMainContentBottomPagePaddingDuringAnimation: Boolean = false,
+        override val searchBoxPadding: PaddingValues,
+        override val breadcrumbsPadding: PaddingValues,
+        override val toolbarPadding: PaddingValues,
+        override val toolbarContentPadding: PaddingValues,
+        val nowPlayingWidth: Dp,
+        override val nowPlayingCornerSize: Dp,
+        override val slimBrowseGridCellMinSize: Dp,
+        override val galleryGridCellMinSize: Dp
+    ) : MainLayout {
+        override val useGridForSlimBrowseItemsByDefault = false
     }
 }
 
@@ -567,18 +590,23 @@ private fun MainActivityPlayerContent(
                 scrollBehavior = scrollBehavior
             )
 
+            val adaptiveInfo = currentWindowAdaptiveInfoV2()
             val layout = determineMainLayout(
                 containerSize = DpSize(maxWidth, maxHeight),
                 insets = systemInsets,
-                layoutDirection = LocalLayoutDirection.current
+                hinge = adaptiveInfo.windowPosture.hingeList.firstOrNull(),
+                windowSizeClass = adaptiveInfo.windowSizeClass,
+                layoutDirection = LocalLayoutDirection.current,
+                density = LocalDensity.current
             )
 
-            val useGridForSlimBrowseItemsState = remember {
-                computedStateOf {
-                    forceGridForSlimBrowseItemsState.value ||
-                        layout.useGridForSlimBrowseItemsByDefault
+            val useGridForSlimBrowseItemsState =
+                remember(forceGridForSlimBrowseItemsState.value, layout) {
+                    computedStateOf {
+                        forceGridForSlimBrowseItemsState.value ||
+                            layout.useGridForSlimBrowseItemsByDefault
+                    }
                 }
-            }
 
             Scaffold(
                 topBar = {
@@ -896,12 +924,71 @@ private fun MainActivityErrorContent(
 private fun determineMainLayout(
     containerSize: DpSize,
     insets: PaddingValues,
+    hinge: HingeInfo?,
+    windowSizeClass: WindowSizeClass,
+    density: Density,
     layoutDirection: LayoutDirection
 ): MainLayout {
     val nowPlayingCornerSize = 16.dp
     val listContentSidePadding = 8.dp
 
     return when {
+        containerSize.width / containerSize.height in 0.9F..1.1F -> {
+            val (listWidth, nowPlayingWidth) = if (hinge?.isVertical == true) {
+                with(density) {
+                    val leftPaneWidthPx = hinge.bounds.left
+                    val rightPaneStartPx =
+                        if (hinge.isOccluding) hinge.bounds.left else hinge.bounds.right
+
+                    leftPaneWidthPx.toDp() to (containerSize.width - rightPaneStartPx.toDp())
+                }
+            } else {
+                val paneWidth = containerSize.width / 2
+                paneWidth to paneWidth
+            }
+
+            val mainContentPadding = PaddingValues(
+                end = containerSize.width - listWidth
+            )
+            val mainContentPagePadding = PaddingValues(
+                start = insets.calculateStartPadding(layoutDirection)
+                    .coerceAtLeast(listContentSidePadding),
+                end = listContentSidePadding,
+                bottom = insets.calculateBottomPadding()
+            )
+            val breadcrumbsPadding = PaddingValues(
+                start = insets.calculateStartPadding(layoutDirection),
+                end = nowPlayingWidth + insets.calculateEndPadding(layoutDirection)
+            )
+            val searchBoxPadding = PaddingValues(
+                top = insets.calculateTopPadding(),
+                start = insets.calculateStartPadding(layoutDirection),
+                end = nowPlayingWidth + insets.calculateEndPadding(layoutDirection)
+            )
+            val toolbarPadding = PaddingValues(
+                end = nowPlayingWidth - nowPlayingCornerSize
+            )
+            val toolbarContentPadding = PaddingValues(
+                top = insets.calculateTopPadding(),
+                start = insets.calculateStartPadding(layoutDirection),
+                end = nowPlayingCornerSize
+            )
+            MainLayout.Foldable(
+                containerSize = containerSize,
+                listContentMinSidePadding = listContentSidePadding,
+                mainContentPadding = mainContentPadding,
+                mainContentPagePadding = mainContentPagePadding,
+                breadcrumbsPadding = breadcrumbsPadding,
+                searchBoxPadding = searchBoxPadding,
+                toolbarPadding = toolbarPadding,
+                toolbarContentPadding = toolbarContentPadding,
+                nowPlayingWidth = nowPlayingWidth,
+                nowPlayingCornerSize = nowPlayingCornerSize,
+                slimBrowseGridCellMinSize = 120.dp,
+                galleryGridCellMinSize = 150.dp
+            )
+        }
+
         containerSize.width < containerSize.height -> {
             val collapsedNowPlayingHeight = 68.dp // 64dp sheet + 4dp progress indicator
             val mainContentPadding = PaddingValues(
@@ -929,7 +1016,9 @@ private fun determineMainLayout(
                 start = insets.calculateStartPadding(layoutDirection),
                 end = insets.calculateEndPadding(layoutDirection)
             )
-            val isLargeContainer = containerSize.width >= 480.dp
+            val isLargeContainer = windowSizeClass.isWidthAtLeastBreakpoint(
+                WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND
+            )
             MainLayout.Portrait(
                 containerSize = containerSize,
                 listContentMinSidePadding = listContentSidePadding,
@@ -975,7 +1064,9 @@ private fun determineMainLayout(
                 start = insets.calculateStartPadding(layoutDirection),
                 end = nowPlayingCornerSize
             )
-            val isLargeContainer = containerSize.height >= 480.dp
+            val isLargeContainer = windowSizeClass.isHeightAtLeastBreakpoint(
+                WindowSizeClass.HEIGHT_DP_MEDIUM_LOWER_BOUND
+            )
             MainLayout.Landscape(
                 containerSize = containerSize,
                 listContentMinSidePadding = listContentSidePadding,

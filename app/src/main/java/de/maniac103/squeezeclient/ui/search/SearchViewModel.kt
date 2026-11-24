@@ -32,6 +32,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class SearchViewModel(
@@ -69,7 +70,7 @@ class SearchViewModel(
         submitJob?.cancel()
         searchJob?.cancel()
 
-        queryTextFlow.value = QueryState(query, false)
+        queryTextFlow.update { old -> QueryState(query, old.submitted) }
         if (query.isNotEmpty()) {
             submitJob = viewModelScope.launch {
                 delay(1.seconds)

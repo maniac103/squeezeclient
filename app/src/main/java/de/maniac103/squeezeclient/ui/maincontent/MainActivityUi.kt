@@ -633,6 +633,7 @@ private fun MainActivityPlayerContent(
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
+                        .background(backgroundColor)
                         .padding(top = innerPadding.calculateTopPadding())
                 ) {
                     Breadcrumbs(

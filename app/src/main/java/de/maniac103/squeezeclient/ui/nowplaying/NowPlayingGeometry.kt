@@ -19,6 +19,7 @@ package de.maniac103.squeezeclient.ui.nowplaying
 
 import androidx.compose.animation.core.EaseInCubic
 import androidx.compose.animation.core.EaseInOutCubic
+import androidx.compose.animation.core.EaseInQuint
 import androidx.compose.animation.core.EaseOutCubic
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.PaddingValues
@@ -461,8 +462,8 @@ private fun calculatePortraitGeometry(
         content = ContentLayoutSpec(
             bounds = morph(collapsedBackground, expandedBackground),
             corners = CornerSizes(
-                topStart = morph(input.cornerSize, 0.dp),
-                topEnd = morph(input.cornerSize, 0.dp),
+                topStart = morph(input.cornerSize, 0.dp, EaseInCubic),
+                topEnd = morph(input.cornerSize, 0.dp, EaseInCubic),
                 bottomStart = constant(0.dp),
                 bottomEnd = constant(0.dp)
             ),
@@ -848,9 +849,9 @@ private fun calculateLandscapeGeometry(
         content = ContentLayoutSpec(
             bounds = morph(collapsedBackground, expandedBackground),
             corners = CornerSizes(
-                topStart = morph(input.cornerSize, 0.dp),
+                topStart = morph(input.cornerSize, 0.dp, EaseInQuint),
                 topEnd = constant(0.dp),
-                bottomStart = morph(input.cornerSize, 0.dp),
+                bottomStart = morph(input.cornerSize, 0.dp, EaseInQuint),
                 bottomEnd = constant(0.dp)
             ),
             dragDirection = Orientation.Horizontal,

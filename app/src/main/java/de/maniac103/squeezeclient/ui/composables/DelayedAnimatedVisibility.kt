@@ -25,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalInspectionMode
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -35,6 +36,7 @@ import kotlinx.coroutines.delay
 @Composable
 fun DelayedAnimatedVisibility(
     show: Boolean,
+    modifier: Modifier = Modifier,
     showDelay: Duration = 100.milliseconds,
     minVisible: Duration = 300.milliseconds,
     content: @Composable () -> Unit
@@ -54,7 +56,10 @@ fun DelayedAnimatedVisibility(
         }
     }
 
-    AnimatedVisibility(visible = visible) {
+    AnimatedVisibility(
+        visible = visible,
+        modifier = modifier
+    ) {
         content()
     }
 }

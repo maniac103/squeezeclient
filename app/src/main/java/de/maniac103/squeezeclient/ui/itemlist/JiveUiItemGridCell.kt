@@ -43,6 +43,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.ui.composables.DelayedAnimatedVisibility
+import de.maniac103.squeezeclient.ui.composables.SmallCircularWavyProgressIndicator
 
 @Composable
 fun JiveUiItemGridCell(
@@ -112,9 +113,11 @@ fun JiveUiItemGridCell(
             ) {
                 val trailingWidgetModifier = Modifier
                     .align(Alignment.CenterVertically)
-                DelayedAnimatedVisibility(show = busy) {
-                    JiveUiItemRowBusyIndicator(modifier = trailingWidgetModifier)
-                }
+                DelayedAnimatedVisibility(
+                    show = busy,
+                    content = { SmallCircularWavyProgressIndicator() },
+                    modifier = trailingWidgetModifier
+                )
                 if (!busy && item.trailingWidget != null) {
                     JiveUiItemRowTrailingWidget(
                         widget = item.trailingWidget,

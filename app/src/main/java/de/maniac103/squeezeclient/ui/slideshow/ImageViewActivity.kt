@@ -32,8 +32,6 @@ import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -55,7 +53,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.core.content.IntentCompat
 import coil3.compose.AsyncImage
@@ -67,6 +64,7 @@ import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.extfuncs.addServerCredentialsIfNeeded
 import de.maniac103.squeezeclient.extfuncs.enableEdgeToEdge
 import de.maniac103.squeezeclient.model.SlideshowImage
+import de.maniac103.squeezeclient.ui.composables.HugeCircularWavyProgressIndicator
 import de.maniac103.squeezeclient.ui.composables.ResourceIconButton
 import de.maniac103.squeezeclient.ui.theme.AppTheme
 import kotlin.getValue
@@ -104,10 +102,7 @@ class ImageViewActivity : AppCompatActivity() {
                     var imageIsLoading by remember { mutableStateOf(true) }
 
                     if (imageIsLoading) {
-                        CircularProgressIndicator(
-                            strokeWidth = 6.dp,
-                            modifier = Modifier.size(128.dp)
-                        )
+                        HugeCircularWavyProgressIndicator()
                     }
                     ZoomableAsyncImage(
                         imageRequest = imageRequest,

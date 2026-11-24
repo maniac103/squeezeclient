@@ -29,7 +29,7 @@ import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -87,10 +87,8 @@ private fun GalleryGridItem(
         model = imageRequest,
         contentDescription = caption,
         loading = {
-            CircularProgressIndicator(
-                strokeWidth = 4.dp,
-                modifier = Modifier
-                    .size(64.dp)
+            CircularWavyProgressIndicator(
+                modifier = Modifier.size(64.dp)
             )
         },
         modifier = Modifier

@@ -19,8 +19,6 @@ package de.maniac103.squeezeclient.ui.playermanagement
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -31,9 +29,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.maniac103.squeezeclient.R
+import de.maniac103.squeezeclient.ui.composables.HugeCircularWavyProgressIndicator
 import de.maniac103.squeezeclient.ui.composables.NavigationBarScrim
 import de.maniac103.squeezeclient.ui.composables.ResourceIconButton
 
@@ -70,11 +68,8 @@ fun PlayerManagementUi(viewModel: PlayerManagementViewModel, onGoBack: () -> Uni
         ) {
             when (val state = state) {
                 is PlayerManagementUiState.Loading, is PlayerManagementUiState.Disconnected -> {
-                    CircularProgressIndicator(
-                        strokeWidth = 6.dp,
-                        modifier = Modifier
-                            .size(128.dp)
-                            .align(Alignment.Center)
+                    HugeCircularWavyProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center)
                     )
                 }
 

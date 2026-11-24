@@ -26,12 +26,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.text.input.rememberTextFieldState
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
@@ -56,6 +54,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.maniac103.squeezeclient.R
 import de.maniac103.squeezeclient.cometd.request.LibrarySearchRequest
 import de.maniac103.squeezeclient.ui.composables.ResourceIconButton
+import de.maniac103.squeezeclient.ui.composables.TinyCircularWavyProgressIndicator
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
@@ -203,10 +202,7 @@ fun SearchResultCountRow(category: SearchViewModel.Category, modifier: Modifier 
         ),
         trailingContent = {
             if (category.busy) {
-                CircularProgressIndicator(
-                    strokeWidth = 2.dp,
-                    modifier = Modifier.size(16.dp)
-                )
+                TinyCircularWavyProgressIndicator()
             } else {
                 Text(
                     text = category.resultCount.toString()

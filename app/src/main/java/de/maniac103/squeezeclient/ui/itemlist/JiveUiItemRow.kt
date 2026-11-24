@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
@@ -44,6 +43,7 @@ import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.ui.composables.ArtworkImage
 import de.maniac103.squeezeclient.ui.composables.DelayedAnimatedVisibility
 import de.maniac103.squeezeclient.ui.composables.ResourceIconButton
+import de.maniac103.squeezeclient.ui.composables.SmallCircularWavyProgressIndicator
 
 @Composable
 fun JiveUiItemRow(
@@ -72,7 +72,7 @@ fun JiveUiItemRow(
         },
     trailingContent = {
         DelayedAnimatedVisibility(show = busy) {
-            JiveUiItemRowBusyIndicator()
+            SmallCircularWavyProgressIndicator()
         }
         if (!busy && item.trailingWidget != null) {
             JiveUiItemRowTrailingWidget(
@@ -125,12 +125,6 @@ internal fun JiveUiItemRowIcon(
         )
     }
 }
-
-@Composable
-internal fun JiveUiItemRowBusyIndicator(modifier: Modifier = Modifier) = CircularProgressIndicator(
-    strokeWidth = 3.dp,
-    modifier = modifier.size(24.dp)
-)
 
 @Composable
 internal fun JiveUiItemRowTrailingWidget(

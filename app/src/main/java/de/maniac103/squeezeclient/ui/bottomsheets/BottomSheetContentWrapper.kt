@@ -21,10 +21,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,6 +32,7 @@ import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import de.maniac103.squeezeclient.ui.composables.DelayedAnimatedVisibility
+import de.maniac103.squeezeclient.ui.composables.SmallCircularWavyProgressIndicator
 
 @Composable
 fun BottomSheetContentWrapper(title: String, busy: Boolean, content: @Composable () -> Unit) {
@@ -48,11 +47,8 @@ fun BottomSheetContentWrapper(title: String, busy: Boolean, content: @Composable
                     .padding(horizontal = 16.dp)
             )
             DelayedAnimatedVisibility(show = busy) {
-                CircularProgressIndicator(
-                    strokeWidth = 3.dp,
-                    modifier = Modifier
-                        .padding(end = 8.dp)
-                        .size(24.dp)
+                SmallCircularWavyProgressIndicator(
+                    modifier = Modifier.padding(end = 8.dp)
                 )
             }
         }

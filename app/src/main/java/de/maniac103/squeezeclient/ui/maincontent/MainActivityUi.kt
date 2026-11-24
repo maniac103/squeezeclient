@@ -55,7 +55,6 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerDefaults
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
@@ -127,6 +126,7 @@ import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.ServerConfiguration
 import de.maniac103.squeezeclient.model.SlideshowImage
 import de.maniac103.squeezeclient.ui.ActivePlayerScope
+import de.maniac103.squeezeclient.ui.composables.HugeCircularWavyProgressIndicator
 import de.maniac103.squeezeclient.ui.composables.NavigationBarScrim
 import de.maniac103.squeezeclient.ui.composables.ResourceIconButton
 import de.maniac103.squeezeclient.ui.displaystatus.DisplayStatusIndicator
@@ -889,11 +889,8 @@ private fun MainActivityLoadingIndicator(drawerState: DrawerState) = Scaffold(
             .fillMaxSize()
             .padding(innerPadding)
     ) {
-        CircularProgressIndicator(
-            strokeWidth = 6.dp,
-            modifier = Modifier
-                .size(128.dp)
-                .align(Alignment.Center)
+        HugeCircularWavyProgressIndicator(
+            modifier = Modifier.align(Alignment.Center)
         )
     }
 }

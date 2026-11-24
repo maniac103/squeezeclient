@@ -71,15 +71,22 @@ fun JiveUiItemRow(
             }
         },
     trailingContent = {
-        DelayedAnimatedVisibility(show = busy) {
-            SmallCircularWavyProgressIndicator()
-        }
-        if (!busy && item.trailingWidget != null) {
-            JiveUiItemRowTrailingWidget(
-                widget = item.trailingWidget,
-                onContextMenuSelected = onContextMenuSelected
-            )
-        }
+        DelayedAnimatedVisibility(
+            show = busy,
+            content = {
+                SmallCircularWavyProgressIndicator(
+                    modifier = Modifier.padding(8.dp)
+                )
+            },
+            contentWhenHidden = item.trailingWidget?.let {
+                {
+                    JiveUiItemRowTrailingWidget(
+                        widget = it,
+                        onContextMenuSelected = onContextMenuSelected
+                    )
+                }
+            }
+        )
     },
     supportingContent = {
         if (!item.subText.isNullOrEmpty()) {

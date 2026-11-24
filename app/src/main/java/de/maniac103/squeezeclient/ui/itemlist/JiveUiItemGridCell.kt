@@ -115,17 +115,18 @@ fun JiveUiItemGridCell(
                     .align(Alignment.CenterVertically)
                 DelayedAnimatedVisibility(
                     show = busy,
+                    modifier = trailingWidgetModifier,
                     content = { SmallCircularWavyProgressIndicator() },
-                    modifier = trailingWidgetModifier
+                    contentWhenHidden = item.trailingWidget?.let {
+                        {
+                            JiveUiItemRowTrailingWidget(
+                                widget = it,
+                                onContextMenuSelected = onContextMenuSelected,
+                                contextMenuModifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
                 )
-                if (!busy && item.trailingWidget != null) {
-                    JiveUiItemRowTrailingWidget(
-                        widget = item.trailingWidget,
-                        onContextMenuSelected = onContextMenuSelected,
-                        modifier = trailingWidgetModifier,
-                        contextMenuModifier = trailingWidgetModifier.size(24.dp)
-                    )
-                }
             }
         }
     }

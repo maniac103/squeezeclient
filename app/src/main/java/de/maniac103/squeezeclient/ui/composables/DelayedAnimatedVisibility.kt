@@ -18,6 +18,10 @@
 package de.maniac103.squeezeclient.ui.composables
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.computedStateOf
@@ -39,6 +43,9 @@ fun DelayedAnimatedVisibility(
     modifier: Modifier = Modifier,
     showDelay: Duration = 100.milliseconds,
     minVisible: Duration = 300.milliseconds,
+    enter: EnterTransition = fadeIn(),
+    exit: ExitTransition = fadeOut(),
+    contentWhenHidden: (@Composable () -> Unit)? = null,
     content: @Composable () -> Unit
 ) {
     var shownAt by remember { mutableStateOf<TimeMark?>(null) }
@@ -58,8 +65,20 @@ fun DelayedAnimatedVisibility(
 
     AnimatedVisibility(
         visible = visible,
-        modifier = modifier
+        modifier = modifier,
+        enter = enter,
+        exit = exit
     ) {
         content()
+    }
+    if (contentWhenHidden != null) {
+        AnimatedVisibility(
+            visible = !visible,
+            modifier = modifier,
+            enter = enter,
+            exit = exit
+        ) {
+            contentWhenHidden()
+        }
     }
 }

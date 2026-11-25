@@ -28,6 +28,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
+import androidx.compose.runtime.computedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateSetOf
 import androidx.compose.runtime.remember
@@ -238,17 +239,29 @@ fun MainContent(
     )
 
     val navigationEventState = rememberNavigationEventState(sceneState)
-
-    val isPredictiveBack = navigationEventState.transitionState.let { state ->
-        state is NavigationEventTransitionState.InProgress &&
-            state.direction == NavigationEventTransitionState.TRANSITIONING_BACK
+    val isPredictiveBack by remember(navigationEventState) {
+        computedStateOf {
+            val state = navigationEventState.transitionState
+            state is NavigationEventTransitionState.InProgress &&
+                state.direction == NavigationEventTransitionState.TRANSITIONING_BACK
+        }
     }
+    val runPredictiveBackAnimationState = remember(navigationEventState) {
+        computedStateOf {
+            val state = navigationEventState.transitionState
+            state is NavigationEventTransitionState.InProgress &&
+                state.direction == NavigationEventTransitionState.TRANSITIONING_BACK &&
+                state.latestEvent.progress > 0.05f
+        }
+    }
+
     val animationType = when {
         isPredictiveBack -> MainContentAnimationType.PredictiveBack
         else -> MainContentAnimationType.Normal
     }
     val animationState = MainContentAnimationState(
         animType = animationType,
+        runAnimation = runPredictiveBackAnimationState,
         bottomPaddingForCompensation = if (compensateBottomPagePaddingDuringAnimation) {
             pagePadding.calculateBottomPadding()
         } else {

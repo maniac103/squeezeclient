@@ -136,14 +136,17 @@ fun MainContentPage(
         label = "main-content-elevation"
     )
 
+    val runAnimationState = animationState.runAnimation
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainer,
         content = content,
         modifier = Modifier
             .fillMaxSize()
             .graphicsLayer {
-                val compensationPx = bottomPlaceholderCompensation.value.toPx()
-                val scale = scale.value
+                val (compensationPx, scale) = when (runAnimationState.value) {
+                    true -> bottomPlaceholderCompensation.value.toPx() to scale.value
+                    else -> 0F to 1F
+                }
 
                 scaleX = scale
                 scaleY = if (size.height > 0F) {
@@ -154,7 +157,10 @@ fun MainContentPage(
                 translationY = -0.5F * compensationPx * (1 - scale)
             }
             .layout { measurable, constraints ->
-                val bottom = bottomPlaceholderCompensation.value.roundToPx()
+                val bottom = when (runAnimationState.value) {
+                    true -> bottomPlaceholderCompensation.value.roundToPx()
+                    else -> 0
+                }
                 val placeable = measurable.measure(constraints.offset(vertical = -bottom))
                 layout(
                     constraints.constrainWidth(placeable.width),
@@ -164,13 +170,15 @@ fun MainContentPage(
                 }
             }
             .graphicsLayer {
-                shape = HorizontalInsetRoundedShape(
-                    startInset = startInset.value,
-                    endInset = endInset.value,
-                    cornerRadius = cornerRadius.value
-                )
-                clip = true
-                shadowElevation = elevation.value.toPx()
+                if (runAnimationState.value) {
+                    shape = HorizontalInsetRoundedShape(
+                        startInset = startInset.value,
+                        endInset = endInset.value,
+                        cornerRadius = cornerRadius.value
+                    )
+                    clip = true
+                    shadowElevation = elevation.value.toPx()
+                }
             }
     )
 }

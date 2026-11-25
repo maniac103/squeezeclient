@@ -27,6 +27,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -38,12 +40,13 @@ internal enum class MainContentAnimationType {
 
 internal data class MainContentAnimationState(
     val animType: MainContentAnimationType,
+    val runAnimation: State<Boolean>,
     val bottomPaddingForCompensation: Dp,
     val onTransitionRunningChanged: (Boolean) -> Unit = {}
 )
 
 internal val LocalMainContentAnimationState = staticCompositionLocalOf {
-    MainContentAnimationState(MainContentAnimationType.Normal, 0.dp)
+    MainContentAnimationState(MainContentAnimationType.Normal, mutableStateOf(false), 0.dp)
 }
 
 internal fun mainContentEnter() = slideInHorizontally(
@@ -108,6 +111,6 @@ internal fun <T> mainContentPageAnimationSpec(
     isPredictiveBack: Boolean
 ): FiniteAnimationSpec<T> = tween(
     durationMillis = if (isPredictiveBack) 100 else 0,
-    delayMillis = if (targetState == EnterExitState.Visible) 300 else 100,
+    delayMillis = if (targetState == EnterExitState.Visible) 300 else 0,
     easing = EaseInOutCubic
 )

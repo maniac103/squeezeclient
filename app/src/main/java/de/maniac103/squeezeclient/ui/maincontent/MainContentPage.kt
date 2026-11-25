@@ -25,7 +25,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.TopAppBarState
@@ -42,12 +41,15 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.constrainHeight
+import androidx.compose.ui.unit.constrainWidth
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.min
+import androidx.compose.ui.unit.offset
 import androidx.navigation3.ui.LocalNavAnimatedContentScope
 
 @Composable
@@ -90,20 +92,20 @@ fun MainContentPage(
             else -> settledValue
         }
 
-    val scale by transition.animateFloat(
+    val scale = transition.animateFloat(
         transitionSpec = { mainContentPageAnimationSpec(targetState, isPredictiveBack) },
-        targetValueByState = { state -> targetValueByState(state, 0.95F, 1F) },
+        targetValueByState = { state -> targetValueByState(state, 0.97F, 1F) },
         label = "main-content-scale"
     )
 
-    val cornerRadius by transition.animateDp(
+    val cornerRadius = transition.animateDp(
         transitionSpec = { mainContentPageAnimationSpec(targetState, isPredictiveBack) },
         targetValueByState = { state -> targetValueByState(state, 24.dp, 0.dp) },
         label = "main-content-corner-radius"
     )
 
     val layoutDirection = LocalLayoutDirection.current
-    val startInset by transition.animateDp(
+    val startInset = transition.animateDp(
         transitionSpec = { mainContentPageAnimationSpec(targetState, isPredictiveBack) },
         targetValueByState = { state ->
             val animatedValue = contentPaddingOfPageContent.calculateStartPadding(layoutDirection)
@@ -111,7 +113,7 @@ fun MainContentPage(
         },
         label = "main-content-start-inset"
     )
-    val endInset by transition.animateDp(
+    val endInset = transition.animateDp(
         transitionSpec = { mainContentPageAnimationSpec(targetState, isPredictiveBack) },
         targetValueByState = { state ->
             val animatedValue = contentPaddingOfPageContent.calculateEndPadding(layoutDirection)
@@ -120,7 +122,7 @@ fun MainContentPage(
         label = "main-content-end-inset"
     )
 
-    val animatedBottomPlaceholderCompensation by transition.animateDp(
+    val bottomPlaceholderCompensation = transition.animateDp(
         transitionSpec = { mainContentPageAnimationSpec(targetState, isPredictiveBack) },
         targetValueByState = { state ->
             targetValueByState(state, animationState.bottomPaddingForCompensation, 0.dp)
@@ -128,7 +130,7 @@ fun MainContentPage(
         label = "main-content-bottom-compensation"
     )
 
-    val elevation by transition.animateDp(
+    val elevation = transition.animateDp(
         transitionSpec = { mainContentPageAnimationSpec(targetState, isPredictiveBack) },
         targetValueByState = { state -> targetValueByState(state, 4.dp, 0.dp) },
         label = "main-content-elevation"
@@ -136,17 +138,12 @@ fun MainContentPage(
 
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainer,
-        shape = HorizontalInsetRoundedShape(
-            startInset = startInset,
-            endInset = endInset,
-            cornerRadius = cornerRadius
-        ),
-        shadowElevation = elevation,
         content = content,
         modifier = Modifier
             .fillMaxSize()
             .graphicsLayer {
-                val compensationPx = animatedBottomPlaceholderCompensation.toPx()
+                val compensationPx = bottomPlaceholderCompensation.value.toPx()
+                val scale = scale.value
 
                 scaleX = scale
                 scaleY = if (size.height > 0F) {
@@ -156,7 +153,25 @@ fun MainContentPage(
                 }
                 translationY = -0.5F * compensationPx * (1 - scale)
             }
-            .padding(bottom = animatedBottomPlaceholderCompensation)
+            .layout { measurable, constraints ->
+                val bottom = bottomPlaceholderCompensation.value.roundToPx()
+                val placeable = measurable.measure(constraints.offset(vertical = -bottom))
+                layout(
+                    constraints.constrainWidth(placeable.width),
+                    constraints.constrainHeight(placeable.height + bottom)
+                ) {
+                    placeable.place(0, 0)
+                }
+            }
+            .graphicsLayer {
+                shape = HorizontalInsetRoundedShape(
+                    startInset = startInset.value,
+                    endInset = endInset.value,
+                    cornerRadius = cornerRadius.value
+                )
+                clip = true
+                shadowElevation = elevation.value.toPx()
+            }
     )
 }
 

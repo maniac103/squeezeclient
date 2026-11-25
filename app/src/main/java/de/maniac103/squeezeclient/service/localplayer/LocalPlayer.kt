@@ -69,7 +69,7 @@ class LocalPlayer(
     private val onPlaybackError: () -> Unit = {},
     private val onDecoderLoadFinished: () -> Unit = {},
     onDecodingFinished: () -> Unit = {},
-    private val onAudioFocusLost: () -> Unit = {},
+    private val onPauseRequested: () -> Unit = {},
     private val onPlaybackSuppressionChanged: (suppressed: Boolean) -> Unit = {},
     private val onHeadersReceived: (response: Response) -> Unit = {},
     private val onMetadataReceived: (title: CharSequence, artworkUri: Uri?) -> Unit = { _, _ -> }
@@ -163,6 +163,7 @@ class LocalPlayer(
             .setRenderersFactory(AudioSinkOverridingFactory(context))
             .setLoadControl(loadControl)
             .setDeviceVolumeControlEnabled(true)
+            .setHandleAudioBecomingNoisy(true)
             .build()
         // The server sends the next track's stream command while the current track is still
         // playing. Pre-buffer it so it's ready once playback reaches the playlist item,
@@ -324,8 +325,12 @@ class LocalPlayer(
         if (readyForPlayback) {
             onPauseStateChanged(!playWhenReady)
         }
-        if (!playWhenReady && reason == Player.PLAY_WHEN_READY_CHANGE_REASON_AUDIO_FOCUS_LOSS) {
-            onAudioFocusLost()
+        if (!playWhenReady) {
+            if (reason == Player.PLAY_WHEN_READY_CHANGE_REASON_AUDIO_FOCUS_LOSS ||
+                reason == Player.PLAY_WHEN_READY_CHANGE_REASON_AUDIO_BECOMING_NOISY
+            ) {
+                onPauseRequested()
+            }
         }
         updatePlayerVolume(false)
     }

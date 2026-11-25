@@ -102,7 +102,7 @@ class LocalPlaybackService : LifecycleService() {
             onPlaybackEnded = { streamEnded -> onPlaybackEnded(streamEnded) },
             onPlaybackError = { onPlaybackError() },
             onPauseStateChanged = { paused -> onPauseStateChanged(paused) },
-            onAudioFocusLost = { onAudioFocusLost() },
+            onPauseRequested = { onPauseRequested() },
             onPlaybackSuppressionChanged = { onPlaybackSuppressionChanged() },
             onDecoderLoadFinished = { onDecoderLoadFinished() },
             onDecodingFinished = { onDecodingFinished() },
@@ -208,8 +208,8 @@ class LocalPlaybackService : LifecycleService() {
         sendStatus(SlimprotoSocket.StatusType.StreamingFailed)
     }
 
-    private fun onAudioFocusLost() = lifecycleScope.launch {
-        executeLocalPlayerRequest("audio focus loss") { helper, playerId ->
+    private fun onPauseRequested() = lifecycleScope.launch {
+        executeLocalPlayerRequest("pause requested") { helper, playerId ->
             helper.changePlaybackState(playerId, PlayerStatus.PlayState.Paused)
         }
     }

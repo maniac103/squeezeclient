@@ -17,6 +17,7 @@
 
 package de.maniac103.squeezeclient.ui.contextmenu
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.padding
@@ -26,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import de.maniac103.squeezeclient.ui.composables.DelayedAnimatedVisibility
 import de.maniac103.squeezeclient.ui.composables.SmallCircularWavyProgressIndicator
@@ -57,5 +59,15 @@ fun ContextMenuItemRow(
                 .padding(end = 16.dp)
                 .align(Alignment.CenterVertically)
         )
+    }
+}
+
+@Preview
+@Composable
+fun ContextMenuItemRowPreview() {
+    Column {
+        ContextMenuItemRow("Item title", false, true)
+        ContextMenuItemRow("Not selectable", false, false)
+        ContextMenuItemRow("Busy item", true, true)
     }
 }

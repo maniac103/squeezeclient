@@ -34,15 +34,23 @@ import kotlinx.serialization.Serializable
 class ContextMenuViewModel(
     private val connectionHelper: ConnectionHelper,
     private val playerId: PlayerId,
-    initialItems: List<SlimBrowseItem>,
-    val parentItem: SlimBrowseItem
+    initialPage: PageContent?
 ) : ViewModel() {
-    private val pageStackInternal =
-        MutableStateFlow(listOf(Page(parentItem, initialItems, false)))
+    private val parentItemFlowInternal = MutableStateFlow(initialPage?.parent)
+    private val pageStackInternal = MutableStateFlow(
+        listOfNotNull(initialPage?.let { Page(it, false) })
+    )
     private val busyItemInternal = MutableStateFlow<SlimBrowseItem?>(null)
 
     val pageStackFlow = pageStackInternal.asStateFlow()
+    val parentItemFlow = parentItemFlowInternal.asStateFlow()
     val busyItemFlow = busyItemInternal.asStateFlow()
+
+    fun setRootPage(parent: SlimBrowseItem, initialItems: List<SlimBrowseItem>) =
+        viewModelScope.launch {
+            parentItemFlowInternal.emit(parent)
+            pageStackInternal.emit(listOf(Page(PageContent(parent, initialItems), false)))
+        }
 
     fun pushPage(item: SlimBrowseItem, fetchAction: JiveAction) {
         val job = viewModelScope.launch {
@@ -52,7 +60,7 @@ class ContextMenuViewModel(
                 PagingParams.All,
                 false
             )
-            pageStackInternal.value += Page(item, newItems.items, true)
+            pageStackInternal.value += Page(PageContent(item, newItems.items), true)
         }
         setItemBusy(item, job)
     }
@@ -75,9 +83,8 @@ class ContextMenuViewModel(
     }
 
     @Serializable
-    data class Page(
-        val parent: SlimBrowseItem,
-        val items: List<SlimBrowseItem>,
-        val canGoBack: Boolean
-    ) : NavKey
+    data class PageContent(val parent: SlimBrowseItem, val items: List<SlimBrowseItem>)
+
+    @Serializable
+    data class Page(val content: PageContent, val canGoBack: Boolean) : NavKey
 }

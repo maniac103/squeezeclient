@@ -328,9 +328,8 @@ internal fun NowPlayingScreen(
             onDismissRequest = onInfoMenuDismissed,
             sheetState = sheetState
         ) {
-            val viewModel = koinViewModel<ContextMenuViewModel> {
-                parametersOf(playerId, menuState.items, menuState.parentItem)
-            }
+            val viewModel = koinViewModel<ContextMenuViewModel> { parametersOf(playerId) }
+            viewModel.setRootPage(menuState.parentItem, menuState.items)
 
             LaunchedEffect(Unit) {
                 sheetState.show()

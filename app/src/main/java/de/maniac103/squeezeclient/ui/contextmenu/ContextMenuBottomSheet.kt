@@ -59,11 +59,13 @@ fun ContextMenuBottomSheetContent(
 ) {
     val pageStack by viewModel.pageStackFlow.collectAsStateWithLifecycle()
     val busyItem by viewModel.busyItemFlow.collectAsStateWithLifecycle()
+    val parentItemState = viewModel.parentItemFlow.collectAsStateWithLifecycle()
+    val parentItem = parentItemState.value ?: return
 
     ContextMenuBottomSheetContent(
         pageStack = pageStack,
         busyItem = busyItem,
-        parentItem = viewModel.parentItem,
+        parentItem = parentItem,
         serverConfig = serverConfig,
         onNavigateBack = viewModel::popPage,
         onItemSelected = { item ->
@@ -108,7 +110,7 @@ fun ContextMenuBottomSheetContent(
                     contentDescriptionResId = R.string.content_description_context_menu_back,
                     onClick = onNavigateBack
                 )
-                Text(text = currentPage.parent.title)
+                Text(text = currentPage.content.parent.title)
             }
         }
 
@@ -127,7 +129,7 @@ fun ContextMenuBottomSheetContent(
             entryProvider = entryProvider {
                 entry<ContextMenuViewModel.Page> { page ->
                     LazyColumn {
-                        items(page.items) { item ->
+                        items(page.content.items) { item ->
                             ContextMenuItemRow(
                                 title = item.title,
                                 busy = item == busyItem,

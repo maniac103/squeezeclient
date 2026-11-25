@@ -21,7 +21,6 @@ import de.maniac103.squeezeclient.cometd.request.LibrarySearchRequest
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.JiveActions
 import de.maniac103.squeezeclient.model.PlayerId
-import de.maniac103.squeezeclient.model.SlimBrowseItem
 import de.maniac103.squeezeclient.ui.contextmenu.ContextMenuViewModel
 import de.maniac103.squeezeclient.ui.contextmenu.ItemActionsViewModel
 import de.maniac103.squeezeclient.ui.displaystatus.DisplayStatusViewModel
@@ -68,8 +67,7 @@ val viewModelModule = module {
             ContextMenuViewModel(
                 connectionHelper = get(),
                 playerId = get<PlayerId>(),
-                initialItems = params.get<List<SlimBrowseItem>>(),
-                parentItem = params.get<SlimBrowseItem>()
+                initialPage = params.getOrNull<ContextMenuViewModel.PageContent>()
             )
         }
         viewModel { params ->

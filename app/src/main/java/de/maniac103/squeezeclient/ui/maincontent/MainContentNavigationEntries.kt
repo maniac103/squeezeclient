@@ -418,7 +418,7 @@ internal fun EntryProviderScope<NavKey>.ContextMenuNavEntry(
     metadata = BottomSheetSceneStrategy.bottomSheet()
 ) { route ->
     val viewModel = koinViewModel<ContextMenuViewModel> {
-        parametersOf(route.menuItems, route.item)
+        parametersOf(ContextMenuViewModel.PageContent(route.item, route.menuItems))
     }
 
     ContextMenuBottomSheetContent(

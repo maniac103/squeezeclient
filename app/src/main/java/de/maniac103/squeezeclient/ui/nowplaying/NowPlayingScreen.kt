@@ -150,8 +150,8 @@ import com.kmpalette.rememberPaletteState
 import com.materialkolor.PaletteStyle
 import de.maniac103.squeezeclient.Preferences
 import de.maniac103.squeezeclient.R
+import de.maniac103.squeezeclient.extfuncs.invokeOnDoneOrNull
 import de.maniac103.squeezeclient.extfuncs.loadMaybeRelativeUrl
-import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.JiveActions
 import de.maniac103.squeezeclient.model.PlayerId
 import de.maniac103.squeezeclient.model.Playlist
@@ -197,10 +197,9 @@ internal fun NowPlayingScreen(
     accentModeState: State<Preferences.NowPlayingAccentMode>,
     insets: PaddingValues,
     onShowVolumePopup: () -> Unit,
-    onInfoMenuItemGoAction: (
-        action: JiveAction,
-        parentItem: SlimBrowseItem,
-        contextItem: SlimBrowseItem
+    onInfoMenuItemSelected: (
+        contextItem: SlimBrowseItem,
+        parentItem: SlimBrowseItem
     ) -> Job?,
     modifier: Modifier = Modifier
 ) {
@@ -248,21 +247,16 @@ internal fun NowPlayingScreen(
         onStop = viewModel::stop,
         onSeek = viewModel::seekTo,
         onShowInfoMenu = viewModel::loadContextMenu,
-        onInfoMenuItemSelected = { parentItem, contextItem ->
-            val job = when (val result = viewModel.onContextMenuItemSelected(contextItem)) {
-                is ContextMenuItemResult.None -> null
-
-                is ContextMenuItemResult.DoAction -> result.job
-
-                is ContextMenuItemResult.GoAction ->
-                    onInfoMenuItemGoAction(result.action, parentItem, contextItem)
-            }
-            job?.apply {
-                invokeOnCompletion {
-                    viewModel.onContextMenuDismissed()
-                    scope.launch {
-                        motionState.nowPlaying.collapse()
+        onInfoMenuItemSelected = { item, parentItem ->
+            val job = onInfoMenuItemSelected(item, parentItem)
+            job.apply {
+                invokeOnDoneOrNull {
+                    if (item.actions.downloadData == null && item.actions.goAction != null) {
+                        scope.launch {
+                            motionState.nowPlaying.collapse()
+                        }
                     }
+                    viewModel.onContextMenuDismissed()
                 }
             }
         },
@@ -300,8 +294,8 @@ internal fun NowPlayingScreen(
     onSeek: (position: Int) -> Unit = {},
     onShowInfoMenu: (NowPlayingContextMenuData) -> Unit = {},
     onInfoMenuItemSelected: (
-        parentItem: SlimBrowseItem,
-        contextItem: SlimBrowseItem
+        contextItem: SlimBrowseItem,
+        parentItem: SlimBrowseItem
     ) -> Job? = { _, _ -> null },
     onInfoMenuDismissed: () -> Unit = {},
     onShowSavePlaylistNameInput: () -> Unit = {},
@@ -338,9 +332,7 @@ internal fun NowPlayingScreen(
             ContextMenuBottomSheetContent(
                 viewModel = viewModel,
                 serverConfig = serverConfig,
-                onItemSelected = { item ->
-                    onInfoMenuItemSelected(menuState.parentItem, item)
-                }
+                onItemSelected = { item -> onInfoMenuItemSelected(item, menuState.parentItem) }
             )
         }
     }

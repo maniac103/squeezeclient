@@ -693,12 +693,11 @@ private fun MainActivityPlayerContent(
                 serverConfig = serverConfigState.value,
                 insets = systemInsets,
                 onShowVolumePopup = { volumeViewModel.show(5.seconds) },
-                onInfoMenuItemGoAction = { action, parentItem, contextItem ->
-                    mainContentViewModel.goToHome()
-                    mainContentViewModel.onNowPlayingContextMenuAction(
-                        action = action,
-                        contextItem = contextItem,
-                        parentItem = parentItem
+                onInfoMenuItemSelected = { contextItem, parentItem ->
+                    mainContentViewModel.onContextMenuItemSelected(
+                        item = contextItem,
+                        parentItem = parentItem,
+                        handleDownload = onDownloadSelected
                     )
                 }
             )

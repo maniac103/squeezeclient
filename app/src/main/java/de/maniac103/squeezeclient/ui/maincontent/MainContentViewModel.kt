@@ -27,6 +27,7 @@ import de.maniac103.squeezeclient.cometd.ConnectionHelper
 import de.maniac103.squeezeclient.cometd.request.LibrarySearchRequest
 import de.maniac103.squeezeclient.extfuncs.serverMightCacheResults
 import de.maniac103.squeezeclient.model.ArtworkItem
+import de.maniac103.squeezeclient.model.DownloadRequestData
 import de.maniac103.squeezeclient.model.JiveAction
 import de.maniac103.squeezeclient.model.JiveActions
 import de.maniac103.squeezeclient.model.JiveHomeMenuItem
@@ -128,11 +129,27 @@ class MainContentViewModel(
         navigationFlowInternal.emit(MainContentNavigation.RadioSearchResults(searchTerm))
     }
 
-    fun onNowPlayingContextMenuAction(
-        action: JiveAction,
-        contextItem: SlimBrowseItem,
-        parentItem: SlimBrowseItem
-    ) = handleSlimBrowseDoOrGoAction(action, true, contextItem, parentItem, null)
+    fun onContextMenuItemSelected(
+        item: SlimBrowseItem,
+        parentItem: SlimBrowseItem,
+        handleDownload: (DownloadRequestData) -> Unit
+    ): Job? {
+        val actions = item.actions
+        return when {
+            actions.downloadData != null && item.tag == "download" -> {
+                handleDownload(actions.downloadData)
+                null
+            }
+
+            actions.goAction != null ->
+                handleSlimBrowseDoOrGoAction(actions.goAction, true, item, parentItem, null)
+
+            actions.doAction != null ->
+                handleSlimBrowseDoOrGoAction(actions.doAction, false, item, parentItem, null)
+
+            else -> null
+        }
+    }
 
     fun onHomeItemSelected(item: JiveHomeMenuItem, windowStyle: WindowStyle?) =
         viewModelScope.launch {
@@ -268,19 +285,6 @@ class MainContentViewModel(
 
     fun onSliderValueChanged(action: JiveAction) = viewModelScope.launch {
         connectionHelper.executeAction(playerId, action)
-    }
-
-    fun extractDownloadDataForContextMenuItem(item: SlimBrowseItem) =
-        item.actions.downloadData?.takeIf { item.tag == "download" }
-
-    fun onContextMenuItemSelected(item: SlimBrowseItem, parentItem: SlimBrowseItem?) = when {
-        item.actions.doAction != null ->
-            handleSlimBrowseDoOrGoAction(item.actions.doAction, false, item, parentItem, null)
-
-        item.actions.goAction != null ->
-            handleSlimBrowseDoOrGoAction(item.actions.goAction, true, item, parentItem, null)
-
-        else -> null
     }
 
     fun onBreadcrumbsChanged(backStack: List<NavKey>, transition: NavigationEventTransitionState) =

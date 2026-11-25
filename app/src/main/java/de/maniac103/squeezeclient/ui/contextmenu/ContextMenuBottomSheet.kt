@@ -130,10 +130,13 @@ fun ContextMenuBottomSheetContent(
                 entry<ContextMenuViewModel.Page> { page ->
                     LazyColumn {
                         items(page.content.items) { item ->
+                            val selectable = item.actions.goAction != null ||
+                                item.actions.doAction != null ||
+                                item.actions.downloadData != null
                             ContextMenuItemRow(
                                 title = item.title,
                                 busy = item == busyItem,
-                                selectable = item.actions.goAction != null,
+                                selectable = selectable,
                                 modifier = Modifier
                                     .clickable(onClick = { onItemSelected(item) })
                             )

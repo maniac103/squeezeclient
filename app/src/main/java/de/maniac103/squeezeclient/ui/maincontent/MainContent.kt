@@ -200,14 +200,12 @@ fun MainContent(
 
             ContextMenuNavEntry(
                 serverConfig = serverConfig,
-                onItemSelected = { item, parentItem ->
-                    val downloadData = viewModel.extractDownloadDataForContextMenuItem(item)
-                    if (downloadData != null) {
-                        onDownloadSelected(downloadData)
-                        null
-                    } else {
-                        viewModel.onContextMenuItemSelected(item, parentItem)
-                    }
+                onItemSelected = { contextItem, parentItem ->
+                    viewModel.onContextMenuItemSelected(
+                        item = contextItem,
+                        parentItem = parentItem,
+                        handleDownload = onDownloadSelected
+                    )
                 },
                 onDone = removeFromBackStack
             )

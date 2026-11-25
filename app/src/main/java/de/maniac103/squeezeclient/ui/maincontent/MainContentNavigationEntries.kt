@@ -412,7 +412,10 @@ internal fun EntryProviderScope<NavKey>.InfoNavEntry() = entry<MainContentNaviga
 @Composable
 internal fun EntryProviderScope<NavKey>.ContextMenuNavEntry(
     serverConfig: State<ServerConfiguration?>,
-    onItemSelected: (item: SlimBrowseItem, parentItem: SlimBrowseItem?) -> Job?,
+    onItemSelected: (
+        contextItem: SlimBrowseItem,
+        parentItem: SlimBrowseItem
+    ) -> Job?,
     onDone: (NavKey) -> Unit
 ) = entry<MainContentNavigation.ContextMenu>(
     metadata = BottomSheetSceneStrategy.bottomSheet()

@@ -38,7 +38,6 @@ import kotlin.time.Clock
 import kotlin.time.DurationUnit
 import kotlin.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
@@ -126,33 +125,9 @@ class NowPlayingViewModel(private val connectionHelper: ConnectionHelper, val pl
         )
     }
 
-    fun onContextMenuItemSelected(contextItem: SlimBrowseItem): ContextMenuItemResult {
-        val actions = contextItem.actions
-        return when {
-            actions.doAction != null -> {
-                val job = viewModelScope.launch {
-                    connectionHelper.executeAction(playerId, actions.doAction)
-                }
-                ContextMenuItemResult.DoAction(job)
-            }
-
-            actions.goAction != null -> {
-                ContextMenuItemResult.GoAction(actions.goAction)
-            }
-
-            else -> ContextMenuItemResult.None
-        }
-    }
-
     fun onContextMenuDismissed() = viewModelScope.launch {
         contextMenuFlowInternal.emit(NowPlayingContextMenuState.Idle)
     }
-}
-
-sealed interface ContextMenuItemResult {
-    object None : ContextMenuItemResult
-    data class DoAction(val job: Job) : ContextMenuItemResult
-    data class GoAction(val action: JiveAction) : ContextMenuItemResult
 }
 
 sealed interface NowPlayingContextMenuState {

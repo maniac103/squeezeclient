@@ -35,6 +35,7 @@ import de.maniac103.squeezeclient.service.localplayer.LocalPlaybackService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
@@ -89,6 +90,11 @@ class SqueezeClientApplication :
         applicationScope.launch {
             DownloadWorker.observeStatus(this@SqueezeClientApplication)
         }
+    }
+
+    override fun onTerminate() {
+        applicationScope.cancel()
+        super.onTerminate()
     }
 
     override fun onSharedPreferenceChanged(prefs: SharedPreferences?, key: String?) {

@@ -233,6 +233,7 @@ private fun calculatePortraitGeometry(
     val expandedTextHorizontalPadding = 8.dp
     val expandedControlsHorizontalPadding = 16.dp
     val expandedProgressHorizontalPadding = 16.dp
+    val expandedMinVerticalSpacing = 24.dp
     val expandedTitleSize = 24.sp
     val expandedSecondarySize = 18.sp
 
@@ -383,21 +384,21 @@ private fun calculatePortraitGeometry(
         height = miniProgressHeight
     )
 
-    val expandedArtworkSize = maxOf(expandedContent.width - 32.dp, expandedContent.height * 0.4F)
     val expandedTitleHeight = expandedTitleSize.estimateLayoutHeight(density)
     val expandedSecondaryHeight = expandedSecondarySize.estimateLayoutHeight(density)
     val expandedArtistHeight = if (hasArtist) expandedSecondaryHeight else 0.dp
     val expandedAlbumHeight = if (hasAlbum) expandedSecondaryHeight else 0.dp
     val expandedTextHeight = expandedTitleHeight + expandedArtistHeight + expandedAlbumHeight
-    val expandedVerticalSpacing = (
-        expandedContent.height -
-            toolbarHeight -
-            playlistPeekHeight -
-            expandedArtworkSize -
-            expandedTextHeight -
-            max(expandedPlayPauseSize, expandedOtherControlsSize) -
-            expandedProgressSize
-        ) / 5
+    val expandedNonArtworkHeight = toolbarHeight +
+        expandedTextHeight +
+        expandedProgressSize +
+        max(expandedPlayPauseSize, expandedOtherControlsSize) +
+        playlistPeekHeight
+    val heightAvailableForArtwork =
+        expandedContent.height - expandedNonArtworkHeight - expandedMinVerticalSpacing * 5
+    val expandedArtworkSize = minOf(expandedContent.width - 32.dp, heightAvailableForArtwork)
+    val expandedVerticalSpacing =
+        (expandedContent.height - expandedNonArtworkHeight - expandedArtworkSize) / 5
 
     val expandedArtwork = Bounds(
         start = (expandedContent.width - expandedArtworkSize) / 2,
@@ -1041,6 +1042,7 @@ private fun calculateFoldablePaneGeometry(
     val playPauseSize = 72.dp
     val otherControlsSize = 48.dp
     val textHorizontalPadding = 8.dp
+    val minVerticalSpacing = 24.dp
     val controlsHorizontalPadding = 16.dp
     val progressHorizontalPadding = 16.dp
     val playlistPeekHeight = 48.dp
@@ -1075,21 +1077,16 @@ private fun calculateFoldablePaneGeometry(
         height = containerSize.height - toolbar.bottom
     )
 
-    val artworkSize = maxOf(content.width - 32.dp, content.height * 0.4F)
     val titleHeight = titleSize.estimateLayoutHeight(density)
     val secondaryHeight = secondarySize.estimateLayoutHeight(density)
     val artistHeight = if (hasArtist) secondaryHeight else 0.dp
     val albumHeight = if (hasAlbum) secondaryHeight else 0.dp
     val textHeight = titleHeight + artistHeight + albumHeight
-    val verticalSpacing = (
-        content.height -
-            toolbarHeight -
-            playlistPeekHeight -
-            artworkSize -
-            textHeight -
-            max(playPauseSize, otherControlsSize) -
-            progressSize
-        ) / 5
+    val nonArtworkHeight = toolbarHeight + textHeight + progressSize +
+        max(playPauseSize, otherControlsSize) + playlistPeekHeight
+    val heightAvailableForArtwork = content.height - nonArtworkHeight - minVerticalSpacing * 5
+    val artworkSize = minOf(content.width - 32.dp, heightAvailableForArtwork)
+    val verticalSpacing = (content.height - nonArtworkHeight - artworkSize) / 5
 
     val artwork = Bounds(
         start = (content.width - artworkSize) / 2,

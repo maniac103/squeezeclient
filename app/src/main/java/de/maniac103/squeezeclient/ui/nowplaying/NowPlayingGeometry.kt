@@ -714,18 +714,28 @@ private fun calculateLandscapeGeometry(
         height = collapsedAlbumHeight
     )
 
-    val collapsedControlsPadding =
-        (collapsedContent.width - collapsedControlSize * 5 - collapsedControlSpacing * 4) / 2
+    val collapsedFullControlsWidth = collapsedControlSize * 5 + collapsedControlSpacing * 4
+    val collapsedShowRepeatAndShuffle = collapsedFullControlsWidth < collapsedContent.width
+    val collapsedControlsCount = if (collapsedShowRepeatAndShuffle) 5 else 3
+    val collapsedControlsPadding = (
+        collapsedContent.width -
+            collapsedControlSize * collapsedControlsCount -
+            collapsedControlSpacing * (collapsedControlsCount - 1)
+        ) / 2
     val collapsedControlsTop = collapsedAlbum.bottom + collapsedItemVertSpacing
+    val collapsedRepeatAndShuffleSize =
+        if (collapsedShowRepeatAndShuffle) collapsedControlSize else 0.dp
+    val collapsedRepeatAndShuffleSpacing =
+        if (collapsedShowRepeatAndShuffle) collapsedControlSpacing else 0.dp
 
     val collapsedRepeat = Bounds(
         start = collapsedContent.start + collapsedControlsPadding,
         top = collapsedControlsTop,
-        width = collapsedControlSize,
+        width = collapsedRepeatAndShuffleSize,
         height = collapsedControlSize
     )
     val collapsedPrevTrack = Bounds(
-        start = collapsedRepeat.end + collapsedControlSpacing,
+        start = collapsedRepeat.end + collapsedRepeatAndShuffleSpacing,
         top = collapsedControlsTop,
         width = collapsedControlSize,
         height = collapsedControlSize
@@ -743,9 +753,9 @@ private fun calculateLandscapeGeometry(
         height = collapsedControlSize
     )
     val collapsedShuffle = Bounds(
-        start = collapsedNextTrack.end + collapsedControlSpacing,
+        start = collapsedNextTrack.end + collapsedRepeatAndShuffleSpacing,
         top = collapsedControlsTop,
-        width = collapsedControlSize,
+        width = collapsedRepeatAndShuffleSize,
         height = collapsedControlSize
     )
 

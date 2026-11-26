@@ -43,6 +43,7 @@ val Context.prefs: SharedPreferences get() =
     PreferenceManager.getDefaultSharedPreferences(this)
 val Context.backProgressInterpolator: Interpolator get() =
     (applicationContext as SqueezeClientApplication).backProgressInterpolator
+val Context.database get() = (applicationContext as SqueezeClientApplication).database
 val Context.isRtl get() =
     resources.configuration.locales[0].layoutDirection == View.LAYOUT_DIRECTION_RTL
 

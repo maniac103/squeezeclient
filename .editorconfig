@@ -1,2 +1,7 @@
 [*.{kt,kts}]
 ktlint_code_style = android_studio
+
+[**/build/**]
+generated_code = true
+ij_formatter_enabled = false
+ktlint = disabled

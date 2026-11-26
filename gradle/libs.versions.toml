@@ -16,10 +16,12 @@ androidx-media3 = "1.11.1"
 androidx-paging = "3.5.3"
 androidx-preference = "1.2.1"
 androidx-recyclerview = "1.4.0"
+androidx-room = "3.0.3"
 androidx-wear-compose = "1.7.2"
 androidx-wear-tooling-preview = "1.0.0"
 androidx-work = "2.12.0"
 coil = "3.6.3"
+google-ksp = "2.3.14"
 google-material = "1.14.0" # TODO: refactor MaterialTimePicker after upgrading
 google-play-services-wearable = "20.0.1"
 junit = "4.13.2"
@@ -56,6 +58,8 @@ androidx-media3-exoplayer = { module = "androidx.media3:media3-exoplayer", versi
 androidx-paging-runtime-ktx = { module = "androidx.paging:paging-runtime-ktx", version.ref = "androidx-paging" }
 androidx-preference-ktx = { module = "androidx.preference:preference-ktx", version.ref = "androidx-preference" }
 androidx-recyclerview = { module = "androidx.recyclerview:recyclerview", version.ref = "androidx-recyclerview" }
+androidx-room-compiler = { module = "androidx.room3:room3-compiler", version.ref = "androidx-room" }
+androidx-room-runtime = { module = "androidx.room3:room3-runtime", version.ref = "androidx-room" }
 androidx-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "androidx-compose-ui" }
 androidx-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "androidx-compose-ui" }
 androidx-wear-compose-foundation = { module = "androidx.wear.compose:compose-foundation", version.ref = "androidx-wear-compose" }
@@ -79,5 +83,6 @@ zoomimageview-coil = { module = "io.github.panpf.zoomimage:zoomimage-view-coil3-
 [plugins]
 android-application = { id = "com.android.application", version.ref = "android-gradle-plugin" }
 android-library = { id = "com.android.library", version.ref = "android-gradle-plugin" }
-kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+google-ksp = { id = "com.google.devtools.ksp", version.ref = "google-ksp" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

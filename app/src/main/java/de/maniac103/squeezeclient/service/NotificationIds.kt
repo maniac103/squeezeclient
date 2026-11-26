@@ -20,12 +20,12 @@ package de.maniac103.squeezeclient.service
 import androidx.annotation.StringRes
 import androidx.core.app.NotificationManagerCompat
 import de.maniac103.squeezeclient.R
-import java.util.UUID
 
 object NotificationIds {
     const val LOCAL_PLAYBACK = 1001
     const val MEDIA_CONTTROL_SERVICE = 1002
-    fun forDownloadWork(workId: UUID) = workId.hashCode().or(0x80000000.toInt())
+    const val DOWNLOAD_WORKER = 1003
+    const val DOWNLOAD_FAILURE = 1004
 
     data class ChannelInfo(
         val id: String,

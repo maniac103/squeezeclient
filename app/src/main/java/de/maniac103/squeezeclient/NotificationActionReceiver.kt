@@ -21,15 +21,28 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import de.maniac103.squeezeclient.service.DownloadWorker
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class NotificationActionReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
-        when (intent?.action) {
-            DownloadWorker.NOTIFICATION_ACTION_RETRY_DOWNLOAD ->
-                DownloadWorker.handleRetryAction(context, intent)
+        val pending = goAsync()
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                when (intent?.action) {
+                    DownloadWorker.NOTIFICATION_ACTION_RETRY_DOWNLOAD ->
+                        DownloadWorker.handleRetryAction(context)
 
-            DownloadWorker.NOTIFICATION_ACTION_DISMISS_FAILED ->
-                DownloadWorker.handleDismissAction(context)
+                    DownloadWorker.NOTIFICATION_ACTION_CANCEL_DOWNLOAD ->
+                        DownloadWorker.handleCancelAction(context)
+
+                    DownloadWorker.NOTIFICATION_ACTION_DISMISS_FAILED ->
+                        DownloadWorker.handleDismissAction(context)
+                }
+            } finally {
+                pending.finish()
+            }
         }
     }
 }

@@ -23,19 +23,27 @@ import android.os.Build
 import android.view.animation.AnimationUtils
 import android.view.animation.Interpolator
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.room3.Room
 import com.google.android.material.color.DynamicColors
 import com.markodevcic.peko.PermissionRequester
 import de.maniac103.squeezeclient.cometd.ConnectionHelper
+import de.maniac103.squeezeclient.database.SqueezeClientDatabase
 import de.maniac103.squeezeclient.extfuncs.prefs
 import de.maniac103.squeezeclient.extfuncs.serverConfig
 import de.maniac103.squeezeclient.service.DownloadWorker
 import de.maniac103.squeezeclient.service.localplayer.LocalPlaybackService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 
 class SqueezeClientApplication :
     Application(),
     SharedPreferences.OnSharedPreferenceChangeListener {
+    private val applicationScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+
     val json = Json {
         coerceInputValues = true
         ignoreUnknownKeys = true
@@ -60,6 +68,14 @@ class SqueezeClientApplication :
         AnimationUtils.loadInterpolator(this, android.R.interpolator.decelerate_quint)!!
     }
 
+    val database: SqueezeClientDatabase by lazy {
+        Room.databaseBuilder(
+            context = this,
+            klass = SqueezeClientDatabase::class.java,
+            name = "squeezeclient.db"
+        ).build()
+    }
+
     override fun onCreate() {
         DynamicColors.applyToActivitiesIfAvailable(this)
         super.onCreate()
@@ -70,7 +86,9 @@ class SqueezeClientApplication :
         prefs.registerOnSharedPreferenceChangeListener(this)
         updateDefaultNightMode()
 
-        DownloadWorker.startObservingStatus(this)
+        applicationScope.launch {
+            DownloadWorker.observeStatus(this@SqueezeClientApplication)
+        }
     }
 
     override fun onSharedPreferenceChanged(prefs: SharedPreferences?, key: String?) {

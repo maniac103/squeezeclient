@@ -37,6 +37,7 @@ tasks.withType<CompileArtProfileTask> {
 android {
     namespace = "de.maniac103.squeezeclient"
     compileSdk = 37
+    compileSdkMinor = 2
 
     defaultConfig {
         applicationId = "de.maniac103.squeezeclient"

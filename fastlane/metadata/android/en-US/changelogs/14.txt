@@ -1,0 +1,8 @@
+- Fix list items 100.300 being displayed twice (#65)
+- Fix media session not controllable by other apps (#67)
+- Fix crash when trying to download albums with large number of tracks (#71)
+- Fix local player not working with some plugin's streams (#70)
+- Disable volume control for players that are set to 100% volume server-side
+- Stop media session when player is paused for more than 20 minutes
+- Fix some item click actions not being executed
+- Misc. bug fixes
